@@ -1,0 +1,102 @@
+import type { TextScale } from '../hooks/useSettings';
+
+const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
+const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
+// Fixed px values used only in this picker as a visual size-comparison reference.
+const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
+
+interface Props {
+  textScale: TextScale;
+  onTextScale: (s: TextScale) => void;
+  brightness: number;
+  onBrightness: (v: number) => void;
+}
+
+export function SettingsView({ textScale, onTextScale, brightness, onBrightness }: Props) {
+  return (
+    <div className="space-y-8">
+
+      {/* Text size */}
+      <section className="space-y-4">
+        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Text size</p>
+
+        {/* Five-segment picker */}
+        <div className="flex rounded-xl overflow-hidden border border-bg-border">
+          {SCALES.map((s, i) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onTextScale(s)}
+              aria-pressed={textScale === s}
+              className={`flex-1 flex flex-col items-center justify-center py-3 gap-1.5 transition-colors ${
+                textScale === s
+                  ? 'bg-accent text-bg-base'
+                  : 'bg-bg-raised text-text-secondary hover:bg-bg-border'
+              } ${i > 0 ? 'border-l border-bg-border' : ''}`}
+            >
+              {/* A shown at the absolute size that scale produces — intentional px exception */}
+              <span aria-hidden="true" style={{ fontSize: `${SCALE_PX[s]}px`, lineHeight: 1 }}>A</span>
+              <span style={{ fontSize: '0.625rem', letterSpacing: '0.05em' }} className="font-medium uppercase">
+                {SCALE_LABELS[s]}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Live preview card — inherits root font size so it updates instantly */}
+        <div className="rounded-xl border border-bg-border/60 bg-bg-raised/40 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium text-text-primary">Mon, Jun 24</span>
+                <span className="text-xs text-text-secondary">9:15 AM</span>
+              </div>
+              <p className="text-xs text-text-secondary">2h 30m · 3 snapshots</p>
+              <p className="text-xs text-text-secondary">Right temple, Forehead</p>
+              <div className="flex flex-wrap gap-1 pt-0.5">
+                <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Stress</span>
+                <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Poor sleep</span>
+              </div>
+            </div>
+            <div className="shrink-0">
+              <span className="rounded-lg border border-severity-mid/30 bg-severity-mid/20 px-2 py-1 text-lg font-bold tabular-nums text-severity-mid">
+                7
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-xs text-text-secondary">
+          Changes apply instantly across the app. Use the A+ button (bottom‑right) for quick cycling at medium and above.
+        </p>
+      </section>
+
+      {/* Screen brightness */}
+      <section className="space-y-4">
+        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Screen brightness</p>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-primary">Overlay</span>
+            <span className="text-sm font-medium text-text-secondary tabular-nums">
+              {Math.round(brightness * 100)}%
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={80}
+            step={5}
+            value={Math.round(brightness * 100)}
+            onChange={(e) => onBrightness(Number(e.target.value) / 100)}
+            className="w-full"
+          />
+          <p className="text-xs text-text-secondary">
+            Dims the screen during attacks without changing your phone's system brightness
+          </p>
+        </div>
+      </section>
+
+    </div>
+  );
+}
