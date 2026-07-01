@@ -1,4 +1,7 @@
+import { useRef, useState } from 'react';
 import type { TextScale } from '../hooks/useSettings';
+import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
+import { ConfirmDialog } from './ConfirmDialog';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
@@ -13,6 +16,20 @@ interface Props {
 }
 
 export function SettingsView({ textScale, onTextScale, brightness, onBrightness }: Props) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importErr, setImportErr] = useState<string | null>(null);
+  const [pending, setPending] = useState<ParsedBackup | null>(null);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-picking the same file
+    if (!file) return;
+    setImportErr(null);
+    const res = await readBackupFile(file);
+    if (res.ok) setPending(res.backup);
+    else setImportErr(res.error);
+  }
+
   return (
     <div className="space-y-8">
 
@@ -96,6 +113,61 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness 
           </p>
         </div>
       </section>
+
+      {/* Data */}
+      <section className="space-y-4">
+        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Data</p>
+
+        <div className="rounded-xl border border-bg-border bg-bg-raised/40 p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={exportData}
+              className="btn-secondary rounded-lg py-2.5 text-sm font-medium transition-colors"
+            >
+              Export backup
+            </button>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="btn-secondary rounded-lg py-2.5 text-sm font-medium transition-colors"
+            >
+              Import backup
+            </button>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={onFile}
+          />
+          <p className="text-xs text-text-secondary">
+            Save your attacks, triggers and settings to a file — or restore them on another device.
+            Everything stays on this device; nothing is uploaded.
+          </p>
+          {importErr && <p className="text-xs text-severity-high">{importErr}</p>}
+        </div>
+      </section>
+
+      <ConfirmDialog
+        open={!!pending}
+        danger
+        title="Import this backup?"
+        message={
+          pending
+            ? `This replaces the data on this device with the backup (${pending.attacks} attack${pending.attacks === 1 ? '' : 's'}). Export a backup first if you want to keep what's here.`
+            : ''
+        }
+        confirmLabel="Import & reload"
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (pending) {
+            applyBackup(pending.data);
+            window.location.reload();
+          }
+        }}
+      />
 
     </div>
   );
