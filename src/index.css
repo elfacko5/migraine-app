@@ -7,16 +7,38 @@
   --color-bg-base:        #0d0f14;
   --color-bg-surface:     #161820;
   --color-bg-raised:      #1e2028;
-  --color-bg-border:      #2a2d3a;
+  --color-bg-border:      #2a2d3a;  /* border.DEFAULT — card outlines, dividers */
+  --color-border-subtle:  #34384a;  /* border.subtle — top bar edge, focus rings, active nav tab */
   --color-text-primary:   #dde1eb;
   --color-text-secondary: #7d8599;
   --color-accent:         #5a9e7a;
   --color-accent-light:   #7fc4a0;
+  --color-button-secondary-bg:     #1e2028;
+  --color-button-secondary-border: #3a3f52;
   --color-severity-low:   #5a9e7a;
   --color-severity-mid:   #c97c2a;
   --color-severity-high:  #b85c5c;
   --color-warning:        #c97c2a;
   --color-positive:       #5a9e7a;
+}
+
+/* ── Three-tier button hierarchy ───────────────────────
+   primary: one per screen (main action) · secondary: companion actions
+   · tertiary: low-emphasis / inline. Apply colour treatment; call sites add
+   size, radius, font. */
+@layer components {
+  .btn-primary { background-color: var(--color-accent); color: var(--color-bg-base); }
+  .btn-primary:hover:not(:disabled) { background-color: var(--color-accent-light); }
+
+  .btn-secondary {
+    background-color: var(--color-button-secondary-bg);
+    border: 1px solid var(--color-button-secondary-border);
+    color: var(--color-text-primary);
+  }
+  .btn-secondary:hover:not(:disabled) { background-color: var(--color-bg-raised); }
+
+  .btn-tertiary { background-color: transparent; color: var(--color-accent-light); }
+  .btn-tertiary:hover:not(:disabled) { color: var(--color-accent); }
 }
 
 /* ── Text scale ────────────────────────────────────── */

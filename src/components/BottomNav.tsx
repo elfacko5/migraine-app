@@ -36,7 +36,10 @@ interface Props {
 
 export function BottomNav({ active, onChange, onAdd }: Props) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-bg-border bg-bg-base/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-bg-border bg-bg-base/95 backdrop-blur-md"
+      style={{ paddingBottom: 'max(0.375rem, calc(env(safe-area-inset-bottom) - 0.625rem))' }}
+    >
       <ul className="mx-auto flex w-full max-w-2xl items-end">
         {LEFT_TABS.map((tab) => (
           <li key={tab.id} className="flex-1">
@@ -44,12 +47,12 @@ export function BottomNav({ active, onChange, onAdd }: Props) {
           </li>
         ))}
 
-        <li className="flex flex-1 justify-center pb-3">
+        <li className="flex flex-1 justify-center pb-1.5">
           <button
             type="button"
             aria-label="Log a migraine"
             onClick={onAdd}
-            className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-bg-base shadow-lg ring-4 ring-bg-base transition-colors hover:bg-accent-light active:scale-95"
+            className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-bg-base ring-4 ring-bg-base transition-colors hover:bg-accent-light active:scale-95"
           >
             <PlusIcon />
           </button>
@@ -70,7 +73,7 @@ function TabBtn({ tab, isActive, onClick }: { tab: NavItem; isActive: boolean; o
     <button
       onClick={onClick}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex w-full flex-col items-center gap-1 px-1 py-2.5 text-xs font-medium transition-colors ${isActive ? 'text-accent-light' : 'text-text-secondary hover:text-text-primary'}`}
+      className={`flex w-full flex-col items-center gap-1 border-t-2 px-1 pt-2 pb-1 text-xs font-medium transition-colors ${isActive ? 'border-border-subtle text-accent-light' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
     >
       <span aria-hidden="true">{tab.icon}</span>
       {tab.label}

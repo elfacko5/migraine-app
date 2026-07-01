@@ -4,11 +4,23 @@ import { useAttacks } from './hooks/useAttacks';
 import { useUserPrefs } from './hooks/useUserPrefs';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
+import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { BottomNav } from './components/BottomNav';
+import { TopBar } from './components/TopBar';
+import { TextScaleControl } from './components/TextScaleControl';
 import { Sheet } from './components/Sheet';
+import { ConfirmDialog } from './components/ConfirmDialog';
+
+const TAB_TITLES: Record<Tab, string> = {
+  log: 'Migraine Tracker',
+  history: 'Logs',
+  stats: 'Insights',
+  settings: 'Settings',
+};
 import { LogForm } from './components/LogForm';
 import { QuickUpdateForm } from './components/QuickUpdateForm';
 import { OngoingAttackBanner } from './components/OngoingAttackBanner';
+import { AttackFreeCard } from './components/AttackFreeCard';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
 import { HistoryView } from './components/HistoryView';
@@ -21,6 +33,7 @@ export default function App() {
   const [logSheetOpen, setLogSheetOpen] = useState(false);
   const [updateSheetOpen, setUpdateSheetOpen] = useState(false);
   const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
+  const [endConfirmOpen, setEndConfirmOpen] = useState(false);
 
   const { attacks, ongoingAttack, startAttack, addSnapshot, endAttack, deleteAttack } = useAttacks();
   const { triggers, symptoms, reliefs, addTrigger, addSymptom, addRelief, defaultNotifConfig } = useUserPrefs();
@@ -40,6 +53,19 @@ export default function App() {
     }
     return Array.from(seen.entries()).map(([name, dose]) => ({ name, dose }));
   }, [attacks]);
+
+  // Most recent attack end (ISO strings compare chronologically) — for the
+  // "attack-free" card shown when nothing is ongoing.
+  const lastAttackEnd = useMemo(() => {
+    const ends = attacks.map((a) => a.end).filter((e): e is string => !!e);
+    return ends.length ? ends.reduce((max, e) => (e > max ? e : max)) : null;
+  }, [attacks]);
+
+  // Order the pickers' options by how often they've been selected historically,
+  // so the most-used surface at the top.
+  const sortedTriggers = useMemo(() => sortByFrequency(triggers, triggerFrequency(attacks)), [triggers, attacks]);
+  const sortedSymptoms = useMemo(() => sortByFrequency(symptoms, symptomFrequency(attacks)), [symptoms, attacks]);
+  const sortedReliefs = useMemo(() => sortByFrequency(reliefs, reliefFrequency(attacks)), [reliefs, attacks]);
 
   // Handle SW notification action messages.
   useEffect(() => {
@@ -84,27 +110,31 @@ export default function App() {
     <div className="min-h-dvh bg-bg-base">
       <BrightnessOverlay brightness={brightness} onOpenSettings={() => setTab('settings')} />
 
-      <div className="mx-auto max-w-2xl px-4 pt-6 pb-28 sm:px-6">
+      <TopBar title={TAB_TITLES[tab]} />
+
+      <div className="mx-auto max-w-2xl px-4 pt-5 pb-28 sm:px-6">
         {/* ── Today tab ───────────────────────────── */}
         {tab === 'log' && (
           <section className="space-y-4">
-            <h1 className="text-xl font-bold text-text-primary">Migraine Tracker</h1>
-
             {ongoingAttack && (
               <OngoingAttackBanner
                 attack={ongoingAttack}
                 onAddUpdate={() => setUpdateSheetOpen(true)}
-                onEnd={() => { if (confirm('Mark this attack as ended?')) endAttack(ongoingAttack.id); }}
+                onEnd={() => setEndConfirmOpen(true)}
               />
             )}
 
-            {!ongoingAttack && (
+            {!ongoingAttack && lastAttackEnd && (
+              <AttackFreeCard lastEnd={lastAttackEnd} onStart={() => setLogSheetOpen(true)} />
+            )}
+
+            {!ongoingAttack && !lastAttackEnd && (
               <div className="rounded-xl border border-dashed border-bg-border p-10 text-center space-y-2">
-                <p className="text-text-secondary text-sm">No ongoing attack.</p>
+                <p className="text-text-secondary text-sm">No attacks logged yet.</p>
                 <button
                   type="button"
                   onClick={() => setLogSheetOpen(true)}
-                  className="rounded-xl bg-accent px-6 py-2.5 text-sm font-semibold text-bg-base hover:bg-accent-light transition-colors"
+                  className="btn-primary rounded-xl px-6 py-2.5 text-sm font-semibold transition-colors"
                 >
                   Start logging
                 </button>
@@ -116,7 +146,6 @@ export default function App() {
         {/* ── Logs tab ─────────────────────────────── */}
         {tab === 'history' && (
           <section className="space-y-4">
-            <h1 className="text-xl font-bold text-text-primary">Logs</h1>
             <HistoryView attacks={attacks} onAttackClick={(a) => setDetailAttack(a)} />
           </section>
         )}
@@ -124,7 +153,6 @@ export default function App() {
         {/* ── Insights tab ─────────────────────────── */}
         {tab === 'stats' && (
           <section className="space-y-4">
-            <h1 className="text-xl font-bold text-text-primary">Insights</h1>
             <StatsView attacks={attacks} />
           </section>
         )}
@@ -132,7 +160,6 @@ export default function App() {
         {/* ── Settings tab ─────────────────────────── */}
         {tab === 'settings' && (
           <section className="space-y-4">
-            <h1 className="text-xl font-bold text-text-primary">Settings</h1>
             <SettingsView
               textScale={textScale}
               onTextScale={setTextScale}
@@ -147,11 +174,17 @@ export default function App() {
       <BottomNav active={tab} onChange={setTab} onAdd={() => setLogSheetOpen(true)} />
 
       {/* Log attack sheet */}
-      <Sheet open={logSheetOpen} onClose={() => setLogSheetOpen(false)} title="Log attack">
+      <Sheet
+        open={logSheetOpen}
+        onClose={() => setLogSheetOpen(false)}
+        title="Log an attack"
+        flush
+        headerRight={<TextScaleControl scale={textScale} onScale={setTextScale} />}
+      >
         <LogForm
-          triggers={triggers}
-          symptoms={symptoms}
-          reliefs={reliefs}
+          triggers={sortedTriggers}
+          symptoms={sortedSymptoms}
+          reliefs={sortedReliefs}
           defaultNotifConfig={defaultNotifConfig}
           recentMeds={recentMeds}
           onAddTrigger={addTrigger}
@@ -166,8 +199,8 @@ export default function App() {
         <Sheet open={updateSheetOpen} onClose={() => setUpdateSheetOpen(false)} title="Add update">
           <QuickUpdateForm
             attack={ongoingAttack}
-            symptoms={symptoms}
-            reliefs={reliefs}
+            symptoms={sortedSymptoms}
+            reliefs={sortedReliefs}
             recentMeds={recentMeds}
             onAddSymptom={addSymptom}
             onAddRelief={addRelief}
@@ -188,6 +221,18 @@ export default function App() {
           />
         )}
       </Sheet>
+
+      {/* End-attack confirmation */}
+      {ongoingAttack && (
+        <ConfirmDialog
+          open={endConfirmOpen}
+          title="End this attack?"
+          message="This marks the attack as resolved and stops update reminders. You can still view it in your logs."
+          confirmLabel="End attack"
+          onCancel={() => setEndConfirmOpen(false)}
+          onConfirm={() => { endAttack(ongoingAttack.id); setEndConfirmOpen(false); }}
+        />
+      )}
     </div>
   );
 }

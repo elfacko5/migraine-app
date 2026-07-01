@@ -68,12 +68,12 @@ export function ListSelector({ options, selected, onChange, onAddCustom }: Props
             onClick={() => setAdding(true)}
             className="w-full flex items-center gap-3 px-4 py-3.5 text-left bg-bg-raised/40 hover:bg-bg-raised transition-colors"
           >
-            <div className="h-5 w-5 rounded-md border-2 border-dashed border-bg-border shrink-0 flex items-center justify-center">
-              <svg viewBox="0 0 10 10" fill="none" className="h-2.5 w-2.5 text-text-secondary" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <div className="h-5 w-5 rounded-md border-2 border-dashed border-button-secondary-border shrink-0 flex items-center justify-center">
+              <svg viewBox="0 0 10 10" fill="none" className="h-2.5 w-2.5 text-accent-light" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
                 <line x1="5" y1="1" x2="5" y2="9" /><line x1="1" y1="5" x2="9" y2="5" />
               </svg>
             </div>
-            <span className="text-sm text-text-secondary">Add custom…</span>
+            <span className="btn-tertiary text-sm font-medium">Add custom…</span>
           </button>
         )
       )}

@@ -55,16 +55,16 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitCustom(); if (e.key === 'Escape') setAdding(false); }}
               placeholder="Custom…"
-              className="w-28 rounded-full bg-bg-raised px-3 py-1.5 text-sm text-text-primary placeholder:text-text-secondary ring-1 ring-inset ring-accent outline-none"
+              className="w-28 rounded-full bg-bg-raised px-3 py-1.5 text-sm text-text-primary placeholder:text-text-secondary ring-1 ring-inset ring-border-subtle outline-none"
             />
-            <button type="button" onClick={commitCustom} className="text-sm text-accent hover:text-accent-light font-medium">Add</button>
+            <button type="button" onClick={commitCustom} className="btn-tertiary text-sm font-medium">Add</button>
             <button type="button" onClick={() => setAdding(false)} className="text-sm text-text-secondary hover:text-text-primary">✕</button>
           </div>
         ) : (
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="rounded-full px-3 py-1.5 text-sm font-medium text-text-secondary ring-1 ring-dashed ring-bg-border hover:text-text-primary hover:ring-accent transition-colors"
+            className="btn-tertiary rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-dashed ring-button-secondary-border transition-colors"
           >
             {placeholder}
           </button>

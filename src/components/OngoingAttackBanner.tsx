@@ -56,14 +56,14 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd }: Props) {
         <button
           type="button"
           onClick={onAddUpdate}
-          className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium text-bg-base hover:bg-accent-light transition-colors"
+          className="btn-primary flex-1 rounded-lg py-2 text-sm font-medium transition-colors"
         >
           Add update
         </button>
         <button
           type="button"
           onClick={onEnd}
-          className="flex-1 rounded-lg border border-bg-border py-2 text-sm font-medium text-text-primary hover:bg-bg-raised transition-colors"
+          className="btn-secondary flex-1 rounded-lg py-2 text-sm font-medium transition-colors"
         >
           End attack
         </button>
