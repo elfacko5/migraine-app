@@ -119,6 +119,52 @@ export function areaFrequency(attacks: Attack[]): { area: string; count: number 
     .sort((a, b) => b.count - a.count);
 }
 
+// ── Trigger / symptom / relief frequency ─────────────────────────────────
+// Each counts the number of ATTACKS that included the item (not raw
+// occurrences), so attacks with many snapshots aren't over-weighted.
+
+export interface Freq { name: string; count: number }
+
+function tallyToFreq(tally: Record<string, number>): Freq[] {
+  return Object.entries(tally)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+export function triggerFrequency(attacks: Attack[]): Freq[] {
+  const tally: Record<string, number> = {};
+  for (const a of attacks) for (const t of new Set(a.triggers)) tally[t] = (tally[t] ?? 0) + 1;
+  return tallyToFreq(tally);
+}
+
+export function symptomFrequency(attacks: Attack[]): Freq[] {
+  const tally: Record<string, number> = {};
+  for (const a of attacks) {
+    const seen = new Set<string>();
+    for (const s of a.snapshots) for (const x of s.symptoms) seen.add(x);
+    for (const x of seen) tally[x] = (tally[x] ?? 0) + 1;
+  }
+  return tallyToFreq(tally);
+}
+
+export function reliefFrequency(attacks: Attack[]): Freq[] {
+  const tally: Record<string, number> = {};
+  for (const a of attacks) {
+    const seen = new Set<string>();
+    for (const s of a.snapshots) for (const x of s.reliefs ?? []) seen.add(x);
+    for (const x of seen) tally[x] = (tally[x] ?? 0) + 1;
+  }
+  return tallyToFreq(tally);
+}
+
+// Order `options` by historical usage (most-used first). Ties — including
+// never-used options — keep their original order (Array.sort is stable).
+export function sortByFrequency(options: string[], freq: Freq[]): string[] {
+  const count: Record<string, number> = {};
+  for (const f of freq) count[f.name] = f.count;
+  return [...options].sort((a, b) => (count[b] ?? 0) - (count[a] ?? 0));
+}
+
 // Average hours from first snapshot to max-severity snapshot.
 export function avgTimeToPeak(attacks: Attack[]): number | null {
   const times = attacks

@@ -31,6 +31,19 @@ export function formatElapsed(startIso: string): string {
   return `${h}h ${m}m`;
 }
 
+// Time elapsed since `iso`, expressed in the two largest units (d/h/m).
+export function formatSince(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return 'just now';
+  const totalMin = Math.floor(ms / 60_000);
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const mins = totalMin % 60;
+  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return `${mins}m`;
+}
+
 export function isoToLocalInput(iso?: string): string {
   const d = iso ? new Date(iso) : new Date();
   const pad = (n: number) => String(n).padStart(2, '0');

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { NotificationConfig, Snapshot } from '../types';
-import { isoToLocalInput, localInputToIso } from '../utils/format';
+import { isoToLocalInput, localInputToIso, formatDatetime } from '../utils/format';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { ListSelector } from './ListSelector';
 import { MedicationInput } from './MedicationInput';
@@ -59,15 +59,31 @@ function blank(defaults: NotificationConfig): FormState {
 
 const START_OPTIONS: { value: StartMode; label: string }[] = [
   { value: 'now',      label: 'Just now' },
-  { value: 'hour_ago', label: '1 hour ago' },
-  { value: 'manual',   label: 'Specific time' },
+  { value: 'hour_ago', label: '1h ago' },
+  { value: 'manual',   label: 'Other' },
 ];
 
 const END_OPTIONS: { value: EndMode; label: string }[] = [
   { value: 'ongoing',  label: 'Still going' },
   { value: 'just_now', label: 'Just now' },
-  { value: 'manual',   label: 'Specific time' },
+  { value: 'manual',   label: 'Other' },
 ];
+
+const presetCls = (active: boolean) =>
+  `rounded-lg px-4 py-2 text-sm font-medium transition-colors ${active ? 'btn-primary' : 'btn-secondary'}`;
+
+// Opens the browser's native date/time picker for an <input type="datetime-local">.
+// Falls back to focusing the field on browsers that don't support showPicker()
+// (the field is still tappable there, just not auto-opened).
+function openPicker(el: HTMLInputElement | null) {
+  if (!el) return;
+  try {
+    if (typeof el.showPicker === 'function') el.showPicker();
+    else el.focus();
+  } catch {
+    el.focus();
+  }
+}
 
 const STEP_LABELS = [
   'When',
@@ -81,6 +97,19 @@ const STEP_LABELS = [
 export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, onAddTrigger, onAddSymptom, onAddRelief, onSave }: Props) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(() => blank(defaultNotifConfig));
+
+  // Open the native date/time picker the instant "Other" is chosen, so the
+  // user isn't required to tap the revealed input a second time.
+  const startInputRef = useRef<HTMLInputElement>(null);
+  const endInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (form.startMode === 'manual') openPicker(startInputRef.current);
+  }, [form.startMode]);
+
+  useEffect(() => {
+    if (form.endMode === 'manual') openPicker(endInputRef.current);
+  }, [form.endMode]);
 
   // Step 6 (Reminders) only shown for ongoing attacks; past attacks go 1→5 then submit
   const totalSteps = form.endMode === 'ongoing' ? 6 : 5;
@@ -134,9 +163,9 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
   }
 
   return (
-    <div className="flex flex-col min-h-full">
-      {/* Progress */}
-      <div className="mb-6 space-y-1.5">
+    <div className="flex flex-col flex-1 min-h-0 mx-auto w-full max-w-2xl">
+      {/* Progress (fixed at top) */}
+      <div className="px-4 sm:px-6 pt-5 pb-3 space-y-1.5">
         <div className="flex justify-between text-xs text-text-secondary">
           <span className="font-medium text-text-primary">{STEP_LABELS[step - 1]}</span>
           <span>{step} / {totalSteps}</span>
@@ -148,47 +177,76 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         </div>
       </div>
 
-      {/* Step content — padded at bottom so content clears sticky nav */}
-      <div className="flex-1 pb-4">
+      {/* Step content — the only scrolling region */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pb-4">
 
         {/* ── Step 1: When ── */}
-        {step === 1 && (
-          <div className="space-y-6">
-            <section className="space-y-2">
-              <Label>When did it start?</Label>
-              <div className="flex flex-wrap gap-2">
-                {START_OPTIONS.map(({ value, label }) => (
-                  <button key={value} type="button" onClick={() => set('startMode', value)}
-                    className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors ${form.startMode === value ? 'bg-accent text-bg-base' : 'bg-bg-raised text-text-primary hover:bg-bg-border'}`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {form.startMode === 'manual' && (
-                <input type="datetime-local" value={form.startTime} max={isoToLocalInput()}
-                  onChange={(e) => set('startTime', e.target.value)}
-                  className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent" />
-              )}
-            </section>
+        {step === 1 && (() => {
+          const startDisplay =
+            form.startMode === 'now'      ? formatDatetime(new Date().toISOString())
+            : form.startMode === 'hour_ago' ? formatDatetime(new Date(Date.now() - 3600000).toISOString())
+            : form.startTime               ? formatDatetime(localInputToIso(form.startTime))
+            : 'Pick a time';
+          const endDisplay =
+            form.endMode === 'ongoing'   ? 'Still going'
+            : form.endMode === 'just_now'  ? formatDatetime(new Date().toISOString())
+            : form.endTime               ? formatDatetime(localInputToIso(form.endTime))
+            : 'Pick a time';
 
-            <section className="space-y-2">
-              <Label>When did it end?</Label>
-              <div className="flex flex-wrap gap-2">
-                {END_OPTIONS.map(({ value, label }) => (
-                  <button key={value} type="button" onClick={() => set('endMode', value)}
-                    className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors ${form.endMode === value ? 'bg-accent text-bg-base' : 'bg-bg-raised text-text-primary hover:bg-bg-border'}`}>
-                    {label}
-                  </button>
-                ))}
+          return (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-text-primary">Start and end time of your attack</h2>
+
+              {/* Start time card */}
+              <div className="rounded-xl border border-bg-border bg-bg-raised p-4 space-y-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">Start time</p>
+                  <p className="mt-1 text-lg font-medium text-text-primary">{startDisplay}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">Time presets</p>
+                  <div className="flex flex-wrap gap-2">
+                    {START_OPTIONS.map(({ value, label }) => (
+                      <button key={value} type="button" onClick={() => set('startMode', value)}
+                        aria-pressed={form.startMode === value} className={presetCls(form.startMode === value)}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {form.startMode === 'manual' && (
+                  <input ref={startInputRef} type="datetime-local" value={form.startTime} max={isoToLocalInput()}
+                    onChange={(e) => set('startTime', e.target.value)}
+                    className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
+                )}
               </div>
-              {form.endMode === 'manual' && (
-                <input type="datetime-local" value={form.endTime} max={isoToLocalInput()}
-                  onChange={(e) => set('endTime', e.target.value)}
-                  className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent" />
-              )}
-            </section>
-          </div>
-        )}
+
+              {/* End time card */}
+              <div className="rounded-xl border border-bg-border bg-bg-raised p-4 space-y-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">End time</p>
+                  <p className="mt-1 text-lg font-medium text-text-primary">{endDisplay}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">Time presets</p>
+                  <div className="flex flex-wrap gap-2">
+                    {END_OPTIONS.map(({ value, label }) => (
+                      <button key={value} type="button" onClick={() => set('endMode', value)}
+                        aria-pressed={form.endMode === value} className={presetCls(form.endMode === value)}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {form.endMode === 'manual' && (
+                  <input ref={endInputRef} type="datetime-local" value={form.endTime} max={isoToLocalInput()}
+                    onChange={(e) => set('endTime', e.target.value)}
+                    className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── Step 2: Pain areas ── */}
         {step === 2 && (
@@ -240,7 +298,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               <Label>Note (optional)</Label>
               <textarea rows={2} value={form.note} placeholder="Anything else worth noting…"
                 onChange={(e) => set('note', e.target.value)}
-                className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent resize-none" />
+                className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
             </section>
           </div>
         )}
@@ -252,11 +310,14 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
 
       </div>
 
-      {/* Sticky navigation — pinned to bottom of scroll container */}
-      <div className="sticky bottom-0 -mx-4 sm:-mx-6 bg-bg-surface border-t border-bg-border px-4 sm:px-6 py-4 flex gap-3">
+      {/* Navigation — flex-pinned to the bottom (above the home indicator) */}
+      <div
+        className="flex gap-3 border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
+        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+      >
         {step > 1 && (
           <button type="button" onClick={goBack}
-            className="flex-1 rounded-xl border border-bg-border py-3 text-sm font-medium text-text-secondary hover:bg-bg-raised transition-colors">
+            className="btn-secondary flex-1 rounded-xl py-3 text-sm font-medium transition-colors">
             Back
           </button>
         )}
@@ -267,7 +328,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
           className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-all ${
             nextDisabled
               ? 'bg-bg-raised text-text-secondary cursor-not-allowed'
-              : 'bg-accent text-bg-base hover:bg-accent-light active:scale-[.99]'
+              : 'btn-primary active:scale-[.99]'
           }`}
         >
           {step === totalSteps ? 'Log attack' : 'Next'}

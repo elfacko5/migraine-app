@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import type { Attack } from '../types';
 import { formatDate, formatTime, formatDuration } from '../utils/format';
 import { attackMaxSeverity } from '../utils/stats';
 import { SeverityChart } from './SeverityChart';
 import { SnapshotRow } from './SnapshotRow';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface Props {
   attack: Attack;
@@ -13,6 +15,7 @@ interface Props {
 export function AttackDetail({ attack, onDelete, onClose }: Props) {
   const maxSev = attackMaxSeverity(attack);
   const start = attack.snapshots[0];
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div className="space-y-5">
@@ -53,14 +56,22 @@ export function AttackDetail({ attack, onDelete, onClose }: Props) {
       <div className="pt-2 border-t border-bg-border">
         <button
           type="button"
-          onClick={() => {
-            if (confirm('Delete this attack?')) { onDelete(); onClose(); }
-          }}
-          className="w-full rounded-xl border border-severity-high/30 py-3 text-sm font-medium text-severity-high hover:bg-severity-high/10 transition-colors"
+          onClick={() => setConfirmDelete(true)}
+          className="btn-secondary w-full rounded-xl py-3 text-sm font-medium text-severity-high hover:bg-severity-high/10 transition-colors"
         >
           Delete attack
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        danger
+        title="Delete this attack?"
+        message="This permanently removes the attack and all of its snapshots. This can't be undone."
+        confirmLabel="Delete"
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => { onDelete(); onClose(); }}
+      />
     </div>
   );
 }

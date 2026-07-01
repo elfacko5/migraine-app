@@ -1,16 +1,16 @@
 import { useState, useMemo } from 'react';
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, Cell,
+  LineChart, Line, XAxis, YAxis, Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
 import type { Attack } from '../types';
 import { formatDate } from '../utils/format';
 import {
   attackMaxSeverity, currentAttackStreak, currentPainFreeStreak,
   areaFrequency, avgTimeToPeak, minutesAboveSeverity,
+  triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
 } from '../utils/stats';
-
-const CHART_COLORS = ['#7fc4a0', '#a0b87f', '#c9a55a', '#c97c2a', '#c06060', '#89aec0', '#a89fbf'];
+import { HeadHeatmap } from './HeadHeatmap';
 
 type Period = 'all' | '7d' | '30d' | '3m';
 
@@ -43,6 +43,36 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
       <p className="mt-1 text-2xl font-bold text-text-primary leading-none">{value}</p>
       {sub && <p className="mt-0.5 text-xs text-text-secondary">{sub}</p>}
     </div>
+  );
+}
+
+// Ranked horizontal frequency bars (most-frequent first).
+function FreqBars({ data, color }: { data: Freq[]; color: string }) {
+  const max = data[0]?.count ?? 1;
+  return (
+    <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 p-4 space-y-2.5">
+      {data.slice(0, 8).map((f) => (
+        <div key={f.name} className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-text-primary truncate pr-2">{f.name}</span>
+            <span className="text-text-secondary tabular-nums shrink-0">{f.count}×</span>
+          </div>
+          <div className="h-2 rounded-full bg-bg-border/40 overflow-hidden">
+            <div className="h-full rounded-full" style={{ width: `${(f.count / max) * 100}%`, background: color }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FreqSection({ title, sub, data, color }: { title: string; sub: string; data: Freq[]; color: string }) {
+  if (data.length === 0) return null;
+  return (
+    <section className="space-y-2">
+      <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{title} · {sub}</h3>
+      <FreqBars data={data} color={color} />
+    </section>
   );
 }
 
@@ -82,6 +112,9 @@ export function StatsView({ attacks }: Props) {
       timeToPeak,
       severityTrend,
       areas,
+      triggers: triggerFrequency(filtered),
+      symptoms: symptomFrequency(filtered),
+      reliefs: reliefFrequency(filtered),
     };
   }, [attacks, filtered]);
 
@@ -157,30 +190,20 @@ export function StatsView({ attacks }: Props) {
             </section>
           )}
 
-          {/* Area frequency */}
+          {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
             <section className="space-y-2">
               <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">Pain area frequency</h3>
-              <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 p-3">
-                <ResponsiveContainer width="100%" height={Math.max(120, stats.areas.length * 28)}>
-                  <BarChart data={stats.areas} layout="vertical" margin={{ top: 0, right: 8, bottom: 0, left: 70 }}>
-                    <XAxis type="number" tick={{ fill: '#7d8599', fontSize: '0.625rem' }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="area" tick={{ fill: '#7d8599', fontSize: '0.6875rem' }} axisLine={false} tickLine={false} width={70} />
-                    <Tooltip
-                      contentStyle={{ background: '#1e2028', border: '1px solid #2a2d3a', borderRadius: 8, fontSize: '0.75rem' }}
-                      itemStyle={{ color: '#dde1eb' }}
-                      labelStyle={{ color: '#7d8599' }}
-                    />
-                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                      {stats.areas.map((_, i) => (
-                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 p-4">
+                <HeadHeatmap data={stats.areas.map((a) => ({ area: a.area, value: a.count }))} label="attacks" />
               </div>
             </section>
           )}
+
+          {/* Trigger / symptom / relief frequency */}
+          <FreqSection title="Top triggers"  sub={PERIOD_SUB[period]} data={stats.triggers} color="#c97c2a" />
+          <FreqSection title="Top symptoms"  sub={PERIOD_SUB[period]} data={stats.symptoms} color="#b85c5c" />
+          <FreqSection title="Top reliefs"   sub={PERIOD_SUB[period]} data={stats.reliefs}  color="#5a9e7a" />
         </>
       )}
     </div>

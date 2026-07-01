@@ -2,15 +2,18 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import type { Attack } from '../types';
 import { formatTime } from '../utils/format';
 
-// Desaturated, distinguishable palette for per-area lines.
+// Desaturated, distinguishable palette for per-area lines — drawn only from
+// the brand hues (green / amber-tan / red / gray); no blue, violet or purple.
 const AREA_COLORS: Record<string, string> = {
-  'Forehead':      '#7fc4a0',
-  'Left temple':   '#89aec0',
-  'Right temple':  '#c4b07f',
-  'Back of head':  '#c97c2a',
-  'Top of head':   '#b85c5c',
-  'Left eye':      '#a89fbf',
-  'Right eye':     '#7fbfbf',
+  'Forehead left':  '#7fc4a0', 'Forehead right': '#5a9e7a',
+  'Temple left':    '#c4b07f', 'Temple right':   '#d2c29a',
+  'Eye left':       '#c97c2a', 'Eye right':      '#b8924a',
+  'Nose':           '#9aa3b5',
+  'Cheek left':     '#b85c5c', 'Cheek right':    '#cc7e7e',
+  'Jaw left':       '#c4807f', 'Jaw right':      '#a85a5a',
+  'Crown left':     '#9ad0b0', 'Crown right':    '#6fb38e',
+  'Occiput left':   '#aab0c0', 'Occiput right':  '#8a93a8',
+  'Nape left':      '#87c9a6', 'Nape right':     '#7d8599',
 };
 
 function getColor(area: string): string {

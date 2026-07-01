@@ -64,14 +64,14 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, onAddSy
           <button
             type="button"
             onClick={onNoChange}
-            className="w-full rounded-xl border border-bg-border bg-bg-raised/60 py-3 text-sm font-medium text-text-primary hover:bg-bg-border transition-colors"
+            className="btn-secondary w-full rounded-xl py-3 text-sm font-medium transition-colors"
           >
             Nothing changed — log no change
           </button>
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-bg-base hover:bg-accent-light transition-colors"
+            className="btn-primary w-full rounded-xl py-3 text-sm font-semibold transition-colors"
           >
             Log what changed
           </button>
@@ -87,7 +87,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, onAddSy
               value={time}
               max={isoToLocalInput()}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle"
             />
           </section>
 
@@ -124,15 +124,15 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, onAddSy
               value={note}
               placeholder="What changed?"
               onChange={(e) => setNote(e.target.value)}
-              className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+              className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none"
             />
           </section>
 
           <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-bg-border py-3 text-sm font-medium text-text-secondary hover:bg-bg-raised transition-colors">
+            <button type="button" onClick={onClose} className="btn-secondary flex-1 rounded-xl py-3 text-sm font-medium transition-colors">
               Cancel
             </button>
-            <button type="submit" className="flex-1 rounded-xl bg-accent py-3 text-sm font-semibold text-bg-base hover:bg-accent-light transition-colors">
+            <button type="submit" className="btn-primary flex-1 rounded-xl py-3 text-sm font-semibold transition-colors">
               Save update
             </button>
           </div>
