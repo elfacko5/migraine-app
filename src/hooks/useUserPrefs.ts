@@ -17,17 +17,34 @@ export const DEFAULT_RELIEFS = [
   'Dark room', 'Quiet room', 'Cold compress', 'Hot compress',
   'Peppermint oil', 'Sleep / rest', 'Cold shower', 'Hot shower',
   'Fresh air', 'Hydration', 'Caffeine', 'Eye mask', 'Stretching',
+  'Food', 'Exercise',
 ];
 
 export const PAIN_AREAS = [
-  'Forehead', 'Left temple', 'Right temple', 'Back of head',
-  'Top of head', 'Left eye', 'Right eye',
+  // Front
+  'Forehead left', 'Forehead right',
+  'Temple left', 'Temple right',
+  'Eye left', 'Eye right',
+  'Nose',
+  'Cheek left', 'Cheek right',
+  'Jaw left', 'Jaw right',
+  // Back
+  'Crown left', 'Crown right',
+  'Occiput left', 'Occiput right',
+  'Nape left', 'Nape right',
 ];
 
 function loadList(key: string, defaults: string[]): string[] {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : defaults;
+    if (!raw) return defaults;
+    const stored = JSON.parse(raw);
+    if (!Array.isArray(stored)) return defaults;
+    // Append any newly-added built-in defaults not already present, so new
+    // options propagate to existing users (the list is add-only — never pruned).
+    const merged = [...stored];
+    for (const d of defaults) if (!merged.includes(d)) merged.push(d);
+    return merged;
   } catch { return defaults; }
 }
 
