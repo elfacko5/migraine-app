@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dev",
-      "runtimeExecutable": "/Users/sunny/.nvm/versions/node/v24.17.0/bin/node",
-      "runtimeArgs": ["node_modules/vite/bin/vite.js"],
+      "name": "migraine-app",
+      "runtimeExecutable": "/Users/sunny/.nvm/versions/node/v20.20.2/bin/node",
+      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--host"],
       "port": 5173
     }
   ]
