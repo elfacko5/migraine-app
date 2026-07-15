@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import type { NotificationConfig, Snapshot } from '../types';
+import type { TextScale } from '../hooks/useSettings';
 import { isoToLocalInput, localInputToIso, formatDatetime } from '../utils/format';
+import { openPicker } from '../utils/openPicker';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
-import { ListSelector } from './ListSelector';
 import { MedicationInput } from './MedicationInput';
 import { ChipSelector } from './ChipSelector';
 import { NotificationSettings } from './NotificationSettings';
+import { TextScaleControl } from './TextScaleControl';
 
 interface Props {
   triggers: string[];
@@ -13,9 +15,12 @@ interface Props {
   reliefs: string[];
   defaultNotifConfig: NotificationConfig;
   recentMeds: Array<{ name: string; dose: string }>;
+  textScale: TextScale;
+  onTextScale: (s: TextScale) => void;
   onAddTrigger: (t: string) => void;
   onAddSymptom: (s: string) => void;
   onAddRelief: (r: string) => void;
+  onClose: () => void;
   onSave: (
     snapshot: Omit<Snapshot, 'source'>,
     triggers: string[],
@@ -72,29 +77,30 @@ const END_OPTIONS: { value: EndMode; label: string }[] = [
 const presetCls = (active: boolean) =>
   `rounded-lg px-4 py-2 text-sm font-medium transition-colors ${active ? 'btn-primary' : 'btn-secondary'}`;
 
-// Opens the browser's native date/time picker for an <input type="datetime-local">.
-// Falls back to focusing the field on browsers that don't support showPicker()
-// (the field is still tappable there, just not auto-opened).
-function openPicker(el: HTMLInputElement | null) {
-  if (!el) return;
-  try {
-    if (typeof el.showPicker === 'function') el.showPicker();
-    else el.focus();
-  } catch {
-    el.focus();
-  }
-}
-
 const STEP_LABELS = [
   'When',
   'Pain areas',
+  'Medication',
+  'Relief methods',
   'Symptoms',
   'Triggers',
-  'Treatment & reliefs',
+  'Note',
   'Reminders',
 ];
 
-export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, onAddTrigger, onAddSymptom, onAddRelief, onSave }: Props) {
+// Sentence-case instruction shown under each step's H2 title.
+const STEP_SUBHEADS = [
+  'When did your attack start and end?',
+  'Select all areas affected and rate severity',
+  'Log any medication you took',
+  'What helped relieve it?',
+  'Select any symptoms you noticed',
+  'What may have triggered this?',
+  'Anything else worth noting?',
+  'Get reminded to check in during your attack',
+];
+
+export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, textScale, onTextScale, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave }: Props) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(() => blank(defaultNotifConfig));
 
@@ -111,11 +117,15 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
     if (form.endMode === 'manual') openPicker(endInputRef.current);
   }, [form.endMode]);
 
-  // Step 6 (Reminders) only shown for ongoing attacks; past attacks go 1→5 then submit
-  const totalSteps = form.endMode === 'ongoing' ? 6 : 5;
+  // Step 8 (Reminders) only shown for ongoing attacks; past attacks go 1→7 then submit
+  const totalSteps = form.endMode === 'ongoing' ? 8 : 7;
 
   // Next is disabled only when mandatory fields are missing
   const nextDisabled = step === 2 && Object.keys(form.areas).length === 0;
+
+  // Pain areas are the only required input, so once they're set the log is
+  // complete — every later step is optional enrichment the user may skip.
+  const canFinishEarly = step >= 2 && step < totalSteps && Object.keys(form.areas).length > 0;
 
   function set<K extends keyof FormState>(key: K, val: FormState[K]) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -164,21 +174,55 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
 
   return (
     <div className="flex flex-col flex-1 min-h-0 mx-auto w-full max-w-2xl">
-      {/* Progress (fixed at top) */}
-      <div className="px-4 sm:px-6 pt-5 pb-3 space-y-1.5">
-        <div className="flex justify-between text-xs text-text-secondary">
-          <span className="font-medium text-text-primary">{STEP_LABELS[step - 1]}</span>
-          <span>{step} / {totalSteps}</span>
-        </div>
-        <div className="flex gap-1">
-          {Array.from({ length: totalSteps }).map((_, i) => (
-            <div key={i} className={`h-1 flex-1 rounded-full transition-colors duration-300 ${i < step ? 'bg-accent' : 'bg-bg-raised'}`} />
-          ))}
+      {/* Top app bar — close (left), step count (center), Finish now (right).
+          Finish appears once pain areas are set, since every later step is
+          optional enrichment. */}
+      <div
+        className="relative flex items-center border-b border-border-subtle px-3 py-3 sm:px-4"
+        style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="rounded-full p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-semibold tabular-nums text-text-primary">
+          {step} / {totalSteps}
+        </span>
+
+        <div className="ml-auto flex items-center">
+          {canFinishEarly && (
+            <button type="button" onClick={submit}
+              className="px-2 py-1 text-sm font-medium text-accent-light hover:text-accent transition-colors">
+              Finish now
+            </button>
+          )}
         </div>
       </div>
 
       {/* Step content — the only scrolling region */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-5 pb-4 flex flex-col">
+
+        {/* Section header — H2 title + instruction, with the text-size stepper
+            pinned to its right. */}
+        <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold text-text-primary">{STEP_LABELS[step - 1]}</h2>
+            <p className="mt-1 text-sm text-text-secondary">
+              {STEP_SUBHEADS[step - 1]}
+              {step === 2 && <span className="text-severity-high ml-0.5">*</span>}
+            </p>
+          </div>
+          <div className="shrink-0">
+            <TextScaleControl scale={textScale} onScale={onTextScale} />
+          </div>
+        </div>
 
         {/* ── Step 1: When ── */}
         {step === 1 && (() => {
@@ -195,8 +239,6 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
 
           return (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-text-primary">Start and end time of your attack</h2>
-
               {/* Start time card */}
               <div className="rounded-xl border border-bg-border bg-bg-raised p-4 space-y-3">
                 <div>
@@ -250,61 +292,42 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
 
         {/* ── Step 2: Pain areas ── */}
         {step === 2 && (
-          <section className="space-y-3">
-            <Label required>Select all areas affected and rate severity</Label>
-            <AreaSeverityPicker value={form.areas} onChange={(v) => set('areas', v)} />
-          </section>
+          <AreaSeverityPicker value={form.areas} onChange={(v) => set('areas', v)} />
         )}
 
-        {/* ── Step 3: Symptoms ── */}
+        {/* ── Step 3: Medication ── */}
         {step === 3 && (
-          <section className="space-y-3">
-            <Label>Select any symptoms</Label>
-            <ListSelector
-              options={symptoms}
-              selected={form.symptoms}
-              onChange={(v) => set('symptoms', v)}
-              onAddCustom={onAddSymptom}
-            />
-          </section>
+          <MedicationInput value={form.medication} onChange={(v) => set('medication', v)} recentMeds={recentMeds} />
         )}
 
-        {/* ── Step 4: Triggers ── */}
+        {/* ── Step 4: Relief methods ── */}
         {step === 4 && (
-          <section className="space-y-3">
-            <Label>What may have triggered this?</Label>
-            <ListSelector
-              options={triggers}
-              selected={form.triggers}
-              onChange={(v) => set('triggers', v)}
-              onAddCustom={onAddTrigger}
-            />
-          </section>
+          <ChipSelector options={reliefs} selected={form.reliefs}
+            onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief} />
         )}
 
-        {/* ── Step 5: Treatment & reliefs ── */}
+        {/* ── Step 5: Symptoms ── */}
         {step === 5 && (
-          <div className="space-y-6">
-            <section className="space-y-2">
-              <Label>Medication taken (optional)</Label>
-              <MedicationInput value={form.medication} onChange={(v) => set('medication', v)} recentMeds={recentMeds} />
-            </section>
-            <section className="space-y-3">
-              <Label>Relief methods (optional)</Label>
-              <ChipSelector options={reliefs} selected={form.reliefs}
-                onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief} />
-            </section>
-            <section className="space-y-2">
-              <Label>Note (optional)</Label>
-              <textarea rows={2} value={form.note} placeholder="Anything else worth noting…"
-                onChange={(e) => set('note', e.target.value)}
-                className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
-            </section>
-          </div>
+          <ChipSelector options={symptoms} selected={form.symptoms}
+            onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom} />
         )}
 
-        {/* ── Step 6: Reminders (ongoing only) ── */}
+        {/* ── Step 6: Triggers ── */}
         {step === 6 && (
+          <ChipSelector options={triggers} selected={form.triggers}
+            onChange={(v) => set('triggers', v)} onAddCustom={onAddTrigger} />
+        )}
+
+        {/* ── Step 7: Note — grows to fill the remaining space, so long entries
+            never need to scroll within their own tiny box ── */}
+        {step === 7 && (
+          <textarea rows={4} value={form.note} placeholder="Anything else worth noting…"
+            onChange={(e) => set('note', e.target.value)}
+            className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
+        )}
+
+        {/* ── Step 8: Reminders (ongoing only) ── */}
+        {step === 8 && (
           <NotificationSettings value={form.notifConfig} onChange={(v) => set('notifConfig', v)} />
         )}
 
@@ -335,13 +358,5 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         </button>
       </div>
     </div>
-  );
-}
-
-function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
-  return (
-    <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">
-      {children}{required && <span className="text-severity-high ml-0.5">*</span>}
-    </p>
   );
 }
