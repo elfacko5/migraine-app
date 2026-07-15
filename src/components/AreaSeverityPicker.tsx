@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import {
   VIEWS, type DiagramView,
-  HEAD_FILL, LINE_COLOR, DIVIDER_COLOR, DISABLED_FILL, SELECTED_FILL, HOVER_FILL,
-  sevText,
+  HEAD_FILL, LINE_COLOR, DIVIDER_COLOR, DISABLED_FILL, HOVER_FILL,
+  sevText, sevFill,
 } from './headDiagram';
 
 interface Props {
@@ -168,11 +168,11 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           )
         )}
 
-        {/* Selected zone fills */}
+        {/* Selected zone fills — tinted by each zone's own severity */}
         {view.zones.map((z) =>
           !(z.name in value) ? null : (
             <path key={`f-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-              fill={SELECTED_FILL} pointerEvents="none"/>
+              fill={sevFill(value[z.name])} pointerEvents="none"/>
           )
         )}
 
@@ -243,7 +243,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           return (
             <g key={`b-${z.name}`} pointerEvents="none">
               <circle cx={cx} cy={cy} r={isActive ? 18 : 16}
-                fill="#0d0f14" stroke={isActive ? '#7fc4a0' : SELECTED_FILL}
+                fill="#0d0f14" stroke={isActive ? '#7fc4a0' : sevFill(s)}
                 strokeWidth={isActive ? 3 : 2.5}/>
               <text x={cx} y={cy + 6} textAnchor="middle"
                 fontSize={18} fontFamily="system-ui,sans-serif" fontWeight="700"

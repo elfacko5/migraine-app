@@ -35,6 +35,18 @@ export const DISABLED_FILL = '#7d8599';
 export const SELECTED_FILL = '#5a9e7a';
 export const HOVER_FILL = 'rgba(208,216,230,0.14)';
 
+// Same low/mid/high thresholds and colours as the severity-* CSS tokens
+// (index.css) — used to tint each selected zone by its own severity.
+const SEVERITY_LOW = '#5a9e7a';
+const SEVERITY_MID = '#c97c2a';
+const SEVERITY_HIGH = '#b85c5c';
+
+export function sevFill(s: number): string {
+  if (s <= 3) return SEVERITY_LOW;
+  if (s <= 7) return SEVERITY_MID;
+  return SEVERITY_HIGH;
+}
+
 // ── FRONT ────────────────────────────────────────────────────────────────
 const FRONT_FACE =
   'M133.546 433.545C142.613 401.487 115.101 245.405 276.566 245.769C438.031 246.134 423.401 368.037 426.675 423.96C427.58 439.413 435.877 435.761 439.1 440.892C446.043 451.945 442.165 510.846 423.752 525.514C405.34 540.182 415.533 562.942 398.08 588.046C380.628 613.15 332.203 689.803 281.791 691.584C231.379 693.365 177.951 615.048 164.621 591.117C151.291 567.185 154.805 568.96 148.086 539.988C144.104 522.818 134.99 548.809 124.737 488.225C114.483 427.64 129.668 447.256 133.546 433.545Z';
