@@ -205,12 +205,10 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness,
 
 function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (status === 'sent') {
-    return <p className="text-sm text-text-primary">Check your email for a sign-in link.</p>;
-  }
 
   async function sendLink(e: React.FormEvent) {
     e.preventDefault();
@@ -223,6 +221,52 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Something went wrong');
     }
+  }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setVerifying(true);
+    setError(null);
+    try {
+      await auth.verifyEmailCode(email, code);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid or expired code');
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  if (status === 'sent') {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-text-primary">Check your email for a sign-in link.</p>
+        {/* Tapping the emailed link always opens Safari on iOS, never a
+            standalone home-screen app — entering the 6-digit code from the
+            same email works from inside the installed app instead. */}
+        <form onSubmit={verifyCode} className="space-y-2">
+          <p className="text-xs text-text-secondary">
+            On the home-screen app? Tapping the link opens Safari instead — enter the 6-digit code from the email here.
+          </p>
+          <input
+            type="text"
+            inputMode="numeric"
+            required
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="123456"
+            className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+          />
+          <button
+            type="submit"
+            disabled={verifying}
+            className="btn-secondary w-full rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {verifying ? 'Verifying…' : 'Verify code'}
+          </button>
+        </form>
+        {error && <p className="text-xs text-severity-high">{error}</p>}
+      </div>
+    );
   }
 
   return (

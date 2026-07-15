@@ -30,6 +30,16 @@ export function useAuth() {
     if (error) throw error;
   }, []);
 
+  // Tapping the emailed link always opens Safari on iOS, never a standalone
+  // home-screen app (a hard platform limitation, not fixable client-side) —
+  // typing the 6-digit code from the same email completes sign-in without
+  // ever leaving the app.
+  const verifyEmailCode = useCallback(async (email: string, token: string) => {
+    if (!supabase) throw new Error('Sync is not configured');
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+    if (error) throw error;
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
@@ -41,6 +51,7 @@ export function useAuth() {
     user: session?.user ?? null,
     loading,
     signInWithEmail,
+    verifyEmailCode,
     signOut,
   };
 }
