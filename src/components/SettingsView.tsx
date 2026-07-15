@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import type { TextScale } from '../hooks/useSettings';
+import type { useAuth } from '../hooks/useAuth';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -13,9 +14,10 @@ interface Props {
   onTextScale: (s: TextScale) => void;
   brightness: number;
   onBrightness: (v: number) => void;
+  auth: ReturnType<typeof useAuth>;
 }
 
-export function SettingsView({ textScale, onTextScale, brightness, onBrightness }: Props) {
+export function SettingsView({ textScale, onTextScale, brightness, onBrightness, auth }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importErr, setImportErr] = useState<string | null>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
@@ -114,6 +116,32 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness 
         </div>
       </section>
 
+      {/* Account & sync — only rendered when Supabase is actually configured */}
+      {auth.enabled && (
+        <section className="space-y-4">
+          <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Account &amp; sync</p>
+          <div className="rounded-xl border border-bg-border bg-bg-raised/40 p-4 space-y-3">
+            {auth.session ? (
+              <>
+                <p className="text-sm text-text-primary">
+                  Signed in as <span className="font-medium">{auth.user?.email}</span>
+                </p>
+                <p className="text-xs text-text-secondary">Your attacks and lists sync automatically across devices.</p>
+                <button
+                  type="button"
+                  onClick={() => auth.signOut()}
+                  className="btn-secondary w-full rounded-lg py-2.5 text-sm font-medium transition-colors"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <SignInForm auth={auth} />
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Data */}
       <section className="space-y-4">
         <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Data</p>
@@ -144,7 +172,9 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness 
           />
           <p className="text-xs text-text-secondary">
             Save your attacks, triggers and settings to a file — or restore them on another device.
-            Everything stays on this device; nothing is uploaded.
+            {' '}{auth.session
+              ? "You're signed in, so this data also syncs automatically."
+              : 'Everything stays on this device; nothing is uploaded unless you sign in above.'}
           </p>
           {importErr && <p className="text-xs text-severity-high">{importErr}</p>}
         </div>
@@ -170,5 +200,52 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness 
       />
 
     </div>
+  );
+}
+
+function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  if (status === 'sent') {
+    return <p className="text-sm text-text-primary">Check your email for a sign-in link.</p>;
+  }
+
+  async function sendLink(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus('sending');
+    setError(null);
+    try {
+      await auth.signInWithEmail(email);
+      setStatus('sent');
+    } catch (err) {
+      setStatus('error');
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    }
+  }
+
+  return (
+    <form onSubmit={sendLink} className="space-y-3">
+      <p className="text-xs text-text-secondary">
+        Sign in to sync your attacks across devices. No password — we'll email you a link.
+      </p>
+      <input
+        type="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="you@example.com"
+        className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+      />
+      <button
+        type="submit"
+        disabled={status === 'sending'}
+        className="btn-primary w-full rounded-lg py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
+      >
+        {status === 'sending' ? 'Sending…' : 'Send sign-in link'}
+      </button>
+      {error && <p className="text-xs text-severity-high">{error}</p>}
+    </form>
   );
 }

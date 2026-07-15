@@ -20,6 +20,7 @@ export interface Attack {
   end: string | null;
   triggers: string[];
   notificationConfig: NotificationConfig;
+  updatedAt?: string;    // ISO timestamp of the last local write; used to resolve sync conflicts
 }
 
 export type Tab = 'log' | 'history' | 'stats' | 'settings';

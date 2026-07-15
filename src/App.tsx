@@ -4,6 +4,7 @@ import { useAttacks } from './hooks/useAttacks';
 import { useUserPrefs } from './hooks/useUserPrefs';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
+import { useAuth } from './hooks/useAuth';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { BottomNav } from './components/BottomNav';
 import { TopBar } from './components/TopBar';
@@ -34,8 +35,10 @@ export default function App() {
   const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
 
-  const { attacks, ongoingAttack, startAttack, addSnapshot, endAttack, deleteAttack } = useAttacks();
-  const { triggers, symptoms, reliefs, addTrigger, addSymptom, addRelief, defaultNotifConfig } = useUserPrefs();
+  const auth = useAuth();
+  const userId = auth.user?.id ?? null;
+  const { attacks, ongoingAttack, startAttack, addSnapshot, endAttack, deleteAttack } = useAttacks(userId);
+  const { triggers, symptoms, reliefs, addTrigger, addSymptom, addRelief, defaultNotifConfig } = useUserPrefs(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
   const { textScale, setTextScale, brightness, setBrightness } = useSettings();
 
@@ -164,6 +167,7 @@ export default function App() {
               onTextScale={setTextScale}
               brightness={brightness}
               onBrightness={setBrightness}
+              auth={auth}
             />
           </section>
         )}
