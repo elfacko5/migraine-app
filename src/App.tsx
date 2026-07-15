@@ -7,9 +7,8 @@ import { useSettings } from './hooks/useSettings';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { BottomNav } from './components/BottomNav';
 import { TopBar } from './components/TopBar';
-import { TextScaleControl } from './components/TextScaleControl';
 import { Sheet } from './components/Sheet';
-import { ConfirmDialog } from './components/ConfirmDialog';
+import { EndAttackDialog } from './components/EndAttackDialog';
 
 const TAB_TITLES: Record<Tab, string> = {
   log: 'Migraine Tracker',
@@ -171,7 +170,13 @@ export default function App() {
       </div>
 
       <TextScalePill scale={textScale} onScale={setTextScale} />
-      <BottomNav active={tab} onChange={setTab} onAdd={() => setLogSheetOpen(true)} />
+      {/* FAB opens Add-update when an attack is already ongoing — you can't
+          start a second one until the current attack ends. */}
+      <BottomNav
+        active={tab}
+        onChange={setTab}
+        onAdd={() => (ongoingAttack ? setUpdateSheetOpen(true) : setLogSheetOpen(true))}
+      />
 
       {/* Log attack sheet */}
       <Sheet
@@ -179,7 +184,7 @@ export default function App() {
         onClose={() => setLogSheetOpen(false)}
         title="Log an attack"
         flush
-        headerRight={<TextScaleControl scale={textScale} onScale={setTextScale} />}
+        bareHeader
       >
         <LogForm
           triggers={sortedTriggers}
@@ -187,21 +192,26 @@ export default function App() {
           reliefs={sortedReliefs}
           defaultNotifConfig={defaultNotifConfig}
           recentMeds={recentMeds}
+          textScale={textScale}
+          onTextScale={setTextScale}
           onAddTrigger={addTrigger}
           onAddSymptom={addSymptom}
           onAddRelief={addRelief}
+          onClose={() => setLogSheetOpen(false)}
           onSave={handleLogSave}
         />
       </Sheet>
 
       {/* Quick update sheet */}
       {ongoingAttack && (
-        <Sheet open={updateSheetOpen} onClose={() => setUpdateSheetOpen(false)} title="Add update">
+        <Sheet open={updateSheetOpen} onClose={() => setUpdateSheetOpen(false)} title="Add update" flush bareHeader>
           <QuickUpdateForm
             attack={ongoingAttack}
             symptoms={sortedSymptoms}
             reliefs={sortedReliefs}
             recentMeds={recentMeds}
+            textScale={textScale}
+            onTextScale={setTextScale}
             onAddSymptom={addSymptom}
             onAddRelief={addRelief}
             onSave={handleUpdateSave}
@@ -222,15 +232,13 @@ export default function App() {
         )}
       </Sheet>
 
-      {/* End-attack confirmation */}
+      {/* End-attack confirmation — lets the user end it now or at an earlier time */}
       {ongoingAttack && (
-        <ConfirmDialog
+        <EndAttackDialog
           open={endConfirmOpen}
-          title="End this attack?"
-          message="This marks the attack as resolved and stops update reminders. You can still view it in your logs."
-          confirmLabel="End attack"
+          minTime={ongoingAttack.snapshots[ongoingAttack.snapshots.length - 1].time}
           onCancel={() => setEndConfirmOpen(false)}
-          onConfirm={() => { endAttack(ongoingAttack.id); setEndConfirmOpen(false); }}
+          onConfirm={(endTime) => { endAttack(ongoingAttack.id, endTime); setEndConfirmOpen(false); }}
         />
       )}
     </div>
