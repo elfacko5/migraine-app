@@ -11,26 +11,6 @@ const QTY_OPTIONS = ['1 tablet', '2 tablets', '3 tablets'];
 export function MedicationInput({ value, onChange, recentMeds = [] }: Props) {
   return (
     <div className="space-y-2.5">
-      {/* Recent medication chips */}
-      {recentMeds.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {recentMeds.map((med) => (
-            <button
-              key={med.name}
-              type="button"
-              onClick={() => onChange({ name: med.name, dose: med.dose })}
-              className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                value.name === med.name
-                  ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/40'
-                  : 'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-border hover:text-text-primary'
-              }`}
-            >
-              💊 {med.name}{med.dose ? ` · ${med.dose}` : ''}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Name + dose free-text */}
       <div className="flex flex-wrap gap-2">
         <input
@@ -67,6 +47,30 @@ export function MedicationInput({ value, onChange, recentMeds = [] }: Props) {
               {qty}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Previously used medications — most likely to be reused, so surfaced
+          as one-tap chips rather than requiring retyping. */}
+      {recentMeds.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">Previously used</p>
+          <div className="flex flex-wrap gap-2">
+            {recentMeds.map((med) => (
+              <button
+                key={med.name}
+                type="button"
+                onClick={() => onChange({ name: med.name, dose: med.dose })}
+                className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  value.name === med.name
+                    ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/40'
+                    : 'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-border hover:text-text-primary'
+                }`}
+              >
+                💊 {med.name}{med.dose ? ` · ${med.dose}` : ''}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
