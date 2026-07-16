@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { NotificationConfig } from '../types';
+import type { NotificationConfig, SyncStatus } from '../types';
 import { DEFAULT_NOTIFICATION_CONFIG } from '../utils/notifications';
 import { pullUserPrefs, pushUserPrefs } from '../lib/sync';
 
@@ -69,6 +69,8 @@ export function useUserPrefs(userId: string | null) {
   const [symptoms, setSymptomsState] = useState<string[]>(() => loadList('hd_symptoms', DEFAULT_SYMPTOMS));
   const [reliefs, setReliefsState] = useState<string[]>(() => loadList('hd_reliefs', DEFAULT_RELIEFS));
   const [defaultNotifConfig, setDefaultNotifConfigState] = useState<NotificationConfig>(loadNotifDefault);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const syncingRef = useRef(false);
 
   const setTriggers = useCallback((next: string[]) => {
@@ -91,9 +93,23 @@ export function useUserPrefs(userId: string | null) {
     setDefaultNotifConfigState(cfg);
   }, []);
 
+  // Wraps a fire-and-forget remote push so its outcome also feeds the
+  // Settings sync indicator, not just the console.
+  const trackPush = useCallback((p: Promise<void>) => {
+    setSyncStatus('syncing');
+    p.then(() => {
+      setSyncStatus('synced');
+      setLastSyncedAt(new Date().toISOString());
+    }).catch((err) => {
+      console.error('Prefs sync failed:', err);
+      setSyncStatus('error');
+    });
+  }, []);
+
   const sync = useCallback(async (uid: string) => {
     if (syncingRef.current) return;
     syncingRef.current = true;
+    setSyncStatus('syncing');
     try {
       const remote = await pullUserPrefs();
       // Read fresh from localStorage rather than closing over component
@@ -115,8 +131,11 @@ export function useUserPrefs(userId: string | null) {
         triggers: mergedTriggers, symptoms: mergedSymptoms, reliefs: mergedReliefs,
         notificationDefault: mergedNotif,
       }, uid);
+      setSyncStatus('synced');
+      setLastSyncedAt(new Date().toISOString());
     } catch (err) {
       console.error('Prefs sync failed:', err);
+      setSyncStatus('error');
     } finally {
       syncingRef.current = false;
     }
@@ -139,28 +158,29 @@ export function useUserPrefs(userId: string | null) {
   const addTrigger = useCallback((label: string) => {
     const next = [...triggers, label];
     setTriggers(next);
-    if (userId) pushUserPrefs({ triggers: next, symptoms, reliefs, notificationDefault: defaultNotifConfig }, userId).catch((err) => console.error('Prefs sync failed:', err));
-  }, [triggers, symptoms, reliefs, defaultNotifConfig, setTriggers, userId]);
+    if (userId) trackPush(pushUserPrefs({ triggers: next, symptoms, reliefs, notificationDefault: defaultNotifConfig }, userId));
+  }, [triggers, symptoms, reliefs, defaultNotifConfig, setTriggers, userId, trackPush]);
 
   const addSymptom = useCallback((label: string) => {
     const next = [...symptoms, label];
     setSymptoms(next);
-    if (userId) pushUserPrefs({ triggers, symptoms: next, reliefs, notificationDefault: defaultNotifConfig }, userId).catch((err) => console.error('Prefs sync failed:', err));
-  }, [triggers, symptoms, reliefs, defaultNotifConfig, setSymptoms, userId]);
+    if (userId) trackPush(pushUserPrefs({ triggers, symptoms: next, reliefs, notificationDefault: defaultNotifConfig }, userId));
+  }, [triggers, symptoms, reliefs, defaultNotifConfig, setSymptoms, userId, trackPush]);
 
   const addRelief = useCallback((label: string) => {
     const next = [...reliefs, label];
     setReliefs(next);
-    if (userId) pushUserPrefs({ triggers, symptoms, reliefs: next, notificationDefault: defaultNotifConfig }, userId).catch((err) => console.error('Prefs sync failed:', err));
-  }, [triggers, symptoms, reliefs, defaultNotifConfig, setReliefs, userId]);
+    if (userId) trackPush(pushUserPrefs({ triggers, symptoms, reliefs: next, notificationDefault: defaultNotifConfig }, userId));
+  }, [triggers, symptoms, reliefs, defaultNotifConfig, setReliefs, userId, trackPush]);
 
   const setDefaultNotifConfigSynced = useCallback((cfg: NotificationConfig) => {
     setDefaultNotifConfig(cfg);
-    if (userId) pushUserPrefs({ triggers, symptoms, reliefs, notificationDefault: cfg }, userId).catch((err) => console.error('Prefs sync failed:', err));
-  }, [triggers, symptoms, reliefs, setDefaultNotifConfig, userId]);
+    if (userId) trackPush(pushUserPrefs({ triggers, symptoms, reliefs, notificationDefault: cfg }, userId));
+  }, [triggers, symptoms, reliefs, setDefaultNotifConfig, userId, trackPush]);
 
   return {
     triggers, symptoms, reliefs, addTrigger, addSymptom, addRelief,
     defaultNotifConfig, setDefaultNotifConfig: setDefaultNotifConfigSynced,
+    syncStatus, lastSyncedAt,
   };
 }

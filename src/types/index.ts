@@ -24,3 +24,7 @@ export interface Attack {
 }
 
 export type Tab = 'log' | 'history' | 'stats' | 'settings';
+
+// Reported by useAttacks/useUserPrefs so Settings can show a combined
+// "synced just now" / "sync failed" indicator instead of failing silently.
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';

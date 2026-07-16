@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { Attack, Snapshot, NotificationConfig } from '../types';
+import type { Attack, Snapshot, NotificationConfig, SyncStatus } from '../types';
 import { scheduleNotification, cancelNotification, nextDelay } from '../utils/notifications';
 import { pullAttacks, pushAttacks, deleteAttackRemote } from '../lib/sync';
 
@@ -22,6 +22,8 @@ function persist(attacks: Attack[]) {
 // once are not a case this app needs to handle well).
 export function useAttacks(userId: string | null) {
   const [attacks, setAttacks] = useState<Attack[]>(load);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const syncingRef = useRef(false);
 
   const commit = useCallback((next: Attack[]) => {
@@ -29,9 +31,23 @@ export function useAttacks(userId: string | null) {
     setAttacks(next);
   }, []);
 
+  // Wraps a fire-and-forget remote push so its outcome also feeds the
+  // Settings sync indicator, not just the console.
+  const trackPush = useCallback((p: Promise<void>) => {
+    setSyncStatus('syncing');
+    p.then(() => {
+      setSyncStatus('synced');
+      setLastSyncedAt(new Date().toISOString());
+    }).catch((err) => {
+      console.error('Attack sync failed:', err);
+      setSyncStatus('error');
+    });
+  }, []);
+
   const sync = useCallback(async (uid: string) => {
     if (syncingRef.current) return;
     syncingRef.current = true;
+    setSyncStatus('syncing');
     try {
       const remote = await pullAttacks();
       const local = load();
@@ -49,8 +65,11 @@ export function useAttacks(userId: string | null) {
         return !r || (a.updatedAt ?? '') > (r.updatedAt ?? '');
       });
       if (toPush.length) await pushAttacks(toPush, uid);
+      setSyncStatus('synced');
+      setLastSyncedAt(new Date().toISOString());
     } catch (err) {
       console.error('Attack sync failed:', err);
+      setSyncStatus('error');
     } finally {
       syncingRef.current = false;
     }
@@ -93,9 +112,9 @@ export function useAttacks(userId: string | null) {
         : notificationConfig.fixedIntervalMinutes * 60 * 1000;
       scheduleNotification(attack, delay);
     }
-    if (userId) pushAttacks([attack], userId).catch((err) => console.error('Attack sync failed:', err));
+    if (userId) trackPush(pushAttacks([attack], userId));
     return attack;
-  }, [attacks, commit, userId]);
+  }, [attacks, commit, userId, trackPush]);
 
   const addSnapshot = useCallback((
     attackId: number,
@@ -112,9 +131,9 @@ export function useAttacks(userId: string | null) {
     if (updated && updated.notificationConfig.enabled) {
       scheduleNotification(updated, nextDelay(updated));
     }
-    if (updated && userId) pushAttacks([updated], userId).catch((err) => console.error('Attack sync failed:', err));
+    if (updated && userId) trackPush(pushAttacks([updated], userId));
     return updated;
-  }, [attacks, commit, userId]);
+  }, [attacks, commit, userId, trackPush]);
 
   const endAttack = useCallback((attackId: number, time?: string) => {
     const end = time ?? new Date().toISOString();
@@ -125,16 +144,16 @@ export function useAttacks(userId: string | null) {
       return updated;
     }));
     cancelNotification(attackId);
-    if (updated && userId) pushAttacks([updated], userId).catch((err) => console.error('Attack sync failed:', err));
-  }, [attacks, commit, userId]);
+    if (updated && userId) trackPush(pushAttacks([updated], userId));
+  }, [attacks, commit, userId, trackPush]);
 
   const deleteAttack = useCallback((attackId: number) => {
     cancelNotification(attackId);
     commit(attacks.filter((a) => a.id !== attackId));
-    if (userId) deleteAttackRemote(attackId).catch((err) => console.error('Attack sync failed:', err));
-  }, [attacks, commit, userId]);
+    if (userId) trackPush(deleteAttackRemote(attackId));
+  }, [attacks, commit, userId, trackPush]);
 
   const ongoingAttack = attacks.find((a) => a.end === null) ?? null;
 
-  return { attacks, ongoingAttack, startAttack, addSnapshot, endAttack, deleteAttack };
+  return { attacks, ongoingAttack, startAttack, addSnapshot, endAttack, deleteAttack, syncStatus, lastSyncedAt };
 }

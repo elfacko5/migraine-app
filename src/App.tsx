@@ -37,10 +37,30 @@ export default function App() {
 
   const auth = useAuth();
   const userId = auth.user?.id ?? null;
-  const { attacks, ongoingAttack, startAttack, addSnapshot, endAttack, deleteAttack } = useAttacks(userId);
-  const { triggers, symptoms, reliefs, addTrigger, addSymptom, addRelief, defaultNotifConfig } = useUserPrefs(userId);
+  const {
+    attacks, ongoingAttack, startAttack, addSnapshot, endAttack, deleteAttack,
+    syncStatus: attacksSyncStatus, lastSyncedAt: attacksLastSyncedAt,
+  } = useAttacks(userId);
+  const {
+    triggers, symptoms, reliefs, addTrigger, addSymptom, addRelief, defaultNotifConfig,
+    syncStatus: prefsSyncStatus, lastSyncedAt: prefsLastSyncedAt,
+  } = useUserPrefs(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
   const { textScale, setTextScale, brightness, setBrightness } = useSettings();
+
+  // Combine the two independent sync hooks into one status for Settings:
+  // an error in either takes priority, then in-flight, then the more
+  // recent successful sync of the two.
+  const syncStatus = useMemo(() => {
+    if (attacksSyncStatus === 'error' || prefsSyncStatus === 'error') return 'error' as const;
+    if (attacksSyncStatus === 'syncing' || prefsSyncStatus === 'syncing') return 'syncing' as const;
+    if (attacksLastSyncedAt || prefsLastSyncedAt) return 'synced' as const;
+    return 'idle' as const;
+  }, [attacksSyncStatus, prefsSyncStatus, attacksLastSyncedAt, prefsLastSyncedAt]);
+  const lastSyncedAt = useMemo(() => {
+    if (attacksLastSyncedAt && prefsLastSyncedAt) return attacksLastSyncedAt > prefsLastSyncedAt ? attacksLastSyncedAt : prefsLastSyncedAt;
+    return attacksLastSyncedAt ?? prefsLastSyncedAt;
+  }, [attacksLastSyncedAt, prefsLastSyncedAt]);
 
   // Collect unique medications from history, most-recently-used first.
   const recentMeds = useMemo(() => {
@@ -168,6 +188,8 @@ export default function App() {
               brightness={brightness}
               onBrightness={setBrightness}
               auth={auth}
+              syncStatus={syncStatus}
+              lastSyncedAt={lastSyncedAt}
             />
           </section>
         )}

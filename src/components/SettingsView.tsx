@@ -1,6 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { TextScale } from '../hooks/useSettings';
 import type { useAuth } from '../hooks/useAuth';
+import type { SyncStatus } from '../types';
+import { formatSince } from '../utils/format';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -15,12 +17,21 @@ interface Props {
   brightness: number;
   onBrightness: (v: number) => void;
   auth: ReturnType<typeof useAuth>;
+  syncStatus: SyncStatus;
+  lastSyncedAt: string | null;
 }
 
-export function SettingsView({ textScale, onTextScale, brightness, onBrightness, auth }: Props) {
+export function SettingsView({ textScale, onTextScale, brightness, onBrightness, auth, syncStatus, lastSyncedAt }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importErr, setImportErr] = useState<string | null>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
+  const [, forceRender] = useState(0);
+
+  // Tick so a relative "synced Xm ago" string stays fresh while this tab is open.
+  useEffect(() => {
+    const id = setInterval(() => forceRender((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -127,6 +138,7 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness,
                   Signed in as <span className="font-medium">{auth.user?.email}</span>
                 </p>
                 <p className="text-xs text-text-secondary">Your attacks and lists sync automatically across devices.</p>
+                <SyncIndicator status={syncStatus} lastSyncedAt={lastSyncedAt} />
                 <button
                   type="button"
                   onClick={() => auth.signOut()}
@@ -200,6 +212,40 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness,
       />
 
     </div>
+  );
+}
+
+function SyncIndicator({ status, lastSyncedAt }: { status: SyncStatus; lastSyncedAt: string | null }) {
+  if (status === 'error') {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-severity-high">
+        <span className="h-1.5 w-1.5 rounded-full bg-severity-high shrink-0" />
+        Sync failed — will retry automatically
+      </p>
+    );
+  }
+  if (status === 'syncing') {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-text-secondary">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent-light shrink-0 animate-pulse" />
+        Syncing…
+      </p>
+    );
+  }
+  if (status === 'synced' && lastSyncedAt) {
+    const since = formatSince(lastSyncedAt);
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-text-secondary">
+        <span className="h-1.5 w-1.5 rounded-full bg-severity-low shrink-0" />
+        Synced {since === 'just now' ? since : `${since} ago`}
+      </p>
+    );
+  }
+  return (
+    <p className="flex items-center gap-1.5 text-xs text-text-secondary">
+      <span className="h-1.5 w-1.5 rounded-full bg-text-secondary/50 shrink-0" />
+      Waiting to sync…
+    </p>
   );
 }
 
