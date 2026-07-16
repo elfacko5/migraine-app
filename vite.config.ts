@@ -4,4 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Respect an assigned PORT (e.g. when another session already holds 5173)
+  // instead of Vite's own silent increment-and-retry, so tooling that proxies
+  // to a specific reassigned port can actually reach the server.
+  server: {
+    port: process.env.PORT ? Number(process.env.PORT) : 5173,
+  },
 })
