@@ -15,11 +15,13 @@ source ~/.nvm/nvm.sh && npm run preview  # serve the dist/ build locally
 
 There are no tests. Type-checking is part of `build` (Vite runs `tsc --noEmit` via tsconfig project references).
 
-To test on a phone on the same Wi-Fi, expose the dev server on the LAN with `npm run dev -- --host`, then open `http://<mac-LAN-ip>:5173` (the `.claude/launch.json` preview config already passes `--host`). HMR doesn't reliably push over Wi-Fi — reload the phone manually after changes. Each device has its own `localStorage`, so data does not sync between desktop and phone.
+To test on a phone on the same Wi-Fi, expose the dev server on the LAN with `npm run dev -- --host`, then open `http://<mac-LAN-ip>:5173` (the `.claude/launch.json` preview config already passes `--host`). HMR doesn't reliably push over Wi-Fi — reload the phone manually after changes. Each device has its own `localStorage`; data only matches across desktop/phone if both are signed in to the same account via Supabase sync (see below) — otherwise they're independent.
+
+If working on sync, copy `.env.local.example` to `.env.local` and fill in a Supabase project's URL/anon key (Project Settings → API). `.env.local` is gitignored. Without it, `src/lib/supabase.ts` exports `null` and the app runs local-only — this is the default for a fresh clone.
 
 ## Stack
 
-Vite 8 + React 19 + TypeScript (strict) + Tailwind CSS v4 + Recharts. No backend, no auth — all data lives in `localStorage`. PWA via `public/manifest.json` + `public/sw.js`.
+Vite 8 + React 19 + TypeScript (strict) + Tailwind CSS v4 + Recharts + `@supabase/supabase-js`. `localStorage` is the source of truth for all reads; Supabase provides optional, opt-in cross-device sync (see below) — there's no backend requirement to use the app. PWA via `public/manifest.json` + `public/sw.js`.
 
 **Tailwind v4 note:** configured through the `@tailwindcss/vite` plugin — there is no `tailwind.config.js`. Custom theme tokens go in `src/index.css` under `@theme {}`.
 
@@ -49,6 +51,7 @@ interface Attack {
   end: string | null;   // null means ongoing
   triggers: string[];
   notificationConfig: NotificationConfig;
+  updatedAt?: string;   // ISO timestamp — last-write-wins conflict key for sync (see below)
 }
 ```
 
@@ -70,7 +73,22 @@ All reads/writes go through the hooks (`useAttacks`, `useUserPrefs`, `useSetting
 
 The trigger/symptom/relief lists are **add-only** (no removal UI). `loadList` in `useUserPrefs` merges any newly-added built-in defaults into a user's stored list, so new built-ins (e.g. adding to `DEFAULT_RELIEFS`) propagate to existing users.
 
-**Export / import:** there is no backend or sync. `src/utils/backup.ts` serialises every `hd_` key to a JSON file (Settings → Data → **Export backup**) and restores it (**Import backup** → confirm → reload) — the only cross-device path.
+**Export / import:** `src/utils/backup.ts` serialises every `hd_` key to a JSON file (Settings → Data → **Export backup**) and restores it (**Import backup** → confirm → reload). This predates Supabase sync and still works standalone (no sign-in needed) — it's the only cross-device path for a user who doesn't want to create an account.
+
+## Cross-device sync (Supabase, optional)
+
+Sync is opt-in and additive: `localStorage` stays authoritative for all reads (instant, works offline), and when signed in, every local write is *also* best-effort pushed to Supabase. A push failure is `console.error`'d and never blocks or rolls back the local write — but it also surfaces to the user (see the sync indicator below), so a failure like the missing-table incident in the gotchas doesn't go unnoticed again.
+
+- **`src/lib/supabase.ts`** — creates the client from `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`; exports `null` if either is unset, which is the single flag every sync-aware hook checks to no-op.
+- **`src/hooks/useAuth.ts`** — session state via `supabase.auth`. Email-only, no passwords: `signInWithEmail` sends a magic link (`signInWithOtp`); `verifyEmailCode` completes sign-in from a typed 6-digit code instead. The code path exists specifically because iOS Safari always opens Mail links in Safari itself, never in a standalone home-screen PWA — there's no way to make the magic link land back in the installed app, so the OTP code (same email, `{{ .Token }}`) is the only way to sign in from inside the PWA.
+- **`src/lib/sync.ts`** — `pullAttacks`/`pushAttacks`/`deleteAttackRemote` and `pullUserPrefs`/`pushUserPrefs`; maps between the local `Attack`/`Snapshot` shape and the `attacks`/`user_prefs` table rows (snake_case columns, e.g. `end_time`, `notification_config`).
+- **`src/hooks/useAttacks.ts`** and **`useUserPrefs.ts`** each take `userId: string | null` and run their own `sync()`, merge, and re-push on mount/sign-in **and again on every `visibilitychange`/`focus` event** — not just once — because iOS keeps a backgrounded PWA's page alive in memory rather than reloading it, so a mount-only sync would go stale indefinitely once the app is reopened from the background. Each hook also exposes `syncStatus: 'idle' | 'syncing' | 'synced' | 'error'` and `lastSyncedAt`, set both by the periodic `sync()` and by every individual fire-and-forget push (via a shared `trackPush` wrapper in each hook).
+- **Merge strategy differs by data shape:** attacks merge per-id by comparing `updatedAt` (last-write-wins — true concurrent edits to the *same* attack from two devices at once aren't handled specially). Trigger/symptom/relief lists merge as a plain union (`useUserPrefs.ts`'s `union()`), since those lists are add-only everywhere already — there's no real conflict to resolve.
+- **`supabase/schema.sql`** — run once in the Supabase SQL editor to create `attacks` + `user_prefs`, both with RLS policies scoped to `auth.uid() = user_id`. Snapshots stay a `jsonb` array column rather than their own table, since they're always read/written whole with their parent attack.
+- Settings → **Account & sync** (`SettingsView.tsx`) renders only when `supabase` is non-null, with the magic-link form and the OTP code-entry fallback. When signed in, `App.tsx` combines the two hooks' `syncStatus`/`lastSyncedAt` (error takes priority over syncing, which takes priority over the most recent successful sync) into one `SyncIndicator` line — a colored dot + "Synced 3m ago" / "Syncing…" / "Sync failed — will retry automatically" / "Waiting to sync…" — so a silent push failure is visible instead of only reaching the console.
+- No realtime subscription — sync is pull-on-foreground, not push-based, so a change on device A won't reach device B until B is foregrounded or reloaded. Acceptable for personal use; worth knowing if debugging "why hasn't this shown up yet."
+
+**Supabase project gotchas** (email deliverability, redirect URLs, RLS) live in the Supabase dashboard, not in code — see Authentication → Email Templates (the magic-link template must include `{{ .Token }}` for the OTP fallback to work) and Authentication → URL Configuration (both a `/**` wildcard *and* the exact bare-origin URL need to be in the Redirect URLs allowlist; the Site URL field is a separate fallback Supabase silently uses if nothing in Redirect URLs matches).
 
 ## Notification architecture
 
