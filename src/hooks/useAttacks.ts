@@ -17,44 +17,60 @@ function persist(attacks: Attack[]) {
 // localStorage stays the source of truth for reads — it's instant and works
 // offline. When signed in, every write also gets pushed to Supabase (best
 // effort; a failure there doesn't block or roll back the local write), and
-// on sign-in we pull + merge remote data by comparing `updatedAt` per attack
-// (last write wins — true concurrent edits to the same attack from two
-// devices at once are not a case this app needs to handle well).
+// we pull + merge remote data by comparing `updatedAt` per attack (last
+// write wins — true concurrent edits to the same attack from two devices at
+// once are not a case this app needs to handle well).
 export function useAttacks(userId: string | null) {
   const [attacks, setAttacks] = useState<Attack[]>(load);
-  const syncedForUser = useRef<string | null>(null);
+  const syncingRef = useRef(false);
 
   const commit = useCallback((next: Attack[]) => {
     persist(next);
     setAttacks(next);
   }, []);
 
-  useEffect(() => {
-    if (!userId || syncedForUser.current === userId) return;
-    syncedForUser.current = userId;
-    (async () => {
-      try {
-        const remote = await pullAttacks();
-        const local = load();
-        const merged = new Map<number, Attack>(local.map((a) => [a.id, a]));
-        for (const r of remote) {
-          const l = merged.get(r.id);
-          if (!l || (r.updatedAt ?? '') > (l.updatedAt ?? '')) merged.set(r.id, r);
-        }
-        const mergedList = [...merged.values()].sort((a, b) => b.id - a.id);
-        commit(mergedList);
-
-        const remoteById = new Map(remote.map((r) => [r.id, r]));
-        const toPush = mergedList.filter((a) => {
-          const r = remoteById.get(a.id);
-          return !r || (a.updatedAt ?? '') > (r.updatedAt ?? '');
-        });
-        if (toPush.length) await pushAttacks(toPush, userId);
-      } catch (err) {
-        console.error('Attack sync failed:', err);
+  const sync = useCallback(async (uid: string) => {
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+    try {
+      const remote = await pullAttacks();
+      const local = load();
+      const merged = new Map<number, Attack>(local.map((a) => [a.id, a]));
+      for (const r of remote) {
+        const l = merged.get(r.id);
+        if (!l || (r.updatedAt ?? '') > (l.updatedAt ?? '')) merged.set(r.id, r);
       }
-    })();
-  }, [userId, commit]);
+      const mergedList = [...merged.values()].sort((a, b) => b.id - a.id);
+      commit(mergedList);
+
+      const remoteById = new Map(remote.map((r) => [r.id, r]));
+      const toPush = mergedList.filter((a) => {
+        const r = remoteById.get(a.id);
+        return !r || (a.updatedAt ?? '') > (r.updatedAt ?? '');
+      });
+      if (toPush.length) await pushAttacks(toPush, uid);
+    } catch (err) {
+      console.error('Attack sync failed:', err);
+    } finally {
+      syncingRef.current = false;
+    }
+  }, [commit]);
+
+  // Sync on mount/sign-in, and again whenever the app is foregrounded — iOS
+  // often keeps a backgrounded PWA's page alive in memory rather than
+  // reloading it when reopened, so re-checking on visibility/focus is the
+  // only way it picks up changes made on other devices meanwhile.
+  useEffect(() => {
+    if (!userId) return;
+    sync(userId);
+    const onVisible = () => { if (document.visibilityState === 'visible') sync(userId); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [userId, sync]);
 
   const startAttack = useCallback((
     snapshot: Omit<Snapshot, 'source'>,

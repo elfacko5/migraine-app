@@ -69,7 +69,7 @@ export function useUserPrefs(userId: string | null) {
   const [symptoms, setSymptomsState] = useState<string[]>(() => loadList('hd_symptoms', DEFAULT_SYMPTOMS));
   const [reliefs, setReliefsState] = useState<string[]>(() => loadList('hd_reliefs', DEFAULT_RELIEFS));
   const [defaultNotifConfig, setDefaultNotifConfigState] = useState<NotificationConfig>(loadNotifDefault);
-  const syncedForUser = useRef<string | null>(null);
+  const syncingRef = useRef(false);
 
   const setTriggers = useCallback((next: string[]) => {
     localStorage.setItem('hd_triggers', JSON.stringify(next));
@@ -91,34 +91,50 @@ export function useUserPrefs(userId: string | null) {
     setDefaultNotifConfigState(cfg);
   }, []);
 
+  const sync = useCallback(async (uid: string) => {
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+    try {
+      const remote = await pullUserPrefs();
+      // Read fresh from localStorage rather than closing over component
+      // state, since this runs again on every foreground/visibility change,
+      // not just once at mount.
+      const localTriggers = loadList('hd_triggers', DEFAULT_TRIGGERS);
+      const localSymptoms = loadList('hd_symptoms', DEFAULT_SYMPTOMS);
+      const localReliefs = loadList('hd_reliefs', DEFAULT_RELIEFS);
+      const localNotif = loadNotifDefault();
+      const mergedTriggers = remote ? union(localTriggers, remote.triggers) : localTriggers;
+      const mergedSymptoms = remote ? union(localSymptoms, remote.symptoms) : localSymptoms;
+      const mergedReliefs = remote ? union(localReliefs, remote.reliefs) : localReliefs;
+      const mergedNotif = remote?.notification_default ?? localNotif;
+      setTriggers(mergedTriggers);
+      setSymptoms(mergedSymptoms);
+      setReliefs(mergedReliefs);
+      setDefaultNotifConfig(mergedNotif);
+      await pushUserPrefs({
+        triggers: mergedTriggers, symptoms: mergedSymptoms, reliefs: mergedReliefs,
+        notificationDefault: mergedNotif,
+      }, uid);
+    } catch (err) {
+      console.error('Prefs sync failed:', err);
+    } finally {
+      syncingRef.current = false;
+    }
+  }, [setTriggers, setSymptoms, setReliefs, setDefaultNotifConfig]);
+
+  // Sync on mount/sign-in, and again whenever the app is foregrounded — see
+  // the matching comment in useAttacks.ts for why.
   useEffect(() => {
-    if (!userId || syncedForUser.current === userId) return;
-    syncedForUser.current = userId;
-    (async () => {
-      try {
-        const remote = await pullUserPrefs();
-        const mergedTriggers = remote ? union(triggers, remote.triggers) : triggers;
-        const mergedSymptoms = remote ? union(symptoms, remote.symptoms) : symptoms;
-        const mergedReliefs = remote ? union(reliefs, remote.reliefs) : reliefs;
-        const mergedNotif = remote?.notification_default ?? defaultNotifConfig;
-        if (remote) {
-          setTriggers(mergedTriggers);
-          setSymptoms(mergedSymptoms);
-          setReliefs(mergedReliefs);
-          setDefaultNotifConfig(mergedNotif);
-        }
-        await pushUserPrefs({
-          triggers: mergedTriggers, symptoms: mergedSymptoms, reliefs: mergedReliefs,
-          notificationDefault: mergedNotif,
-        }, userId);
-      } catch (err) {
-        console.error('Prefs sync failed:', err);
-      }
-    })();
-    // Only re-run when the signed-in user changes — the merge above reads
-    // current state once at sign-in time, it doesn't need to track it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+    if (!userId) return;
+    sync(userId);
+    const onVisible = () => { if (document.visibilityState === 'visible') sync(userId); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [userId, sync]);
 
   const addTrigger = useCallback((label: string) => {
     const next = [...triggers, label];
