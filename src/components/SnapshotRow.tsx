@@ -8,9 +8,9 @@ function sevColor(s: number): string {
   return 'text-severity-high';
 }
 
-interface Props { snap: Snapshot; isFirst: boolean }
+interface Props { snap: Snapshot; isFirst: boolean; dateLabel?: string }
 
-export function SnapshotRow({ snap, isFirst }: Props) {
+export function SnapshotRow({ snap, isFirst, dateLabel }: Props) {
   const sev = maxSeverity(snap);
   const label =
     snap.source === 'notification_no_change' ? '(no change)' :
@@ -27,8 +27,9 @@ export function SnapshotRow({ snap, isFirst }: Props) {
 
       <div className="pb-4 min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
+          {dateLabel && <span className="text-xs font-medium text-text-primary">{dateLabel}</span>}
           <span className="text-xs text-text-secondary">{formatTime(snap.time)}</span>
-          <span className="text-xs text-text-secondary">{label}</span>
+          <span className={`text-xs ${isFirst ? 'font-semibold text-accent-light' : 'text-text-secondary'}`}>{label}</span>
           {sev > 0 && <span className={`text-xs font-bold ${sevColor(sev)}`}>sev {sev}</span>}
         </div>
 

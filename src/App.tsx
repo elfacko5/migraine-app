@@ -254,6 +254,7 @@ export default function App() {
             attack={detailAttack}
             onDelete={() => deleteAttack(detailAttack.id)}
             onClose={() => setDetailAttack(null)}
+            onAddUpdate={() => { setDetailAttack(null); setUpdateSheetOpen(true); }}
           />
         )}
       </Sheet>

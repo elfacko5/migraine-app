@@ -10,9 +10,10 @@ interface Props {
   attack: Attack;
   onDelete: () => void;
   onClose: () => void;
+  onAddUpdate?: () => void;
 }
 
-export function AttackDetail({ attack, onDelete, onClose }: Props) {
+export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) {
   const maxSev = attackMaxSeverity(attack);
   const start = attack.snapshots[0];
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -40,20 +41,31 @@ export function AttackDetail({ attack, onDelete, onClose }: Props) {
       <div>
         <p className="text-xs uppercase tracking-wider font-medium text-text-secondary mb-3">Timeline</p>
         {attack.snapshots.map((snap, i) => (
-          <SnapshotRow key={i} snap={snap} isFirst={i === 0} />
+          <SnapshotRow key={i} snap={snap} isFirst={i === 0} dateLabel={formatDate(snap.time)} />
         ))}
         {attack.end && (
           <div className="flex gap-3 items-center">
             <div className="flex flex-col items-center">
               <div className="h-3 w-3 rounded-full bg-bg-border shrink-0 mt-0.5" />
             </div>
-            <p className="text-xs text-text-secondary pb-4">Attack ended · {formatTime(attack.end)}</p>
+            <p className="text-xs text-text-secondary pb-4">
+              Attack ended · {formatDate(attack.end)} {formatTime(attack.end)}
+            </p>
           </div>
         )}
       </div>
 
       {/* Actions */}
-      <div className="pt-2 border-t border-bg-border">
+      <div className="pt-2 border-t border-bg-border space-y-2">
+        {!attack.end && onAddUpdate && (
+          <button
+            type="button"
+            onClick={onAddUpdate}
+            className="btn-primary w-full rounded-xl py-3 text-sm font-semibold transition-colors"
+          >
+            Add update
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setConfirmDelete(true)}
