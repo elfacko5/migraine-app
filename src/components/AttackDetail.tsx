@@ -55,14 +55,14 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) 
         <p className="text-xs uppercase tracking-wider font-medium text-text-secondary mb-3">Timeline</p>
         {attack.end && (
           <div className="flex gap-3">
-            <div className="flex flex-col items-center">
+            <div className="relative flex flex-col items-center w-16 shrink-0">
+              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-bg-border" />
               {spansMultipleDays && (
-                <span className="mb-1 text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{formatDate(attack.end)}</span>
+                <span className="relative mb-1 text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{formatDate(attack.end)}</span>
               )}
-              <span className="shrink-0 rounded-full bg-accent px-2.5 py-1 text-xs font-bold tabular-nums text-bg-base whitespace-nowrap">
+              <span className="relative shrink-0 rounded-full bg-bg-raised border border-bg-border px-2.5 py-1 text-xs font-bold tabular-nums text-text-primary whitespace-nowrap">
                 {formatTime(attack.end)}
               </span>
-              <div className="flex-1 w-px bg-bg-raised mt-1" />
             </div>
             <p className="pt-1.5 pb-4 text-sm font-semibold text-accent-light">
               Attack ended

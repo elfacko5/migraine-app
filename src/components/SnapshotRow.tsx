@@ -51,15 +51,18 @@ export function SnapshotRow({ snap, isFirst, dateLabel }: Props) {
     <div className="flex gap-3">
       {/* Timeline stem — the time itself sits in a pill marker instead of a
           plain dot, so the moment each reading was taken is the first thing
-          that's scannable down the column. */}
-      <div className="flex flex-col items-center">
-        {dateLabel && <span className="mb-1 text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{dateLabel}</span>}
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold tabular-nums whitespace-nowrap ${
-          isFirst ? 'bg-accent text-bg-base' : 'bg-bg-raised border border-bg-border text-text-primary'
-        }`}>
+          that's scannable down the column. A fixed width keeps the
+          connecting line's x-position — and the pill above it — identical
+          across rows regardless of whether the time is 4 or 5 characters
+          wide (e.g. "9:09" vs "11:03"). */}
+      <div className="relative flex flex-col items-center w-16 shrink-0">
+        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-bg-border" />
+        {dateLabel && (
+          <span className="relative mb-1 text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{dateLabel}</span>
+        )}
+        <span className="relative shrink-0 rounded-full bg-bg-raised border border-bg-border px-2.5 py-1 text-xs font-bold tabular-nums text-text-primary whitespace-nowrap">
           {formatTime(snap.time)}
         </span>
-        <div className="flex-1 w-px bg-bg-raised mt-1" />
       </div>
 
       <div className="pb-4 min-w-0 flex-1 pt-1">
