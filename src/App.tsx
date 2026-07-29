@@ -145,6 +145,7 @@ export default function App() {
                 attack={ongoingAttack}
                 onAddUpdate={() => setUpdateSheetOpen(true)}
                 onEnd={() => setEndConfirmOpen(true)}
+                onOpenDetail={() => setDetailAttack(ongoingAttack)}
               />
             )}
 

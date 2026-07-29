@@ -7,6 +7,7 @@ interface Props {
   attack: Attack;
   onAddUpdate: () => void;
   onEnd: () => void;
+  onOpenDetail: () => void;
 }
 
 function severityBg(s: number): string {
@@ -23,7 +24,7 @@ function severityText(s: number): string {
   return 'text-severity-high';
 }
 
-export function OngoingAttackBanner({ attack, onAddUpdate, onEnd }: Props) {
+export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }: Props) {
   const [, forceRender] = useState(0);
 
   // Tick elapsed time every minute.
@@ -38,7 +39,11 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd }: Props) {
 
   return (
     <div className={`rounded-xl border p-4 space-y-3 ${severityBg(maxSev)}`}>
-      <div className="flex items-start justify-between gap-3">
+      <button
+        type="button"
+        onClick={onOpenDetail}
+        className="flex w-full items-start justify-between gap-3 text-left -m-1 p-1 rounded-lg transition-colors hover:bg-bg-raised/40 active:bg-bg-raised/60"
+      >
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium uppercase tracking-wider text-text-secondary">Ongoing attack</span>
@@ -50,7 +55,7 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd }: Props) {
           </p>
         </div>
         <div className={`text-2xl font-bold tabular-nums leading-none ${severityText(maxSev)}`}>{maxSev}</div>
-      </div>
+      </button>
 
       <div className="flex flex-wrap gap-2">
         <button
