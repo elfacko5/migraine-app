@@ -130,7 +130,10 @@ export function useAttacks(userId: string | null) {
       return updated;
     });
     commit(next);
-    if (updated && updated.notificationConfig.enabled) {
+    // Only an ongoing attack should ever get a future reminder scheduled —
+    // this is also reachable for backfilled updates on an already-ended
+    // (past-logged) attack, which must never queue a notification.
+    if (updated && updated.notificationConfig.enabled && !updated.end) {
       scheduleNotification(updated, nextDelay(updated));
     }
     if (updated && userId) trackPush(pushAttacks([updated], userId));

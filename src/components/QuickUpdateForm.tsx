@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Attack, Snapshot } from '../types';
 import type { TextScale } from '../hooks/useSettings';
-import { isoToLocalInput, localInputToIso, formatTime, formatDate } from '../utils/format';
+import { isoToLocalInput, localInputToIso, formatTime, formatDate, formatDuration } from '../utils/format';
 import { maxSeverity, attackMaxSeverity } from '../utils/stats';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { ChipSelector } from './ChipSelector';
@@ -33,8 +33,8 @@ interface FormState {
   note: string;
 }
 
-const blank = (): FormState => ({
-  time: isoToLocalInput(),
+const blank = (defaultTime: string): FormState => ({
+  time: defaultTime,
   areas: {},
   symptoms: [],
   reliefs: [],
@@ -88,11 +88,17 @@ function lastEntryCaption(step: number, prev: Snapshot): string | null {
 
 export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onNoChange, onClose }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
+  const isPast = attack.end !== null;
+  // A new update must land after the last reading, and — for a past attack —
+  // no later than when it ended (an ongoing attack has no such ceiling
+  // besides "now", which the input's max already enforces per render).
+  const minTime = prev.time;
+  const maxTime = attack.end ?? new Date().toISOString();
 
   // step 0 = the initial "nothing changed / log what changed" choice screen;
   // steps 1..TOTAL_STEPS = the wizard.
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>(blank);
+  const [form, setForm] = useState<FormState>(() => blank(isoToLocalInput(minTime)));
 
   function set<K extends keyof FormState>(key: K, val: FormState[K]) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -108,8 +114,14 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
   }
 
   function submit() {
+    // Minute-precision picker vs second-precision snapshots means the exact
+    // bounds can otherwise land a few seconds outside them — clamp instead
+    // of rejecting, matching EndAttackDialog's handling of the same gap.
+    let time = localInputToIso(form.time);
+    if (time < minTime) time = minTime;
+    if (time > maxTime) time = maxTime;
     onSave({
-      time: localInputToIso(form.time),
+      time,
       areas: form.areas,
       symptoms: form.symptoms,
       reliefs: form.reliefs,
@@ -161,7 +173,8 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
             <div>
               <h2 className="text-lg font-semibold text-text-primary">{formatDate(attack.snapshots[0].time)}</h2>
               <p className="text-sm text-text-secondary">
-                Ongoing · max severity {attackMaxSeverity(attack)}
+                {isPast ? formatDuration(attack.snapshots[0].time, attack.end) + ' duration' : 'Ongoing'}
+                {' · '}max severity {attackMaxSeverity(attack)}
               </p>
               {attack.triggers.length > 0 && (
                 <p className="text-xs text-text-secondary mt-1">{attack.triggers.join(', ')}</p>
@@ -193,12 +206,14 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
               </div>
             </div>
 
-            {/* ── Step 1: Update time ── */}
+            {/* ── Step 1: Update time — bounded to after the last reading and,
+                for a past attack, no later than when it ended ── */}
             {step === 1 && (
               <input
                 type="datetime-local"
                 value={form.time}
-                max={isoToLocalInput()}
+                min={isoToLocalInput(minTime)}
+                max={isoToLocalInput(maxTime)}
                 onChange={(e) => set('time', e.target.value)}
                 className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle"
               />
@@ -248,13 +263,18 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
       >
         {step === 0 ? (
           <div className="flex flex-col gap-3 w-full">
-            <button
-              type="button"
-              onClick={onNoChange}
-              className="btn-secondary w-full rounded-xl py-3 text-sm font-medium transition-colors"
-            >
-              Nothing changed — log no change
-            </button>
+            {/* "Right now, nothing changed" only means something for an
+                attack still in progress — a past attack has no "now" to
+                log against, so it always needs an explicit time instead. */}
+            {!isPast && (
+              <button
+                type="button"
+                onClick={onNoChange}
+                className="btn-secondary w-full rounded-xl py-3 text-sm font-medium transition-colors"
+              >
+                Nothing changed — log no change
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setStep(1)}

@@ -33,7 +33,11 @@ export default function App() {
   useViewportHeight();
   const [tab, setTab] = useState<Tab>('log');
   const [logSheetOpen, setLogSheetOpen] = useState(false);
-  const [updateSheetOpen, setUpdateSheetOpen] = useState(false);
+  // The attack an "Add update" sheet targets — the ongoing one (via the FAB
+  // or its Today-tab banner) or any past attack (via its detail sheet).
+  // Looked up fresh from `attacks` by id rather than stashing the object, so
+  // it always reflects the latest snapshots even if this stays open a while.
+  const [updateAttackId, setUpdateAttackId] = useState<number | null>(null);
   const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
 
@@ -91,6 +95,8 @@ export default function App() {
   const sortedSymptoms = useMemo(() => sortByFrequency(symptoms, symptomFrequency(attacks)), [symptoms, attacks]);
   const sortedReliefs = useMemo(() => sortByFrequency(reliefs, reliefFrequency(attacks)), [reliefs, attacks]);
 
+  const updateAttack = attacks.find((a) => a.id === updateAttackId) ?? null;
+
   // Handle SW notification action messages.
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -102,7 +108,7 @@ export default function App() {
         const prev = attack.snapshots[attack.snapshots.length - 1];
         addSnapshot(attackId, { time: new Date().toISOString(), areas: { ...prev.areas }, symptoms: [...prev.symptoms], reliefs: [...(prev.reliefs ?? [])], medication: null, note: null }, 'notification_no_change');
       } else if (action === 'update') {
-        setUpdateSheetOpen(true);
+        setUpdateAttackId(attackId);
         setTab('log');
       } else if (action === 'snooze') {
         // Snooze is handled in the SW; no client action needed.
@@ -119,15 +125,18 @@ export default function App() {
   }
 
   function handleUpdateSave(snapshot: Omit<Snapshot, 'source'>) {
-    if (ongoingAttack) addSnapshot(ongoingAttack.id, snapshot);
-    setUpdateSheetOpen(false);
+    if (updateAttackId !== null) addSnapshot(updateAttackId, snapshot);
+    setUpdateAttackId(null);
   }
 
+  // "Nothing changed" only applies to an ongoing attack — a past attack has
+  // no "right now" to log against, so QuickUpdateForm doesn't offer this
+  // option once attack.end is set.
   function handleNoChange() {
-    if (!ongoingAttack) return;
-    const prev = ongoingAttack.snapshots[ongoingAttack.snapshots.length - 1];
-    addSnapshot(ongoingAttack.id, { time: new Date().toISOString(), areas: { ...prev.areas }, symptoms: [...prev.symptoms], reliefs: [...(prev.reliefs ?? [])], medication: null, note: null }, 'notification_no_change');
-    setUpdateSheetOpen(false);
+    if (!updateAttack || updateAttack.end) return;
+    const prev = updateAttack.snapshots[updateAttack.snapshots.length - 1];
+    addSnapshot(updateAttack.id, { time: new Date().toISOString(), areas: { ...prev.areas }, symptoms: [...prev.symptoms], reliefs: [...(prev.reliefs ?? [])], medication: null, note: null }, 'notification_no_change');
+    setUpdateAttackId(null);
   }
 
   return (
@@ -143,7 +152,7 @@ export default function App() {
             {ongoingAttack && (
               <OngoingAttackBanner
                 attack={ongoingAttack}
-                onAddUpdate={() => setUpdateSheetOpen(true)}
+                onAddUpdate={() => setUpdateAttackId(ongoingAttack.id)}
                 onEnd={() => setEndConfirmOpen(true)}
                 onOpenDetail={() => setDetailAttack(ongoingAttack)}
               />
@@ -204,7 +213,7 @@ export default function App() {
       <BottomNav
         active={tab}
         onChange={setTab}
-        onAdd={() => (ongoingAttack ? setUpdateSheetOpen(true) : setLogSheetOpen(true))}
+        onAdd={() => (ongoingAttack ? setUpdateAttackId(ongoingAttack.id) : setLogSheetOpen(true))}
       />
 
       {/* Log attack sheet */}
@@ -231,11 +240,12 @@ export default function App() {
         />
       </Sheet>
 
-      {/* Quick update sheet */}
-      {ongoingAttack && (
-        <Sheet open={updateSheetOpen} onClose={() => setUpdateSheetOpen(false)} title="Add update" flush bareHeader>
+      {/* Quick update sheet — targets the ongoing attack (FAB/banner) or any
+          past attack (its own detail sheet's "Add update") */}
+      {updateAttack && (
+        <Sheet open={!!updateAttackId} onClose={() => setUpdateAttackId(null)} title="Add update" flush bareHeader>
           <QuickUpdateForm
-            attack={ongoingAttack}
+            attack={updateAttack}
             symptoms={sortedSymptoms}
             reliefs={sortedReliefs}
             recentMeds={recentMeds}
@@ -245,7 +255,7 @@ export default function App() {
             onAddRelief={addRelief}
             onSave={handleUpdateSave}
             onNoChange={handleNoChange}
-            onClose={() => setUpdateSheetOpen(false)}
+            onClose={() => setUpdateAttackId(null)}
           />
         </Sheet>
       )}
@@ -257,7 +267,7 @@ export default function App() {
             attack={detailAttack}
             onDelete={() => deleteAttack(detailAttack.id)}
             onClose={() => setDetailAttack(null)}
-            onAddUpdate={() => { setDetailAttack(null); setUpdateSheetOpen(true); }}
+            onAddUpdate={() => { setUpdateAttackId(detailAttack.id); setDetailAttack(null); }}
           />
         )}
       </Sheet>

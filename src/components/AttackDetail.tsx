@@ -54,13 +54,18 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) 
       <div>
         <p className="text-xs uppercase tracking-wider font-medium text-text-secondary mb-3">Timeline</p>
         {attack.end && (
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-3">
             <div className="flex flex-col items-center">
-              <div className="h-3 w-3 rounded-full bg-bg-border shrink-0 mt-0.5" />
+              {spansMultipleDays && (
+                <span className="mb-1 text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{formatDate(attack.end)}</span>
+              )}
+              <span className="shrink-0 rounded-full bg-accent px-2.5 py-1 text-xs font-bold tabular-nums text-bg-base whitespace-nowrap">
+                {formatTime(attack.end)}
+              </span>
               <div className="flex-1 w-px bg-bg-raised mt-1" />
             </div>
-            <p className="text-xs text-text-secondary pb-4">
-              Attack ended · {spansMultipleDays ? `${formatDate(attack.end)} ` : ''}{formatTime(attack.end)}
+            <p className="pt-1.5 pb-4 text-sm font-semibold text-accent-light">
+              Attack ended
             </p>
           </div>
         )}
@@ -74,9 +79,10 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) 
         ))}
       </div>
 
-      {/* Actions */}
+      {/* Actions — Add update works for past attacks too, to backfill a
+          retrospective log with more than one reading */}
       <div className="pt-2 border-t border-bg-border space-y-2">
-        {!attack.end && onAddUpdate && (
+        {onAddUpdate && (
           <button
             type="button"
             onClick={onAddUpdate}
