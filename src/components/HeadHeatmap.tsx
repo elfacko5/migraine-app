@@ -33,11 +33,14 @@ function heatFill(t: number): string {
 export function HeadHeatmap({ data, label = 'attacks' }: Props) {
   const maxVal = Math.max(1, ...data.map((d) => d.value));
   const byArea = Object.fromEntries(data.map((d) => [d.area, d.value]));
+  // Skip a whole view (front or back) when nothing in the selected period
+  // touched any of its zones — an empty illustration is just dead space.
+  const visibleViews = VIEWS.filter((view) => view.zones.some((z) => (byArea[z.name] ?? 0) > 0));
 
   return (
     <div className="space-y-3">
       <div className="flex flex-col items-center gap-5">
-        {VIEWS.map((view) => (
+        {visibleViews.map((view) => (
           <HeatView key={view.id} view={view} byArea={byArea} maxVal={maxVal} />
         ))}
       </div>

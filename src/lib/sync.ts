@@ -8,6 +8,7 @@ interface AttackRow {
   triggers: string[];
   notification_config: NotificationConfig;
   updated_at: string;
+  woke_with_migraine: boolean | null;
 }
 
 function rowToAttack(row: AttackRow): Attack {
@@ -18,6 +19,7 @@ function rowToAttack(row: AttackRow): Attack {
     triggers: row.triggers,
     notificationConfig: row.notification_config,
     updatedAt: row.updated_at,
+    wokeWithMigraine: row.woke_with_migraine ?? false,
   };
 }
 
@@ -30,6 +32,7 @@ function attackToRow(attack: Attack, userId: string) {
     triggers: attack.triggers,
     notification_config: attack.notificationConfig,
     updated_at: attack.updatedAt ?? new Date().toISOString(),
+    woke_with_migraine: attack.wokeWithMigraine ?? false,
   };
 }
 

@@ -96,6 +96,7 @@ export function useAttacks(userId: string | null) {
     triggers: string[],
     notificationConfig: NotificationConfig,
     end: string | null = null,
+    wokeWithMigraine = false,
   ): Attack => {
     const attack: Attack = {
       id: Date.now(),
@@ -104,6 +105,7 @@ export function useAttacks(userId: string | null) {
       triggers,
       notificationConfig,
       updatedAt: new Date().toISOString(),
+      wokeWithMigraine,
     };
     commit([attack, ...attacks]);
     if (notificationConfig.enabled && !end) {

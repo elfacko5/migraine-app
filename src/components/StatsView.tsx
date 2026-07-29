@@ -8,7 +8,7 @@ import { formatDate } from '../utils/format';
 import {
   attackMaxSeverity, currentAttackStreak, currentPainFreeStreak,
   areaFrequency, avgTimeToPeak, minutesAboveSeverity,
-  triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
+  triggerFrequency, symptomFrequency, reliefFrequency, medicationFrequency, type Freq,
 } from '../utils/stats';
 import { HeadHeatmap } from './HeadHeatmap';
 
@@ -115,6 +115,7 @@ export function StatsView({ attacks }: Props) {
       triggers: triggerFrequency(filtered),
       symptoms: symptomFrequency(filtered),
       reliefs: reliefFrequency(filtered),
+      medications: medicationFrequency(filtered),
     };
   }, [attacks, filtered]);
 
@@ -200,10 +201,11 @@ export function StatsView({ attacks }: Props) {
             </section>
           )}
 
-          {/* Trigger / symptom / relief frequency */}
-          <FreqSection title="Top triggers"  sub={PERIOD_SUB[period]} data={stats.triggers} color="#c97c2a" />
-          <FreqSection title="Top symptoms"  sub={PERIOD_SUB[period]} data={stats.symptoms} color="#b85c5c" />
-          <FreqSection title="Top reliefs"   sub={PERIOD_SUB[period]} data={stats.reliefs}  color="#5a9e7a" />
+          {/* Trigger / symptom / relief / medication frequency */}
+          <FreqSection title="Top triggers"       sub={PERIOD_SUB[period]} data={stats.triggers}    color="#c97c2a" />
+          <FreqSection title="Top symptoms"       sub={PERIOD_SUB[period]} data={stats.symptoms}    color="#b85c5c" />
+          <FreqSection title="Top reliefs"        sub={PERIOD_SUB[period]} data={stats.reliefs}     color="#5a9e7a" />
+          <FreqSection title="Medication intake"  sub={PERIOD_SUB[period]} data={stats.medications} color="#7fc4a0" />
         </>
       )}
     </div>

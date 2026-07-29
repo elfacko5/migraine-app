@@ -11,10 +11,15 @@ create table if not exists attacks (
   end_time timestamptz,                          -- null while ongoing
   triggers text[] not null default '{}',
   notification_config jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  woke_with_migraine boolean not null default false
 );
 
 create index if not exists attacks_user_id_idx on attacks (user_id);
+
+-- If this table already existed before woke_with_migraine was added, run
+-- this once (create table if not exists above won't retroactively add it):
+-- alter table attacks add column if not exists woke_with_migraine boolean not null default false;
 
 alter table attacks enable row level security;
 

@@ -21,6 +21,7 @@ export interface Attack {
   triggers: string[];
   notificationConfig: NotificationConfig;
   updatedAt?: string;    // ISO timestamp of the last local write; used to resolve sync conflicts
+  wokeWithMigraine?: boolean; // set at logging time — the attack was already present on waking, not noticed while awake
 }
 
 export type Tab = 'log' | 'history' | 'stats' | 'settings';

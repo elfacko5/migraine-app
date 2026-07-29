@@ -157,6 +157,16 @@ export function reliefFrequency(attacks: Attack[]): Freq[] {
   return tallyToFreq(tally);
 }
 
+export function medicationFrequency(attacks: Attack[]): Freq[] {
+  const tally: Record<string, number> = {};
+  for (const a of attacks) {
+    const seen = new Set<string>();
+    for (const s of a.snapshots) if (s.medication?.name.trim()) seen.add(s.medication.name.trim());
+    for (const x of seen) tally[x] = (tally[x] ?? 0) + 1;
+  }
+  return tallyToFreq(tally);
+}
+
 // Order `options` by historical usage (most-used first). Ties — including
 // never-used options — keep their original order (Array.sort is stable).
 export function sortByFrequency(options: string[], freq: Freq[]): string[] {

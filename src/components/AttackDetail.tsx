@@ -42,6 +42,9 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) 
         {attack.triggers.length > 0 && (
           <p className="text-xs text-text-secondary mt-1">{attack.triggers.join(', ')}</p>
         )}
+        {attack.wokeWithMigraine && (
+          <p className="text-xs text-accent-light mt-1">🌙 Woke up with this migraine</p>
+        )}
       </div>
 
       {/* Severity chart */}

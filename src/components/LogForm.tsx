@@ -26,6 +26,7 @@ interface Props {
     triggers: string[],
     notifConfig: NotificationConfig,
     end: string | null,
+    wokeWithMigraine: boolean,
   ) => void;
 }
 
@@ -37,6 +38,7 @@ interface FormState {
   startTime: string;
   endMode: EndMode;
   endTime: string;
+  wokeWithMigraine: boolean;
   areas: Record<string, number>;
   triggers: string[];
   symptoms: string[];
@@ -52,6 +54,7 @@ function blank(defaults: NotificationConfig): FormState {
     startTime: isoToLocalInput(),
     endMode: 'ongoing',
     endTime: isoToLocalInput(),
+    wokeWithMigraine: false,
     areas: {},
     triggers: [],
     symptoms: [],
@@ -169,6 +172,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
       form.triggers,
       form.notifConfig,
       endTime,
+      form.wokeWithMigraine,
     );
   }
 
@@ -261,6 +265,14 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                     onChange={(e) => set('startTime', e.target.value)}
                     className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
                 )}
+                <button
+                  type="button"
+                  onClick={() => set('wokeWithMigraine', !form.wokeWithMigraine)}
+                  aria-pressed={form.wokeWithMigraine}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${presetCls(form.wokeWithMigraine)}`}
+                >
+                  🌙 Woke up with this migraine
+                </button>
               </div>
 
               {/* End time card */}

@@ -112,8 +112,8 @@ export default function App() {
     return () => navigator.serviceWorker?.removeEventListener('message', handler);
   }, [attacks, addSnapshot]);
 
-  function handleLogSave(snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null) {
-    startAttack(snapshot, triggersSel, notifConfig, end);
+  function handleLogSave(snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean) {
+    startAttack(snapshot, triggersSel, notifConfig, end, wokeWithMigraine);
     setLogSheetOpen(false);
     if (notifConfig.enabled && !end && shouldPrompt) requestPermission();
   }
