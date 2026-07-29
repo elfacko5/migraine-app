@@ -39,7 +39,8 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute inset-x-0 bottom-0 top-0 flex flex-col bg-bg-surface transition-transform duration-300 ease-out ${open ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`absolute inset-x-0 top-0 flex flex-col bg-bg-surface transition-transform duration-300 ease-out ${open ? 'translate-y-0' : 'translate-y-full'}`}
+        style={{ height: 'var(--app-height, 100dvh)' }}
       >
         {!bareHeader && (
           <div

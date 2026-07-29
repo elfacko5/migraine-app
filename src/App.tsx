@@ -5,6 +5,7 @@ import { useUserPrefs } from './hooks/useUserPrefs';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
 import { useAuth } from './hooks/useAuth';
+import { useViewportHeight } from './hooks/useViewportHeight';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { BottomNav } from './components/BottomNav';
 import { TopBar } from './components/TopBar';
@@ -29,6 +30,7 @@ import { TextScalePill } from './components/TextScalePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
 
 export default function App() {
+  useViewportHeight();
   const [tab, setTab] = useState<Tab>('log');
   const [logSheetOpen, setLogSheetOpen] = useState(false);
   const [updateSheetOpen, setUpdateSheetOpen] = useState(false);
