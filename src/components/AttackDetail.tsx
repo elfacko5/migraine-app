@@ -18,6 +18,16 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) 
   const start = attack.snapshots[0];
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // A per-row date is only worth showing once the attack actually touches
+  // more than one calendar day — otherwise the header's date already covers
+  // it and repeating it on every row is just noise.
+  const allTimes = [...attack.snapshots.map((s) => s.time), ...(attack.end ? [attack.end] : [])];
+  const spansMultipleDays = new Set(allTimes.map((t) => formatDate(t))).size > 1;
+  // Newest first, with the attack's start pinned at the very bottom as the
+  // timeline's anchor point — mirrors how the severity chart reads left
+  // (oldest) to right (newest), just inverted for a scannable top-down list.
+  const reversedSnapshots = [...attack.snapshots].reverse();
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -37,22 +47,28 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) 
       {/* Severity chart */}
       <SeverityChart attack={attack} height={180} />
 
-      {/* Snapshot timeline */}
+      {/* Snapshot timeline — newest first; attack start anchors the bottom */}
       <div>
         <p className="text-xs uppercase tracking-wider font-medium text-text-secondary mb-3">Timeline</p>
-        {attack.snapshots.map((snap, i) => (
-          <SnapshotRow key={i} snap={snap} isFirst={i === 0} dateLabel={formatDate(snap.time)} />
-        ))}
         {attack.end && (
           <div className="flex gap-3 items-center">
             <div className="flex flex-col items-center">
               <div className="h-3 w-3 rounded-full bg-bg-border shrink-0 mt-0.5" />
+              <div className="flex-1 w-px bg-bg-raised mt-1" />
             </div>
             <p className="text-xs text-text-secondary pb-4">
-              Attack ended · {formatDate(attack.end)} {formatTime(attack.end)}
+              Attack ended · {spansMultipleDays ? `${formatDate(attack.end)} ` : ''}{formatTime(attack.end)}
             </p>
           </div>
         )}
+        {reversedSnapshots.map((snap, i) => (
+          <SnapshotRow
+            key={snap.time}
+            snap={snap}
+            isFirst={i === reversedSnapshots.length - 1}
+            dateLabel={spansMultipleDays ? formatDate(snap.time) : undefined}
+          />
+        ))}
       </div>
 
       {/* Actions */}

@@ -8,6 +8,11 @@ function sevColor(s: number): string {
   return 'text-severity-high';
 }
 
+// dateLabel is only passed when the attack spans multiple calendar days —
+// for a same-day attack the header already states the date, so repeating it
+// on every row is noise; the time becomes the primary, highlighted element
+// instead. When dateLabel *is* shown (multi-day), it takes that same
+// highlighted styling and the time steps back to a secondary role.
 interface Props { snap: Snapshot; isFirst: boolean; dateLabel?: string }
 
 export function SnapshotRow({ snap, isFirst, dateLabel }: Props) {
@@ -15,7 +20,7 @@ export function SnapshotRow({ snap, isFirst, dateLabel }: Props) {
   const label =
     snap.source === 'notification_no_change' ? '(no change)' :
     snap.source === 'notification_yes' ? '(via notification)' :
-    isFirst ? 'Attack start' : 'Update';
+    isFirst ? 'Attack start' : null;
   // With a single area the "sev X" badge always equals that area's own score
   // shown just below — only worth a separate summary once there's 2+ areas
   // to summarize the max of.
@@ -32,9 +37,15 @@ export function SnapshotRow({ snap, isFirst, dateLabel }: Props) {
 
       <div className="pb-4 min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          {dateLabel && <span className="text-xs font-medium text-text-primary">{dateLabel}</span>}
-          <span className="text-xs text-text-secondary">{formatTime(snap.time)}</span>
-          <span className={`text-xs ${isFirst ? 'font-semibold text-accent-light' : 'text-text-secondary'}`}>{label}</span>
+          {dateLabel ? (
+            <>
+              <span className="text-xs font-medium text-text-primary">{dateLabel}</span>
+              <span className="text-xs text-text-secondary">{formatTime(snap.time)}</span>
+            </>
+          ) : (
+            <span className="text-sm font-semibold text-text-primary">{formatTime(snap.time)}</span>
+          )}
+          {label && <span className={`text-xs ${isFirst ? 'font-semibold text-accent-light' : 'text-text-secondary'}`}>{label}</span>}
           {showSevBadge && <span className={`text-xs font-bold ${sevColor(sev)}`}>sev {sev}</span>}
         </div>
 
