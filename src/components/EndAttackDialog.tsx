@@ -67,7 +67,11 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
         role="alertdialog"
         aria-modal="true"
         aria-label="End this attack?"
-        className={`relative w-full max-w-sm rounded-2xl border border-bg-border bg-bg-surface p-5 transition-all duration-200 ${open ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+        // min-w-0 lets this shrink to max-w-sm — as a flex item it otherwise
+        // defaults to min-width:auto, so a native datetime-local input's own
+        // intrinsic content width (wider than the dialog on some devices)
+        // would push the whole dialog wider instead of fitting inside it.
+        className={`relative w-full min-w-0 max-w-sm rounded-2xl border border-bg-border bg-bg-surface p-5 transition-all duration-200 ${open ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
       >
         <h2 className="text-base font-semibold text-text-primary">End this attack?</h2>
         <p className="mt-1.5 text-sm text-text-secondary leading-relaxed">
