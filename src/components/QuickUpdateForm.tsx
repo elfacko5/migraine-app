@@ -96,8 +96,10 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
   const maxTime = attack.end ?? new Date().toISOString();
 
   // step 0 = the initial "nothing changed / log what changed" choice screen;
-  // steps 1..TOTAL_STEPS = the wizard.
-  const [step, setStep] = useState(0);
+  // steps 1..TOTAL_STEPS = the wizard. A past attack has no "nothing
+  // changed" option (see below), so that screen would only ever offer the
+  // one "Log what changed" button — skip straight to the wizard instead.
+  const [step, setStep] = useState(() => (isPast ? 1 : 0));
   const [form, setForm] = useState<FormState>(() => blank(isoToLocalInput(minTime)));
 
   function set<K extends keyof FormState>(key: K, val: FormState[K]) {
@@ -285,10 +287,13 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
           </div>
         ) : (
           <>
-            <button type="button" onClick={goBack}
-              className="btn-secondary flex-1 rounded-xl py-3 text-sm font-medium transition-colors">
-              Back
-            </button>
+            {/* No choice screen to go back to for a past attack's first step */}
+            {!(isPast && step === 1) && (
+              <button type="button" onClick={goBack}
+                className="btn-secondary flex-1 rounded-xl py-3 text-sm font-medium transition-colors">
+                Back
+              </button>
+            )}
             <button type="button" onClick={goNext}
               className="btn-primary flex-1 rounded-xl py-3 text-sm font-semibold transition-colors">
               {step === TOTAL_STEPS ? 'Save update' : 'Next'}
