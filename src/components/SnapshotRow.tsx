@@ -16,6 +16,11 @@ export function SnapshotRow({ snap, isFirst, dateLabel }: Props) {
     snap.source === 'notification_no_change' ? '(no change)' :
     snap.source === 'notification_yes' ? '(via notification)' :
     isFirst ? 'Attack start' : 'Update';
+  // With a single area the "sev X" badge always equals that area's own score
+  // shown just below — only worth a separate summary once there's 2+ areas
+  // to summarize the max of.
+  const areaCount = Object.keys(snap.areas).length;
+  const showSevBadge = sev > 0 && areaCount > 1;
 
   return (
     <div className="flex gap-3">
@@ -30,10 +35,10 @@ export function SnapshotRow({ snap, isFirst, dateLabel }: Props) {
           {dateLabel && <span className="text-xs font-medium text-text-primary">{dateLabel}</span>}
           <span className="text-xs text-text-secondary">{formatTime(snap.time)}</span>
           <span className={`text-xs ${isFirst ? 'font-semibold text-accent-light' : 'text-text-secondary'}`}>{label}</span>
-          {sev > 0 && <span className={`text-xs font-bold ${sevColor(sev)}`}>sev {sev}</span>}
+          {showSevBadge && <span className={`text-xs font-bold ${sevColor(sev)}`}>sev {sev}</span>}
         </div>
 
-        {Object.keys(snap.areas).length > 0 && (
+        {areaCount > 0 && (
           <div className="mt-1 flex flex-wrap gap-1">
             {Object.entries(snap.areas).map(([area, s]) => (
               <span key={area} className={`text-xs font-medium ${sevColor(s)}`}>{area} {s}</span>

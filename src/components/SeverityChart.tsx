@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { Attack } from '../types';
 import { formatTime } from '../utils/format';
 
@@ -36,6 +36,8 @@ export function SeverityChart({ attack, height = 200 }: Props) {
     ...new Set(attack.snapshots.flatMap((s) => Object.keys(s.areas))),
   ];
   const medEvents = attack.snapshots.filter((s) => s.medication?.name);
+  // A legend only earns its space when there's more than one line to tell apart.
+  const showLegend = activeAreas.length > 1;
 
   if (data.length < 2) {
     return (
@@ -46,7 +48,11 @@ export function SeverityChart({ attack, height = 200 }: Props) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    // Clips the chart's negative left margin (used to pull the Y-axis in)
+    // so it can never register as extra horizontal scroll width on the page —
+    // that overflow was making the whole sheet scrollable sideways on iOS.
+    <div style={{ overflowX: 'hidden' }}>
+    <ResponsiveContainer width="100%" height={showLegend ? height + 28 : height}>
       <LineChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: -20 }}>
         <XAxis
           dataKey="time"
@@ -92,8 +98,17 @@ export function SeverityChart({ attack, height = 200 }: Props) {
             connectNulls
           />
         ))}
+        {showLegend && (
+          <Legend
+            verticalAlign="bottom"
+            height={24}
+            wrapperStyle={{ fontSize: '0.6875rem' }}
+            formatter={(value) => <span style={{ color: '#dde1eb' }}>{value}</span>}
+          />
+        )}
       </LineChart>
     </ResponsiveContainer>
+    </div>
   );
 }
 

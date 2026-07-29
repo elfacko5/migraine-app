@@ -52,10 +52,17 @@
 /* ── Typography baseline ───────────────────────────── */
 html {
   color-scheme: dark;
+  /* Belt-and-suspenders: a stray negative-margin or absolutely-positioned
+     element (e.g. a chart's Y-axis offset) can otherwise make the whole
+     page horizontally scrollable on iOS, forcing a manual pinch/scroll to
+     "fit" it back — nothing in this single-page app needs page-level
+     horizontal scroll. */
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
   background-color: #0d0f14;
   color: #dde1eb;
   font-family: var(--font-sans);
