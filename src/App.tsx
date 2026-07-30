@@ -141,13 +141,28 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-dvh bg-bg-base">
+    <div
+      // `relative` + an explicit height from --app-height (rather than
+      // min-h-dvh + letting the page itself scroll) makes this div a fixed,
+      // never-scrolling box: the containing block every `absolute`-positioned
+      // overlay below (BottomNav, the floating pills, Sheet) anchors against.
+      // Confirmed via live Safari Web Inspector testing on-device: after a
+      // cold PWA relaunch, WebKit doesn't just miscalculate `position: fixed`
+      // — it hard-clips fixed-position content to its own broken, short
+      // native viewport (icons showed, labels below them didn't, no matter
+      // what top/bottom values were used). Only escaping `position: fixed`
+      // entirely — anchoring to this correctly-sized non-scrolling root
+      // instead — actually renders past that clip.
+      className="relative overflow-hidden bg-bg-base"
+      style={{ height: 'var(--app-height, 100dvh)' }}
+    >
       <ViewportDebug />
       <BrightnessOverlay brightness={brightness} onOpenSettings={() => setTab('settings')} />
 
       <TopBar title={TAB_TITLES[tab]} />
 
-      <div className="mx-auto max-w-2xl px-4 pt-5 pb-28 sm:px-6">
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto max-w-2xl px-4 pt-5 pb-28 sm:px-6">
         {/* ── Today tab ───────────────────────────── */}
         {tab === 'log' && (
           <section className="space-y-4">
@@ -207,6 +222,7 @@ export default function App() {
             />
           </section>
         )}
+        </div>
       </div>
 
       <TextScalePill scale={textScale} onScale={setTextScale} />

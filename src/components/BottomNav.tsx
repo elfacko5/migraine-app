@@ -37,16 +37,13 @@ interface Props {
 export function BottomNav({ active, onChange, onAdd }: Props) {
   return (
     <>
-      {/* Safety-margin patch: on some iOS launches, WebKit's own fixed-position
-          viewport calculation lands `bottom: 0` short of the true screen edge
-          (a WebKit bug, not something a CSS position fix could reliably
-          correct — attempts to compensate for it precisely caused worse
-          regressions). Rather than chase the exact shortfall, extend the same
-          background color generously below the nav's nominal bottom edge so
-          any gap paints over instead of showing raw page background. */}
-      <div aria-hidden="true" className="fixed inset-x-0 z-30 bg-bg-base" style={{ bottom: '-60px', height: '60px' }} />
+      {/* `absolute` (not `fixed`) relative to App's own correctly-sized,
+          non-scrolling root — position: fixed was confirmed, via live Safari
+          Web Inspector testing on-device, to be hard-clipped to WebKit's own
+          short native viewport after a cold PWA relaunch (icons rendered,
+          labels below them didn't, regardless of top/bottom values). */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-bg-border bg-bg-base/95 backdrop-blur-md"
+        className="absolute inset-x-0 bottom-0 z-40 border-t border-bg-border bg-bg-base/95 backdrop-blur-md"
         style={{ paddingBottom: 'max(0.375rem, calc(env(safe-area-inset-bottom) - 0.625rem))' }}
       >
       <ul className="mx-auto flex w-full max-w-2xl items-end">
