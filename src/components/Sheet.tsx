@@ -28,11 +28,7 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
   }, [open, onClose]);
 
   return (
-    <div
-      className={`fixed inset-0 z-50 ${open ? '' : 'pointer-events-none'}`}
-      style={{ bottom: 'var(--viewport-shortfall, 0px)' }}
-      aria-hidden={!open}
-    >
+    <div className={`fixed inset-0 z-50 ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
       {/* Backdrop */}
       <div
         className={`absolute inset-0 bg-bg-base/70 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
