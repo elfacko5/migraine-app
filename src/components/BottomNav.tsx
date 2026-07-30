@@ -36,24 +36,19 @@ interface Props {
 
 export function BottomNav({ active, onChange, onAdd }: Props) {
   return (
-    <nav
-      // Anchored from `top` + a self-height transform instead of `bottom: 0` —
-      // a zoomed screenshot confirmed bottom-0 really was landing short of the
-      // true edge on-device. `top: --app-height` (confirmed correct via the
-      // screen-based fallback in useViewportHeight) plus shifting up by the
-      // element's own rendered height sidesteps whatever reference frame
-      // `bottom` was resolving against, without needing to know the exact size
-      // of the gap at any given moment.
-      // TEMPORARY: magenta bg for the bottom-gap investigation — revert once
-      // confirmed.
-      className="fixed inset-x-0 z-40 border-t border-bg-border backdrop-blur-md"
-      style={{
-        top: 'var(--app-height, 100dvh)',
-        transform: 'translateY(-100%)',
-        paddingBottom: 'max(0.375rem, calc(env(safe-area-inset-bottom) - 0.625rem))',
-        backgroundColor: 'magenta',
-      }}
-    >
+    <>
+      {/* Safety-margin patch: on some iOS launches, WebKit's own fixed-position
+          viewport calculation lands `bottom: 0` short of the true screen edge
+          (a WebKit bug, not something a CSS position fix could reliably
+          correct — attempts to compensate for it precisely caused worse
+          regressions). Rather than chase the exact shortfall, extend the same
+          background color generously below the nav's nominal bottom edge so
+          any gap paints over instead of showing raw page background. */}
+      <div aria-hidden="true" className="fixed inset-x-0 z-30 bg-bg-base" style={{ bottom: '-60px', height: '60px' }} />
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-bg-border bg-bg-base/95 backdrop-blur-md"
+        style={{ paddingBottom: 'max(0.375rem, calc(env(safe-area-inset-bottom) - 0.625rem))' }}
+      >
       <ul className="mx-auto flex w-full max-w-2xl items-end">
         {LEFT_TABS.map((tab) => (
           <li key={tab.id} className="flex-1">
@@ -78,7 +73,8 @@ export function BottomNav({ active, onChange, onAdd }: Props) {
           </li>
         ))}
       </ul>
-    </nav>
+      </nav>
+    </>
   );
 }
 
