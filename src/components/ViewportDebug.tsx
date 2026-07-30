@@ -35,7 +35,7 @@ export function ViewportDebug() {
 
   return (
     <div
-      className="fixed left-1 top-1 z-[999] rounded bg-black/80 px-2 py-1 font-mono text-[10px] leading-tight text-lime-300"
+      className="pointer-events-none fixed left-1 top-1 z-[999] rounded bg-black/80 px-2 py-1 font-mono text-[10px] leading-tight text-lime-300"
       style={{ paddingTop: 'calc(0.25rem + env(safe-area-inset-top))' }}
     >
       {lines.map((l, i) => <div key={i}>{l}</div>)}
