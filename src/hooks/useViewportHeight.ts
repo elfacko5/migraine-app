@@ -8,19 +8,32 @@ import { useEffect } from 'react';
 // the actual visual viewport height in a CSS var and re-applying it on every
 // resize/scroll forces a correct recalculation instead of trusting the
 // browser's own (sometimes stale) fixed-position sizing.
+//
+// A second, distinct failure mode confirmed via an on-device diagnostic
+// readout: after a cold launch from a fully-terminated state, WebKit can
+// report visualViewport.height/innerHeight as if the translucent status bar
+// (set via apple-mobile-web-app-status-bar-style + viewport-fit=cover) were
+// opaque reserved space instead of an overlay — a real, internally
+// consistent measurement, not a stale one, so re-reading it later doesn't
+// help. The shortfall matches a status bar's height (~40-60px on this
+// device), never a keyboard's (200px+), so below that threshold we trust
+// window.screen's physical dimensions (which a real keyboard never affects)
+// over the browser's own figure.
 export function useViewportHeight() {
   useEffect(() => {
     const setHeight = () => {
-      const height = window.visualViewport?.height ?? window.innerHeight;
+      const measured = window.visualViewport?.height ?? window.innerHeight;
+      const isPortrait = window.innerWidth <= window.innerHeight;
+      const screenFull = isPortrait
+        ? Math.max(window.screen.width, window.screen.height)
+        : Math.min(window.screen.width, window.screen.height);
+      const shortfall = screenFull - measured;
+      const height = shortfall > 0 && shortfall < 100 ? screenFull : measured;
       document.documentElement.style.setProperty('--app-height', `${height}px`);
     };
     setHeight();
-    // On a cold PWA launch, visualViewport.height can briefly report a
-    // too-small value before the standalone window chrome finishes settling —
-    // there's no event for "settled", so re-measure a few times shortly after
-    // mount to catch the correct value once it's available. Without this, the
-    // undersized reading sticks in --app-height for the rest of the session
-    // unless some unrelated scroll/resize happens to fire first.
+    // Also re-measure a few times shortly after mount in case the browser's
+    // own figure needs a moment to settle on a genuinely correct value.
     const settleTimers = [50, 150, 300, 600, 1000].map((ms) => setTimeout(setHeight, ms));
     window.visualViewport?.addEventListener('resize', setHeight);
     window.visualViewport?.addEventListener('scroll', setHeight);
