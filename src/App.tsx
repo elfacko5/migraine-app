@@ -140,7 +140,17 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-dvh bg-bg-base">
+    <div
+      className="bg-bg-base"
+      // `will-change: transform` makes this div the containing block for every
+      // `position: fixed` descendant (BottomNav, TextScalePill, BrightnessOverlay's
+      // pill, Sheet's own fixed wrapper) — so their `bottom-*` offsets resolve
+      // against our JS-measured --app-height instead of WebKit's native
+      // fixed-viewport rect, which useViewportHeight's own comment notes can get
+      // stuck stale after a cold PWA launch until some unrelated reflow (e.g.
+      // scrolling a tall page) nudges it to recompute.
+      style={{ height: 'var(--app-height, 100dvh)', willChange: 'transform' }}
+    >
       <BrightnessOverlay brightness={brightness} onOpenSettings={() => setTab('settings')} />
 
       <TopBar title={TAB_TITLES[tab]} />
