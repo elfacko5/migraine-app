@@ -37,11 +37,22 @@ interface Props {
 export function BottomNav({ active, onChange, onAdd }: Props) {
   return (
     <nav
-      // TEMPORARY: magenta bg for the bottom-gap investigation, so the gap
-      // shows up unmistakably even in a compressed screenshot — revert once
+      // Anchored from `top` + a self-height transform instead of `bottom: 0` —
+      // a zoomed screenshot confirmed bottom-0 really was landing short of the
+      // true edge on-device. `top: --app-height` (confirmed correct via the
+      // screen-based fallback in useViewportHeight) plus shifting up by the
+      // element's own rendered height sidesteps whatever reference frame
+      // `bottom` was resolving against, without needing to know the exact size
+      // of the gap at any given moment.
+      // TEMPORARY: magenta bg for the bottom-gap investigation — revert once
       // confirmed.
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-bg-border backdrop-blur-md"
-      style={{ paddingBottom: 'max(0.375rem, calc(env(safe-area-inset-bottom) - 0.625rem))', backgroundColor: 'magenta' }}
+      className="fixed inset-x-0 z-40 border-t border-bg-border backdrop-blur-md"
+      style={{
+        top: 'var(--app-height, 100dvh)',
+        transform: 'translateY(-100%)',
+        paddingBottom: 'max(0.375rem, calc(env(safe-area-inset-bottom) - 0.625rem))',
+        backgroundColor: 'magenta',
+      }}
     >
       <ul className="mx-auto flex w-full max-w-2xl items-end">
         {LEFT_TABS.map((tab) => (
