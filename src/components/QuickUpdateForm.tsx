@@ -261,7 +261,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
       {/* Actions — flex-pinned to the bottom (above the home indicator) */}
       <div
         className="flex gap-3 border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
-        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
       >
         {step === 0 ? (
           <div className="flex flex-col gap-3 w-full">

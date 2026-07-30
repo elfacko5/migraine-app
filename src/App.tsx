@@ -28,7 +28,6 @@ import { HistoryView } from './components/HistoryView';
 import { SettingsView } from './components/SettingsView';
 import { TextScalePill } from './components/TextScalePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
-import { ViewportDebug } from './components/ViewportDebug';
 
 export default function App() {
   useViewportHeight();
@@ -156,7 +155,6 @@ export default function App() {
       className="relative overflow-hidden bg-bg-base"
       style={{ height: 'var(--app-height, 100dvh)' }}
     >
-      <ViewportDebug />
       <BrightnessOverlay brightness={brightness} onOpenSettings={() => setTab('settings')} />
 
       <TopBar title={TAB_TITLES[tab]} />
