@@ -37,8 +37,11 @@ interface Props {
 export function BottomNav({ active, onChange, onAdd }: Props) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-bg-border bg-bg-base/95 backdrop-blur-md"
-      style={{ paddingBottom: 'max(0.375rem, calc(env(safe-area-inset-bottom) - 0.625rem))' }}
+      className="fixed inset-x-0 z-40 border-t border-bg-border bg-bg-base/95 backdrop-blur-md"
+      style={{
+        bottom: 'var(--viewport-shortfall, 0px)',
+        paddingBottom: 'max(0.375rem, calc(env(safe-area-inset-bottom) - 0.625rem))',
+      }}
     >
       <ul className="mx-auto flex w-full max-w-2xl items-end">
         {LEFT_TABS.map((tab) => (

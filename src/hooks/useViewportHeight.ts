@@ -28,8 +28,16 @@ export function useViewportHeight() {
         ? Math.max(window.screen.width, window.screen.height)
         : Math.min(window.screen.width, window.screen.height);
       const shortfall = screenFull - measured;
-      const height = shortfall > 0 && shortfall < 100 ? screenFull : measured;
+      const isStatusBarBug = shortfall > 0 && shortfall < 100;
+      const height = isStatusBarBug ? screenFull : measured;
       document.documentElement.style.setProperty('--app-height', `${height}px`);
+      // `position: fixed; bottom: 0` elements (BottomNav, the floating text-size
+      // and brightness pills) anchor to WebKit's own (possibly also-broken)
+      // fixed-positioning viewport, not to --app-height — so on top of sizing
+      // Sheet correctly, expose the same shortfall as a padding nudge those
+      // elements can add to their own `bottom` offset to land back at the true
+      // edge. Zero in the normal/keyboard-open case, so it's a no-op then.
+      document.documentElement.style.setProperty('--viewport-shortfall', `${isStatusBarBug ? shortfall : 0}px`);
     };
     setHeight();
     // Also re-measure a few times shortly after mount in case the browser's
