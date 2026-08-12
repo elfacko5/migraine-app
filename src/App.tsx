@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { Tab, Attack, Snapshot } from './types';
 import { useAttacks } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
@@ -9,6 +9,7 @@ import { useViewportHeight } from './hooks/useViewportHeight';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { parseVoiceEntry, type VoiceDraft } from './utils/voiceParse';
 import { onNotificationAction } from './utils/notifications';
+import { consumePendingVoiceEntry } from './utils/pendingVoice';
 import { BottomNav } from './components/BottomNav';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
@@ -103,33 +104,61 @@ export default function App() {
 
   const updateAttack = attacks.find((a) => a.id === updateAttackId) ?? null;
 
-  // "Log a migraine" Siri Shortcut deep link: the Shortcut dictates via
-  // Siri's own free dictation (no Web Speech API involved — Safari/iOS PWA
-  // doesn't implement it) and opens this app at `?voice=<transcript>`.
-  // Parses that transcript into a draft and opens the right sheet prefilled
-  // — LogForm for a new attack, QuickUpdateForm if one's already ongoing —
-  // same routing the FAB already uses. A ref guard (not just the URL param
-  // being consumed) makes this fire at most once per load even if the
-  // dependencies below change before the param is stripped.
+  // Voice logging has two entry points, both ending here:
+  //
+  // - **Siri App Intent** (native) — `LogMigraineIntent` captures what was said
+  //   and leaves it in Preferences under PENDING_VOICE_KEY. Native code can't
+  //   write an attack itself (attacks live in localStorage inside the WebView),
+  //   so it hands over the transcript and this side does the rest.
+  // - **Siri Shortcut deep link** (PWA, and still valid natively) — opens the
+  //   app at `?voice=<transcript>`.
+  //
+  // Either way the transcript is parsed into a draft and the matching sheet
+  // opens prefilled — LogForm for a new attack, QuickUpdateForm if one is
+  // already ongoing, the same routing the FAB uses. Nothing auto-saves.
+  //
+  // The ref guard (rather than relying on the URL param being stripped) keeps
+  // this to one fire per delivery even if the dependencies below change first.
   const voiceHandledRef = useRef(false);
-  useEffect(() => {
+  const applyVoiceText = useCallback((text: string) => {
     if (voiceHandledRef.current) return;
-    const params = new URLSearchParams(window.location.search);
-    const voiceText = params.get('voice');
-    if (!voiceText) return;
     voiceHandledRef.current = true;
-    const draft = parseVoiceEntry(voiceText, {
+    setVoiceDraft(parseVoiceEntry(text, {
       painAreas: PAIN_AREAS,
       symptoms: sortedSymptoms,
       reliefs: sortedReliefs,
       triggers: sortedTriggers,
       recentMeds,
-    });
-    setVoiceDraft(draft);
-    window.history.replaceState({}, '', window.location.pathname);
+    }));
     if (ongoingAttack) setUpdateAttackId(ongoingAttack.id);
     else setLogSheetOpen(true);
   }, [ongoingAttack, recentMeds, sortedTriggers, sortedSymptoms, sortedReliefs]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const voiceText = params.get('voice');
+    if (voiceText) {
+      window.history.replaceState({}, '', window.location.pathname);
+      applyVoiceText(voiceText);
+      return;
+    }
+    // The intent runs in the native process and may have written its transcript
+    // before the web layer even started, or while the app sat in the background
+    // — so check on mount *and* on every foreground, not just once.
+    const drainPending = async () => {
+      if (voiceHandledRef.current) return;
+      const pending = await consumePendingVoiceEntry();
+      if (pending) applyVoiceText(pending);
+    };
+    drainPending();
+    const onVisible = () => { if (document.visibilityState === 'visible') drainPending(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [applyVoiceText]);
 
   // Handle reminder button taps. The source is the OS on native and the
   // service worker on web — onNotificationAction hides that difference and
@@ -148,14 +177,19 @@ export default function App() {
     });
   }, [attacks, addSnapshot]);
 
+  // Releasing the voice guard on close is what lets Siri be used more than once
+  // per app session: the intent can run again at any time (it only backgrounds
+  // the app), unlike the `?voice=` deep link which is consumed once per load.
   function closeLogSheet() {
     setLogSheetOpen(false);
     setVoiceDraft(null);
+    voiceHandledRef.current = false;
   }
 
   function closeUpdateSheet() {
     setUpdateAttackId(null);
     setVoiceDraft(null);
+    voiceHandledRef.current = false;
   }
 
   function handleLogSave(snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean) {
