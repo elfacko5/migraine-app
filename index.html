@@ -3,7 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- maximum-scale/user-scalable stop WKWebView's automatic "zoom to the
+         focused field" on inputs whose font-size is under 16px (e.g.
+         ChipSelector's text-sm custom-entry box, which also autofocuses). That
+         zoom shifts the whole fixed-height app shell up under the status bar
+         and pushes its right edge off-screen, and it doesn't undo itself when
+         the keyboard closes. iOS Safari has ignored both since iOS 10, so the
+         PWA keeps pinch-zoom and loses no accessibility; only the Capacitor
+         WKWebView honours them (Capacitor leaves ignoresViewportScaleLimits
+         at its false default). The app's own text-size control remains the
+         intended way to enlarge type. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#020617" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

@@ -87,3 +87,30 @@ h1, h2, h3, h4, h5, h6 {
 input[type="range"] {
   accent-color: #5a9e7a;
 }
+
+/* iOS WebKit sizes date/time inputs from their internal field widgets, giving
+   them an intrinsic width that a plain `w-full` doesn't shrink — the picker
+   then runs past the app shell's right edge (confirmed in the native build:
+   the input's left border rounds correctly while its right border is off
+   screen entirely). Desktop browsers size these fine, so this only shows up
+   on device. */
+input[type="datetime-local"],
+input[type="date"],
+input[type="time"] {
+  /* iOS WebKit renders these as native controls and sizes them itself: on
+     device the field reported box-sizing:content-box and min-width:149px even
+     with border-box/min-width:0 declared and matching (verified against the
+     live DOM — the element matched the selector and the right stylesheet was
+     loaded, the UA simply won). Its border box came out 396px inside a 370px
+     container, pushing 10px off the right edge of the screen.
+     `appearance: none` drops the native control so the box model below is
+     honoured; the field keeps its Tailwind styling and still opens the system
+     picker on tap (and via openPicker's showPicker call). Desktop browsers
+     size these correctly either way, so this only ever showed up on device. */
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
