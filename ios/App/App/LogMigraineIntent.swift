@@ -27,23 +27,27 @@ struct LogMigraineIntent: AppIntent {
     /// nothing is ever saved without the user seeing it.
     static var openAppWhenRun: Bool = true
 
-    @Parameter(title: "How it feels")
-    var note: String?
+    /// Required, with a prompt, so App Intents asks for it during *parameter
+    /// resolution* — before `perform()` runs and before the app opens. It was
+    /// optional at first, with a `requestValue` call inside `perform()` as the
+    /// fallback: optional parameters are never prompted for automatically, and
+    /// the in-perform request didn't prompt either once `openAppWhenRun` was
+    /// set, so Siri silently ran with no text and just opened the app.
+    @Parameter(
+        title: "How it feels",
+        requestValueDialog: IntentDialog("How does it feel?")
+    )
+    var note: String
 
     func perform() async throws -> some IntentResult {
-        // Optional parameters are not prompted for automatically, so ask when
-        // the phrase carried no description ("Hey Siri, log a migraine"). If
-        // the request fails or is dismissed, fall through and just open the
-        // app — an unprefilled wizard is still a usable outcome.
-        var spoken = note
-        if spoken?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
-            spoken = try? await $note.requestValue("How does it feel?")
-        }
-
-        if let spoken, !spoken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        let spoken = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !spoken.isEmpty {
             UserDefaults.standard.set(spoken, forKey: "CapacitorStorage.pendingVoiceEntry")
+            // The app may already be running and merely brought forward, in
+            // which case nothing else forces the write to disk before the web
+            // layer reads it back.
+            UserDefaults.standard.synchronize()
         }
-
         return .result()
     }
 }
