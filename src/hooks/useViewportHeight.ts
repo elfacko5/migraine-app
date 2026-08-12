@@ -41,18 +41,28 @@ export function useViewportHeight() {
         ? Math.max(window.screen.width, window.screen.height)
         : Math.min(window.screen.width, window.screen.height);
       const shortfall = screenFull - measured;
-      const isStatusBarBug = shortfall > 0 && shortfall < 100;
-      // With the keyboard up, WebKit does not shorten the layout viewport —
-      // it keeps it full height and offsets the *visual* viewport instead
-      // (visualViewport.offsetTop). The visible region is therefore
-      // [offsetTop, offsetTop + visualViewport.height], which still ends at
-      // the bottom of the layout viewport. So the shell must stay full height:
-      // shrinking it to visualViewport.height subtracts the keyboard a second
-      // time and lifts BottomNav clear of the bottom of the screen — measured
-      // at a 68px accessory bar in the simulator, and a whole keyboard's worth
-      // (~300px, nav stranded mid-screen) on device.
-      const height = isStatusBarBug || isKeyboardOpen() ? screenFull : measured;
-      document.documentElement.style.setProperty('--app-height', `${height}px`);
+      // The keyboard shrinks the viewport far more than the status bar ever
+      // could, but its accessory bar alone takes ~68px — inside the sub-100px
+      // band this workaround claims — so focus, not magnitude, decides.
+      const isStatusBarBug = shortfall > 0 && shortfall < 100 && !isKeyboardOpen();
+      const height = isStatusBarBug ? screenFull : measured;
+
+      // The shell is pinned to the *visible* region rather than the layout
+      // viewport. With the keyboard up, WebKit keeps the layout viewport full
+      // height and describes what is actually on screen as
+      // [visualViewport.offsetTop, + visualViewport.height] — but it only
+      // applies that offset when it has to scroll the focused field into
+      // view. Focus a field that is already visible and offsetTop stays 0, so
+      // a shell sized to the visible height sits at the top of the layout
+      // viewport with its bottom edge — and BottomNav — behind the keyboard,
+      // until an unrelated scroll makes WebKit apply the offset and the nav
+      // abruptly snaps into place. Translating by offsetTop makes the shell
+      // cover the visible region in both cases, without depending on WebKit
+      // having scrolled.
+      const offset = window.visualViewport?.offsetTop ?? 0;
+      const root = document.documentElement.style;
+      root.setProperty('--app-height', `${height}px`);
+      root.setProperty('--app-offset', `${offset}px`);
     };
     setHeight();
     // Also re-measure a few times shortly after mount in case the browser's

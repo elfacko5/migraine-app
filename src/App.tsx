@@ -193,7 +193,16 @@ export default function App() {
       // entirely — anchoring to this correctly-sized non-scrolling root
       // instead — actually renders past that clip.
       className="relative overflow-hidden bg-bg-base"
-      style={{ height: 'var(--app-height, 100dvh)' }}
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        // Offsets the shell onto the *visible* region when the keyboard
+        // pushes it (see useViewportHeight) — 0 the rest of the time. This is
+        // a plain translate, not the `will-change: transform` containing-block
+        // trick that broke Sheet's overlay behaviour before: every overlay is
+        // `absolute` and already anchors to this element, so nothing depends
+        // on it not establishing a containing block.
+        transform: 'translateY(var(--app-offset, 0px))',
+      }}
     >
       <BrightnessOverlay brightness={brightness} onOpenSettings={() => setTab('settings')} />
 
