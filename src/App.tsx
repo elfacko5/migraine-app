@@ -43,8 +43,8 @@ export default function App() {
   const [updateAttackId, setUpdateAttackId] = useState<number | null>(null);
   const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
-  // Set when either sheet below was opened from the "log a migraine" Siri
-  // Shortcut deep link (see the voice-param effect below) — cleared whenever
+  // Set when either sheet below was opened by voice — the Siri App Intent or
+  // the Shortcut deep link (see the voice effect below) — and cleared whenever
   // that sheet closes so a stray prefill never leaks into a later manual open.
   const [voiceDraft, setVoiceDraft] = useState<VoiceDraft | null>(null);
 

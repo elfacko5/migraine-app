@@ -146,15 +146,31 @@ Things that will bite when touching this:
 
 Adaptive schedule: +1h after first snapshot, +2h after any subsequent snapshot. Notifications are not scheduled if `attack.end` is already set (retrospective logs).
 
-**Verified so far:** on device, logging an attack raises the real iOS permission prompt and iOS then holds a `UNNotificationRequest` with the folded id and the `MIGRAINE_CHECKIN` category. **Not yet verified:** a delivered notification or its buttons round-tripping — the shortest interval is 30 minutes, so that needs a deliberate wait.
+**Permission is requested before anything is scheduled** (`handleLogSave` awaits it). iOS accepts a request made while permission is undecided but never delivers it if the user then declines, which would leave an attack looking like it had a reminder queued when it had none. The request is wrapped so a failure can't cost the user the log entry.
 
-**Known ordering wrinkle:** `handleLogSave` schedules before requesting permission. iOS accepts the request either way, but on a genuine first run where the user denies, the reminder stays scheduled and silently never fires.
+**Verified in the simulator:** a notification scheduled through the plugin is delivered by the OS and appears in Notification Center with the right title/body/icon; permission is prompted before `hd_attacks` is written, and denying still stores the attack. **Not verified:** the action buttons round-tripping back into `addSnapshot` — synthetic taps on Simulator notifications don't activate them, so that needs a real device.
 
-## Voice logging (Siri Shortcut deep link)
+## Voice logging
 
-Opening the app at `?voice=<transcript>` parses the text and opens the matching sheet prefilled — `LogForm` for a new attack, `QuickUpdateForm` when one is ongoing (the same routing the FAB uses). Nothing auto-submits; the wizard still walks every step.
+Two entry points, both landing in the same handler in `App.tsx`, which parses the transcript and opens the matching sheet prefilled — `LogForm` for a new attack, `QuickUpdateForm` when one is ongoing (the same routing the FAB uses). Nothing auto-submits; the wizard still walks every step.
 
-The transcript comes from a user-built iOS Shortcut (Dictate Text → URL Encode → open the app URL). That indirection exists because neither native path is open to a PWA: Siri App Intents are native-only, and iOS Safari doesn't implement the Web Speech API, so an in-app mic button would silently do nothing on the one platform this ships to. **Replacing this with real App Intents is the main outstanding reason the native shell was built.**
+- **Siri App Intent** (native) — `ios/App/App/LogMigraineIntent.swift`. "Hey Siri, log a migraine", no user setup.
+- **Siri Shortcut deep link** (`?voice=<transcript>`) — the original path, still the only option on the PWA, since Siri App Intents are native-only and iOS Safari doesn't implement the Web Speech API (an in-app mic button would silently do nothing there).
+
+**The intent cannot write an attack itself.** Attacks live in `localStorage` inside the WebView, which native code can't reach — so it captures what was said and hands it over, exactly as the Shortcut did.
+
+The handoff deliberately avoids a custom native bridge: `@capacitor/preferences` on iOS stores to `UserDefaults.standard` with keys prefixed `CapacitorStorage.`, so the intent writes `CapacitorStorage.pendingVoiceEntry` directly and `consumePendingVoiceEntry()` (`src/utils/pendingVoice.ts`) reads it with a plain `Preferences.get`. **The key name is duplicated in Swift and TS — change one, change the other.** It's read on mount *and* on every foreground, because the intent may have written it before the web layer started or while the app was backgrounded, and it's cleared on read so it fires once.
+
+- **App Intents need iOS 16**; the deployment target is 15, so the intent is availability-gated. On iOS 15 there's simply no Siri support.
+- **`voiceHandledRef` releases when the sheet closes.** It guards against double-firing within one delivery, but the intent (unlike a URL param consumed once per load) can run again at any time — latching it for the page's lifetime made Siri work exactly once per app session.
+- Adding a Swift file to the target should be scripted with the `xcodeproj` gem (ships with CocoaPods) rather than hand-editing `project.pbxproj`.
+
+`src/utils/voiceParse.ts` is deliberately low-precision — substring/prefix matching against the user's own chip lists, not NLP:
+
+- Needle words under 4 characters need an exact word match; longer ones need a 4-character shared prefix. An earlier 5-char-stem rule let filler words ("a", "me", "my") match unrelated entries — a test sentence produced "Aura", "Alcohol" and "Menstruation" from a transcript containing none of them.
+- A side-less mention ("my forehead is killing me") selects **both** sides rather than guessing.
+- Medications only match against `recentMeds` (names already in the user's history), so a drug named for the first time by voice won't be picked up — it survives in the note.
+- The raw transcript is always kept verbatim as the note, so nothing said is lost when the structured parse misses, and the prefill banner lists exactly what was recognised so a wrong guess is visible rather than silently saved.
 
 `src/utils/voiceParse.ts` is deliberately low-precision — substring/prefix matching against the user's own chip lists, not NLP:
 
