@@ -33,7 +33,7 @@ Vite 8 + React 19 + TypeScript (strict) + Tailwind CSS v4 + Recharts + `@supabas
 
 `ios/` is a real Xcode project that loads the Vite build in a `WKWebView`. No application code is platform-specific: `dist/` is copied into the bundle at build time, so every hook, component and utility runs unchanged.
 
-It exists for two things a PWA structurally cannot do: **reminders that survive the app being force-quit** (the OS owns the timer — see the notification section) and, eventually, **real Siri App Intents** rather than the Shortcut deep link.
+It exists for two things a PWA structurally cannot do, both now in place: **reminders that survive the app being force-quit** (the OS owns the timer — see the notification section) and **real Siri App Intents** rather than a hand-built Shortcut (see voice logging).
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22            # the Capacitor CLI needs Node >= 22; the repo default is 20
@@ -264,3 +264,59 @@ Opened via the FAB or `OngoingAttackBanner` for the ongoing attack, **or via "Ad
 - **`NotificationSettings`** — the enable control is a real toggle switch (`role="switch"`, sliding thumb), not a checkbox, and is always rendered expanded (no accordion) since it only ever appears on its own dedicated wizard step now. If you touch the toggle's markup: the thumb needs an explicit `left-0.5` (a `<button>`'s default UA `text-align: center` skews the "static position" fallback an absolutely-positioned child with no explicit `left` would otherwise get), the track needs `overflow-hidden` (a `rounded-full` container does not clip an absolutely-positioned child to its curved corners on its own), and the "on" translate distance must leave the same 2px inset as the other three sides (`translate-x-5`, not a value calibrated for a `left-0` base).
 - **`openPicker`** (`src/utils/openPicker.ts`) — shared helper that calls `showPicker()` on a `datetime-local` input (falling back to `.focus()`), used by `LogForm`'s start/end time "Other" option and `EndAttackDialog`'s "Earlier" option so the native picker opens on the same tap that reveals the field.
 - **`SnapshotRow`** (`AttackDetail` timeline and `QuickUpdateForm`'s choice-screen timeline) — the time itself is a pill marker on the timeline stem (same neutral style for every row, including "Attack start" and `AttackDetail`'s "Attack ended" line — those two anchors are highlighted via bold accent-colored *label text* next to the pill, not the pill itself, which stays muted so it doesn't compete with the pain-area colors) instead of a plain dot. The stem column has a fixed width (`w-16`) so the connecting line's x-position — and every pill's center — lines up exactly regardless of whether the time is 4 or 5 characters (e.g. "9:09" vs "11:03"); the line itself is one continuous absolutely-positioned element per row (spanning the row's full height) rather than a short segment below the pill, so it reads as unbroken down the column. The pain-area+severity chips are the row's first line, since that's the one thing worth scanning for, with the source label (`Attack start` / `(no change)` / `(via notification)`) demoted to a small caption under it — there's no generic "Update" label. Medication lines get a per-name deterministic color (hash into a fixed palette) and a best-effort form icon (`MED_ICON_RULES` in `SnapshotRow.tsx` — 🫧 for soluble/effervescent tablets like Treo, 💉 injections, 💨 sprays, etc., defaulting to 💊); it's pattern-matching on the name/dose text, not a real drug database, so extend the rules list as new forms come up rather than expecting it to know an arbitrary medication's form.
+
+## Decision log
+
+Why things are the way they are, and what was tried and rejected. The sections above cover *how* each piece works; this is the record of the calls behind them, so they don't get re-litigated or accidentally reverted.
+
+### Platform
+
+- **Wrap the existing web app with Capacitor rather than rewrite it.** The two things that justified going native — reminders surviving a force-quit, and real Siri App Intents — are both reachable from a wrapped app, and ~90% of the codebase (data model, hooks, stats, sync, every component) carries over untouched. *Rejected:* a React Native rewrite (business logic ports, but every component and the hand-inlined head-diagram SVG get rebuilt) and a SwiftUI rewrite (cleanest long-term, but re-derives everything in this file by hand — months, for a personal app whose value is the data model, not the chrome).
+- **The PWA stays alive alongside the native build.** It's still how the app is developed and how the browser tooling exercises it, and it's the fallback if the native track is ever abandoned. Anything that must differ branches on `Capacitor.isNativePlatform()` at runtime; nothing is forked.
+- **The App Store is not a goal yet.** If it becomes one, the bundle identifier needs settling deliberately first (it's permanent per app record — see below), and Apple's requirements bite on *behaviour*, not on the framework: an in-app account-deletion path, since Supabase sign-in creates accounts, plus a hosted privacy policy and accurate health-data declarations. Sign in with Apple is *not* triggered by email/OTP sign-in.
+
+### Distribution and signing
+
+- **Free provisioning, not the paid account.** It covers everything worth testing on device — local notifications need no entitlement, only *remote* push does. The cost is a 7-day expiry. *Revisit if:* TestFlight becomes useful (sharing with others, or installing without a cable during an actual migraine, when plugging into a laptop is the last thing anyone wants).
+- **Bundle id is `com.sunny.migrainetracker2`.** The `2` is not meaningful — the original id could not be registered, and renaming was the fastest way past it. Worth settling deliberately before any Store submission.
+
+### Voice logging
+
+- **No in-app microphone.** iOS Safari doesn't implement the Web Speech API, so a mic button would silently do nothing on the one platform this ships to. Voice therefore always comes from Siri, which does its own dictation.
+- **The Shortcut deep link came first and stays.** It was the only option before the native shell, and it's still the only option on the PWA. The App Intent is the native upgrade, not a replacement — both converge on one handler.
+- **Neither path writes an attack directly; both hand over a transcript.** Native code can't reach `localStorage` inside the WebView. Even if it could, the wizard still opening for review is the right behaviour: the parser is fuzzy, and silently saving a misheard reading into health data is worse than making the user tap through.
+- **The parser is deliberately dumb** — substring/prefix matching over the user's own chip lists, not NLP, and the raw transcript is always kept verbatim as the note. A cleverer parser that silently drops what it doesn't understand would be worse than an obvious one whose guesses are visible in the prefill banner.
+
+### Notifications
+
+- **Both backends stay live** (OS-scheduled natively, service worker on web) behind one pair of function signatures, so `useAttacks` never branches on platform.
+- **All actions open the app (`foreground: true`), including "No change" and "Snooze".** They're handled in JavaScript, so a background action does nothing once the app has been evicted — which is exactly when a reminder is most likely to be answered. A tap that silently drops a reading is worse than one that opens the app. *The alternative,* handling those two natively in Swift so they resolve without opening the app, is the fix if the app-opening becomes annoying in practice.
+- **The body states an absolute clock time.** It's composed at schedule time but read whenever the user gets to it, so anything relative is a lie by the time it's seen.
+- **Permission is requested before anything is scheduled**, because iOS accepts a request made while permission is undecided and then never delivers it. The request is wrapped so a failure can't cost the user the log entry.
+
+### Layout and viewport
+
+- **The shell is pinned to the visible region** (`--app-height` + `--app-offset`), which is the third approach tried. *Rejected:* sizing it to `visualViewport.height` alone (subtracts the keyboard twice when WebKit has offset, stranding the nav mid-screen), and keeping it full height and relying on WebKit's offset (fails when WebKit *hasn't* offset — a focused field that's already visible leaves the nav under the keyboard until an unrelated scroll snaps it into place).
+- **Pinch-zoom is disabled via the viewport meta** to stop WKWebView's focus-zoom wrecking the fixed shell. iOS Safari has ignored those directives since iOS 10, so the PWA keeps pinch-zoom and loses no accessibility; the app's own text-size control is the intended way to enlarge type.
+- **Trackpad scrolling in the Simulator is left broken.** Making it work would mean letting the document scroll instead of a nested container — reverting the architecture this file exists to protect. Real devices only produce touch, which works.
+
+### Config tried and reverted
+
+Both were plausible, neither had a measurable effect; they're recorded so they aren't tried again as fixes for the same symptoms.
+
+- **`ios.scrollEnabled: false`** — did not stop the keyboard shifting the shell. The offset is a *visual viewport* offset, not a scroll of the WebView's `UIScrollView`.
+- **`ios.backgroundColor`** — did not remove the brief pure-black frame between the launch screen and the app's first paint. That flash is still there and still unexplained.
+
+### Tooling
+
+- **Node 22 for the Capacitor CLI** (installed via nvm; the repo default stays on 20).
+- **`pod install` needs a UTF-8 locale**, or it dies inside Ruby's Unicode normalisation.
+- **Add Swift files to the target with the `xcodeproj` gem** (ships with CocoaPods), not by hand-editing `project.pbxproj`.
+- **Rasterise SVG with `librsvg`** (`brew install librsvg`). `qlmanage` produces a small off-centre thumbnail on a white field.
+- **Measure, don't reason from screenshots.** Every iOS layout bug this file records was diagnosed by reading real numbers off the live DOM; several wrong fixes shipped first when that step was skipped. Safari Web Inspector against the device is the best tool; the `localStorage` + `sqlite3` probe described above works when it isn't to hand.
+
+### Known gaps
+
+- **Notification action buttons have not been round-tripped end to end.** Synthetic taps on Simulator notifications don't activate them, so this needs a device.
+- **The app icon is a placeholder** — the app's existing bolt mark on the app background. A brief for a designed replacement exists; dropping new sources into `assets/` and re-running `@capacitor/assets` is all that's needed.
+- **Siri phrase recognition is unverified** beyond the metadata being registered.
