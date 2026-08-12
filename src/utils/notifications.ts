@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import type { Attack } from '../types';
 import { attackMaxSeverity } from './stats';
-import { formatElapsed } from './format';
+import { formatTime } from './format';
 
 // Reminder scheduling has two backends, chosen at runtime:
 //
@@ -44,15 +44,37 @@ function notificationBody(attack: Attack): string {
   const first = attack.snapshots[0];
   const cur = attack.snapshots[attack.snapshots.length - 1];
   const severity = attackMaxSeverity(attack);
-  const elapsed = formatElapsed(first.time);
   const areas = Object.keys(cur.areas).join(', ') || 'unknown area';
-  return `Started ${elapsed} · ${areas} · severity ${severity}`;
+  // The body is frozen when the notification is *scheduled*, but read when it
+  // fires — an interval later — and often later still, since the point of the
+  // reminder is that the user isn't looking at the phone. Anything relative
+  // ("Started just now", via formatElapsed) is therefore wrong by the time
+  // anyone sees it: an attack logged at 14:05 with a 30-minute reminder
+  // announced "Started just now" at 14:35. An absolute clock time stays true
+  // however long the notification sits unread.
+  return `Started ${formatTime(first.time)} · ${areas} · severity ${severity}`;
 }
 
 const TITLE = "How's your migraine?";
 
 // Registers the notification's action buttons. Native only, and must run
 // before the first schedule() or iOS shows the notification with no buttons.
+//
+// Every action sets `foreground` (UNNotificationAction's .foreground option),
+// which is what makes iOS bring the app up when one is tapped. Without it the
+// action runs in the background — and since all three are handled in
+// JavaScript inside the WebView, there is nothing alive to handle them once the
+// app has been evicted from memory. Observed on device: tapping "Something
+// changed" on a reminder that arrived 30 minutes later dismissed the
+// notification and did nothing at all.
+//
+// The cost is that the quick actions now open the app rather than resolving
+// silently, which is a real regression in feel for "No change" and "Snooze".
+// It is the right trade for now: a tap that silently drops a reading is worse
+// than one that opens the app, and a reminder is most likely to be answered
+// exactly when the app *has* been evicted. Making those two resolve without
+// opening the app means handling them natively in Swift, which is a bigger
+// change than this fix.
 export async function registerNotificationActions(): Promise<void> {
   if (!isNative()) return;
   try {
@@ -60,9 +82,9 @@ export async function registerNotificationActions(): Promise<void> {
       types: [{
         id: ACTION_TYPE_ID,
         actions: [
-          { id: 'update', title: 'Something changed' },
-          { id: 'no_change', title: 'No change' },
-          { id: 'snooze', title: 'Snooze 30 min' },
+          { id: 'update', title: 'Something changed', foreground: true },
+          { id: 'no_change', title: 'No change', foreground: true },
+          { id: 'snooze', title: 'Snooze 30 min', foreground: true },
         ],
       }],
     });
