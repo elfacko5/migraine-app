@@ -15,6 +15,8 @@ source ~/.nvm/nvm.sh && npm run preview  # serve the dist/ build locally
 
 There are no tests. Type-checking is part of `build` (Vite runs `tsc --noEmit` via tsconfig project references).
 
+`npm run lint` currently reports ~6 pre-existing errors (`setState` called synchronously in an effect, `Date.now()` during render). They're the established pattern in this codebase for sync-on-mount and period filtering — don't treat a non-zero lint count as a regression you caused; compare against `git stash`ed output first.
+
 To test on a phone on the same Wi-Fi, expose the dev server on the LAN with `npm run dev -- --host`, then open `http://<mac-hostname>.local:5173` (the `.claude/launch.json` preview config already passes `--host`) — use the Mac's mDNS hostname (`scutil --get LocalHostName`, e.g. `Sunnys-MacBook-Neo.local`), not its LAN IP, since DHCP can reassign the IP at any time and a phone PWA added to the home screen at an IP silently breaks the next time that happens (Vite's `server.allowedHosts` in `vite.config.ts` explicitly allows `.local` for this reason — a `Blocked request` error means a fresh clone or a reset config lost that setting). HMR doesn't reliably push over Wi-Fi — reload the phone manually after changes. Each device has its own `localStorage`; data only matches across desktop/phone if both are signed in to the same account via Supabase sync (see below) — otherwise they're independent.
 
 If working on sync, copy `.env.local.example` to `.env.local` and fill in a Supabase project's URL/anon key (Project Settings → API). `.env.local` is gitignored. Without it, `src/lib/supabase.ts` exports `null` and the app runs local-only — this is the default for a fresh clone.
@@ -23,7 +25,42 @@ If working on sync, copy `.env.local.example` to `.env.local` and fill in a Supa
 
 Vite 8 + React 19 + TypeScript (strict) + Tailwind CSS v4 + Recharts + `@supabase/supabase-js`. `localStorage` is the source of truth for all reads; Supabase provides optional, opt-in cross-device sync (see below) — there's no backend requirement to use the app. PWA via `public/manifest.json` + `public/sw.js`.
 
+**Two shipping targets, one codebase.** The same build runs as a browser/installed PWA *and*, since the Capacitor wrap, as a native iOS app (see "Native iOS shell" below). Nothing is forked per platform: where behaviour has to differ it branches at runtime on `Capacitor.isNativePlatform()`. Keep it that way — the web build is still how the app is developed and how the browser preview tooling exercises it.
+
 **Tailwind v4 note:** configured through the `@tailwindcss/vite` plugin — there is no `tailwind.config.js`. Custom theme tokens go in `src/index.css` under `@theme {}`.
+
+## Native iOS shell (Capacitor)
+
+`ios/` is a real Xcode project that loads the Vite build in a `WKWebView`. No application code is platform-specific: `dist/` is copied into the bundle at build time, so every hook, component and utility runs unchanged.
+
+It exists for two things a PWA structurally cannot do: **reminders that survive the app being force-quit** (the OS owns the timer — see the notification section) and, eventually, **real Siri App Intents** rather than the Shortcut deep link.
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22            # the Capacitor CLI needs Node >= 22; the repo default is 20
+npx cap copy ios                              # rebuild dist/ first, then copy web assets into the bundle
+npx cap sync ios                              # copy + install native deps (run after adding a plugin)
+```
+
+- **`npm run build` before any `cap copy`/`cap sync`** — Capacitor copies `dist/`, it does not build it. A web change that "didn't take effect" in the app is almost always a skipped build.
+- **`pod install` needs a UTF-8 locale.** Without `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` it dies in Ruby's Unicode normalisation. `cap sync` runs pod install, so it inherits this.
+- **`appId` in `capacitor.config.ts` must match `PRODUCT_BUNDLE_IDENTIFIER`** in the Xcode project (currently `com.sunny.migrainetracker2`). iOS takes its identity from the Xcode project, so a mismatch fails silently until a plugin resolves the appId from Capacitor's config and gets an id that doesn't exist on the device.
+- **Deployment target is 15.0**, which `@capacitor/ios` 8's podspec requires. The generated project defaults to 14.0 and `pod install` refuses.
+
+### Running on a physical device
+
+Free provisioning works and covers everything worth testing on device — local notifications need no entitlement (only *remote* push does). Builds expire after 7 days; re-run to renew.
+
+If Xcode's UI fails to register the bundle identifier, build once from the CLI with `-allowProvisioningUpdates` — it registers the App ID and issues the profile where the UI wouldn't:
+
+```bash
+xcodebuild -workspace ios/App/App.xcworkspace -scheme App \
+  -destination 'platform=iOS,id=<device-udid>' -allowProvisioningUpdates -configuration Debug build
+xcrun devicectl device install app --device <device-udid> <path-to-App.app>
+```
+
+First launch on a device is refused until the certificate is trusted under **Settings → General → VPN & Device Management** — that's expected, not a signing fault. Signing will also raise a macOS keychain prompt asking for the **login (Mac account) password**, not the Apple ID password.
+
+**Simulator caveat:** trackpad scrolling doesn't scroll the app. The document never scrolls (see the viewport section) — only nested containers do — and the Simulator delivers trackpad input to the WebView's own scroll view, which has nothing to scroll. Touch drags work, and a real device only ever produces touch, so this is a Simulator artefact and not worth "fixing".
 
 ## Dark-first design
 
@@ -92,27 +129,75 @@ Sync is opt-in and additive: `localStorage` stays authoritative for all reads (i
 
 ## Notification architecture
 
-Notifications are scheduled entirely client-side via `postMessage` to the service worker (`public/sw.js`). The SW keeps a `Map<attackId, timerId>` of pending `setTimeout` calls. This works while the browser is open but does not survive a browser restart.
+Two backends, chosen at runtime in `src/utils/notifications.ts` by `Capacitor.isNativePlatform()`. `scheduleNotification` / `cancelNotification` keep one signature across both, so `useAttacks` never branches on platform.
 
-Flow: `startAttack` / `addSnapshot` → `scheduleNotification()` posts `SCHEDULE_NOTIFICATION` to SW → SW fires `showNotification` after delay → user taps action button → SW posts `NOTIFICATION_ACTION` back to the page → `App.tsx` message handler calls `addSnapshot(..., 'notification_no_change')` or opens the update sheet.
+- **Native (iOS)** — `@capacitor/local-notifications`. The OS owns the timer, so a reminder still fires after the app is force-quit. This is the reason the native shell exists.
+- **Web (browser + installed PWA)** — the original service worker (`public/sw.js`), which keeps a `Map<attackId, timerId>` of pending `setTimeout` calls. Survives tab navigation but **not** a browser restart.
+
+Flow: `startAttack` / `addSnapshot` → `scheduleNotification()` → (native) `LocalNotifications.schedule` / (web) `SCHEDULE_NOTIFICATION` to the SW → reminder fires → user taps an action → `onNotificationAction()` hands `{ action, attackId }` to `App.tsx`, which calls `addSnapshot(..., 'notification_no_change')` or opens the update sheet.
+
+Things that will bite when touching this:
+
+- **`onNotificationAction` is the only subscription point.** It hides which backend delivered the event and absorbs `snooze` itself (rescheduled natively, handled in the SW on web), so callers only see actions that change data. Don't re-add a `snooze` branch in `App.tsx`.
+- **Notification ids are folded.** Attack ids are `Date.now()`, which overflows the 32-bit int the plugin wants, so `notifId()` maps them into a safe range. It's deterministic, so `cancel` derives the same id `schedule` used and re-scheduling replaces rather than stacks.
+- **Action buttons must be registered before the first schedule** (`registerNotificationActions()`, called from `useNotifications` on mount) or iOS renders the notification with no buttons.
+- **Tapping the notification body** reports `actionId: 'tap'` on iOS; that maps to `update`, matching the SW's default click.
+- `useNotifications` requests permission through the plugin on native and `Notification.requestPermission()` on web, normalising both onto `'default' | 'granted' | 'denied'`.
 
 Adaptive schedule: +1h after first snapshot, +2h after any subsequent snapshot. Notifications are not scheduled if `attack.end` is already set (retrospective logs).
 
+**Verified so far:** on device, logging an attack raises the real iOS permission prompt and iOS then holds a `UNNotificationRequest` with the folded id and the `MIGRAINE_CHECKIN` category. **Not yet verified:** a delivered notification or its buttons round-tripping — the shortest interval is 30 minutes, so that needs a deliberate wait.
+
+**Known ordering wrinkle:** `handleLogSave` schedules before requesting permission. iOS accepts the request either way, but on a genuine first run where the user denies, the reminder stays scheduled and silently never fires.
+
+## Voice logging (Siri Shortcut deep link)
+
+Opening the app at `?voice=<transcript>` parses the text and opens the matching sheet prefilled — `LogForm` for a new attack, `QuickUpdateForm` when one is ongoing (the same routing the FAB uses). Nothing auto-submits; the wizard still walks every step.
+
+The transcript comes from a user-built iOS Shortcut (Dictate Text → URL Encode → open the app URL). That indirection exists because neither native path is open to a PWA: Siri App Intents are native-only, and iOS Safari doesn't implement the Web Speech API, so an in-app mic button would silently do nothing on the one platform this ships to. **Replacing this with real App Intents is the main outstanding reason the native shell was built.**
+
+`src/utils/voiceParse.ts` is deliberately low-precision — substring/prefix matching against the user's own chip lists, not NLP:
+
+- Needle words under 4 characters need an exact word match; longer ones need a 4-character shared prefix. An earlier 5-char-stem rule let filler words ("a", "me", "my") match unrelated entries — a test sentence produced "Aura", "Alcohol" and "Menstruation" from a transcript containing none of them.
+- A side-less mention ("my forehead is killing me") selects **both** sides rather than guessing.
+- The raw transcript is always kept verbatim as the note, so nothing said is lost when the structured parse misses, and the prefill banner lists exactly what was recognised so a wrong guess is visible rather than silently saved.
+
 ## App shell
 
-`App.tsx` owns all sheet/modal open state and routes SW messages. Four tabs — Today (`log`), Logs (`history`), Insights (`stats`), Settings — rendered conditionally in one `div`, no router. `TopBar` and the tab content live inside a nested `overflow-y-auto` scroll div; `BottomNav` and the floating pills are positioned outside it (see below). All of them pad for the iOS safe-area insets (`env(safe-area-inset-*)`), needed because the PWA uses `viewport-fit=cover` + a translucent status bar.
+`App.tsx` owns all sheet/modal open state and routes notification actions. Four tabs — Today (`log`), Logs (`history`), Insights (`stats`), Settings — rendered conditionally in one `div`, no router. `TopBar` and the tab content live inside a nested `overflow-y-auto` scroll div; `BottomNav` and the floating pills are positioned outside it (see below). All of them pad for the iOS safe-area insets (`env(safe-area-inset-*)`), needed because the app uses `viewport-fit=cover` + a translucent status bar.
+
+**`TopBar` must stay *inside* the scroll div.** It sat outside once, as a sibling ahead of it: since the scroll div is `h-full` (100% of the root) but `TopBar` also took space in normal flow, the two together overflowed the fixed-height root and its `overflow-hidden` silently clipped a `TopBar`'s worth of content off the bottom of **every** tab. It also made scrolling seize up, because the scroll box's real geometry disagreed with what was painted — leaving and re-entering a tab reset it, which is what made it look intermittent. Nesting it also restores its `sticky top-0`, which is inert without a scrolling parent.
+
+**Bottom clearance uses `calc(7rem + env(safe-area-inset-bottom))`, not a flat `pb-28`.** `BottomNav`'s height grows with the home-indicator inset, so a fixed reserve tuned against a zero-inset preview leaves the last card behind the nav on a real device.
 
 ### Viewport-height architecture (don't revert to `position: fixed` + `min-h-dvh`)
 
-The app root (`App.tsx`'s outer `div`) is `position: relative`, sized explicitly with `height: var(--app-height, 100dvh)`, and `overflow-hidden` — it never scrolls itself. `BottomNav`, `TextScalePill`, `BrightnessOverlay`'s dim layer + pill, and `Sheet`'s wrapper are all `position: absolute` (not `fixed`), anchored to this root. The actual page scrolling happens in a nested `h-full overflow-y-auto` div wrapping `TopBar` + the tab content.
+The app root (`App.tsx`'s outer `div`) is `position: relative`, sized explicitly with `height: var(--app-height, 100dvh)`, translated by `translateY(var(--app-offset, 0px))`, and `overflow-hidden` — it never scrolls itself. `BottomNav`, `TextScalePill`, `BrightnessOverlay`'s dim layer + pill, and `Sheet`'s wrapper are all `position: absolute` (not `fixed`), anchored to this root. The actual page scrolling happens in a nested `h-full overflow-y-auto` div wrapping `TopBar` + the tab content.
+
+`html` and `body` are `overflow: hidden; height: 100%`. The document must never scroll at page level — the shell owns its own nested scroll region — and this stops a page-level scroll from being possible if the shell and viewport ever disagree.
 
 This exists because of a real, confirmed-on-device iOS bug, found only after several failed fix attempts based on screenshots alone (see git log around commits `5bf13a4`…`a25b2fa` for the full trail):
 
-- **`--app-height`** (`src/hooks/useViewportHeight.ts`) tracks the real viewport height into a CSS var. After a **cold PWA relaunch** (force-quit from the app switcher, then reopened from the home-screen icon — not just backgrounded/resumed), WebKit can report `visualViewport.height`/`innerHeight` as if the translucent status bar were opaque reserved space rather than an overlay — a stable, self-consistent wrong number, not a stale one, so simply re-measuring later doesn't fix it. The shortfall matches a status-bar height (~40–60px), never a keyboard's (200px+), so below that threshold the hook trusts `window.screen`'s physical dimensions (unaffected by this bug, and never affected by a real keyboard) instead of the browser's own figure.
+- **`--app-height`** (`src/hooks/useViewportHeight.ts`) tracks the real viewport height into a CSS var. After a **cold PWA relaunch** (force-quit from the app switcher, then reopened from the home-screen icon — not just backgrounded/resumed), WebKit can report `visualViewport.height`/`innerHeight` as if the translucent status bar were opaque reserved space rather than an overlay — a stable, self-consistent wrong number, not a stale one, so simply re-measuring later doesn't fix it. Below a ~100px shortfall the hook trusts `window.screen`'s physical dimensions instead of the browser's own figure.
+- **That threshold alone can't identify the status-bar bug** — the original "a keyboard is always 200px+" reasoning was wrong. The keyboard's *input accessory bar* alone takes ~68px, squarely inside the sub-100px band. So the workaround is additionally gated on `isKeyboardOpen()` (a focused `input`/`textarea`, or a non-zero `visualViewport.offsetTop`): focus, not magnitude, tells the two cases apart. Date/time inputs count — they raise a picker rather than a keyboard, but offset the viewport identically.
 - **Even with `--app-height` correct, `position: fixed` elements were still broken.** Confirmed via live Safari Web Inspector (USB-connected iPhone, `Develop` menu → device → page) on the real device, not just theory: in this broken state WebKit **hard-clips** `position: fixed` content to its own short native viewport — e.g. `BottomNav`'s icons rendered but its labels (further down in the same fixed box) didn't, no matter what `top`/`bottom`/`transform` values were used to try to reposition it. No CSS offset on a `fixed` element can escape that clip. The only fix was to stop using `position: fixed` for these elements entirely and anchor them to a correctly-sized, non-scrolling `position: relative` ancestor instead (`position: absolute`), which isn't subject to the same clip.
+- **`--app-offset` pins the shell to the *visible* region when the keyboard is up.** WebKit does not shorten the layout viewport for the keyboard: it keeps the layout viewport full height and describes what's actually on screen as `[visualViewport.offsetTop, + visualViewport.height]`. Two failure modes follow, and both were shipped and reverted before the current fix:
+  - Sizing the shell to `visualViewport.height` alone **subtracts the keyboard twice** when WebKit *has* offset — the shell ends where the keyboard starts *and* is shifted up by the same amount again, stranding `BottomNav` mid-screen with a gap beneath it.
+  - Keeping the shell at full height and relying on WebKit's offset fails when it *hasn't* offset — it only scrolls when it must reveal the focused field, so focusing an already-visible field leaves `offsetTop` at 0 and the nav underneath the keyboard, until an unrelated scroll makes it snap into place.
+  
+  The shell therefore takes its height from `visualViewport.height` **and** translates by `visualViewport.offsetTop`, covering the visible region either way. `focusin`/`focusout` are observed directly, because the viewport resize can land before `activeElement` settles.
+- The root's `transform` is a plain `translateY`, deliberately **not** the `will-change: transform` containing-block trick that once broke `Sheet` entirely. Every overlay is already `absolute` against the root, so nothing depends on it not establishing a containing block — but verify `Sheet` still covers the full shell if you touch this.
 - If you ever need to add another floating/overlay element (another pill, another full-screen layer), give it `absolute` relative to this root — **not** `fixed` — or it will silently reintroduce this bug on the next cold launch.
-- This structure reproduces a distinct, confirmed **Chromium desktop preview** bug (a scrollable sibling's `getBoundingClientRect()` disagreeing with its own `offsetTop`/`offsetParent` after a tab switch) that does **not** occur on real Safari — irrelevant in production since this only ships as an iOS PWA, but don't mistake it for a regression if you see it while testing in the sandboxed preview browser or desktop Chrome.
-- **Debugging method note:** screenshots alone were not enough to diagnose this — several fixes shipped, verified only by reasoning + screenshots, and made things worse (a `will-change: transform` containing-block trick broke `Sheet`'s overlay behavior entirely; a `top` + `translateY(-100%)` anchoring attempt overshot past the true edge). What actually cracked it was connecting the real iPhone to a Mac via Safari's Web Inspector (`Settings → Safari → Advanced → Web Inspector` on the phone, `Develop` menu in Safari on the Mac) and running diagnostic JS directly against the live, broken DOM. If this class of bug resurfaces, reach for that first rather than iterating blind.
+- This structure reproduces a distinct, confirmed **Chromium desktop preview** bug (a scrollable sibling's `getBoundingClientRect()` disagreeing with its own `offsetTop`/`offsetParent` after a tab switch) that does **not** occur on real Safari — irrelevant in production, since every shipping target (installed PWA, native iOS build) is WebKit, but don't mistake it for a regression if you see it while testing in the sandboxed preview browser or desktop Chrome.
+- **Debugging method note:** screenshots alone were not enough to diagnose this — several fixes shipped, verified only by reasoning + screenshots, and made things worse (a `will-change: transform` containing-block trick broke `Sheet`'s overlay behavior entirely; a `top` + `translateY(-100%)` anchoring attempt overshot past the true edge). What actually cracked it was connecting the real iPhone to a Mac via Safari's Web Inspector (`Settings → Safari → Advanced → Web Inspector` on the phone, `Develop` menu in Safari on the Mac) and running diagnostic JS directly against the live, broken DOM. If this class of bug resurfaces, reach for that first rather than iterating blind. The keyboard-offset work above repeated the same lesson: two wrong fixes shipped from reasoning about screenshots, and only measuring `visualViewport.height`/`offsetTop` against the shell's own rect settled it.
+- **Measuring inside the native app without Web Inspector.** For the Capacitor build there's a cheap offline channel: inject a probe `<script>` into `public/index.html` *inside the installed simulator bundle* (`xcrun simctl get_app_container <udid> <bundle-id>`), have it write numbers to `localStorage`, relaunch, then read them straight off disk with `sqlite3` from `…/Library/WebKit/**/localstorage.sqlite3` (values are UTF-16). No rebuild per iteration, and it works when the app renders nothing at all. Reinstall the app afterwards to drop the probe.
+
+### iOS form-field quirks (native build only)
+
+Both of these are invisible in a desktop browser and only surfaced on device/simulator:
+
+- **Focus zoom.** WKWebView zooms to a focused field whose font-size is under 16px — `ChipSelector`'s custom-entry input is `text-sm` *and* autofocuses, so tapping "Add custom…" zoomed instantly. Because the shell is a fixed-height non-scrolling root, that zoom shifted it up under the status bar, pushed its right edge off screen, and did not undo itself. `index.html`'s viewport meta therefore carries `maximum-scale=1, user-scalable=no`. iOS Safari has ignored both since iOS 10, so **the PWA keeps pinch-zoom and loses no accessibility** — only the Capacitor WebView honours them. The app's own text-size control is the intended way to enlarge type.
+- **Date/time inputs ignore the author box model.** iOS renders `datetime-local`/`date`/`time` as native controls and sizes them itself: on device one reported `box-sizing: content-box` and `min-width: 149px` *even with `border-box` and `min-width: 0` declared and matching*, giving a 396px border box inside a 370px container and hanging ~10px off screen. `appearance: none` (in `src/index.css`) drops the native control so the box model applies; the system picker still opens on tap.
 
 **FAB routing:** the central FAB opens `LogForm` ("Log an attack") only when there's no ongoing attack; if one is already in progress it opens `QuickUpdateForm` ("Add update") instead. This is enforced only at the FAB (`App.tsx`'s `onAdd`) — `AttackFreeCard`'s "Start logging" and the first-run empty-state button are already gated on `!ongoingAttack` by where they render, so the FAB was the only path that could create a second concurrent ongoing attack. Don't reintroduce an unconditional "open LogForm" entry point.
 
