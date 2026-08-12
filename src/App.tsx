@@ -157,10 +157,19 @@ export default function App() {
     >
       <BrightnessOverlay brightness={brightness} onOpenSettings={() => setTab('settings')} />
 
-      <TopBar title={TAB_TITLES[tab]} />
-
       <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-2xl px-4 pt-5 pb-28 sm:px-6">
+        <TopBar title={TAB_TITLES[tab]} />
+        <div
+          className="mx-auto max-w-2xl px-4 pt-5 sm:px-6"
+          // Fixed pb-28 isn't enough on devices with a taller home-indicator
+          // safe area: BottomNav's own height grows with
+          // env(safe-area-inset-bottom), so a flat reserve tuned against a
+          // zero-inset preview leaves the last bit of content hidden behind
+          // the nav on real devices. Every other bottom-clearance spot in
+          // the app (Sheet, LogForm, QuickUpdateForm) already adds the inset
+          // explicitly — this one was the one place that didn't.
+          style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom))' }}
+        >
         {/* ── Today tab ───────────────────────────── */}
         {tab === 'log' && (
           <section className="space-y-4">
