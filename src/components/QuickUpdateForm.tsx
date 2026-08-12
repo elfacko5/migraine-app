@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Attack, Snapshot } from '../types';
 import type { TextScale } from '../hooks/useSettings';
+import type { VoiceDraft } from '../utils/voiceParse';
 import { isoToLocalInput, localInputToIso, formatTime, formatDate, formatDuration } from '../utils/format';
 import { maxSeverity, attackMaxSeverity } from '../utils/stats';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
@@ -22,6 +23,10 @@ interface Props {
   onSave: (snapshot: Omit<Snapshot, 'source'>) => void;
   onNoChange: () => void;
   onClose: () => void;
+  // Set when this sheet was opened from the "log a migraine" Siri Shortcut
+  // for an already-ongoing attack — prefills the wizard from the dictated
+  // transcript and skips straight past the choice screen (see below).
+  voiceDraft?: VoiceDraft | null;
 }
 
 interface FormState {
@@ -86,7 +91,7 @@ function lastEntryCaption(step: number, prev: Snapshot): string | null {
   return null;
 }
 
-export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onNoChange, onClose }: Props) {
+export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onNoChange, onClose, voiceDraft }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
   const isPast = attack.end !== null;
   // A new update must land after the last reading, and — for a past attack —
@@ -99,8 +104,21 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
   // steps 1..TOTAL_STEPS = the wizard. A past attack has no "nothing
   // changed" option (see below), so that screen would only ever offer the
   // one "Log what changed" button — skip straight to the wizard instead.
-  const [step, setStep] = useState(() => (isPast ? 1 : 0));
-  const [form, setForm] = useState<FormState>(() => blank(isoToLocalInput(minTime)));
+  // A voice-dictated update always has *something* to say, so it skips the
+  // choice screen too, straight into the (prefilled) wizard.
+  const [step, setStep] = useState(() => (voiceDraft || isPast ? 1 : 0));
+  const [form, setForm] = useState<FormState>(() => {
+    const base = blank(isoToLocalInput(minTime));
+    if (!voiceDraft) return base;
+    return {
+      ...base,
+      areas: voiceDraft.areas,
+      symptoms: voiceDraft.symptoms,
+      reliefs: voiceDraft.reliefs,
+      medication: voiceDraft.medication ?? base.medication,
+      note: voiceDraft.note,
+    };
+  });
 
   function set<K extends keyof FormState>(key: K, val: FormState[K]) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -207,6 +225,20 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
                 <TextScaleControl scale={textScale} onScale={onTextScale} />
               </div>
             </div>
+
+            {step === 1 && voiceDraft && (
+              <div className="mb-4 rounded-xl border border-accent/40 bg-accent/10 p-3 text-xs text-text-secondary space-y-1">
+                <p className="font-medium text-accent-light">🎙️ Filled in from your voice note</p>
+                {voiceDraft.matched.length > 0 ? (
+                  <ul className="list-disc pl-4 space-y-0.5">
+                    {voiceDraft.matched.map((m) => <li key={m}>{m}</li>)}
+                  </ul>
+                ) : (
+                  <p>Nothing specific was recognized — what you said was saved as a note.</p>
+                )}
+                <p>Review each step before saving.</p>
+              </div>
+            )}
 
             {/* ── Step 1: Update time — bounded to after the last reading and,
                 for a past attack, no later than when it ended ── */}

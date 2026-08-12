@@ -1,12 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Tab, Attack, Snapshot } from './types';
 import { useAttacks } from './hooks/useAttacks';
-import { useUserPrefs } from './hooks/useUserPrefs';
+import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
 import { useAuth } from './hooks/useAuth';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
+import { parseVoiceEntry, type VoiceDraft } from './utils/voiceParse';
 import { BottomNav } from './components/BottomNav';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
@@ -40,6 +41,10 @@ export default function App() {
   const [updateAttackId, setUpdateAttackId] = useState<number | null>(null);
   const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+  // Set when either sheet below was opened from the "log a migraine" Siri
+  // Shortcut deep link (see the voice-param effect below) — cleared whenever
+  // that sheet closes so a stray prefill never leaks into a later manual open.
+  const [voiceDraft, setVoiceDraft] = useState<VoiceDraft | null>(null);
 
   const auth = useAuth();
   const userId = auth.user?.id ?? null;
@@ -97,6 +102,34 @@ export default function App() {
 
   const updateAttack = attacks.find((a) => a.id === updateAttackId) ?? null;
 
+  // "Log a migraine" Siri Shortcut deep link: the Shortcut dictates via
+  // Siri's own free dictation (no Web Speech API involved — Safari/iOS PWA
+  // doesn't implement it) and opens this app at `?voice=<transcript>`.
+  // Parses that transcript into a draft and opens the right sheet prefilled
+  // — LogForm for a new attack, QuickUpdateForm if one's already ongoing —
+  // same routing the FAB already uses. A ref guard (not just the URL param
+  // being consumed) makes this fire at most once per load even if the
+  // dependencies below change before the param is stripped.
+  const voiceHandledRef = useRef(false);
+  useEffect(() => {
+    if (voiceHandledRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const voiceText = params.get('voice');
+    if (!voiceText) return;
+    voiceHandledRef.current = true;
+    const draft = parseVoiceEntry(voiceText, {
+      painAreas: PAIN_AREAS,
+      symptoms: sortedSymptoms,
+      reliefs: sortedReliefs,
+      triggers: sortedTriggers,
+      recentMeds,
+    });
+    setVoiceDraft(draft);
+    window.history.replaceState({}, '', window.location.pathname);
+    if (ongoingAttack) setUpdateAttackId(ongoingAttack.id);
+    else setLogSheetOpen(true);
+  }, [ongoingAttack, recentMeds, sortedTriggers, sortedSymptoms, sortedReliefs]);
+
   // Handle SW notification action messages.
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -118,15 +151,25 @@ export default function App() {
     return () => navigator.serviceWorker?.removeEventListener('message', handler);
   }, [attacks, addSnapshot]);
 
+  function closeLogSheet() {
+    setLogSheetOpen(false);
+    setVoiceDraft(null);
+  }
+
+  function closeUpdateSheet() {
+    setUpdateAttackId(null);
+    setVoiceDraft(null);
+  }
+
   function handleLogSave(snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean) {
     startAttack(snapshot, triggersSel, notifConfig, end, wokeWithMigraine);
-    setLogSheetOpen(false);
+    closeLogSheet();
     if (notifConfig.enabled && !end && shouldPrompt) requestPermission();
   }
 
   function handleUpdateSave(snapshot: Omit<Snapshot, 'source'>) {
     if (updateAttackId !== null) addSnapshot(updateAttackId, snapshot);
-    setUpdateAttackId(null);
+    closeUpdateSheet();
   }
 
   // "Nothing changed" only applies to an ongoing attack — a past attack has
@@ -136,7 +179,7 @@ export default function App() {
     if (!updateAttack || updateAttack.end) return;
     const prev = updateAttack.snapshots[updateAttack.snapshots.length - 1];
     addSnapshot(updateAttack.id, { time: new Date().toISOString(), areas: { ...prev.areas }, symptoms: [...prev.symptoms], reliefs: [...(prev.reliefs ?? [])], medication: null, note: null }, 'notification_no_change');
-    setUpdateAttackId(null);
+    closeUpdateSheet();
   }
 
   return (
@@ -244,7 +287,7 @@ export default function App() {
       {/* Log attack sheet */}
       <Sheet
         open={logSheetOpen}
-        onClose={() => setLogSheetOpen(false)}
+        onClose={closeLogSheet}
         title="Log an attack"
         flush
         bareHeader
@@ -260,15 +303,16 @@ export default function App() {
           onAddTrigger={addTrigger}
           onAddSymptom={addSymptom}
           onAddRelief={addRelief}
-          onClose={() => setLogSheetOpen(false)}
+          onClose={closeLogSheet}
           onSave={handleLogSave}
+          voiceDraft={voiceDraft}
         />
       </Sheet>
 
       {/* Quick update sheet — targets the ongoing attack (FAB/banner) or any
           past attack (its own detail sheet's "Add update") */}
       {updateAttack && (
-        <Sheet open={!!updateAttackId} onClose={() => setUpdateAttackId(null)} title="Add update" flush bareHeader>
+        <Sheet open={!!updateAttackId} onClose={closeUpdateSheet} title="Add update" flush bareHeader>
           <QuickUpdateForm
             attack={updateAttack}
             symptoms={sortedSymptoms}
@@ -280,7 +324,8 @@ export default function App() {
             onAddRelief={addRelief}
             onSave={handleUpdateSave}
             onNoChange={handleNoChange}
-            onClose={() => setUpdateAttackId(null)}
+            onClose={closeUpdateSheet}
+            voiceDraft={voiceDraft}
           />
         </Sheet>
       )}

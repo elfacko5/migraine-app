@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { NotificationConfig, Snapshot } from '../types';
 import type { TextScale } from '../hooks/useSettings';
+import type { VoiceDraft } from '../utils/voiceParse';
 import { isoToLocalInput, localInputToIso, formatDatetime } from '../utils/format';
 import { openPicker } from '../utils/openPicker';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
@@ -28,6 +29,10 @@ interface Props {
     end: string | null,
     wokeWithMigraine: boolean,
   ) => void;
+  // Set when this sheet was opened from the "log a migraine" Siri Shortcut —
+  // prefills the wizard from the dictated transcript. The user still walks
+  // every step to confirm; nothing is auto-submitted.
+  voiceDraft?: VoiceDraft | null;
 }
 
 type StartMode = 'now' | 'hour_ago' | 'manual';
@@ -103,9 +108,21 @@ const STEP_SUBHEADS = [
   'Get reminded to check in during your attack',
 ];
 
-export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, textScale, onTextScale, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave }: Props) {
+export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, textScale, onTextScale, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave, voiceDraft }: Props) {
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<FormState>(() => blank(defaultNotifConfig));
+  const [form, setForm] = useState<FormState>(() => {
+    const base = blank(defaultNotifConfig);
+    if (!voiceDraft) return base;
+    return {
+      ...base,
+      areas: voiceDraft.areas,
+      symptoms: voiceDraft.symptoms,
+      reliefs: voiceDraft.reliefs,
+      triggers: voiceDraft.triggers,
+      medication: voiceDraft.medication ?? base.medication,
+      note: voiceDraft.note,
+    };
+  });
 
   // Open the native date/time picker the instant "Other" is chosen, so the
   // user isn't required to tap the revealed input a second time.
@@ -243,6 +260,19 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
 
           return (
             <div className="space-y-4">
+              {voiceDraft && (
+                <div className="rounded-xl border border-accent/40 bg-accent/10 p-3 text-xs text-text-secondary space-y-1">
+                  <p className="font-medium text-accent-light">🎙️ Filled in from your voice note</p>
+                  {voiceDraft.matched.length > 0 ? (
+                    <ul className="list-disc pl-4 space-y-0.5">
+                      {voiceDraft.matched.map((m) => <li key={m}>{m}</li>)}
+                    </ul>
+                  ) : (
+                    <p>Nothing specific was recognized — what you said was saved as a note.</p>
+                  )}
+                  <p>Review each step before logging.</p>
+                </div>
+              )}
               {/* Start time card */}
               <div className="rounded-xl border border-bg-border bg-bg-raised p-4 space-y-3">
                 <div>
