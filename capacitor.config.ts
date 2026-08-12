@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   // so the Xcode target moved to ...tracker2 and this follows it.
   appId: 'com.sunny.migrainetracker2',
   appName: 'Migraine Tracker',
-  webDir: 'dist'
+  webDir: 'dist',
 };
 
 export default config;
