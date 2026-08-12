@@ -58,11 +58,23 @@ html {
      "fit" it back — nothing in this single-page app needs page-level
      horizontal scroll. */
   overflow-x: hidden;
+  /* The document itself must never scroll: the app root is sized to the
+     viewport and owns its own nested scroll region. If the two ever disagree
+     — as they did when the keyboard's accessory bar shrank the viewport while
+     --app-height still held the full height — the surplus makes the document
+     scrollable, and WebKit scrolls it to reveal the focused field, dragging
+     the absolutely-positioned BottomNav up off the bottom of the screen.
+     useViewportHeight now keeps the two in step; this stops a page-level
+     scroll from being possible at all if they ever drift again. */
+  overflow-y: hidden;
+  height: 100%;
 }
 
 body {
   margin: 0;
   overflow-x: hidden;
+  overflow-y: hidden;
+  height: 100%;
   background-color: #0d0f14;
   color: #dde1eb;
   font-family: var(--font-sans);

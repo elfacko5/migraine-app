@@ -19,6 +19,19 @@ import { useEffect } from 'react';
 // device), never a keyboard's (200px+), so below that threshold we trust
 // window.screen's physical dimensions (which a real keyboard never affects)
 // over the browser's own figure.
+// True while a text field is focused, i.e. the on-screen keyboard (or at least
+// its accessory bar) is up. A keyboard shrink is always preceded by a focus, so
+// this identifies the case directly rather than guessing from the size of the
+// shortfall — which matters because the accessory bar alone takes ~68px, well
+// inside the sub-100px band the status-bar workaround claims.
+function isKeyboardOpen(): boolean {
+  const el = document.activeElement;
+  // Date/time inputs raise a picker rather than a keyboard, but both offset
+  // the visual viewport the same way, so either counts.
+  if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) return true;
+  return (window.visualViewport?.offsetTop ?? 0) > 0;
+}
+
 export function useViewportHeight() {
   useEffect(() => {
     const setHeight = () => {
@@ -29,7 +42,16 @@ export function useViewportHeight() {
         : Math.min(window.screen.width, window.screen.height);
       const shortfall = screenFull - measured;
       const isStatusBarBug = shortfall > 0 && shortfall < 100;
-      const height = isStatusBarBug ? screenFull : measured;
+      // With the keyboard up, WebKit does not shorten the layout viewport —
+      // it keeps it full height and offsets the *visual* viewport instead
+      // (visualViewport.offsetTop). The visible region is therefore
+      // [offsetTop, offsetTop + visualViewport.height], which still ends at
+      // the bottom of the layout viewport. So the shell must stay full height:
+      // shrinking it to visualViewport.height subtracts the keyboard a second
+      // time and lifts BottomNav clear of the bottom of the screen — measured
+      // at a 68px accessory bar in the simulator, and a whole keyboard's worth
+      // (~300px, nav stranded mid-screen) on device.
+      const height = isStatusBarBug || isKeyboardOpen() ? screenFull : measured;
       document.documentElement.style.setProperty('--app-height', `${height}px`);
     };
     setHeight();
@@ -46,6 +68,13 @@ export function useViewportHeight() {
     // height from before backgrounding needs a fresh read on return.
     document.addEventListener('visibilitychange', setHeight);
     window.addEventListener('focus', setHeight);
+    // Focus changes gate isKeyboardOpen() above, and the viewport resize that
+    // follows one can arrive before activeElement settles — so re-measure on
+    // the focus change itself, and once more on the next frame, rather than
+    // relying on the resize event alone.
+    const onFocusChange = () => { setHeight(); requestAnimationFrame(setHeight); };
+    document.addEventListener('focusin', onFocusChange);
+    document.addEventListener('focusout', onFocusChange);
     return () => {
       settleTimers.forEach(clearTimeout);
       window.visualViewport?.removeEventListener('resize', setHeight);
@@ -54,6 +83,8 @@ export function useViewportHeight() {
       window.removeEventListener('orientationchange', setHeight);
       document.removeEventListener('visibilitychange', setHeight);
       window.removeEventListener('focus', setHeight);
+      document.removeEventListener('focusin', onFocusChange);
+      document.removeEventListener('focusout', onFocusChange);
     };
   }, []);
 }
