@@ -192,10 +192,19 @@ export default function App() {
     voiceHandledRef.current = false;
   }
 
-  function handleLogSave(snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean) {
+  async function handleLogSave(snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean) {
+    const wantsReminders = notifConfig.enabled && !end;
+    // Ask before scheduling, not after. startAttack schedules as a side effect,
+    // and a reminder scheduled while permission is still undecided is accepted
+    // by iOS but silently never delivered if the user then declines — the
+    // attack looks like it has reminders when it has none. Awaiting first
+    // means the decision is known before anything is queued.
+    // Never let a permission failure cost the user the log entry itself.
+    if (wantsReminders && shouldPrompt) {
+      try { await requestPermission(); } catch (err) { console.error('Notification permission request failed:', err); }
+    }
     startAttack(snapshot, triggersSel, notifConfig, end, wokeWithMigraine);
     closeLogSheet();
-    if (notifConfig.enabled && !end && shouldPrompt) requestPermission();
   }
 
   function handleUpdateSave(snapshot: Omit<Snapshot, 'source'>) {
