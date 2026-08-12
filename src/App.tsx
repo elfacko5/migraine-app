@@ -8,6 +8,7 @@ import { useAuth } from './hooks/useAuth';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { parseVoiceEntry, type VoiceDraft } from './utils/voiceParse';
+import { onNotificationAction } from './utils/notifications';
 import { BottomNav } from './components/BottomNav';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
@@ -130,11 +131,11 @@ export default function App() {
     else setLogSheetOpen(true);
   }, [ongoingAttack, recentMeds, sortedTriggers, sortedSymptoms, sortedReliefs]);
 
-  // Handle SW notification action messages.
+  // Handle reminder button taps. The source is the OS on native and the
+  // service worker on web — onNotificationAction hides that difference and
+  // absorbs `snooze` itself, so only data-changing actions arrive here.
   useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      const { type, action, attackId } = e.data ?? {};
-      if (type !== 'NOTIFICATION_ACTION') return;
+    return onNotificationAction(({ action, attackId }) => {
       const attack = attacks.find((a) => a.id === attackId);
       if (!attack) return;
       if (action === 'no_change') {
@@ -143,12 +144,8 @@ export default function App() {
       } else if (action === 'update') {
         setUpdateAttackId(attackId);
         setTab('log');
-      } else if (action === 'snooze') {
-        // Snooze is handled in the SW; no client action needed.
       }
-    };
-    navigator.serviceWorker?.addEventListener('message', handler);
-    return () => navigator.serviceWorker?.removeEventListener('message', handler);
+    });
   }, [attacks, addSnapshot]);
 
   function closeLogSheet() {
