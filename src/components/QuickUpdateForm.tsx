@@ -23,6 +23,12 @@ interface Props {
   onSave: (snapshot: Omit<Snapshot, 'source'>) => void;
   onNoChange: () => void;
   onClose: () => void;
+  // Only passed for an attack still in progress. A reminder asks "how's your
+  // migraine?", and "it's over" is one of the three honest answers — without
+  // it here the user has to close the sheet, find the attack again and end it
+  // from the Today tab, or log a no-change reading that says the opposite of
+  // what happened.
+  onEndAttack?: () => void;
   // Set when this sheet was opened from the "log a migraine" Siri Shortcut
   // for an already-ongoing attack — prefills the wizard from the dictated
   // transcript and skips straight past the choice screen (see below).
@@ -91,7 +97,7 @@ function lastEntryCaption(step: number, prev: Snapshot): string | null {
   return null;
 }
 
-export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onNoChange, onClose, voiceDraft }: Props) {
+export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onNoChange, onClose, onEndAttack, voiceDraft }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
   const isPast = attack.end !== null;
   // A new update must land after the last reading, and — for a past attack —
@@ -300,6 +306,18 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
             {/* "Right now, nothing changed" only means something for an
                 attack still in progress — a past attack has no "now" to
                 log against, so it always needs an explicit time instead. */}
+            {/* Sits above the two logging options and is styled quieter than
+                both: it's the least frequent answer, but the one with no other
+                route out of this sheet. */}
+            {!isPast && onEndAttack && (
+              <button
+                type="button"
+                onClick={onEndAttack}
+                className="btn-tertiary w-full rounded-xl py-2 text-sm font-medium transition-colors"
+              >
+                It's over — end attack
+              </button>
+            )}
             {!isPast && (
               <button
                 type="button"

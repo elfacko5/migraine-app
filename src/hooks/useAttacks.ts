@@ -5,6 +5,14 @@ import { pullAttacks, pushAttacks, deleteAttackRemote } from '../lib/sync';
 
 const KEY = 'hd_attacks';
 
+export interface SnapshotEntry {
+  attackId: number;
+  snapshot: Omit<Snapshot, 'source'>;
+  source: Snapshot['source'];
+  /** Whether this reading should queue the next reminder itself. */
+  reschedule: boolean;
+}
+
 function load(): Attack[] {
   try { return JSON.parse(localStorage.getItem(KEY) ?? '[]'); }
   catch { return []; }
@@ -97,10 +105,18 @@ export function useAttacks(userId: string | null) {
     notificationConfig: NotificationConfig,
     end: string | null = null,
     wokeWithMigraine = false,
+    // Readings that belong to the attack from the moment it's created — a
+    // voice log describing doses already taken. They're committed with it
+    // rather than added afterwards, because `addSnapshots` maps over the
+    // `attacks` of the current render, which can't yet contain this one.
+    extraSnapshots: Array<Omit<Snapshot, 'source'>> = [],
   ): Attack => {
     const attack: Attack = {
       id: Date.now(),
-      snapshots: [{ ...snapshot, source: 'manual' }],
+      snapshots: ([
+        { ...snapshot, source: 'manual' },
+        ...extraSnapshots.map((s) => ({ ...s, source: 'manual' })),
+      ] as Snapshot[]).sort((a, b) => a.time.localeCompare(b.time)),
       end,
       triggers,
       notificationConfig,
@@ -118,27 +134,53 @@ export function useAttacks(userId: string | null) {
     return attack;
   }, [attacks, commit, userId, trackPush]);
 
+  // Applies several readings in one commit. Draining the pending-notification
+  // queue can carry more than one "no change" answer — a reminder chain
+  // answered repeatedly while the app stayed closed — and calling addSnapshot
+  // in a loop would drop all but the last: each call maps over the `attacks`
+  // captured in the current render, so the second overwrites the first.
+  const addSnapshots = useCallback((entries: SnapshotEntry[]): Attack[] => {
+    if (entries.length === 0) return [];
+    const updatedAt = new Date().toISOString();
+    const touched: Attack[] = [];
+
+    const next = attacks.map((a) => {
+      const mine = entries.filter((e) => e.attackId === a.id);
+      if (mine.length === 0) return a;
+      const updated: Attack = {
+        ...a,
+        snapshots: [...a.snapshots, ...mine.map((e) => ({ ...e.snapshot, source: e.source }))],
+        updatedAt,
+      };
+      touched.push(updated);
+      return updated;
+    });
+    commit(next);
+
+    for (const attack of touched) {
+      // Only an ongoing attack should ever get a future reminder scheduled —
+      // this is also reachable for backfilled updates on an already-ended
+      // (past-logged) attack, which must never queue a notification.
+      if (!attack.notificationConfig.enabled || attack.end) continue;
+      // `reschedule: false` means the reminder was already queued by whoever
+      // handled the tap — the native handler does it at tap time. Scheduling
+      // again here would push it out by however long the app stayed closed.
+      if (!entries.some((e) => e.attackId === attack.id && e.reschedule)) continue;
+      scheduleNotification(attack, nextDelay(attack));
+    }
+
+    if (touched.length && userId) trackPush(pushAttacks(touched, userId));
+    return touched;
+  }, [attacks, commit, userId, trackPush]);
+
   const addSnapshot = useCallback((
     attackId: number,
     snapshot: Omit<Snapshot, 'source'>,
     source: Snapshot['source'] = 'manual',
   ): Attack => {
-    let updated!: Attack;
-    const next = attacks.map((a) => {
-      if (a.id !== attackId) return a;
-      updated = { ...a, snapshots: [...a.snapshots, { ...snapshot, source }], updatedAt: new Date().toISOString() };
-      return updated;
-    });
-    commit(next);
-    // Only an ongoing attack should ever get a future reminder scheduled —
-    // this is also reachable for backfilled updates on an already-ended
-    // (past-logged) attack, which must never queue a notification.
-    if (updated && updated.notificationConfig.enabled && !updated.end) {
-      scheduleNotification(updated, nextDelay(updated));
-    }
-    if (updated && userId) trackPush(pushAttacks([updated], userId));
+    const [updated] = addSnapshots([{ attackId, snapshot, source, reschedule: true }]);
     return updated;
-  }, [attacks, commit, userId, trackPush]);
+  }, [addSnapshots]);
 
   const endAttack = useCallback((attackId: number, time?: string) => {
     const end = time ?? new Date().toISOString();
@@ -160,5 +202,5 @@ export function useAttacks(userId: string | null) {
 
   const ongoingAttack = attacks.find((a) => a.end === null) ?? null;
 
-  return { attacks, ongoingAttack, startAttack, addSnapshot, endAttack, deleteAttack, syncStatus, lastSyncedAt };
+  return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, deleteAttack, syncStatus, lastSyncedAt };
 }

@@ -3,6 +3,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import type { Attack } from '../types';
 import { attackMaxSeverity } from './stats';
 import { formatTime } from './format';
+import { queuePendingAction } from './pendingActions';
 
 // Reminder scheduling has two backends, chosen at runtime:
 //
@@ -21,13 +22,9 @@ const isNative = () => Capacitor.isNativePlatform();
 
 // Action buttons on the reminder. The ids match the `action` values the SW
 // posts back, so App.tsx handles both backends with one code path.
+// The snooze interval itself lives with whoever reschedules: 30 minutes in
+// NotificationActionHandler.swift on native, in public/sw.js on web.
 const ACTION_TYPE_ID = 'MIGRAINE_CHECKIN';
-const SNOOZE_MS = 30 * 60 * 1000;
-
-export interface NotificationAction {
-  action: string;
-  attackId: number;
-}
 
 // Attack ids are `Date.now()`, which overflows the 32-bit int the plugin
 // requires for a notification id, so fold it into a safe range. Deterministic,
@@ -60,21 +57,16 @@ const TITLE = "How's your migraine?";
 // Registers the notification's action buttons. Native only, and must run
 // before the first schedule() or iOS shows the notification with no buttons.
 //
-// Every action sets `foreground` (UNNotificationAction's .foreground option),
-// which is what makes iOS bring the app up when one is tapped. Without it the
-// action runs in the background — and since all three are handled in
-// JavaScript inside the WebView, there is nothing alive to handle them once the
-// app has been evicted from memory. Observed on device: tapping "Something
-// changed" on a reminder that arrived 30 minutes later dismissed the
-// notification and did nothing at all.
+// `foreground` maps to UNNotificationAction's .foreground option, which brings
+// the app up when the action is tapped. "Something changed" needs it — it opens
+// the update wizard. The other two do not, because they are now resolved in
+// Swift by `NotificationActionHandler`, which iOS runs whether or not there is
+// a WebView alive.
 //
-// The cost is that the quick actions now open the app rather than resolving
-// silently, which is a real regression in feel for "No change" and "Snooze".
-// It is the right trade for now: a tap that silently drops a reading is worse
-// than one that opens the app, and a reminder is most likely to be answered
-// exactly when the app *has* been evicted. Making those two resolve without
-// opening the app means handling them natively in Swift, which is a bigger
-// change than this fix.
+// Both were `foreground: true` for a while, and that was not a preference: the
+// handling lived in JavaScript inside the WebView, so with the app evicted from
+// memory a background action had nothing to run it and silently did nothing.
+// Opening the app was the lesser evil until the native handler existed.
 export async function registerNotificationActions(): Promise<void> {
   if (!isNative()) return;
   try {
@@ -83,8 +75,8 @@ export async function registerNotificationActions(): Promise<void> {
         id: ACTION_TYPE_ID,
         actions: [
           { id: 'update', title: 'Something changed', foreground: true },
-          { id: 'no_change', title: 'No change', foreground: true },
-          { id: 'snooze', title: 'Snooze 30 min', foreground: true },
+          { id: 'no_change', title: 'No change', foreground: false },
+          { id: 'snooze', title: 'Snooze 30 min', foreground: false },
         ],
       }],
     });
@@ -106,7 +98,24 @@ export function scheduleNotification(attack: Attack, delayMs: number) {
         body,
         schedule: { at: new Date(Date.now() + delayMs) },
         actionTypeId: ACTION_TYPE_ID,
-        extra: { attackId: attack.id },
+        // Without this the plugin leaves `content.sound` nil, and iOS then
+        // delivers the reminder *silently* — no alert tone, but also no
+        // vibration and no tap on a paired Apple Watch, since those are driven
+        // by the notification having a sound. A reminder nobody can feel is
+        // useless to someone lying down with a migraine.
+        //
+        // It has to be a real file in the bundle (`ios/App/App/reminder.wav`,
+        // in the target's Copy Bundle Resources). The plugin can't express
+        // `UNNotificationSound.default` — it only takes a filename — and its
+        // docs claim an unresolvable name falls back to the system default.
+        // It does not: tested on device, a name with no matching file is
+        // silent, which is the same bug wearing a disguise.
+        sound: 'reminder.wav',
+        // followUpMs is for the Swift handler: when the user answers "No
+        // change" it schedules the next reminder itself, and it has no way to
+        // work the interval out — that needs the attack's notificationConfig
+        // and snapshot count, both of which live in localStorage.
+        extra: { attackId: attack.id, followUpMs: followUpDelay(attack) },
       }],
     }).catch((err) => console.error('Failed to schedule notification:', err));
     return;
@@ -132,35 +141,29 @@ export function cancelNotification(attackId: number) {
   getSW()?.postMessage({ type: 'CANCEL_NOTIFICATION', attackId });
 }
 
-// Subscribes to reminder button taps from whichever backend is active and
-// returns an unsubscribe. `snooze` is handled internally (re-scheduled here on
-// native, inside the SW on web) and never reaches the handler, so callers only
-// deal with the actions that actually change data.
-export function onNotificationAction(handler: (a: NotificationAction) => void): () => void {
+// Subscribes to reminder button taps and returns an unsubscribe. The callback
+// takes no arguments: it means *"an answer is waiting — drain the queue"*, and
+// nothing more, on both platforms.
+//
+// The answer itself never travels through here. It is written to the pending
+// queue first — in Swift on native, below on web — and `consumePendingActions`
+// is the only thing that reads it. This subscription exists purely so a WebView
+// that happens to be running already reacts now instead of on next foreground.
+//
+// It is deliberately not load-bearing. Delivering the answer *through* this
+// listener is what failed twice on device: the app opened and the button did
+// nothing, because the path from the OS to a React effect (Capacitor's router →
+// plugin → retained event → async `addListener`) assumes a WebView further
+// along than it is when a reminder launches the app. Missing the cue now costs
+// a delay; missing the answer cost the answer.
+//
+// `snooze` never reaches here at all — it re-queues the reminder and changes no
+// data (Swift on native, `public/sw.js` on web).
+export function onNotificationAction(handler: () => void): () => void {
   if (isNative()) {
     const listener = LocalNotifications.addListener(
       'localNotificationActionPerformed',
-      (payload) => {
-        const attackId = payload.notification.extra?.attackId as number | undefined;
-        if (typeof attackId !== 'number') return;
-        // `tap` is the notification body itself rather than a button — treat
-        // it as "open the update sheet", same as the SW's default click.
-        const action = payload.actionId === 'tap' ? 'update' : payload.actionId;
-        if (action === 'snooze') {
-          LocalNotifications.schedule({
-            notifications: [{
-              id: notifId(attackId),
-              title: payload.notification.title ?? TITLE,
-              body: payload.notification.body ?? '',
-              schedule: { at: new Date(Date.now() + SNOOZE_MS) },
-              actionTypeId: ACTION_TYPE_ID,
-              extra: { attackId },
-            }],
-          }).catch((err) => console.error('Failed to snooze notification:', err));
-          return;
-        }
-        handler({ action, attackId });
-      },
+      () => handler(),
     );
     return () => { listener.then((l) => l.remove()).catch(() => {}); };
   }
@@ -169,17 +172,37 @@ export function onNotificationAction(handler: (a: NotificationAction) => void): 
     const { type, action, attackId } = e.data ?? {};
     if (type !== 'NOTIFICATION_ACTION') return;
     if (action === 'snooze') return; // handled in the SW
-    handler({ action, attackId });
+    if (typeof attackId !== 'number') return;
+    // There is no Swift handler on web, so the page queues the answer itself,
+    // then nudges — landing on exactly the same drain the native path feeds.
+    void queuePendingAction({
+      attackId,
+      time: new Date().toISOString(),
+      action: action === 'no_change' ? 'no_change' : 'update',
+      rescheduled: false,
+    }).then(handler);
   };
   navigator.serviceWorker?.addEventListener('message', swHandler);
   return () => navigator.serviceWorker?.removeEventListener('message', swHandler);
 }
 
-export function nextDelay(attack: Attack): number {
-  const cfg = attack.notificationConfig;
+// Adaptive: +1h after the first reading, +2h after any later one.
+function delayForSnapshotCount(cfg: Attack['notificationConfig'], count: number): number {
   if (!cfg.enabled) return 0;
   if (cfg.mode === 'fixed') return cfg.fixedIntervalMinutes * 60 * 1000;
-  return attack.snapshots.length === 1 ? 60 * 60 * 1000 : 2 * 60 * 60 * 1000;
+  return count === 1 ? 60 * 60 * 1000 : 2 * 60 * 60 * 1000;
+}
+
+export function nextDelay(attack: Attack): number {
+  return delayForSnapshotCount(attack.notificationConfig, attack.snapshots.length);
+}
+
+// The interval that will apply once a "no change" reading lands — one more
+// snapshot than the attack has now. Carried in the notification so the Swift
+// handler can schedule the follow-up at the moment the button is tapped
+// instead of leaving the chain stalled until the app is next opened.
+function followUpDelay(attack: Attack): number {
+  return delayForSnapshotCount(attack.notificationConfig, attack.snapshots.length + 1);
 }
 
 export const DEFAULT_NOTIFICATION_CONFIG = {

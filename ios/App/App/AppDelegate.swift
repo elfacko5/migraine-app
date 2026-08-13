@@ -7,7 +7,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Has to happen before this method returns: iOS only delivers the
+        // response for a notification that launched the app if a delegate was
+        // set during launch. Capacitor's own router installs itself later than
+        // that (see NotificationActionHandler), so the app owns the delegate
+        // and forwards to Capacitor by hand.
+        NotificationActionHandler.shared.install()
         return true
     }
 
@@ -27,6 +32,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+
+        // A notification response can land before the Capacitor bridge exists
+        // — a cold launch straight from a reminder. Anything held back then is
+        // delivered now that there is something to deliver it to.
+        NotificationActionHandler.shared.flushUndelivered()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { Tab, Attack, Snapshot } from './types';
-import { useAttacks } from './hooks/useAttacks';
+import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
@@ -8,8 +8,9 @@ import { useAuth } from './hooks/useAuth';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { parseVoiceEntry, type VoiceDraft } from './utils/voiceParse';
-import { onNotificationAction } from './utils/notifications';
-import { consumePendingVoiceEntry } from './utils/pendingVoice';
+import { onNotificationAction, cancelNotification } from './utils/notifications';
+import { awaitPendingVoiceEntry } from './utils/pendingVoice';
+import { consumePendingActions } from './utils/pendingActions';
 import { BottomNav } from './components/BottomNav';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
@@ -51,7 +52,7 @@ export default function App() {
   const auth = useAuth();
   const userId = auth.user?.id ?? null;
   const {
-    attacks, ongoingAttack, startAttack, addSnapshot, endAttack, deleteAttack,
+    attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, deleteAttack,
     syncStatus: attacksSyncStatus, lastSyncedAt: attacksLastSyncedAt,
   } = useAttacks(userId);
   const {
@@ -120,7 +121,7 @@ export default function App() {
   // The ref guard (rather than relying on the URL param being stripped) keeps
   // this to one fire per delivery even if the dependencies below change first.
   const voiceHandledRef = useRef(false);
-  const applyVoiceText = useCallback((text: string) => {
+  const applyVoiceText = useCallback((text: string, startedText = '') => {
     if (voiceHandledRef.current) return;
     voiceHandledRef.current = true;
     setVoiceDraft(parseVoiceEntry(text, {
@@ -129,7 +130,7 @@ export default function App() {
       reliefs: sortedReliefs,
       triggers: sortedTriggers,
       recentMeds,
-    }));
+    }, startedText));
     if (ongoingAttack) setUpdateAttackId(ongoingAttack.id);
     else setLogSheetOpen(true);
   }, [ongoingAttack, recentMeds, sortedTriggers, sortedSymptoms, sortedReliefs]);
@@ -145,10 +146,18 @@ export default function App() {
     // The intent runs in the native process and may have written its transcript
     // before the web layer even started, or while the app sat in the background
     // — so check on mount *and* on every foreground, not just once.
+    let polling = false;
     const drainPending = async () => {
-      if (voiceHandledRef.current) return;
-      const pending = await consumePendingVoiceEntry();
-      if (pending) applyVoiceText(pending);
+      if (voiceHandledRef.current || polling) return;
+      polling = true;
+      try {
+        // Waits rather than reads once — the intent's write may not be visible
+        // to this process yet, and there is no second event coming to retry on.
+        const pending = await awaitPendingVoiceEntry();
+        if (pending) applyVoiceText(pending.note, pending.started);
+      } finally {
+        polling = false;
+      }
     };
     drainPending();
     const onVisible = () => { if (document.visibilityState === 'visible') drainPending(); };
@@ -160,22 +169,92 @@ export default function App() {
     };
   }, [applyVoiceText]);
 
-  // Handle reminder button taps. The source is the OS on native and the
-  // service worker on web — onNotificationAction hides that difference and
-  // absorbs `snooze` itself, so only data-changing actions arrive here.
-  useEffect(() => {
-    return onNotificationAction(({ action, attackId }) => {
-      const attack = attacks.find((a) => a.id === attackId);
-      if (!attack) return;
-      if (action === 'no_change') {
+  // Applies every reminder answer given outside the app — the only place they
+  // are ever applied, on both platforms.
+  //
+  // Nothing here is driven by the notification event itself. On iOS the buttons
+  // are handled in Swift with the app closed, so an answer may be hours old by
+  // the time this runs: a no-change reading keeps its own tap time rather than
+  // being stamped now, and "Something changed" opens the wizard from the queue
+  // rather than from a live event that may arrive before the app can act on it.
+  const drainingRef = useRef(false);
+  const drainNotificationAnswers = useCallback(async () => {
+    if (drainingRef.current) return;
+    drainingRef.current = true;
+    try {
+      const pending = await consumePendingActions();
+      if (pending.length === 0) return;
+
+      const entries: SnapshotEntry[] = [];
+      let openFor: number | null = null;
+
+      for (const answer of pending) {
+        const attack = attacks.find((a) => a.id === answer.attackId);
+        // The attack may have been ended or deleted while the reminder sat
+        // unanswered: cancelNotification only drops *pending* reminders, so one
+        // already sitting in Notification Center keeps working buttons. An
+        // ended attack can still be opened for a backfilled update, but it must
+        // never take a "no change" reading against right now.
+        if (!attack) {
+          cancelNotification(answer.attackId);
+          continue;
+        }
+        if (answer.action === 'update') {
+          openFor = answer.attackId;
+          continue;
+        }
+        if (attack.end) {
+          cancelNotification(answer.attackId);
+          continue;
+        }
         const prev = attack.snapshots[attack.snapshots.length - 1];
-        addSnapshot(attackId, { time: new Date().toISOString(), areas: { ...prev.areas }, symptoms: [...prev.symptoms], reliefs: [...(prev.reliefs ?? [])], medication: null, note: null }, 'notification_no_change');
-      } else if (action === 'update') {
-        setUpdateAttackId(attackId);
+        entries.push({
+          attackId: answer.attackId,
+          snapshot: {
+            time: answer.time,
+            areas: { ...prev.areas },
+            symptoms: [...prev.symptoms],
+            reliefs: [...(prev.reliefs ?? [])],
+            medication: null,
+            note: null,
+          },
+          source: 'notification_no_change',
+          reschedule: !answer.rescheduled,
+        });
+      }
+
+      if (entries.length) addSnapshots(entries);
+      // After the readings, so the wizard opens onto an attack that already
+      // includes them.
+      if (openFor !== null) {
+        setUpdateAttackId(openFor);
         setTab('log');
       }
-    });
-  }, [attacks, addSnapshot]);
+    } finally {
+      drainingRef.current = false;
+    }
+  }, [attacks, addSnapshots]);
+
+  // Same reasoning as the voice handoff: the answer may have been queued before
+  // the web layer started, or while the app sat in the background.
+  useEffect(() => {
+    void drainNotificationAnswers();
+    const onVisible = () => { if (document.visibilityState === 'visible') void drainNotificationAnswers(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [drainNotificationAnswers]);
+
+  // A reminder was answered while the app happened to be running. The answer is
+  // already in the queue by now, so this only says "look at it now" instead of
+  // waiting for the next foreground — see onNotificationAction for why nothing
+  // is allowed to depend on this arriving.
+  useEffect(() => onNotificationAction(() => {
+    void drainNotificationAnswers();
+  }), [drainNotificationAnswers]);
 
   // Releasing the voice guard on close is what lets Siri be used more than once
   // per app session: the intent can run again at any time (it only backgrounds
@@ -192,7 +271,7 @@ export default function App() {
     voiceHandledRef.current = false;
   }
 
-  async function handleLogSave(snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean) {
+  async function handleLogSave(snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean, doseReadings: Array<Omit<Snapshot, 'source'>> = []) {
     const wantsReminders = notifConfig.enabled && !end;
     // Ask before scheduling, not after. startAttack schedules as a side effect,
     // and a reminder scheduled while permission is still undecided is accepted
@@ -203,7 +282,7 @@ export default function App() {
     if (wantsReminders && shouldPrompt) {
       try { await requestPermission(); } catch (err) { console.error('Notification permission request failed:', err); }
     }
-    startAttack(snapshot, triggersSel, notifConfig, end, wokeWithMigraine);
+    startAttack(snapshot, triggersSel, notifConfig, end, wokeWithMigraine, doseReadings);
     closeLogSheet();
   }
 
@@ -374,6 +453,9 @@ export default function App() {
             onSave={handleUpdateSave}
             onNoChange={handleNoChange}
             onClose={closeUpdateSheet}
+            // Only for the attack that's actually in progress: the same sheet
+            // also backfills past attacks, which have already ended.
+            onEndAttack={updateAttack.end === null ? () => setEndConfirmOpen(true) : undefined}
             voiceDraft={voiceDraft}
           />
         </Sheet>
@@ -397,7 +479,13 @@ export default function App() {
           open={endConfirmOpen}
           minTime={ongoingAttack.snapshots[ongoingAttack.snapshots.length - 1].time}
           onCancel={() => setEndConfirmOpen(false)}
-          onConfirm={(endTime) => { endAttack(ongoingAttack.id, endTime); setEndConfirmOpen(false); }}
+          onConfirm={(endTime) => {
+            endAttack(ongoingAttack.id, endTime);
+            setEndConfirmOpen(false);
+            // Ending can be reached from inside the update sheet, which is
+            // showing an attack that no longer has anything to update.
+            if (updateAttackId === ongoingAttack.id) closeUpdateSheet();
+          }}
         />
       )}
     </div>

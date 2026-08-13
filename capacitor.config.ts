@@ -7,6 +7,15 @@ const config: CapacitorConfig = {
   appId: 'com.sunny.migrainetracker2',
   appName: 'Migraine Tracker',
   webDir: 'dist',
+  ios: {
+    // Stops Capacitor installing itself as the UNUserNotificationCenter
+    // delegate, so `NotificationActionHandler` can — it has to be set before
+    // launch finishes, and Capacitor sets it later than that. The handler
+    // forwards everything the web layer still needs back to Capacitor's
+    // router. Setting this back to true disables the native handling of the
+    // "No change" and "Snooze" reminder buttons.
+    handleApplicationNotifications: false,
+  },
 };
 
 export default config;
