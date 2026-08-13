@@ -23,7 +23,10 @@
 	     "lid", "lead" or "Lydd" as often as not, and a phrase that doesn't
 	     match is answered with "I can't help you with that" rather than
 	     anything that hints at why. The old name is here too, since it was
-	     what worked until the rename. -->
+	     what worked until the rename.
+
+	     iOS allows a **maximum of three**. A fourth doesn't warn — the app
+	     refuses to install at all, with the count in the installd error. -->
 	<key>INAlternativeAppNames</key>
 	<array>
 		<dict>
@@ -39,10 +42,6 @@
 		<dict>
 			<key>INAlternativeAppName</key>
 			<string>Migraine Tracker</string>
-		</dict>
-		<dict>
-			<key>INAlternativeAppName</key>
-			<string>Migraine tracker app</string>
 		</dict>
 	</array>
 	<key>CFBundlePackageType</key>
