@@ -409,11 +409,12 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
     return sides && sides.size === 1 ? [...sides] : ['left', 'right'];
   };
 
-  // A number stated for one area must never stand in for another. When any
-  // mention carries its own number, the sentence-wide fallback is switched off
-  // and an area without one is reported as not heard — "Joe six left eye for
-  // left forehead nine" (jaw six, left eye four) otherwise handed the jaw's six
-  // to the eye, inventing a severity that reads exactly like a spoken one.
+  // A number stated for one area must never stand in for another. When
+  // mentions carry *different* numbers of their own, the sentence-wide
+  // fallback is switched off and an area without one is reported as not
+  // heard — "Joe six left eye for left forehead nine" (jaw six, left eye
+  // four) otherwise handed the jaw's six to the eye, inventing a severity
+  // that reads exactly like a spoken one.
   //
   // The fallback still applies when *no* mention has its own number, which is
   // the "eight out of ten, right eye and forehead" case: one severity, and it
@@ -429,7 +430,16 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
     if (meds >= 0) window = window.slice(0, meds);
     return firstNumberIn(window);
   });
-  const anyStatedPerArea = ownSeverities.some((value) => value !== null);
+  // Distinct values, not just "any value": a *trailing* shared severity —
+  // "forehead and eye hurt, it's a nine" — lands in the last mention's own
+  // window purely because that's where the sentence ends, not because the
+  // user aimed it at that area specifically. Left as "any", that one number
+  // switched the fallback off for forehead, which then invented a default
+  // and reported it as not heard despite the user having stated a severity
+  // for both in one breath. Two *different* numbers is what actually proves
+  // per-area intent (the Joe-six/forehead-nine case below) — one number
+  // occupying one window is exactly the leading-fallback case, mirrored.
+  const anyStatedPerArea = new Set(ownSeverities.filter((v) => v !== null)).size > 1;
 
   mentions.forEach((mention, i) => {
     const own = ownSeverities[i] ?? (anyStatedPerArea ? null : fallback);
