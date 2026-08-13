@@ -8,7 +8,6 @@ const AREA_COLORS: Record<string, string> = {
   'Forehead left':  '#7fc4a0', 'Forehead right': '#5a9e7a',
   'Temple left':    '#c4b07f', 'Temple right':   '#d2c29a',
   'Eye left':       '#c97c2a', 'Eye right':      '#b8924a',
-  'Nose':           '#9aa3b5',
   'Cheek left':     '#b85c5c', 'Cheek right':    '#cc7e7e',
   'Jaw left':       '#c4807f', 'Jaw right':      '#a85a5a',
   'Crown left':     '#9ad0b0', 'Crown right':    '#6fb38e',

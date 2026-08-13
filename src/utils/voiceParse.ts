@@ -71,8 +71,9 @@ const NUMBER_WORDS: Record<string, number> = {
   six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
 };
 
-// The sided PAIN_AREAS base terms (see useUserPrefs.ts) — 'Nose' has no side
-// and is handled separately.
+// The sided PAIN_AREAS base terms (see useUserPrefs.ts). Every one of these
+// has a left/right pair — unlike the old 'Nose' zone (removed; there's no
+// sideless zone left, so extractAreas no longer needs a special case for one).
 const AREA_TERMS = ['Forehead', 'Temple', 'Eye', 'Cheek', 'Jaw', 'Crown', 'Occiput', 'Nape'];
 
 // Nobody says "occiput". The zone names are anatomical because they have to be
@@ -106,7 +107,6 @@ const AREA_SYNONYMS: Array<{ pattern: RegExp; term: string; exclude?: string }> 
   { pattern: /\bneck\b/g, term: 'Nape' },
   { pattern: /\bbrow\b/g, term: 'Forehead' },
   { pattern: /\bcheekbones?\b/g, term: 'Cheek' },
-  { pattern: /\bsinus(?:es)?\b/g, term: 'Nose' },
 ];
 
 /**
@@ -380,7 +380,6 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
       mentions.push({ term, start: m.index, end: m.index + m[0].length });
     }
   }
-  if (painAreas.includes('Nose')) collect('Nose');
   for (const term of AREA_TERMS) collect(term);
   mentions.sort((a, b) => a.start - b.start);
 
@@ -464,9 +463,7 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
   mentions.forEach((mention, i) => {
     const own = ownSeverities[i] ?? (anyStatedPerArea ? null : fallback);
 
-    const names = mention.term === 'Nose'
-      ? ['Nose']
-      : sidesFor(i).map((s) => `${mention.term} ${s}`);
+    const names = sidesFor(i).map((s) => `${mention.term} ${s}`);
 
     for (const name of names.filter((n) => painAreas.includes(n))) {
       // An earlier mention wins, unless it had no severity and this one does —
