@@ -14,6 +14,33 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
+	<!-- Names Siri will also accept for this app in an App Shortcut phrase.
+	     "Lidd" is an invented one-syllable word, so dictation renders it as
+	     "lid", "lead" or "Lydd" as often as not, and a phrase that doesn't
+	     match is answered with "I can't help you with that" rather than
+	     anything that hints at why. The old name is here too, since it was
+	     what worked until the rename. -->
+	<key>INAlternativeAppNames</key>
+	<array>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>Lid</string>
+			<key>INAlternativeAppNamePronunciationHint</key>
+			<string>lid</string>
+		</dict>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>Lidd app</string>
+		</dict>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>Migraine Tracker</string>
+		</dict>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>Migraine tracker app</string>
+		</dict>
+	</array>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
