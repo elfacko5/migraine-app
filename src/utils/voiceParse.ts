@@ -214,6 +214,11 @@ export function parseStartOffset(text: string): number | null {
   if (/\bjust started\b|\bjust now\b|\bright now\b|^\s*now\b/.test(t)) return 0;
   if (/\bhalf an hour\b|\bhalf hour\b/.test(t)) return 30;
 
+  // "About noon" is a clock time that contains no number, so nothing else here
+  // catches it. Yesterday's if the hour hasn't come round yet today.
+  const named = /\bnoon\b|\bmidday\b/.test(t) ? 12 : /\bmidnight\b/.test(t) ? 0 : null;
+  if (named !== null) return minutesSince(named, 0);
+
   const hours = t.match(new RegExp(`\\b(${COUNT_WORDS})\\s+(?:and a half\\s+)?(?:hour|hr)`, 'i'));
   if (hours) {
     const n = countFrom(hours[1]);
@@ -270,6 +275,16 @@ export function parseStartOffset(text: string): number | null {
     return Math.round((now.getTime() - at.getTime()) / 60_000);
   }
   return null;
+}
+
+/** Minutes since the most recent occurrence of a clock time, today or yesterday. */
+function minutesSince(hour: number, minute: number, daysBack = 0): number {
+  const now = new Date();
+  const at = new Date(now);
+  at.setHours(hour, minute, 0, 0);
+  if (daysBack) at.setDate(at.getDate() - daysBack);
+  if (at.getTime() > now.getTime()) at.setDate(at.getDate() - 1);
+  return Math.round((now.getTime() - at.getTime()) / 60_000);
 }
 
 // "I woke up with it" answers *when* it started without giving a time, and the
@@ -405,7 +420,14 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
   // genuinely covers everything mentioned.
   const ownSeverities = mentions.map((mention, i) => {
     const next = mentions[i + 1];
-    return firstNumberIn(lower.slice(mention.end, next ? next.start : lower.length));
+    let window = lower.slice(mention.end, next ? next.start : lower.length);
+    // A severity window stops where the sentence turns to medication. Numbers
+    // after "I took" are quantities — "in the back of my head ten. I took two
+    // tablets…" came back with "ten" as "then", and the last area helped itself
+    // to the two out of "two tablets" and reported it as a severity.
+    const meds = window.search(/\b(?:took|taken|taking|had)\b/);
+    if (meds >= 0) window = window.slice(0, meds);
+    return firstNumberIn(window);
   });
   const anyStatedPerArea = ownSeverities.some((value) => value !== null);
 
@@ -453,6 +475,8 @@ const NOT_A_MED = new Set([
   'the', 'some', 'my', 'it', 'this', 'that', 'them', 'another', 'more',
   'something', 'anything', 'nothing', 'painkillers', 'medication', 'medicine',
   'meds', 'shower', 'nap', 'rest', 'break', 'walk',
+  // Connectives, so "took two tablets and then…" doesn't name a drug "and".
+  'and', 'then', 'with', 'for', 'at', 'in', 'of', 'about', 'around',
   ...Object.keys(NUMBER_WORDS),
 ]);
 
@@ -478,8 +502,12 @@ function quantityToNumber(token: string): string {
  */
 // "two tablets of Treo", and "two *more* tablets of Treo" — the filler between
 // the quantity and the form is how a second dose usually gets described.
+// The optional number before the name is dictation debris, not a second
+// quantity: "two tablets of Treo" came back as "two tablets of three trail",
+// and taking "three" as the drug's name threw the whole dose away, since a
+// number word can't be a medication.
 const DOSE_PATTERN = new RegExp(
-  `\\b(${QUANTITY})\\s+(?:more\\s+|extra\\s+|additional\\s+|another\\s+)?(${MED_FORMS})\\s+(?:of\\s+)?([a-z][a-z0-9-]{2,})`,
+  `\\b(${QUANTITY})\\s+(?:more\\s+|extra\\s+|additional\\s+|another\\s+)?(${MED_FORMS})\\s+(?:of\\s+)?(?:(?:${Object.keys(NUMBER_WORDS).join('|')}|\\d+)\\s+)?([a-z][a-z0-9-]{2,})`,
   'gi',
 );
 
@@ -491,16 +519,50 @@ const DOSE_PATTERN = new RegExp(
  * two events, not one. Each dose's time is read from the words between it and
  * the next dose, so times can't bleed across.
  */
-function extractDoses(text: string): VoiceDose[] {
+/**
+ * A bare hour — "and then a tablet of Sumatriptan at six" — is ambiguous on its
+ * own, which is why the *start* time refuses to guess at one. A dose isn't
+ * ambiguous in the same way: it has to have been taken after the attack began
+ * and before now, and that usually leaves exactly one candidate. Six o'clock,
+ * for an attack that started at noon, can only be the evening.
+ *
+ * Where it doesn't leave exactly one, this returns null and the dose keeps
+ * "no time given" rather than picking a side.
+ */
+function resolveBareHour(text: string, startMinutesAgo: number | null): number | null {
+  const m = text.match(new RegExp(`\\b(?:at|around|about)\\s+(\\d{1,2}|${Object.keys(CLOCK_WORDS).join('|')})\\b`, 'i'));
+  if (!m) return null;
+  const parsed = parseInt(m[1], 10);
+  const hour = Number.isNaN(parsed) ? CLOCK_WORDS[m[1].toLowerCase()] : parsed;
+  if (hour === undefined || hour > 23) return null;
+
+  const now = Date.now();
+  const startMs = startMinutesAgo === null ? null : now - startMinutesAgo * 60_000;
+  const candidates = new Set<number>();
+  for (const h of new Set([hour % 12, (hour % 12) + 12, hour])) {
+    for (const daysBack of [0, 1]) {
+      const at = new Date();
+      at.setHours(h, 0, 0, 0);
+      at.setDate(at.getDate() - daysBack);
+      const t = at.getTime();
+      if (t <= now && (startMs === null || t >= startMs)) candidates.add(t);
+    }
+  }
+  if (candidates.size !== 1) return null;
+  return Math.round((now - [...candidates][0]) / 60_000);
+}
+
+function extractDoses(text: string, startMinutesAgo: number | null = null): VoiceDose[] {
   const matches = [...text.matchAll(DOSE_PATTERN)]
     .filter((m) => !NOT_A_MED.has(m[3].toLowerCase()));
   return matches.map((m, i) => {
     const from = m.index + m[0].length;
     const to = i + 1 < matches.length ? matches[i + 1].index : text.length;
+    const window = text.slice(from, to);
     return {
       name: titleCase(m[3]),
       dose: `${quantityToNumber(m[1])} ${m[2].toLowerCase()}`,
-      minutesAgo: parseStartOffset(text.slice(from, to)),
+      minutesAgo: parseStartOffset(window) ?? resolveBareHour(window, startMinutesAgo),
     };
   });
 }
@@ -605,9 +667,14 @@ export function parseVoiceEntry(rawText: string, opts: VoiceParseOptions, starte
   const reliefs = extractFromList(text, opts.reliefs);
   const triggers = extractFromList(text, opts.triggers);
   const medication = extractMedication(text, opts.recentMeds);
+  // Parsed before the doses, which use it to disambiguate a bare hour: a dose
+  // must fall between the attack starting and now.
+  const started = startedText.trim();
+  const startMinutesAgo = started ? parseStartOffset(started) : null;
+
   // Correct each dose's name the same way the single medication is corrected,
   // so a second "trail" becomes Treo too.
-  const doses: VoiceDose[] = extractDoses(text).map((d) => {
+  const doses: VoiceDose[] = extractDoses(text, startMinutesAgo).map((d) => {
     const corrected = correctAgainstHistory(d.name, opts.recentMeds);
     return corrected ? { ...d, name: corrected.name } : d;
   });
@@ -631,8 +698,6 @@ export function parseVoiceEntry(rawText: string, opts: VoiceParseOptions, starte
   if (triggers.length) matched.push(`Triggers: ${triggers.join(', ')}`);
   if (medication) matched.push(`Medication: ${medication.name}${medication.dose ? ` ${medication.dose}` : ''}`);
 
-  const started = startedText.trim();
-  const startMinutesAgo = started ? parseStartOffset(started) : null;
   // The onset flag can be answered by either question — "I woke up with it" is
   // as likely to arrive as a description as it is as a time.
   const wokeWithMigraine = WOKE_RE.test(started) || WOKE_RE.test(text);
