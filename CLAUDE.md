@@ -352,6 +352,13 @@ Both were plausible, neither had a measurable effect; they're recorded so they a
 - **`pod install` needs a UTF-8 locale**, or it dies inside Ruby's Unicode normalisation.
 - **Add Swift files to the target with the `xcodeproj` gem** (ships with CocoaPods), not by hand-editing `project.pbxproj`.
 - **Rasterise SVG with `librsvg`** (`brew install librsvg`). `qlmanage` produces a small off-centre thumbnail on a white field.
+- **Xcode does not reliably re-copy `public/` on an incremental build**, so a web fix can appear not to work when it simply isn't on the phone. This cost three rounds of device testing in one session, twice producing "the fix didn't work" reports against code that predated the fix. **⇧⌘K (Clean Build Folder) before running a device test**, and settle it by reading the installed bundle rather than re-reasoning about the code:
+
+  ```bash
+  grep -rl "some string from the new build" ~/Library/Developer/Xcode/DerivedData/App-*/Build/Products/Debug-iphoneos/App.app/public/assets/
+  ```
+
+  A UI string from the change is the most reliable marker, since identifiers are minified. `stat -f "%Sm"` on the `.app` gives the build time.
 - **Measure, don't reason from screenshots.** Every iOS layout bug this file records was diagnosed by reading real numbers off the live DOM; several wrong fixes shipped first when that step was skipped. Safari Web Inspector against the device is the best tool; the `localStorage` + `sqlite3` probe described above works when it isn't to hand.
 
 ### Known gaps
