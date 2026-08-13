@@ -1,4 +1,4 @@
-# Migraine tracker
+# Lidd
 
 A migraine diary built around the idea that an attack is a *thing that changes over time*, not a single row in a table. You log it once when it starts, then add readings as it evolves — and the app reminds you to, so the timeline doesn't end up with one entry and a guess.
 

@@ -17,7 +17,7 @@ import { Sheet } from './components/Sheet';
 import { EndAttackDialog } from './components/EndAttackDialog';
 
 const TAB_TITLES: Record<Tab, string> = {
-  log: 'Migraine Tracker',
+  log: 'Lidd',
   history: 'Logs',
   stats: 'Insights',
   settings: 'Settings',

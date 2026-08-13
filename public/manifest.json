@@ -1,6 +1,6 @@
 {
-  "name": "Migraine Tracker",
-  "short_name": "Migraines",
+  "name": "Lidd",
+  "short_name": "Lidd",
   "description": "Log and track your migraine attacks with a snapshot timeline.",
   "start_url": "/",
   "display": "standalone",

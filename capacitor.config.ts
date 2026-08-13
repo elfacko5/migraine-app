@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   // com.sunny.migrainetracker could not be registered for free provisioning,
   // so the Xcode target moved to ...tracker2 and this follows it.
   appId: 'com.sunny.migrainetracker2',
-  appName: 'Migraine Tracker',
+  appName: 'Lidd',
   webDir: 'dist',
   ios: {
     // Stops Capacitor installing itself as the UNUserNotificationCenter
