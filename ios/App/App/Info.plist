@@ -12,8 +12,12 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<!-- Both names are set explicitly. CFBundleName defaulted to
+	     $(PRODUCT_NAME), which is the Xcode *target* name — "App" — so the
+	     bundle claimed to be called Lidd in one key and App in the other, and
+	     App Shortcut phrases interpolate whichever the system picks. -->
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>Lidd</string>
 	<!-- Names Siri will also accept for this app in an App Shortcut phrase.
 	     "Lidd" is an invented one-syllable word, so dictation renders it as
 	     "lid", "lead" or "Lydd" as often as not, and a phrase that doesn't
