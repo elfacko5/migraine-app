@@ -79,10 +79,29 @@ const AREA_TERMS = ['Forehead', 'Temple', 'Eye', 'Cheek', 'Jaw', 'Crown', 'Occip
 // stable (see the pain-areas section), but people describe where it hurts in
 // ordinary words, so those map onto the same terms and are matched first —
 // "the back of my head" has to win before "head" can match anything else.
-const AREA_SYNONYMS: Array<{ pattern: RegExp; term: string }> = [
-  { pattern: /\bback of (?:my |the )?head\b/g, term: 'Occiput' },
+//
+// "top of" and "back of" take a wildcard trailing word rather than requiring
+// the literal "head": dictation mangled "top of my head" into "top of my
+// Hedegård" (a name, not even a near-miss for "head" the way "Joe" is for
+// "jaw" — soundex wouldn't have rescued it), and the phrase was dropped
+// entirely, taking its severity with it. In a migraine transcript, "top of
+// my ___" only ever means the crown of the head, whatever ___ came out as —
+// there's no other "top of my X" anyone would say here. "back of my ___" is
+// genuinely ambiguous between head and neck, so `exclude` rules out the one
+// case that means something else (a literal, correctly-heard "neck") and
+// treats every other trailing word as "head" — the more likely of the two,
+// and the dedicated "back of my neck" pattern below still wins when "neck"
+// *was* heard clearly.
+//
+// The exclusion is a plain string check on the captured word, not a regex
+// lookahead ahead of the optional "my "/"the " — a lookahead there can be
+// satisfied by backtracking *past* "my" instead of past the real word (the
+// engine tries skipping the optional group, finds "my" doesn't look like
+// "neck" either, and happily captures "my" itself as the trailing word).
+const AREA_SYNONYMS: Array<{ pattern: RegExp; term: string; exclude?: string }> = [
+  { pattern: /\bback of (?:my |the )?(\S+)/g, term: 'Occiput', exclude: 'neck' },
   { pattern: /\bbase of (?:my |the )?skull\b/g, term: 'Occiput' },
-  { pattern: /\btop of (?:my |the )?head\b/g, term: 'Crown' },
+  { pattern: /\btop of (?:my |the )?(\S+)/g, term: 'Crown' },
   { pattern: /\bback of (?:my |the )?neck\b/g, term: 'Nape' },
   { pattern: /\bneck\b/g, term: 'Nape' },
   { pattern: /\bbrow\b/g, term: 'Forehead' },
@@ -355,8 +374,9 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
   };
   // Everyday phrasings first, so "the back of my head" is already claimed
   // before the anatomical terms are looked for.
-  for (const { pattern, term } of AREA_SYNONYMS) {
+  for (const { pattern, term, exclude } of AREA_SYNONYMS) {
     for (const m of lower.matchAll(pattern)) {
+      if (exclude && m[1] === exclude) continue;
       mentions.push({ term, start: m.index, end: m.index + m[0].length });
     }
   }
