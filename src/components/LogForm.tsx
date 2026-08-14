@@ -317,10 +317,16 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                 <div className="rounded-xl border border-bg-border bg-bg-raised p-4 space-y-2">
                   <p className="text-xs uppercase tracking-wider text-text-secondary">Pain areas</p>
                   <ul className="space-y-1.5">
+                    {/* Per area, not off the single all-areas flag: a
+                        transcript that states three severities and omits one
+                        is the normal case, and driving every row off the
+                        global flag told the user their own spoken number
+                        wasn't heard — with the quote right underneath
+                        showing that it was. */}
                     {areaNames.map((name) => (
                       <li key={name} className="flex items-baseline justify-between gap-3">
                         <span className="text-base text-text-primary">{name}</span>
-                        {voiceDraft.severityHeard ? (
+                        {voiceDraft.severityHeardFor[name] ? (
                           <span className="text-base font-semibold tabular-nums text-text-primary">{form.areas[name]}</span>
                         ) : (
                           // The reason the save button is disabled, said where

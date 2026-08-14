@@ -31,8 +31,24 @@ export interface VoiceDraft {
    * It matters because a guessed number is indistinguishable from a spoken one
    * once it is in `areas`, and this is a health record. The banner says so, and
    * the wizard won't offer its one-tap save until someone has looked at it.
+   *
+   * This is the *all* of `severityHeardFor` — true only when every area's
+   * severity was actually said. Use it to gate the one-tap save; use
+   * `severityHeardFor` to describe an individual area.
    */
   severityHeard: boolean;
+  /**
+   * Per area: was its severity actually said, or is it `DEFAULT_SEVERITY`?
+   *
+   * The review screen needs this rather than the single flag above, because
+   * the two disagree constantly. "Left eye seven left jaw six top of head nine
+   * and the back of the neck" states three severities and omits one — driving
+   * every row off the global flag labelled all four "no severity heard",
+   * including the eye whose seven was sitting in the transcript quoted
+   * directly underneath. Telling someone their own clearly-spoken number
+   * wasn't heard is the same class of lie as inventing one.
+   */
+  severityHeardFor: Record<string, boolean>;
   /**
    * Minutes before now that the attack started, from Siri's answer to "when
    * did it start?". `null` means nothing usable was said, and the form keeps
@@ -233,10 +249,21 @@ export function parseStartOffset(text: string): number | null {
   if (/\bjust started\b|\bjust now\b|\bright now\b|^\s*now\b/.test(t)) return 0;
   if (/\bhalf an hour\b|\bhalf hour\b/.test(t)) return 30;
 
+  // Which day, and which half of it — read once, up here, because *every*
+  // clock-time branch below needs them. They used to be read only by the
+  // spoken-hour branch at the bottom, so a numeric hour silently ignored both:
+  // "Yesterday at 10:30" recorded this morning, and "last night at 10:30"
+  // recorded 10:30 today instead of 22:30 yesterday. A start time a day out is
+  // exactly the kind of quiet wrongness this parser is meant to refuse.
+  const pm = /\b(pm|p\.m\.|evening|tonight|afternoon|night)\b/i.test(t);
+  const am = /\b(am|a\.m\.|morning)\b/i.test(t);
+  const lastNight = /\blast night\b|\byesterday\b/i.test(t);
+  const daysBack = lastNight ? 1 : 0;
+
   // "About noon" is a clock time that contains no number, so nothing else here
   // catches it. Yesterday's if the hour hasn't come round yet today.
   const named = /\bnoon\b|\bmidday\b/.test(t) ? 12 : /\bmidnight\b/.test(t) ? 0 : null;
-  if (named !== null) return minutesSince(named, 0);
+  if (named !== null) return minutesSince(named, 0, daysBack);
 
   const hours = t.match(new RegExp(`\\b(${COUNT_WORDS})\\s+(?:and a half\\s+)?(?:hour|hr)`, 'i'));
   if (hours) {
@@ -258,25 +285,25 @@ export function parseStartOffset(text: string): number | null {
     const minute = clock[2] ? parseInt(clock[2], 10) : 0;
     const suffix = (clock[3] ?? clock[5] ?? '').toLowerCase().replace(/\./g, '');
     if (hour > 23 || minute > 59) return null;
-    if (suffix.startsWith('p') && hour < 12) hour += 12;
-    if (suffix.startsWith('a') && hour === 12) hour = 0;
-
-    const now = new Date();
-    const at = new Date(now);
-    at.setHours(hour, minute, 0, 0);
-    // A time still ahead of us was meant as yesterday — you can't have started
-    // a migraine later today.
-    if (at.getTime() > now.getTime()) at.setDate(at.getDate() - 1);
-    return Math.round((now.getTime() - at.getTime()) / 60_000);
+    // An explicit am/pm suffix wins; failing that, a part-of-day word decides.
+    // "last night at 10:30" is 22:30, and reading it as 10:30 put a dose
+    // twelve hours out with nothing on screen to suggest it was a guess.
+    if (suffix) {
+      if (suffix.startsWith('p') && hour < 12) hour += 12;
+      if (suffix.startsWith('a') && hour === 12) hour = 0;
+    } else {
+      if (pm && hour < 12) hour += 12;
+      if (am && hour === 12) hour = 0;
+    }
+    // minutesSince rolls a time that hasn't come round yet back a day of its
+    // own accord — you can't have started a migraine later today.
+    return minutesSince(hour, minute, daysBack);
   }
 
   // A spoken clock time — "last night around nine", "this morning at seven".
   // Siri writes the hour as a word here, and the part of day is what makes it
   // unambiguous, so one is required: a bare "nine" could be either end of the
   // day and guessing would put the attack twelve hours out.
-  const pm = /\b(pm|p\.m\.|evening|tonight|afternoon|night)\b/i.test(t);
-  const am = /\b(am|a\.m\.|morning)\b/i.test(t);
-  const lastNight = /\blast night\b|\byesterday\b/i.test(t);
   if (pm || am || lastNight) {
     const spoken = t.match(new RegExp(`\\b(\\d{1,2}|${Object.keys(CLOCK_WORDS).join('|')})\\b`, 'i'));
     if (!spoken) return null;
@@ -285,13 +312,7 @@ export function parseStartOffset(text: string): number | null {
     if (hour === undefined || hour > 23) return null;
     if (pm && hour < 12) hour += 12;
     if (am && hour === 12) hour = 0;
-
-    const now = new Date();
-    const at = new Date(now);
-    at.setHours(hour, 0, 0, 0);
-    if (lastNight) at.setDate(at.getDate() - 1);
-    if (at.getTime() > now.getTime()) at.setDate(at.getDate() - 1);
-    return Math.round((now.getTime() - at.getTime()) / 60_000);
+    return minutesSince(hour, 0, daysBack);
   }
   return null;
 }
@@ -362,6 +383,14 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
       const end = m.index + m[0].length;
       if (soundex(m[0]) !== code) continue;
       if (firstNumberIn(lower.slice(end, end + 15)) === null) continue;
+      // Never sound-match a word another area has already claimed literally.
+      // "neck" and "nose" share a soundex code (N200), so "the back of the
+      // neck three" matched Nape correctly *and* invented a Nose reading at
+      // the same severity — the number after it satisfies the guard above,
+      // which exists for "Joe six" and can't tell the two cases apart. A word
+      // sitting inside an existing mention was heard correctly; it needs no
+      // rescue, and the synonyms run before this so the span is already there.
+      if (mentions.some((x) => m.index < x.end && end > x.start)) continue;
       mentions.push({ term, start: m.index, end });
     }
     if (mentions.some((m) => m.term === term)) return;
@@ -376,7 +405,11 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
   // before the anatomical terms are looked for.
   for (const { pattern, term, exclude } of AREA_SYNONYMS) {
     for (const m of lower.matchAll(pattern)) {
-      if (exclude && m[1] === exclude) continue;
+      // Trailing punctuation is part of the captured word — "\S+" grabs
+      // "neck." at the end of a sentence, which didn't equal "neck" and so
+      // slipped past the exclusion, giving "the back of the neck." both an
+      // Occiput reading and the Nape one it actually meant.
+      if (exclude && m[1]?.replace(/[^\p{L}]+$/u, '') === exclude) continue;
       mentions.push({ term, start: m.index, end: m.index + m[0].length });
     }
   }
@@ -796,6 +829,7 @@ export function parseVoiceEntry(rawText: string, opts: VoiceParseOptions, starte
     // The start answer joins the note too, so nothing said is lost even when
     // the time itself wasn't understood.
     note: [text, started].filter(Boolean).join(' · '),
-    matched, severityHeard, startMinutesAgo, wokeWithMigraine, startedText: started,
+    matched, severityHeard, severityHeardFor: heard,
+    startMinutesAgo, wokeWithMigraine, startedText: started,
   };
 }
