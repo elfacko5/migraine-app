@@ -17,7 +17,10 @@ import { Sheet } from './components/Sheet';
 import { EndAttackDialog } from './components/EndAttackDialog';
 
 const TAB_TITLES: Record<Tab, string> = {
-  log: 'Lidd',
+  // A greeting rather than the app's name: the user already knows which app
+  // they opened, and the Today tab is the one screen that isn't a list of
+  // something, so naming it after its contents would say nothing either.
+  log: 'Hello',
   history: 'Logs',
   stats: 'Insights',
   settings: 'Settings',
