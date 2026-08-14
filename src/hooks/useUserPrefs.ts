@@ -26,6 +26,7 @@ export const PAIN_AREAS = [
   'Forehead left', 'Forehead right',
   'Temple left', 'Temple right',
   'Eye left', 'Eye right',
+  'Nose',
   'Cheek left', 'Cheek right',
   'Jaw left', 'Jaw right',
   // Back

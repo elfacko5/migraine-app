@@ -260,18 +260,16 @@ When no attack is ongoing, the Today tab shows `AttackFreeCard` (time since the 
 
 ## Pain areas
 
-The canonical list lives in `src/hooks/useUserPrefs.ts` as `PAIN_AREAS` (16 zones — every zone is a left/right pair; there's no sideless zone anymore, see below). There is no single global severity field — `snapshot.areas` maps each selected zone name to its severity (1–10), and `maxSeverity(snapshot)` in `stats.ts` returns `Math.max(...Object.values(snapshot.areas))` as the effective severity.
+The canonical list lives in `src/hooks/useUserPrefs.ts` as `PAIN_AREAS` (17 zones). There is no single global severity field — `snapshot.areas` maps each selected zone name to its severity (1–10), and `maxSeverity(snapshot)` in `stats.ts` returns `Math.max(...Object.values(snapshot.areas))` as the effective severity.
 
 The picker (`AreaSeverityPicker`) and the stats heatmap (`HeadHeatmap`) share geometry from `src/components/headDiagram.ts`, which **inlines the user's exported SVG artwork** (`Face front - 1.svg`, `Head back - 1.svg`, in the repo root) as two `DiagramView` configs in the `VIEWS` array. Each view holds a closed `path` per selectable zone plus `disabled` regions (the front jaw + neck, filled `#7d8599`, non-selectable) and a `details` stroke (the lips). Selected zones are filled by `sevFill(severity)` (same low/mid/high thresholds and colors as the `--color-severity-*` CSS tokens: ≤3 green, ≤7 orange, >7 red) so a zone's own color reflects its own severity — not a flat accent fill. The focused zone (the one the slider controls) gets an additional bright outline ring on top.
 
-- **Front (mirrored — screen-left = subject's right), 10 zones:** `Forehead/Temple/Eye/Cheek/Jaw left+right`.
+- **Front (mirrored — screen-left = subject's right), 11 zones:** `Forehead/Temple/Eye/Cheek/Jaw left+right` + `Nose`.
 - **Back (not mirrored — screen-left = subject's left), 6 zones:** `Crown/Occiput/Nape left+right`.
 
 A Front/Back toggle switches views (each shows a per-view selected count). Tapping a zone selects + focuses it; a **single** severity slider follows the focused zone (tapping the focused zone again deselects it). Each selected zone shows its score as a badge on the diagram.
 
 Renaming zones or editing `PAIN_AREAS` strands existing `snapshot.areas` data (which stores the exact strings) — keep the zone-name strings stable. If the user re-exports SVGs, re-inline the path data into the matching `DiagramView`.
-
-**`Nose` was removed by request** — it's no longer a `PAIN_AREAS` entry, tappable on the front diagram, or reachable from voice ("sinuses" now matches nothing). It was the one sideless zone; `AreaSeverityPicker` and `extractAreas` (`voiceParse.ts`) both had a special case for a bare, un-sided name, now gone along with it. Existing `snapshot.areas['Nose']` in old attacks is untouched and still shows in `SnapshotRow` and `SeverityChart` (both read snapshot data directly, not the zone list) — it just can't be created again, and won't appear on `HeadHeatmap`, which only draws zones still in `headDiagram.ts`.
 
 `HeadHeatmap` (Insights → Pain area frequency) skips rendering a view entirely when none of its zones have any count in the selected period — e.g. an all-front history hides the Back illustration rather than showing an empty head. `AreaSeverityPicker` (the logging picker) always shows both views regardless, since the user picks a view to select in, not to review data.
 
