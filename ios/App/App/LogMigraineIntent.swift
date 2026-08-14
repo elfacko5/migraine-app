@@ -34,13 +34,15 @@ struct LogMigraineIntent: AppIntent {
     /// the in-perform request didn't prompt either once `openAppWhenRun` was
     /// set, so Siri silently ran with no text and just opened the app.
     ///
-    /// Three narrow questions rather than one open one. Siri ends dictation on
-    /// its own, so a long rambling answer gets cut off part-way — and since
+    /// Several narrow questions rather than one open one. Siri ends dictation
+    /// on its own, so a long rambling answer gets cut off part-way — and since
     /// severity tends to come last, it was what got lost. Each of these fits
     /// inside the window Siri allows, and asking separately means a cut-off
-    /// answer costs one field instead of everything after it.
+    /// answer costs one field instead of everything after it. The last two are
+    /// the same question asked twice, because the medication answer is the
+    /// longest and was still being cut off on device.
     ///
-    /// All three are required, because **optional parameters are never
+    /// All of them are required, because **optional parameters are never
     /// prompted for automatically** — an optional one is simply skipped, which
     /// is how this intent originally managed to run with no text at all. The
     /// cost is that Siri insists on an answer, so "nothing" is a valid reply
@@ -63,14 +65,52 @@ struct LogMigraineIntent: AppIntent {
     )
     var extras: String
 
+    /// A second bite at the previous question, because Siri keeps ending
+    /// dictation mid-sentence on it.
+    ///
+    /// Medication is the longest thing anyone says here — "two tablets of X
+    /// last night at ten and then one this morning at seven" — and on device
+    /// it was cut off part-way through, repeatedly. Splitting the answer in
+    /// two gives the second half its own dictation window, and the two are
+    /// concatenated on the way out, so a sentence finished here reads exactly
+    /// as if it had all fit in one.
+    ///
+    /// It is asked unconditionally, which is not the ideal design — the ideal
+    /// is to ask it only when `extras` got an answer. That needs a
+    /// `requestValue` inside `perform()`, and this file's own history says
+    /// that silently fails to prompt once `openAppWhenRun` is set: the intent
+    /// ran through with no text at all and just opened the app. A required
+    /// parameter is the only prompt that reliably happens, so the cost of
+    /// always asking is accepted. "No"/"nothing" is one word and `clean()`
+    /// already maps it to an empty answer.
+    @Parameter(
+        title: "Anything more",
+        requestValueDialog: IntentDialog("Anything more, or is that everything?")
+    )
+    var extrasMore: String
+
     func perform() async throws -> some IntentResult {
         // "Nothing"/"no" are how a required parameter gets skipped out loud;
         // treat them as an empty answer rather than as something the user said.
+        // "That's everything"/"that's all" answer the follow-up question in
+        // the words its own phrasing invites.
         func clean(_ raw: String) -> String {
             let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             let bare = trimmed.lowercased().trimmingCharacters(in: .punctuationCharacters)
-            return ["no", "nothing", "none", "nope", "skip", "no thanks"].contains(bare) ? "" : trimmed
+            let declines = [
+                "no", "nothing", "none", "nope", "skip", "no thanks",
+                "that's all", "thats all", "that's everything", "thats everything",
+                "that's it", "thats it", "everything", "all done", "done",
+            ]
+            return declines.contains(bare) ? "" : trimmed
         }
+
+        // The follow-up continues the same answer, so the two are joined into
+        // one before parsing rather than kept apart — a sentence Siri cut in
+        // half should read as the single sentence it was meant to be.
+        let allExtras = [clean(extras), clean(extrasMore)]
+            .filter { !$0.isEmpty }
+            .joined(separator: ". ")
 
         // Written as JSON because the three answers must stay separate: "an
         // hour ago" is a time, but run through the pain parser its number
@@ -80,7 +120,7 @@ struct LogMigraineIntent: AppIntent {
         let payload: [String: String] = [
             "note": clean(note),
             "started": clean(started),
-            "extras": clean(extras)
+            "extras": allExtras
         ]
 
         if let data = try? JSONSerialization.data(withJSONObject: payload),
