@@ -44,6 +44,23 @@ export function formatSince(iso: string): string {
   return `${mins}m`;
 }
 
+// The same elapsed time as formatSince, but spelled out — "14 days" rather
+// than "14d". The compact form is for dense rows; the Today card gives this
+// number a whole line to itself, where an abbreviation reads as cramped.
+// Only the largest unit, since that card is a glance, not a stopwatch.
+export function formatSinceLong(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return 'just now';
+  const totalMin = Math.floor(ms / 60_000);
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const mins = totalMin % 60;
+  const unit = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  if (days > 0) return unit(days, 'day');
+  if (hours > 0) return unit(hours, 'hour');
+  return unit(mins, 'minute');
+}
+
 export function isoToLocalInput(iso?: string): string {
   const d = iso ? new Date(iso) : new Date();
   const pad = (n: number) => String(n).padStart(2, '0');

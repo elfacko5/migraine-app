@@ -2,26 +2,14 @@ import { useEffect, useState } from 'react';
 import type { Attack } from '../types';
 import { formatElapsed } from '../utils/format';
 import { attackMaxSeverity } from '../utils/stats';
+import { HomeCard } from './HomeCard';
+import cardImage from '../assets/card-ongoing.jpg';
 
 interface Props {
   attack: Attack;
   onAddUpdate: () => void;
   onEnd: () => void;
   onOpenDetail: () => void;
-}
-
-function severityBg(s: number): string {
-  if (s <= 3) return 'border-severity-low/40 bg-severity-low/10';
-  if (s <= 6) return 'border-severity-mid/40 bg-severity-mid/10';
-  if (s <= 8) return 'border-severity-mid/40 bg-severity-mid/10';
-  return 'border-severity-high/40 bg-severity-high/10';
-}
-
-function severityText(s: number): string {
-  if (s <= 3) return 'text-severity-low';
-  if (s <= 6) return 'text-severity-mid';
-  if (s <= 8) return 'text-severity-mid';
-  return 'text-severity-high';
 }
 
 export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }: Props) {
@@ -35,44 +23,33 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }
 
   const maxSev = attackMaxSeverity(attack);
   const start = attack.snapshots[0].time;
-  const areas = Object.keys(attack.snapshots[attack.snapshots.length - 1].areas);
 
   return (
-    <div className={`rounded-xl border p-4 space-y-3 ${severityBg(maxSev)}`}>
+    <HomeCard
+      image={cardImage}
+      label="Ongoing attack"
+      headline={`Started ${formatElapsed(start)}`}
+      // The worst area's severity, stated plainly rather than colour-coded.
+      // The card sits on artwork, where a severity-tinted number would read as
+      // part of the picture; the detail line is the same shape as the
+      // attack-free card's, which keeps the two interchangeable at a glance.
+      detail={<>Pain severity: {maxSev}</>}
+      onOpenDetail={onOpenDetail}
+    >
       <button
         type="button"
-        onClick={onOpenDetail}
-        className="flex w-full items-start justify-between gap-3 text-left -m-1 p-1 rounded-lg transition-colors hover:bg-bg-raised/40 active:bg-bg-raised/60"
+        onClick={onAddUpdate}
+        className="btn-primary rounded-full px-5 py-2.5 text-sm font-semibold transition-colors"
       >
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-text-secondary">Ongoing attack</span>
-            <span className={`text-xs font-bold ${severityText(maxSev)}`}>severity {maxSev}</span>
-          </div>
-          <p className="mt-0.5 text-sm text-text-primary">
-            Started {formatElapsed(start)}
-            {areas.length > 0 && <> · {areas.join(', ')}</>}
-          </p>
-        </div>
-        <div className={`text-2xl font-bold tabular-nums leading-none ${severityText(maxSev)}`}>{maxSev}</div>
+        Add update
       </button>
-
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onAddUpdate}
-          className="btn-primary flex-1 rounded-lg py-2 text-sm font-medium transition-colors"
-        >
-          Add update
-        </button>
-        <button
-          type="button"
-          onClick={onEnd}
-          className="btn-secondary flex-1 rounded-lg py-2 text-sm font-medium transition-colors"
-        >
-          End attack
-        </button>
-      </div>
-    </div>
+      <button
+        type="button"
+        onClick={onEnd}
+        className="btn-secondary rounded-full px-5 py-2.5 text-sm font-semibold transition-colors"
+      >
+        End attack
+      </button>
+    </HomeCard>
   );
 }
