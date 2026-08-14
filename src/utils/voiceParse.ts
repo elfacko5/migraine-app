@@ -400,6 +400,20 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
     });
   }
   const SIDE_RANGE = 20;
+  // English puts the side word *before* the area it describes — "right eye",
+  // "left side of the jaw" — so a mention that follows the word beats one that
+  // precedes it even when the preceding one is closer in raw characters. This
+  // penalty is what expresses that: it's added to a backward match's distance,
+  // and being >= SIDE_RANGE it means any forward candidate in range wins.
+  //
+  // Without it, "right eye eight left side of the jaw seven" put the "left"
+  // on the *eye* (7 chars back, past "eight") rather than the jaw (13 chars
+  // forward, past "side of the"). The eye then held both "right" and "left",
+  // which reads as no side at all and selected both eyes, while the jaw was
+  // left unsided and selected both jaws — four areas from two that were each
+  // clearly given one side, with severities the user never said attached to
+  // the two invented ones.
+  const BACKWARD_PENALTY = SIDE_RANGE;
 
   // Each side word belongs to whichever mention it's nearest, rather than each
   // mention grabbing any side word in range. Otherwise the "right" in "right
@@ -408,13 +422,16 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
   const claimed = new Map<number, Set<'left' | 'right'>>();
   for (const word of sideWords) {
     let owner = -1;
-    let bestDistance = Infinity;
+    let bestScore = Infinity;
     mentions.forEach((mention, i) => {
-      const distance = word.end <= mention.start ? mention.start - word.end
+      const forward = word.end <= mention.start;
+      const distance = forward ? mention.start - word.end
         : word.start >= mention.end ? word.start - mention.end
         : 0;
-      if (distance > SIDE_RANGE || distance >= bestDistance) return;
-      bestDistance = distance;
+      if (distance > SIDE_RANGE) return;
+      const score = forward ? distance : distance + BACKWARD_PENALTY;
+      if (score >= bestScore) return;
+      bestScore = score;
       owner = i;
     });
     if (owner < 0) continue;
@@ -507,6 +524,10 @@ const NOT_A_MED = new Set([
   'meds', 'shower', 'nap', 'rest', 'break', 'walk',
   // Connectives, so "took two tablets and then…" doesn't name a drug "and".
   'and', 'then', 'with', 'for', 'at', 'in', 'of', 'about', 'around',
+  // Time words, since the connector before a name can also introduce a time —
+  // "took two tablets at noon" must not record a drug called "Noon".
+  'noon', 'midday', 'midnight', 'morning', 'afternoon', 'evening', 'night',
+  'tonight', 'yesterday', 'today', 'last', 'just', 'now',
   ...Object.keys(NUMBER_WORDS),
 ]);
 
@@ -536,10 +557,36 @@ function quantityToNumber(token: string): string {
 // quantity: "two tablets of Treo" came back as "two tablets of three trail",
 // and taking "three" as the drug's name threw the whole dose away, since a
 // number word can't be a medication.
+//
+// "at" joins the form to the name as often as "of" does — dictation rendered
+// "two tablets of Sumatriptan" as "two tablets **at** Sumatriptan", and with
+// only "of" allowed the dose didn't match at all, so it lost its timestamp
+// and became an attribute of the attack instead of an event on the timeline.
+//
+// **The name is optional**, which is the difference between a dose that keeps
+// its time and one that is thrown away entirely. Siri dropped the drug name
+// out of "one tablet of Treo this morning at seven" and left "one tablet of
+// this morning at seven" — the name resolved to "this", a NOT_A_MED word, and
+// the whole dose went with it, time included. A quantity and a form on their
+// own are still unambiguously a dose; only the name is missing, and an unnamed
+// dose at a stated time is both true and useful ("1 tablet at 07:00"), where
+// silently dropping the event is neither. A name that turns out to be a
+// NOT_A_MED word is *not* allowed to swallow the time that follows it — see
+// the window handling in extractDoses.
+//
+// The `d` flag records each group's offsets, which is what lets a rejected
+// name be excluded from the match's span again.
 const DOSE_PATTERN = new RegExp(
-  `\\b(${QUANTITY})\\s+(?:more\\s+|extra\\s+|additional\\s+|another\\s+)?(${MED_FORMS})\\s+(?:of\\s+)?(?:(?:${Object.keys(NUMBER_WORDS).join('|')}|\\d+)\\s+)?([a-z][a-z0-9-]{2,})`,
-  'gi',
+  `\\b(${QUANTITY})\\s+(?:more\\s+|extra\\s+|additional\\s+|another\\s+)?(${MED_FORMS})(?:\\s+(?:of\\s+|at\\s+)?(?:(?:${Object.keys(NUMBER_WORDS).join('|')}|\\d+)\\s+)?([a-z][a-z0-9-]{2,}))?`,
+  'gdi',
 );
+
+// A captured name is only kept when it could actually be a drug — otherwise
+// the dose survives with an empty name rather than being discarded.
+function doseName(raw: string | undefined): string {
+  if (!raw || NOT_A_MED.has(raw.toLowerCase())) return '';
+  return titleCase(raw);
+}
 
 /**
  * Every dose mentioned, in the order spoken, each with the time attached to it.
@@ -583,14 +630,22 @@ function resolveBareHour(text: string, startMinutesAgo: number | null): number |
 }
 
 function extractDoses(text: string, startMinutesAgo: number | null = null): VoiceDose[] {
-  const matches = [...text.matchAll(DOSE_PATTERN)]
-    .filter((m) => !NOT_A_MED.has(m[3].toLowerCase()));
+  const matches = [...text.matchAll(DOSE_PATTERN)];
   return matches.map((m, i) => {
-    const from = m.index + m[0].length;
+    const name = doseName(m[3]);
+    // The time is read from the words between this dose and the next. When a
+    // captured name was rejected, the window starts back at the end of the
+    // *form* instead of the end of the match, so the rejected word is read as
+    // part of the time rather than swallowed: "took two tablets at noon" ends
+    // up matching "noon" as a name, and consuming it would leave an empty
+    // window and a dose with no time, when "noon" *is* the time. Same for the
+    // "one tablet of this morning at seven" case the optional name exists for.
+    const formEnd = m.indices?.[2]?.[1];
+    const from = (name === '' && formEnd !== undefined ? formEnd : m.index + m[0].length);
     const to = i + 1 < matches.length ? matches[i + 1].index : text.length;
     const window = text.slice(from, to);
     return {
-      name: titleCase(m[3]),
+      name,
       dose: `${quantityToNumber(m[1])} ${m[2].toLowerCase()}`,
       minutesAgo: parseStartOffset(window) ?? resolveBareHour(window, startMinutesAgo),
     };
@@ -598,8 +653,12 @@ function extractDoses(text: string, startMinutesAgo: number | null = null): Voic
 }
 
 function extractMedicationByPhrasing(text: string): { name: string; dose: string } | null {
-  // "two tablets of Treo" — quantity, form, then the name.
-  const [first] = extractDoses(text);
+  // "two tablets of Treo" — quantity, form, then the name. The first *named*
+  // dose is preferred over the first dose outright: the wizard's single
+  // medication field can only hold one, and a name the user actually said is
+  // worth more there than an earlier dose whose name dictation dropped.
+  const doses = extractDoses(text);
+  const first = doses.find((d) => d.name) ?? doses[0];
   if (first) return { name: first.name, dose: first.dose };
 
   // "took two tablets" — a dose with no name. Checked before the bare-name
