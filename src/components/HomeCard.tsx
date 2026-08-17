@@ -41,9 +41,9 @@ interface Props {
 export function HomeCard({ image, label, headline, detail, onOpenDetail, children }: Props) {
   const text = (
     <>
-      <p className="text-sm text-text-secondary">{label}</p>
-      <p className="text-xl font-bold leading-tight text-text-primary">{headline}</p>
-      <p className="text-sm text-text-secondary">{detail}</p>
+      <p className="text-base text-text-secondary">{label}</p>
+      <p className="text-2xl font-bold leading-tight text-text-primary">{headline}</p>
+      <p className="text-base text-text-secondary">{detail}</p>
     </>
   );
 
@@ -64,11 +64,12 @@ export function HomeCard({ image, label, headline, detail, onOpenDetail, childre
         className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-bg-surface from-38% via-bg-surface/35 via-62% to-transparent to-85%"
       />
 
-      {/* Generous vertical padding, and the text lines given room to breathe
-          rather than set solid: this card is glanceable-by-design and is read
-          with a headache, where tightly-stacked lines are the first thing to
-          become hard work. */}
-      <div className="px-5 py-6">
+      {/* Generous padding, and the text lines given room to breathe rather
+          than set solid: this card is glanceable-by-design and is read with a
+          headache, where tightly-stacked lines are the first thing to become
+          hard work. Sized against the Figma comp, where the card is roughly
+          half as tall as it is wide — the built version was nearer a third. */}
+      <div className="px-6 py-8">
         {onOpenDetail ? (
           // The text block is the way into the detail view — the card itself
           // can't be the tap target with buttons inside it, and a third
@@ -77,15 +78,15 @@ export function HomeCard({ image, label, headline, detail, onOpenDetail, childre
           <button
             type="button"
             onClick={onOpenDetail}
-            className="-m-1 block max-w-[64%] space-y-1.5 rounded-lg p-1 text-left transition-colors hover:bg-bg-raised/40 active:bg-bg-raised/60"
+            className="-m-1 block max-w-[64%] space-y-2 rounded-lg p-1 text-left transition-colors hover:bg-bg-raised/40 active:bg-bg-raised/60"
           >
             {text}
           </button>
         ) : (
-          <div className="max-w-[64%] space-y-1.5">{text}</div>
+          <div className="max-w-[64%] space-y-2">{text}</div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2 pt-5">{children}</div>
+        <div className="flex flex-wrap items-center gap-2 pt-6">{children}</div>
       </div>
     </div>
   );
