@@ -114,7 +114,21 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
   // choice screen too, straight into the (prefilled) wizard.
   const [step, setStep] = useState(() => (voiceDraft || isPast ? 1 : 0));
   const [form, setForm] = useState<FormState>(() => {
-    const base = blank(isoToLocalInput(minTime));
+    // Defaults to *now* — the moment this sheet was opened — not to the last
+    // reading's time. Seeding it with `minTime` meant the first update on an
+    // attack offered the attack's own start time, so accepting the default
+    // recorded a reading as having happened hours before it did.
+    //
+    // Captured in the initialiser rather than re-read per render, so it stays
+    // the moment the user tapped "Add update" while they work through the
+    // wizard. Clamped into the picker's own window: for a past attack "now"
+    // is after `maxTime` (its end), and the nearest valid instant is that
+    // end — which does assert the update happened right as the attack
+    // finished, but any default does something like that, and the picker is
+    // right there. An ongoing attack is unaffected: now is always in range.
+    const opened = new Date().toISOString();
+    const initialTime = opened < minTime ? minTime : opened > maxTime ? maxTime : opened;
+    const base = blank(isoToLocalInput(initialTime));
     if (!voiceDraft) return base;
     return {
       ...base,
