@@ -302,9 +302,28 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
                 className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
             )}
 
-            {/* Reference to what was logged last time — never pre-filled, just shown */}
+            {/* Reference to what was logged last time — never pre-filled, just
+                shown. Boxed so it reads as a distinct aside rather than as a
+                caption belonging to the control above it, which is what plain
+                text under a picker looks like.
+
+                Deliberately quiet: the app's own raised surface and border,
+                no accent fill and no colour of its own. A tinted info box
+                (the usual blue) would break the palette rules and, worse,
+                pull the eye to the one thing on the step that is *not*
+                actionable — this is context for the reading being entered
+                above it, not a message about it. `aria-hidden` is wrong here
+                (it is real information), so it stays readable but inert. */}
             {caption && (
-              <p className="mt-3 text-xs text-text-secondary">{caption}</p>
+              <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-bg-border bg-bg-raised/50 px-3 py-2.5">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+                  strokeLinecap="round" strokeLinejoin="round"
+                  className="mt-px h-3.5 w-3.5 shrink-0 text-text-secondary" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4M12 8h.01" />
+                </svg>
+                <p className="text-xs leading-relaxed text-text-secondary">{caption}</p>
+              </div>
             )}
           </>
         )}

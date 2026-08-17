@@ -53,9 +53,15 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Front / Back view toggle */}
+      {/* Front / Back view toggle.
+          Sized as a segmented control (32px overall), not as a pair of
+          buttons: at the old height it carried the same weight as the
+          wizard's primary/secondary actions and read as something to press
+          to continue, rather than as a switch between two views of the same
+          step. Everything here is scaled to fit that 32px — 2px of track
+          padding around a 28px segment. */}
       <div className="flex justify-center">
-        <div className="inline-flex gap-1 rounded-xl border border-bg-border bg-bg-raised/40 p-1">
+        <div className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-bg-border bg-bg-raised/40 p-0.5">
           {VIEWS.map((v) => {
             const isActive = v.id === activeViewId;
             const n = selectedCount(v);
@@ -65,14 +71,14 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
                 type="button"
                 onClick={() => setActiveViewId(v.id)}
                 aria-pressed={isActive}
-                className={`flex items-center gap-1.5 rounded-lg px-6 py-1.5 text-sm font-medium transition-colors ${
+                className={`flex h-7 items-center gap-1.5 rounded-md px-4 text-xs font-medium transition-colors ${
                   isActive ? 'bg-accent text-bg-base' : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {v.label}
                 {n > 0 && (
                   <span
-                    className={`inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[0.65rem] font-bold tabular-nums ${
+                    className={`inline-flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full px-1 text-[0.6rem] font-bold tabular-nums ${
                       isActive ? 'bg-bg-base/25 text-bg-base' : 'bg-accent text-bg-base'
                     }`}
                   >
