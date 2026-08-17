@@ -41,9 +41,13 @@ interface Props {
 export function HomeCard({ image, label, headline, detail, onOpenDetail, children }: Props) {
   const text = (
     <>
+      {/* Deliberately uneven gaps, to spec: 4px under the label so it reads as
+          a kicker attached to the headline, then 16px before the detail line
+          so it separates as its own fact. A uniform stack made the label float
+          between the two. */}
       <p className="text-base text-text-secondary">{label}</p>
-      <p className="text-2xl font-bold leading-tight text-text-primary">{headline}</p>
-      <p className="text-base text-text-secondary">{detail}</p>
+      <p className="mt-1 text-2xl font-bold leading-tight text-text-primary">{headline}</p>
+      <p className="mt-4 text-base text-text-secondary">{detail}</p>
     </>
   );
 
@@ -57,11 +61,21 @@ export function HomeCard({ image, label, headline, detail, onOpenDetail, childre
         // squashing, and the right-hand anchor keeps each image's subject
         // (the moon, the swirl) inside the visible part rather than centred
         // under the gradient's opaque end.
-        className="pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-3/5 object-cover object-right"
+        //
+        // Half the card, not three fifths: right-aligned, the box's centre —
+        // and so the artwork's subject — sits at 75% of the card rather than
+        // 70%, which is where the comp puts it.
+        className="pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-1/2 object-cover object-right"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-bg-surface from-38% via-bg-surface/35 via-62% to-transparent to-85%"
+        // The opaque stop has to sit *past* the image's left edge (50%), not
+        // before it. The image is a hard-edged box: wherever the gradient is
+        // already translucent at that edge, flat card colour meets artwork in
+        // one step and the seam is visible straight down the card. Staying
+        // fully opaque to 53% hides the join and lets the artwork fade up out
+        // of the card, which is the whole point of the gradient.
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-bg-surface from-53% via-bg-surface/35 via-74% to-transparent to-92%"
       />
 
       {/* Generous padding, and the text lines given room to breathe rather
@@ -78,12 +92,12 @@ export function HomeCard({ image, label, headline, detail, onOpenDetail, childre
           <button
             type="button"
             onClick={onOpenDetail}
-            className="-m-1 block max-w-[64%] space-y-2 rounded-lg p-1 text-left transition-colors hover:bg-bg-raised/40 active:bg-bg-raised/60"
+            className="-m-1 block max-w-[64%] rounded-lg p-1 text-left transition-colors hover:bg-bg-raised/40 active:bg-bg-raised/60"
           >
             {text}
           </button>
         ) : (
-          <div className="max-w-[64%] space-y-2">{text}</div>
+          <div className="max-w-[64%]">{text}</div>
         )}
 
         <div className="flex flex-wrap items-center gap-2 pt-6">{children}</div>
