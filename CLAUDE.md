@@ -398,6 +398,15 @@ The Today tab was rebuilt from supplied mockups. The mechanics are under "The To
 - **The top bar has no divider and says "Hello".** The content below is the same colour, so the line only made the bar look like chrome bolted above the page; `backdrop-blur` still separates scrolled content from the title. "Hello" because the user knows which app they opened, and Today is the one tab with no list to name itself after.
 - **Tab titles are 34px, expressed in `rem`.** A `px` value would make the largest type on screen the one thing that ignores the app's own text-size control, which is backwards for an accessibility feature that exists for people who can't read small text during an attack. The header uses `min-h` so it grows instead of clipping at the bigger scales (46.75px at `xl`). Only the four tab titles — the wizard's step headings were explicitly left alone.
 
+Refined against the device and a supplied spec, in that order:
+
+- **Spacing came from a spec, not from taste, and the gaps are uneven on purpose.** 24px sides, 32px top/bottom, then 4/16/24 down the stack. The label is a kicker belonging to the headline and sits tight to it; the detail line is a separate fact and doesn't. An even stack left the label floating between the two, which is what made the first attempt feel wrong without being obviously wrong.
+- **Button radius is `rounded-xl` (12px), left in `rem`.** Same reasoning as the titles: the text-size control grows the buttons, and a pinned `[12px]` would read tighter as they get bigger. It's also the radius ~36 other buttons already use, so the card stopped being the odd one out.
+- **The gradient's opaque stop must sit past the image's left edge.** The image is a hard-edged box; wherever the gradient has already begun fading at that edge, flat card colour meets artwork in one step and a seam runs down the card. Cost a round to spot, because moving the image and the gradient felt like one change and is two.
+- **Which edge of the artwork survives the crop is per-card (`imageAnchor`), not global.** It depends entirely on where the subject sits in that source and how much dead margin surrounds it. Encoding a per-image judgement as one shared constant is how the next artwork swap silently breaks the other card — which nearly happened when the trimmed ongoing art inverted the correct answer.
+- **The headline never wraps.** It overflows the text column onto the artwork instead, because it is the one line that has to land at a glance, and a two-line "Started 24h 38m" grew the card for nothing. Verified at the largest text scale, where it still clears the card edge.
+- **Live durations tick on resume, not just on a timer** (`useNowTick`). An interval alone looks right and is wrong on iOS, which suspends a backgrounded page's timers while keeping the page alive — the card then paints a stopped clock. Worth treating as a class of bug rather than three patches, since it applies to anything deriving a duration from `Date.now()` at render.
+
 ### Config tried and reverted
 
 Both were plausible, neither had a measurable effect; they're recorded so they aren't tried again as fixes for the same symptoms.
