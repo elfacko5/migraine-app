@@ -174,9 +174,17 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
   //
   // Step 0 is excluded because the review screen carries its own pair of
   // buttons; a second "Finish now" in the app bar would just be a duplicate.
+  //
+  // Shown from step 1 onward and *disabled* until it can be used, rather than
+  // appearing once the requirement happens to be met. A control that
+  // materialises out of nowhere gives no hint it exists, so nobody looks for
+  // it; one that is visibly greyed out says both that the shortcut is there
+  // and that something is still missing. Same call as the voice review
+  // screen's disabled save, for the same reason.
   const areasFilled = Object.keys(form.areas).length > 0;
   const severityConfirmed = step >= 2 || (voiceDraft?.severityHeard ?? false);
-  const canFinishEarly = areasFilled && severityConfirmed && step > 0 && step < totalSteps;
+  const showFinishEarly = step > 0 && step < totalSteps;
+  const canFinishEarly = areasFilled && severityConfirmed;
 
   // The review screen's save. Pain areas are still the one requirement, and a
   // severity nobody said is treated as missing rather than as a value.
@@ -271,9 +279,20 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         </span>
 
         <div className="ml-auto flex items-center">
-          {canFinishEarly && (
-            <button type="button" onClick={submit}
-              className="px-2 py-1 text-sm font-medium text-accent-light hover:text-accent transition-colors">
+          {showFinishEarly && (
+            <button
+              type="button"
+              onClick={submit}
+              disabled={!canFinishEarly}
+              // Says why, for a control whose disabled state is otherwise a
+              // dead end — the required step is the one it points at.
+              title={canFinishEarly ? undefined : 'Select a pain area first'}
+              className={`px-2 py-1 text-sm font-medium transition-colors ${
+                canFinishEarly
+                  ? 'text-accent-light hover:text-accent'
+                  : 'text-text-secondary/50 cursor-not-allowed'
+              }`}
+            >
               Finish now
             </button>
           )}
