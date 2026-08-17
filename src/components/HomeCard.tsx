@@ -3,6 +3,17 @@ import type { ReactNode } from 'react';
 interface Props {
   /** Decorative artwork, bled off the card's right edge. */
   image: string;
+  /**
+   * Which edge of the artwork to keep when `object-cover` crops it.
+   *
+   * Per-image, because it depends on where the subject sits in the source and
+   * how much dead margin surrounds it — there is no single right answer. The
+   * ongoing card's art is pre-trimmed tight to its subject, so its right edge
+   * is the one to keep; the attack-free art is a full square with the moon
+   * left of centre, so keeping its left edge is what carries the moon into
+   * the visible strip instead of burying it under the gradient.
+   */
+  imageAnchor: 'left' | 'right';
   /** Small label above the headline — "Attack-free for", "Ongoing attack". */
   label: string;
   /** The one thing the card exists to say, at a glance. */
@@ -38,7 +49,7 @@ interface Props {
  * their own background, so they read fine over the artwork where a line of
  * body text would not.
  */
-export function HomeCard({ image, label, headline, detail, onOpenDetail, children }: Props) {
+export function HomeCard({ image, imageAnchor, label, headline, detail, onOpenDetail, children }: Props) {
   const text = (
     <>
       {/* Deliberately uneven gaps, to spec: 4px under the label so it reads as
@@ -67,14 +78,14 @@ export function HomeCard({ image, label, headline, detail, onOpenDetail, childre
         // (the moon, the swirl) inside the visible part rather than centred
         // under the gradient's opaque end.
         //
-        // `object-left`, counter-intuitively, is what pushes the *subject*
-        // right. The source art is square and centred, and the box is wider
-        // than it is tall once cropped, so `object-cover` overflows it
-        // horizontally and something has to be trimmed. Anchoring right kept
-        // the artwork's own empty right-hand margin and left the swirl at ~67%
-        // of the card, with a dead strip beyond it. Anchoring left trims that
-        // margin off instead and carries the subject out to ~82%.
-        className="pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-1/2 object-cover object-left"
+        // `object-cover` always overflows this box horizontally, so one side
+        // of the source is trimmed either way — `imageAnchor` picks which.
+        // Note the counter-intuitive part: keeping the *left* edge is what
+        // pushes a centred subject *right*, because the trimming comes off the
+        // other side.
+        className={`pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-1/2 object-cover ${
+          imageAnchor === 'right' ? 'object-right' : 'object-left'
+        }`}
       />
       <div
         aria-hidden="true"

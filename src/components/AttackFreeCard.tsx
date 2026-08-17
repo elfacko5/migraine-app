@@ -17,6 +17,8 @@ export function AttackFreeCard({ lastEnd, onStart }: Props) {
   return (
     <HomeCard
       image={cardImage}
+      // Full square with the moon left of centre — keeping the left edge is what carries it into the visible strip.
+      imageAnchor="left"
       label="Attack-free for"
       headline={formatSinceLong(lastEnd)}
       detail={<>Since {formatDatetime(lastEnd)}</>}

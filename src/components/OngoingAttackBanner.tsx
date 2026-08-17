@@ -23,6 +23,8 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }
   return (
     <HomeCard
       image={cardImage}
+      // Pre-trimmed tight to the swirl, so its right edge is the one to keep.
+      imageAnchor="right"
       label="Ongoing attack"
       headline={`Started ${formatElapsed(start)}`}
       // The worst area's severity, stated plainly rather than colour-coded.
