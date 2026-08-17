@@ -46,7 +46,12 @@ export function HomeCard({ image, label, headline, detail, onOpenDetail, childre
           so it separates as its own fact. A uniform stack made the label float
           between the two. */}
       <p className="text-base text-text-secondary">{label}</p>
-      <p className="mt-1 text-2xl font-bold leading-tight text-text-primary">{headline}</p>
+      {/* Never wrapped. "Started 24h 38m" broke onto a second line against the
+          64% text width and pushed the card taller for no reason — the
+          headline is the one line that has to be readable at a glance, and
+          running it over the artwork costs nothing, since the buttons already
+          do the same. It overflows the width-limited block deliberately. */}
+      <p className="mt-1 whitespace-nowrap text-2xl font-bold leading-tight text-text-primary">{headline}</p>
       <p className="mt-4 text-base text-text-secondary">{detail}</p>
     </>
   );
@@ -62,10 +67,14 @@ export function HomeCard({ image, label, headline, detail, onOpenDetail, childre
         // (the moon, the swirl) inside the visible part rather than centred
         // under the gradient's opaque end.
         //
-        // Half the card, not three fifths: right-aligned, the box's centre —
-        // and so the artwork's subject — sits at 75% of the card rather than
-        // 70%, which is where the comp puts it.
-        className="pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-1/2 object-cover object-right"
+        // `object-left`, counter-intuitively, is what pushes the *subject*
+        // right. The source art is square and centred, and the box is wider
+        // than it is tall once cropped, so `object-cover` overflows it
+        // horizontally and something has to be trimmed. Anchoring right kept
+        // the artwork's own empty right-hand margin and left the swirl at ~67%
+        // of the card, with a dead strip beyond it. Anchoring left trims that
+        // margin off instead and carries the subject out to ~82%.
+        className="pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-1/2 object-cover object-left"
       />
       <div
         aria-hidden="true"
