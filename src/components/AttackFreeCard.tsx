@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { formatSinceLong, formatDatetime } from '../utils/format';
+import { useNowTick } from '../hooks/useNowTick';
 import { HomeCard } from './HomeCard';
 import cardImage from '../assets/card-attack-free.jpg';
 
@@ -10,13 +10,9 @@ interface Props {
 
 /** Shown on the Today tab when no attack is ongoing — how long since the last one ended. */
 export function AttackFreeCard({ lastEnd, onStart }: Props) {
-  const [, forceRender] = useState(0);
-
-  // Tick the elapsed time every minute.
-  useEffect(() => {
-    const id = setInterval(() => forceRender((n) => n + 1), 60_000);
-    return () => clearInterval(id);
-  }, []);
+  // Every minute, and on every return to the foreground — an interval alone
+  // leaves "14 days" reading whatever it said before the app was backgrounded.
+  useNowTick();
 
   return (
     <HomeCard

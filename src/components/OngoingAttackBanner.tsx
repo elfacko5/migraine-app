@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import type { Attack } from '../types';
 import { formatElapsed } from '../utils/format';
 import { attackMaxSeverity } from '../utils/stats';
+import { useNowTick } from '../hooks/useNowTick';
 import { HomeCard } from './HomeCard';
 import cardImage from '../assets/card-ongoing.jpg';
 
@@ -13,13 +13,9 @@ interface Props {
 }
 
 export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }: Props) {
-  const [, forceRender] = useState(0);
-
-  // Tick elapsed time every minute.
-  useEffect(() => {
-    const id = setInterval(() => forceRender((n) => n + 1), 60_000);
-    return () => clearInterval(id);
-  }, []);
+  // Keeps "Started 3m" honest — every minute, and on every return to the
+  // foreground, which is the case a bare interval silently got wrong.
+  useNowTick();
 
   const maxSev = attackMaxSeverity(attack);
   const start = attack.snapshots[0].time;

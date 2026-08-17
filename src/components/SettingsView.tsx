@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { TextScale } from '../hooks/useSettings';
 import type { useAuth } from '../hooks/useAuth';
 import type { SyncStatus } from '../types';
 import { formatSince } from '../utils/format';
+import { useNowTick } from '../hooks/useNowTick';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -25,13 +26,9 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness,
   const fileRef = useRef<HTMLInputElement>(null);
   const [importErr, setImportErr] = useState<string | null>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
-  const [, forceRender] = useState(0);
-
-  // Tick so a relative "synced Xm ago" string stays fresh while this tab is open.
-  useEffect(() => {
-    const id = setInterval(() => forceRender((n) => n + 1), 30_000);
-    return () => clearInterval(id);
-  }, []);
+  // Keeps a relative "synced Xm ago" string fresh — on a timer while the tab
+  // is open, and on return to the foreground, when the timer has been asleep.
+  useNowTick(30_000);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

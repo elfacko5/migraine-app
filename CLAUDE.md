@@ -263,6 +263,8 @@ Both of these are invisible in a desktop browser and only surfaced on device/sim
 
 When no attack is ongoing, the Today tab shows `AttackFreeCard` (time since the most recent attack `end`, ticking each minute) or a "no attacks yet" prompt.
 
+**Anything showing a live duration must use `useNowTick` (`src/hooks/useNowTick.ts`), not a bare `setInterval`.** A value derived from `Date.now()` during render is only as fresh as the last render, and an interval alone does not guarantee one: iOS keeps a backgrounded PWA/WKWebView page alive in memory rather than reloading it, and suspends its timers while it's there. On resume the component paints whatever it computed *before* backgrounding, until some unrelated state change re-renders it. Seen on device — the Today card read "Started 1h" for an attack logged the previous day, and only corrected after a tab switch. The hook adds `visibilitychange` + `focus` on top of the interval (the same pair the sync hooks use). Used by `OngoingAttackBanner`, `AttackFreeCard`, and `SettingsView`'s "Synced 3m ago" line. Note that only the `visibilitychange` path checks `visibilityState` — `focus` refreshes unconditionally, because some environments hand a page focus while still reporting it hidden (the sandboxed preview browser does exactly this, which is how that branch got found).
+
 ### The Today hero cards
 
 `AttackFreeCard` and `OngoingAttackBanner` are both thin wrappers over **`HomeCard`** — artwork bleeding off the right edge, text and buttons on the left, one gradient tying them together. Each is `label` / `headline` / `detail` plus action buttons, so the two read as the same object in two states rather than two different components.
