@@ -283,6 +283,16 @@ When no attack is ongoing, the Today tab shows `AttackFreeCard` (time since the 
 
 `Sheet.tsx` is the reusable full-screen bottom sheet (backdrop/Escape close, body scroll lock, children mounted only when open). It has two opt-in modes: `flush` (non-scrolling flex body, so a child owns its own scroll region — needed because sticky footers were unreliable in iOS PWA scroll containers) and `bareHeader` (Sheet renders no header of its own; the child provides its full top app bar). `LogForm` and `QuickUpdateForm` both use `flush bareHeader` since their top bar shows a live step count and a "Finish now" quick-exit that the generic Sheet header can't express.
 
+## Attack detail (`AttackDetail.tsx`)
+
+Opened from the Logs list and from the Today card's text block. Rendered through `Sheet`'s **`flush bareHeader`** mode, like the two wizards — it owns its top bar and flex-pins its own footer, because a footer that must sit above the home indicator is more reliable pinned than `sticky` inside an iOS PWA scroll container.
+
+- **Top bar:** Close (leading) · "Attack details" · Delete (trailing), both as circular icon buttons. **Delete lives up here, away from the footer**, so the destructive action isn't adjacent to the primary one — it still routes through `ConfirmDialog`, since it's irreversible.
+- **Footer, by state:** an ongoing attack gets **Add update** (primary) + **End attack** (secondary); an ended one gets **Add update** alone.
+- **"Add update" is deliberately offered on past attacks too**, so a retrospectively logged attack can be backfilled with the readings it actually had. Only "End attack" is exclusive to a live one.
+- **"Edit details" is specified but not built.** The design puts it as the primary action for a past attack with Add update demoted to secondary; it's parked until the scope of editing an existing attack is settled (there is no edit path today, and making snapshots mutable is a data-model decision, not a UI one). Until then Add update holds the primary slot rather than shipping a dead button.
+- **End attack reuses `EndAttackDialog`** rather than ending immediately, so the Just now / Earlier presets and the minute-vs-second clamping aren't duplicated. `App.tsx` closes the detail sheet on confirm — otherwise it sits there still offering to end an attack that just ended.
+
 `ConfirmDialog.tsx` is the in-app confirm/alert modal that replaces native `confirm()` (Delete attack, Import backup) — it deliberately does **not** lock body scroll so it can stack on top of a `Sheet` without leaving the page unscrollable. Ending an attack has its own dialog, `EndAttackDialog.tsx`, since it needs inline time-picker state: **Just now** / **Earlier** presets (the latter opens a native `datetime-local` picker, min-bounded to the attack's last snapshot time and max-bounded to now). The picker is minute-precision but snapshots are second-precision, so the confirm handler clamps the chosen end time up to `minTime` if picking the exact minimum would otherwise land a few seconds before the last update.
 
 ## Pain areas

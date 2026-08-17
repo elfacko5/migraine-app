@@ -464,14 +464,19 @@ export default function App() {
         </Sheet>
       )}
 
-      {/* Attack detail sheet */}
-      <Sheet open={!!detailAttack} onClose={() => setDetailAttack(null)} title="Attack detail">
+      {/* Attack detail sheet — flush/bareHeader because AttackDetail brings
+          its own top bar and pins its own footer. */}
+      <Sheet open={!!detailAttack} onClose={() => setDetailAttack(null)} title="Attack details" flush bareHeader>
         {detailAttack && (
           <AttackDetail
             attack={detailAttack}
             onDelete={() => deleteAttack(detailAttack.id)}
             onClose={() => setDetailAttack(null)}
             onAddUpdate={() => { setUpdateAttackId(detailAttack.id); setDetailAttack(null); }}
+            // Only for the attack actually in progress — an ended one has
+            // nothing to end. Opens the same dialog the Today tab uses, so
+            // its presets and minute-vs-second clamping aren't duplicated.
+            onEndAttack={detailAttack.end === null ? () => setEndConfirmOpen(true) : undefined}
           />
         )}
       </Sheet>
@@ -488,6 +493,9 @@ export default function App() {
             // Ending can be reached from inside the update sheet, which is
             // showing an attack that no longer has anything to update.
             if (updateAttackId === ongoingAttack.id) closeUpdateSheet();
+            // …and from the detail sheet, which would otherwise sit there
+            // still offering "End attack" for an attack that just ended.
+            if (detailAttack?.id === ongoingAttack.id) setDetailAttack(null);
           }}
         />
       )}

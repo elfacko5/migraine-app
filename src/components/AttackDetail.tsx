@@ -11,9 +11,20 @@ interface Props {
   onDelete: () => void;
   onClose: () => void;
   onAddUpdate?: () => void;
+  /** Only passed for an attack still in progress. */
+  onEndAttack?: () => void;
 }
 
-export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) {
+/**
+ * Rendered inside `Sheet`'s `flush bareHeader` mode: this component owns its
+ * own top bar and pins its own footer, rather than sitting as plain content
+ * inside the generic sheet chrome.
+ *
+ * That's the same arrangement `LogForm`/`QuickUpdateForm` use, and for the
+ * same reason — a footer that has to stay put above the home indicator is
+ * more reliable flex-pinned than `sticky` inside an iOS PWA scroll container.
+ */
+export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAttack }: Props) {
   const maxSev = attackMaxSeverity(attack);
   const start = attack.snapshots[0];
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -29,7 +40,45 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) 
   const reversedSnapshots = [...attack.snapshots].reverse();
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 min-h-0 mx-auto w-full max-w-2xl">
+      {/* Top app bar — Close (leading), title, Delete (trailing). Delete sits
+          up here rather than among the footer actions deliberately: the
+          footer is for what you came to do, and a destructive action next to
+          the primary one is a mis-tap waiting to happen. */}
+      <div
+        className="relative flex items-center border-b border-border-subtle px-3 py-3 sm:px-4"
+        style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-semibold text-text-primary">
+          Attack details
+        </span>
+
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          aria-label="Delete attack"
+          className="ml-auto rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-severity-high/15 hover:text-severity-high transition-colors"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6M14 11v6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Body — the only scrolling region */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-5 space-y-5">
       {/* Header */}
       <div>
         <h2 className="text-lg font-semibold text-text-primary">{formatDate(start.time)}</h2>
@@ -79,9 +128,22 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) 
         ))}
       </div>
 
-      {/* Actions — Add update works for past attacks too, to backfill a
-          retrospective log with more than one reading */}
-      <div className="pt-2 border-t border-bg-border space-y-2">
+      </div>
+
+      {/* Actions — flex-pinned to the bottom, above the home indicator.
+          "Add update" is offered for past attacks too, so a retrospectively
+          logged attack can be backfilled with the readings it actually had;
+          only "End attack" is exclusive to one that's still running.
+
+          A past attack shows "Add update" as its primary action for now. The
+          design calls for "Edit details" in that slot, with this demoted to
+          secondary — that's parked until the scope of editing an existing
+          attack is decided (there is no edit path today), so rather than
+          ship a dead button the remaining action takes the primary role. */}
+      <div
+        className="flex flex-col gap-2 border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
+        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+      >
         {onAddUpdate && (
           <button
             type="button"
@@ -91,13 +153,15 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate }: Props) 
             Add update
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => setConfirmDelete(true)}
-          className="btn-secondary w-full rounded-xl py-3 text-sm font-medium text-severity-high hover:bg-severity-high/10 transition-colors"
-        >
-          Delete attack
-        </button>
+        {onEndAttack && (
+          <button
+            type="button"
+            onClick={onEndAttack}
+            className="btn-secondary w-full rounded-xl py-3 text-sm font-medium transition-colors"
+          >
+            End attack
+          </button>
+        )}
       </div>
 
       <ConfirmDialog
