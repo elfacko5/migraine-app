@@ -16,7 +16,12 @@ export function TopBar({ title, action }: Props) {
   return (
     <header
       className="sticky top-0 z-30 bg-bg-base/90 backdrop-blur-md"
-      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      // 2rem (32px at the default text size) *on top of* the safe-area inset,
+      // never instead of it: the inset is what keeps the title clear of the
+      // status bar and notch, and it reads as 0 in the browser preview — so a
+      // flat value tuned here would look right on desktop and collide with the
+      // clock on device. Same trap BottomNav's bottom clearance already has.
+      style={{ paddingTop: 'calc(2rem + env(safe-area-inset-top))' }}
     >
       {/* min-h rather than a fixed height: the title is large enough now that
           a 3.5rem row would clip it at the bigger text-size settings. */}
