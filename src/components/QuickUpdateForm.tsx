@@ -25,7 +25,6 @@ interface Props {
   // it here the user has to close the sheet, find the attack again and end it
   // from the Today tab, or log a no-change reading that says the opposite of
   // what happened.
-  onEndAttack?: () => void;
   // Set when this sheet was opened from the "log a migraine" Siri Shortcut
   // for an already-ongoing attack — prefills the wizard from the dictated
   // transcript and skips straight past the choice screen (see below).
@@ -94,9 +93,8 @@ function lastEntryCaption(step: number, prev: Snapshot): string | null {
   return null;
 }
 
-export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onClose, onEndAttack, voiceDraft }: Props) {
+export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onClose, voiceDraft }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
-  const isPast = attack.end !== null;
   // A new update must land after the last reading, and — for a past attack —
   // no later than when it ended (an ongoing attack has no such ceiling
   // besides "now", which the input's max already enforces per render).
@@ -298,22 +296,6 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
               </div>
             )}
       </div>
-
-      {/* The one thing the choice screen offered that nothing else here
-          does: an ongoing attack that has actually stopped. Losing it would
-          send someone back out to the Today card to end it, which is the
-          detour it was added to remove. Quiet, and only on the first step. */}
-      {step === 1 && !isPast && onEndAttack && (
-        <div className="px-4 sm:px-6 pb-2 shrink-0">
-          <button
-            type="button"
-            onClick={onEndAttack}
-            className="btn-tertiary w-full rounded-xl py-2 text-sm font-medium transition-colors"
-          >
-            It's over — end attack
-          </button>
-        </div>
-      )}
 
       {/* Actions — flex-pinned to the bottom (above the home indicator) */}
       <div

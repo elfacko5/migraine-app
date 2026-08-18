@@ -469,9 +469,6 @@ export default function App() {
             onAddRelief={addRelief}
             onSave={handleUpdateSave}
             onClose={closeUpdateSheet}
-            // Only for the attack that's actually in progress: the same sheet
-            // also backfills past attacks, which have already ended.
-            onEndAttack={updateAttack.end === null ? () => setEndConfirmOpen(true) : undefined}
             voiceDraft={voiceDraft}
           />
         </Sheet>
