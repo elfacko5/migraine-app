@@ -29,6 +29,38 @@ interface Props {
 // simple analgesic was warned about five days early.
 const warnAt = (threshold: number) => Math.ceil(threshold * 0.7);
 
+// **The two medication rows are one shape.** They carry the same kind of
+// content — a drug, a figure about it, and a line of supporting detail — and
+// were drawn two different ways: one had the form icon and an emphasised name,
+// the other had neither, so two adjacent cards saying comparable things looked
+// like unrelated components. The only difference that means anything is that
+// one of them is a warning, so that is the only difference left: an amber ring
+// and tint. Everything else — the icon column, the name's weight, the figure
+// on the headline, the detail underneath — is shared.
+function MedRow({ name, icon, figure, detail, warning = false }: {
+  name: string;
+  icon: string;
+  figure: string;
+  detail?: string | null;
+  warning?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-start gap-2 rounded-xl px-4 py-3 ${
+        warning ? 'border border-severity-mid/40 bg-severity-mid/10' : 'bg-bg-surface'
+      }`}
+    >
+      <span aria-hidden="true">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-sm text-text-primary">
+          <span className="font-medium">{name}</span> {figure}
+        </p>
+        {detail && <p className="mt-0.5 text-xs text-text-secondary">{detail}</p>}
+      </div>
+    </div>
+  );
+}
+
 // In attack mode the page keeps only what changes what you do in the next
 // hour, which the dossier's "fewer elements per screen" asks for and which
 // nothing else in the app has yet acted on (§8.3, and CLAUDE.md has recorded
@@ -83,52 +115,46 @@ export function TodaySummary({ attacks, ongoing, medications = [], attackMode = 
   return (
     <div className="space-y-3">
       {nearing.map((m) => (
-        <div
+        <MedRow
           key={m.name}
-          className="rounded-xl border border-severity-mid/40 bg-severity-mid/10 px-4 py-3"
-        >
-          <p className="text-sm text-text-primary">
-            <span className="font-medium">{m.name}</span> on {m.thisMonth} days this month
-          </p>
-          {/* States the number and the guideline, and stops. Deciding what it
-              means is a conversation with a doctor. */}
-          {!attackMode && (
-            <p className="mt-0.5 text-xs text-text-secondary">
-              {findMedication(medications, m.name)?.maxDaysPerMonth
+          name={m.name}
+          icon={medIcon(m.name, '')}
+          figure={`on ${m.thisMonth} days this month`}
+          warning
+          /* States the number and the guideline, and stops. Deciding what it
+             means is a conversation with a doctor — and when the user entered
+             a limit of their own, that is the number quoted back, not a
+             guideline they didn't ask about. */
+          detail={!attackMode
+            ? `${findMedication(medications, m.name)?.maxDaysPerMonth
                 ? `You entered a limit of ${m.threshold} days a month for this one.`
-                : `Guidelines put medication-overuse headache at around ${m.threshold} days a month for this type of medication, sustained over three months.`}{' '}
-              Worth raising at your next appointment.
-            </p>
-          )}
-        </div>
+                : `Guidelines put medication-overuse headache at around ${m.threshold} days a month for this type of medication, sustained over three months.`
+              } Worth raising at your next appointment.`
+            : null}
+        />
       ))}
 
       {lastDose?.medication && (
-        <div className="flex items-start gap-2 rounded-xl bg-bg-surface px-4 py-3">
-          <span aria-hidden="true">{medIcon(lastDose.medication.name, lastDose.medication.dose)}</span>
-          <div className="min-w-0">
-            {/* "Treo at 20:51" reads as a label with a timestamp — it could as
-                easily mean a reminder due then, or when it was logged. The
-                verb is what makes it a statement about a dose that was taken,
-                and it stays in the line however much else joins it. */}
-            <p className="text-sm text-text-primary">
-              {lastDose.medication.name}
-              {lastLibrary?.maxPerDay
-                ? ` · ${takenIn24h} of ${lastLibrary.maxPerDay} in the last 24h`
-                : ''}
-              {' · '}
-              {takenIn24h > doseUnits(lastDose.medication) ? 'last taken at ' : 'taken at '}
-              {formatTime(lastDose.time)}
-            </p>
-            {/* Only when a minimum gap was entered and it hasn't elapsed. A
-                statement of the user's own number, never an instruction. */}
-            {position?.tooSoon && position.nextAllowedAt && (
-              <p className="mt-0.5 text-xs text-text-secondary">
-                Next dose from {formatTime(position.nextAllowedAt)}, by the gap you entered.
-              </p>
-            )}
-          </div>
-        </div>
+        <MedRow
+          name={lastDose.medication.name}
+          icon={medIcon(lastDose.medication.name, lastDose.medication.dose)}
+          // "Treo at 20:51" reads as a label with a timestamp — it could as
+          // easily mean a reminder due then, or when it was logged. The verb
+          // is what makes it a statement about a dose that was taken, and it
+          // stays in the line however much else joins it.
+          figure={[
+            lastLibrary?.maxPerDay ? `${takenIn24h} of ${lastLibrary.maxPerDay} in the last 24h` : null,
+            `${takenIn24h > doseUnits(lastDose.medication) ? 'last taken' : 'taken'} at ${formatTime(lastDose.time)}`,
+            // Leading separator: the warning row's figure continues its name
+            // as a sentence ("Treo on 8 days this month"), where this one is a
+            // list of facts about it.
+          ].filter(Boolean).map((part) => `· ${part}`).join(' ')}
+          // Only when a minimum gap was entered and it hasn't elapsed. A
+          // statement of the user's own number, never an instruction.
+          detail={position?.tooSoon && position.nextAllowedAt
+            ? `Next dose from ${formatTime(position.nextAllowedAt)}, by the gap you entered.`
+            : null}
+        />
       )}
 
       {!attackMode && (

@@ -21,6 +21,12 @@ const CLASSES: { value: MedClass; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
+// A fixed list rather than free text: the unit is only ever one of a handful
+// of words, it's used to label the wizard's quantity picker ("2 sprays"), and
+// a typo there would read as a different medication's unit for good. The
+// plural is formed by adding an "s", which holds for every option here.
+const UNITS = ['tablet', 'capsule', 'spray', 'puff', 'sachet', 'injection', 'drop'];
+
 const mohSuggestion = (cls: MedClass | undefined) =>
   cls === 'simple' ? MOH_DAYS_SIMPLE : cls ? MOH_DAYS_TRIPTAN : null;
 
@@ -243,18 +249,23 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
           <div className="space-y-2.5">
             <label className="flex items-center gap-3">
               <span className="min-w-0 flex-1 text-sm text-text-primary">Unit</span>
-              <input
-                type="text"
-                placeholder={DEFAULT_UNIT}
-                value={unitLabel}
+              {/* 9.75rem is exactly what a numeric row's control occupies —
+                  the w-20 input, the gap-3, and the w-16 suffix — so the four
+                  rows share both edges instead of the select floating inside
+                  them. Sized in rem, so it tracks the text-size control. */}
+              <select
+                value={unitLabel || DEFAULT_UNIT}
                 onChange={(e) => setUnitLabel(e.target.value)}
-                className="w-20 rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-              <span className="w-16 shrink-0 text-xs text-text-secondary">spray, capsule…</span>
+                className="w-[9.75rem] rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                {UNITS.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
             </label>
 
             <LimitField
-              label="Most in one go"
+              label="Max in one go"
               suffix={`${unit}s`}
               value={maxPerIntake}
               onChange={setMaxPerIntake}
@@ -263,7 +274,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
                 calendar day quietly allows a late-night dose plus an
                 early-morning one to count as two days' worth. */}
             <LimitField
-              label="Most in 24 hours"
+              label="Max in 24 hours"
               suffix={`${unit}s`}
               value={maxPerDay}
               onChange={setMaxPerDay}
@@ -275,7 +286,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
               onChange={setMinHoursBetween}
             />
             <LimitField
-              label="Most days a month"
+              label="Max days a month"
               suffix="days"
               value={maxDaysPerMonth}
               onChange={setMaxDaysPerMonth}
