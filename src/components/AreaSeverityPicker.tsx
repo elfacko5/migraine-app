@@ -233,7 +233,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           const [cx, cy] = z.center;
           return (
             <text key={`l-${z.name}`} x={cx} y={cy} textAnchor="middle"
-              fontSize={20} fontFamily="'Atkinson Hyperlegible', system-ui, sans-serif"
+              fontSize={20} fontFamily="Lexend, system-ui, sans-serif"
               fill="rgba(225,233,244,0.75)" pointerEvents="none">
               {z.label}
             </text>
@@ -252,7 +252,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
                 fill="#1b1a18" stroke={isActive ? '#9bb9a1' : sevFill(s)}
                 strokeWidth={isActive ? 3 : 2.5}/>
               <text x={cx} y={cy + 6} textAnchor="middle"
-                fontSize={18} fontFamily="'Atkinson Hyperlegible', system-ui, sans-serif" fontWeight="700"
+                fontSize={18} fontFamily="Lexend, system-ui, sans-serif" fontWeight="700"
                 fill="#e4dfd6">{s}</text>
             </g>
           );

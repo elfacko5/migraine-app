@@ -1,26 +1,28 @@
 @import "tailwindcss";
 
 /* ── Typeface ───────────────────────────────────────────
-   Atkinson Hyperlegible Next, designed by the Braille Institute for low
-   vision — every letter is drawn to be told apart from its lookalikes, which
-   is what this app needs when it's read mid-attack. Self-hosted (SIL Open
-   Font License): the app has to work offline and a CDN is ruled out by both
-   that and the CSP. Latin subset, one 34KB variable file.
+   Lexend, self-hosted (SIL Open Font License): the app has to work offline
+   and a CDN is ruled out by both that and the CSP. Latin subset, one 40KB
+   variable file covering 400–700.
 
-   Variable specifically so 500 is a real weight. With the two static files
-   this started as (400 + 700 only), CSS weight matching sent every
-   `font-semibold` (600) up to 700 — Atkinson's bold is heavy, and every
-   button label in the app came out looking slabbed. */
+   Lexend is the second name in the photophobia spec's font stack, and it's
+   the one that shipped — Atkinson Hyperlegible was tried first and rejected
+   on looks. Both are designed for reading difficulty; this is a preference
+   between two valid choices, not a departure from the spec.
+
+   Variable specifically so 500 is a real weight. With a static 400 + 700
+   pair, CSS weight matching sends every `font-semibold` (600) up to 700 and
+   button labels come out slabbed. */
 @font-face {
-  font-family: 'Atkinson Hyperlegible Next';
+  font-family: 'Lexend';
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url('./assets/fonts/AtkinsonHyperlegibleNext-Variable.woff2') format('woff2-variations');
+  src: url('./assets/fonts/Lexend-Variable.woff2') format('woff2-variations');
 }
 
 @theme {
-  --font-sans: 'Atkinson Hyperlegible Next', 'Lexend', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Lexend', system-ui, -apple-system, sans-serif;
 
   /* ── Type scale ──────────────────────────────────────
      Floors from the photophobia spec: body never below 16px, captions never
