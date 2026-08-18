@@ -490,6 +490,7 @@ export default function App() {
         title="Profile"
         flush
         bareHeader
+        enterFrom="right"
       >
         {profileSheet === 'medications' && (
           <MedicationsView

@@ -268,7 +268,9 @@ Every rule below exists because a real transcript broke without it. The worked e
 
 ## Profile tab
 
-Four rows, each opening a full-screen sub-page: **My medications** · **Accessibility** (text size + brightness) · **Account & sync** (hidden unless `supabase` is non-null) · **Data** (export/import). `ProfileView.tsx` holds the menu and exports `AccessibilityPanel` / `AccountPanel` / `DataPanel`; `MedicationsView.tsx` is the fourth. Every panel wraps itself in **`ProfileSubPage`**, which owns the top bar and the scroll region — so a new sub-page never re-derives the safe-area padding or the close button.
+Four rows, each opening a full-screen sub-page: **My medications** · **Accessibility** (text size + brightness) · **Account & sync** (hidden unless `supabase` is non-null) · **Data** (export/import). `ProfileView.tsx` holds the menu and exports `AccessibilityPanel` / `AccountPanel` / `DataPanel`; `MedicationsView.tsx` is the fourth. Every panel wraps itself in **`ProfileSubPage`**, which owns the top bar and the scroll region — so a new sub-page never re-derives the safe-area padding or the back button.
+
+**The sub-pages are a drill-down, not a modal.** They enter from the right (`Sheet`'s `enterFrom="right"`) and their leading control is a **back chevron**, not a close X — these are rows you go one level *into* from a list. `AttackDetail` and the wizards keep the default bottom entry and their X for exactly that contrast: they interrupt what you were doing, a settings page doesn't. If you add a sheet, pick the pair deliberately — a panel that slides up with a back arrow, or in from the right with a close X, tells the user two different things at once.
 
 **The Sheets live in `App.tsx`, not inside `ProfileView`.** `Sheet` is `absolute inset-0` against the app root; rendered from inside the tab's scroll container it would anchor to the wrong ancestor and reintroduce exactly the clipping the viewport architecture exists to avoid. One `Sheet` switches its contents on `profileSheet: ProfileSection | null`.
 

@@ -9,6 +9,11 @@ interface Props {
 // it owns the top bar and its own scroll region — the same arrangement
 // AttackDetail uses, and the reason a footer or header here doesn't rely on
 // `sticky` inside an iOS scroll container.
+//
+// Leading control is a back chevron, not a close X, and the panel slides in
+// from the right (`enterFrom="right"`): these are rows you go one level into
+// from a list, not a modal that interrupts what you were doing. AttackDetail
+// keeps its X for exactly that contrast — it *is* a detour.
 export function ProfileSubPage({ title, onClose, children }: Props) {
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -19,11 +24,11 @@ export function ProfileSubPage({ title, onClose, children }: Props) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label="Back"
           className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-raised text-text-secondary transition-colors hover:text-text-primary"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
-            <path d="M18 6 6 18M6 6l12 12" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+            <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
         <h2 className="flex-1 text-center text-base font-medium text-text-primary">{title}</h2>

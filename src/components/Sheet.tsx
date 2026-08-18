@@ -15,9 +15,17 @@ interface Props {
   // full-height area and provides its own top bar (used by the log flow, whose
   // header shows a live step count + contextual actions).
   bareHeader?: boolean;
+  // Which edge the panel enters from. 'bottom' is the modal default — a sheet
+  // that covers what you were looking at. 'right' is a drill-down: the Profile
+  // rows are a list you go one level *into*, and a page that slides in from
+  // the right with a back button says that, where a sheet rising from the
+  // bottom says "this is a detour". Pair it with a back chevron, not a close
+  // X — the two have to agree or the gesture and the icon tell different
+  // stories.
+  enterFrom?: 'bottom' | 'right';
 }
 
-export function Sheet({ open, onClose, title, children, flush = false, headerRight, bareHeader = false }: Props) {
+export function Sheet({ open, onClose, title, children, flush = false, headerRight, bareHeader = false, enterFrom = 'bottom' }: Props) {
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -39,7 +47,9 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute inset-x-0 top-0 flex flex-col bg-bg-surface transition-transform duration-300 ease-out ${open ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`absolute inset-x-0 top-0 flex flex-col bg-bg-surface transition-transform duration-300 ease-out ${
+          open ? 'translate-x-0 translate-y-0' : enterFrom === 'right' ? 'translate-x-full' : 'translate-y-full'
+        }`}
         style={{ height: 'var(--app-height, 100dvh)' }}
       >
         {!bareHeader && (
