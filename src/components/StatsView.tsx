@@ -177,14 +177,14 @@ export function StatsView({ attacks }: Props) {
               <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 p-3">
                 <ResponsiveContainer width="100%" height={140}>
                   <LineChart data={stats.severityTrend} margin={{ top: 4, right: 8, bottom: 4, left: -20 }}>
-                    <XAxis dataKey="date" tick={{ fill: '#7d8599', fontSize: '0.625rem' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                    <YAxis domain={[0, 10]} ticks={[0, 5, 10]} tick={{ fill: '#7d8599', fontSize: '0.625rem' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="date" tick={{ fill: '#a39d92', fontSize: '0.625rem' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                    <YAxis domain={[0, 10]} ticks={[0, 5, 10]} tick={{ fill: '#a39d92', fontSize: '0.625rem' }} axisLine={false} tickLine={false} />
                     <Tooltip
-                      contentStyle={{ background: '#1e2028', border: '1px solid #2a2d3a', borderRadius: 8, fontSize: '0.75rem' }}
-                      labelStyle={{ color: '#7d8599' }}
-                      itemStyle={{ color: '#dde1eb' }}
+                      contentStyle={{ background: '#302d29', border: '1px solid #3a3733', borderRadius: 8, fontSize: '0.75rem' }}
+                      labelStyle={{ color: '#a39d92' }}
+                      itemStyle={{ color: '#e4dfd6' }}
                     />
-                    <Line type="monotone" dataKey="severity" stroke="#7fc4a0" strokeWidth={2} dot={{ r: 3, fill: '#7fc4a0' }} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="severity" stroke="#9bb9a1" strokeWidth={2} dot={{ r: 3, fill: '#9bb9a1' }} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -202,10 +202,10 @@ export function StatsView({ attacks }: Props) {
           )}
 
           {/* Trigger / symptom / relief / medication frequency */}
-          <FreqSection title="Top triggers"       sub={PERIOD_SUB[period]} data={stats.triggers}    color="#c97c2a" />
-          <FreqSection title="Top symptoms"       sub={PERIOD_SUB[period]} data={stats.symptoms}    color="#b85c5c" />
-          <FreqSection title="Top reliefs"        sub={PERIOD_SUB[period]} data={stats.reliefs}     color="#5a9e7a" />
-          <FreqSection title="Medication intake"  sub={PERIOD_SUB[period]} data={stats.medications} color="#7fc4a0" />
+          <FreqSection title="Top triggers"       sub={PERIOD_SUB[period]} data={stats.triggers}    color="#b07a3c" />
+          <FreqSection title="Top symptoms"       sub={PERIOD_SUB[period]} data={stats.symptoms}    color="#a65a52" />
+          <FreqSection title="Top reliefs"        sub={PERIOD_SUB[period]} data={stats.reliefs}     color="#7fa187" />
+          <FreqSection title="Medication intake"  sub={PERIOD_SUB[period]} data={stats.medications} color="#9bb9a1" />
         </>
       )}
     </div>

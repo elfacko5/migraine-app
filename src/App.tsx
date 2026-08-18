@@ -35,7 +35,7 @@ import { StatsView } from './components/StatsView';
 import { HistoryView } from './components/HistoryView';
 import { ProfileView, AccessibilityPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
-import { TextScalePill } from './components/TextScalePill';
+import { AttackModePill } from './components/AttackModePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
 
 export default function App() {
@@ -70,7 +70,7 @@ export default function App() {
     syncStatus: medsSyncStatus, lastSyncedAt: medsLastSyncedAt,
   } = useMedications(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
-  const { textScale, setTextScale, brightness, setBrightness } = useSettings();
+  const { textScale, setTextScale, brightness, setBrightness, attackMode, setAttackMode } = useSettings();
 
   // Combine the independent sync hooks into one status for Profile: an error
   // in any takes priority, then in-flight, then the most recent successful
@@ -353,7 +353,7 @@ export default function App() {
         transform: 'translateY(var(--app-offset, 0px))',
       }}
     >
-      <BrightnessOverlay brightness={brightness} onOpenProfile={() => setTab('profile')} />
+      <BrightnessOverlay brightness={brightness} attackMode={attackMode} onOpenProfile={() => setTab('profile')} />
 
       <div className="h-full overflow-y-auto">
         <TopBar title={TAB_TITLES[tab]} />
@@ -422,7 +422,7 @@ export default function App() {
         </div>
       </div>
 
-      <TextScalePill scale={textScale} onScale={setTextScale} />
+      <AttackModePill active={attackMode} onToggle={setAttackMode} />
       {/* FAB opens Add-update when an attack is already ongoing — you can't
           start a second one until the current attack ends. */}
       <BottomNav
@@ -506,6 +506,8 @@ export default function App() {
             onTextScale={setTextScale}
             brightness={brightness}
             onBrightness={setBrightness}
+            attackMode={attackMode}
+            onAttackMode={setAttackMode}
             onClose={() => setProfileSheet(null)}
           />
         )}

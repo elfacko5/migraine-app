@@ -186,7 +186,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
         {view.zones.map((z) =>
           z.name === active ? (
             <path key={`a-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-              fill="none" stroke="#7fc4a0" strokeWidth={4} strokeLinejoin="round"
+              fill="none" stroke="#9bb9a1" strokeWidth={4} strokeLinejoin="round"
               pointerEvents="none"/>
           ) : null
         )}
@@ -233,7 +233,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           const [cx, cy] = z.center;
           return (
             <text key={`l-${z.name}`} x={cx} y={cy} textAnchor="middle"
-              fontSize={20} fontFamily="system-ui,sans-serif"
+              fontSize={20} fontFamily="'Atkinson Hyperlegible', system-ui, sans-serif"
               fill="rgba(225,233,244,0.75)" pointerEvents="none">
               {z.label}
             </text>
@@ -249,11 +249,11 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           return (
             <g key={`b-${z.name}`} pointerEvents="none">
               <circle cx={cx} cy={cy} r={isActive ? 18 : 16}
-                fill="#0d0f14" stroke={isActive ? '#7fc4a0' : sevFill(s)}
+                fill="#1b1a18" stroke={isActive ? '#9bb9a1' : sevFill(s)}
                 strokeWidth={isActive ? 3 : 2.5}/>
               <text x={cx} y={cy + 6} textAnchor="middle"
-                fontSize={18} fontFamily="system-ui,sans-serif" fontWeight="700"
-                fill="#dde1eb">{s}</text>
+                fontSize={18} fontFamily="'Atkinson Hyperlegible', system-ui, sans-serif" fontWeight="700"
+                fill="#e4dfd6">{s}</text>
             </g>
           );
         })}

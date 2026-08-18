@@ -48,7 +48,7 @@ export function HeadHeatmap({ data, label = 'attacks' }: Props) {
       <div className="flex items-center gap-2 justify-center pt-1">
         <span className="text-[0.6rem] text-text-secondary uppercase tracking-wider">Less</span>
         <div className="h-2 w-28 rounded-full"
-          style={{ background: 'linear-gradient(to right, #5a9e7a, #c97c2a, #b85c5c)' }}/>
+          style={{ background: 'linear-gradient(to right, #7fa187, #b07a3c, #a65a52)' }}/>
         <span className="text-[0.6rem] text-text-secondary uppercase tracking-wider">More {label}</span>
       </div>
     </div>
@@ -127,8 +127,8 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
             if (count === 0) return null;
             return (
               <text key={`c-${z.name}`} x={cx} y={cy + 7} textAnchor="middle"
-                fontSize={20} fontFamily="system-ui,sans-serif" fontWeight="700"
-                fill="#dde1eb" pointerEvents="none">
+                fontSize={20} fontFamily="'Atkinson Hyperlegible', system-ui, sans-serif" fontWeight="700"
+                fill="#e4dfd6" pointerEvents="none">
                 {count}×
               </text>
             );
@@ -136,13 +136,13 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
           return (
             <g key={`c-${z.name}`} pointerEvents="none">
               <text x={cx} y={cy} textAnchor="middle" fontSize={18}
-                fontFamily="system-ui,sans-serif"
+                fontFamily="'Atkinson Hyperlegible', system-ui, sans-serif"
                 fill={tv > 0.15 ? 'rgba(221,225,235,0.95)' : 'rgba(208,216,230,0.55)'}>
                 {z.label}
               </text>
               {count > 0 && (
                 <text x={cx} y={cy + 22} textAnchor="middle" fontSize={22}
-                  fontFamily="system-ui,sans-serif" fontWeight="700" fill="#dde1eb">
+                  fontFamily="'Atkinson Hyperlegible', system-ui, sans-serif" fontWeight="700" fill="#e4dfd6">
                   {count}×
                 </text>
               )}

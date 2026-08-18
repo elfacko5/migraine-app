@@ -1,25 +1,88 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+/* ── Typeface ───────────────────────────────────────────
+   Atkinson Hyperlegible, designed by the Braille Institute for low vision —
+   every letter is drawn to be told apart from its lookalikes, which is what
+   this app needs when it's read mid-attack. Self-hosted (SIL Open Font
+   License): the app has to work offline and a CDN is ruled out by both that
+   and the CSP. Latin subset only, ~22KB for both weights.
+   Only 400 and 700 are bundled — no light or thin weight is used anywhere,
+   because thin strokes shimmer for light-sensitive eyes. */
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/AtkinsonHyperlegible-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/AtkinsonHyperlegible-Bold.woff2') format('woff2');
+}
 
-  /* ── Color tokens ──────────────────────────────────── */
-  --color-bg-base:        #0d0f14;
-  --color-bg-surface:     #161820;
-  --color-bg-raised:      #1e2028;
-  --color-bg-border:      #2a2d3a;  /* border.DEFAULT — card outlines, dividers */
-  --color-border-subtle:  #34384a;  /* border.subtle — top bar edge, focus rings, active nav tab */
-  --color-text-primary:   #dde1eb;
-  --color-text-secondary: #7d8599;
-  --color-accent:         #5a9e7a;
-  --color-accent-light:   #7fc4a0;
-  --color-button-secondary-bg:     #1e2028;
-  --color-button-secondary-border: #3a3f52;
-  --color-severity-low:   #5a9e7a;
-  --color-severity-mid:   #c97c2a;
-  --color-severity-high:  #b85c5c;
-  --color-warning:        #c97c2a;
-  --color-positive:       #5a9e7a;
+@theme {
+  --font-sans: 'Atkinson Hyperlegible', 'Lexend', system-ui, -apple-system, sans-serif;
+
+  /* ── Type scale ──────────────────────────────────────
+     Floors from the photophobia spec: body never below 16px, captions never
+     below 14px. Every step carries a 1.5 line-height, which is the ratio the
+     spec asks be preserved at every text size. */
+  --text-xs:   0.875rem;  /* 14px — caption floor */
+  --text-xs--line-height: 1.5;
+  --text-sm:   1rem;      /* 16px — body floor */
+  --text-sm--line-height: 1.5;
+  --text-base: 1.0625rem; /* 17px — preferred body */
+  --text-base--line-height: 1.5;
+  --text-lg:   1.25rem;   /* 20px — H3 */
+  --text-lg--line-height: 1.4;
+  --text-xl:   1.5rem;    /* 24px — H2 */
+  --text-xl--line-height: 1.35;
+  --text-2xl:  1.75rem;   /* 28px — H1 */
+  --text-2xl--line-height: 1.3;
+
+  /* ── Color tokens — warm dark ────────────────────────
+     Warm charcoal rather than the old blue-leaning slate: saturated blue is
+     the worst hue for photophobia, and the previous palette had a blue cast
+     through every surface. No pure black and no pure white at either end —
+     both ends are pulled inward on purpose, so contrast lands at AA without
+     the max-contrast pairing that hurts to look at. */
+  --color-bg-base:        #1b1a18;  /* warm charcoal */
+  --color-bg-surface:     #262421;
+  --color-bg-raised:      #302d29;
+  --color-bg-border:      #3a3733;
+  --color-border-subtle:  #47433d;
+  --color-text-primary:   #e4dfd6;  /* soft off-white, never #fff */
+  --color-text-secondary: #a39d92;
+  --color-accent:         #7fa187;  /* muted sage — the safest hue */
+  --color-accent-light:   #9bb9a1;
+  --color-button-secondary-bg:     #262421;
+  --color-button-secondary-border: #47433d;
+  --color-severity-low:   #7fa187;
+  --color-severity-mid:   #b07a3c;  /* muted amber, used sparingly */
+  --color-severity-high:  #a65a52;  /* desaturated terracotta, not bright red */
+  --color-warning:        #b07a3c;
+  --color-positive:       #7fa187;
+}
+
+/* ── Attack mode ────────────────────────────────────────
+   A third theme rather than a filter over the second: darker still, lower
+   contrast, and paired with an enforced dim floor and no motion. Toggled by
+   the floating pill; `data-theme="attack"` on <html>. */
+[data-theme="attack"] {
+  --color-bg-base:        #14140f;
+  --color-bg-surface:     #1e1e17;
+  --color-bg-raised:      #262218;
+  --color-bg-border:      #34322a;
+  --color-border-subtle:  #403d33;
+  --color-text-primary:   #c9c4b8;  /* deliberately not the brightest option */
+  --color-text-secondary: #8e8a7e;
+  --color-accent:         #7fa187;
+  --color-accent-light:   #93ae99;
+  --color-button-secondary-bg:     #1e1e17;
+  --color-button-secondary-border: #403d33;
 }
 
 /* ── Three-tier button hierarchy ───────────────────────
@@ -41,13 +104,41 @@
   .btn-tertiary:hover:not(:disabled) { color: var(--color-accent); }
 }
 
-/* ── Text scale ────────────────────────────────────── */
+/* ── Text scale ──────────────────────────────────────
+   Anchored on md = 16px = 100%, and reaching 200% at xl, which is the
+   reflow requirement in WCAG 1.4.4. The floor is 87.5% rather than the old
+   81%, because 13px broke the spec's caption floor once text-xs scaled with
+   it. Everything is in rem off this root size, so the whole UI reflows. */
 :root,
-[data-scale="md"] { font-size: 16px; }
-[data-scale="xs"] { font-size: 13px; }
-[data-scale="sm"] { font-size: 14px; }
-[data-scale="lg"] { font-size: 19px; }
-[data-scale="xl"] { font-size: 22px; }
+[data-scale="md"] { font-size: 16px; }   /* 100% */
+[data-scale="xs"] { font-size: 14px; }   /*  87.5% */
+[data-scale="sm"] { font-size: 15px; }   /*  94% */
+[data-scale="lg"] { font-size: 22px; }   /* 137% */
+[data-scale="xl"] { font-size: 32px; }   /* 200% */
+
+/* Attack mode lifts body text to the spec's 20px floor, but never drags a
+   larger choice back down — lg and xl are already past it. */
+[data-theme="attack"][data-scale="xs"],
+[data-theme="attack"][data-scale="sm"],
+[data-theme="attack"][data-scale="md"] { font-size: 20px; }
+
+/* ── Motion ──────────────────────────────────────────
+   Attack mode kills animation outright; everyone else gets the OS setting
+   honoured. Both matter here — movement is a migraine trigger in itself. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+[data-theme="attack"] *,
+[data-theme="attack"] *::before,
+[data-theme="attack"] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
 
 /* ── Typography baseline ───────────────────────────── */
 html {
@@ -75,11 +166,11 @@ body {
   overflow-x: hidden;
   overflow-y: hidden;
   height: 100%;
-  background-color: #0d0f14;
-  color: #dde1eb;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  line-height: 1.55;
+  line-height: 1.5;   /* the spec's ratio, kept at every text size */
   letter-spacing: 0.01em;
   font-weight: 400;
 }
@@ -97,7 +188,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Smooth range-input track */
 input[type="range"] {
-  accent-color: #5a9e7a;
+  accent-color: var(--color-accent);
 }
 
 /* iOS WebKit sizes date/time inputs from their internal field widgets, giving

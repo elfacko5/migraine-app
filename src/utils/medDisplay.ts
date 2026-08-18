@@ -24,7 +24,7 @@ export function medIcon(name: string, dose: string): string {
 
 // Deterministic per-name color so different medications stay visually
 // distinct across a timeline without needing a maintained name→color map.
-const MED_COLOR_PALETTE = ['#7fc4a0', '#c97c2a', '#b85c5c', '#9ad0b0', '#c4b07f', '#87c9a6', '#aab0c0', '#d2c29a'];
+const MED_COLOR_PALETTE = ['#9bb9a1', '#b07a3c', '#a65a52', '#a9bfad', '#c4b07f', '#87a98f', '#9a9384', '#c99a5e'];
 
 export function medColor(name: string): string {
   let hash = 0;

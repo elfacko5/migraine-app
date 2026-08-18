@@ -3,22 +3,24 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Re
 import type { Attack } from '../types';
 import { formatTime } from '../utils/format';
 
-// Desaturated, distinguishable palette for per-area lines — drawn only from
-// the brand hues (green / amber-tan / red / gray); no blue, violet or purple.
+// Desaturated, distinguishable palette for per-area lines. Warm and
+// low-saturation throughout — sage, clay, ochre — because saturated blue is
+// the worst hue for photophobia and the old set ran through three blue-greys.
+// Mirrors the CSS tokens by hand: a presentation attribute can't read var().
 const AREA_COLORS: Record<string, string> = {
-  'Forehead left':  '#7fc4a0', 'Forehead right': '#5a9e7a',
-  'Temple left':    '#c4b07f', 'Temple right':   '#d2c29a',
-  'Eye left':       '#c97c2a', 'Eye right':      '#b8924a',
-  'Nose':           '#9aa3b5',
-  'Cheek left':     '#b85c5c', 'Cheek right':    '#cc7e7e',
-  'Jaw left':       '#c4807f', 'Jaw right':      '#a85a5a',
-  'Crown left':     '#9ad0b0', 'Crown right':    '#6fb38e',
-  'Occiput left':   '#aab0c0', 'Occiput right':  '#8a93a8',
-  'Nape left':      '#87c9a6', 'Nape right':     '#7d8599',
+  'Forehead left':  '#9bb9a1', 'Forehead right': '#7fa187',
+  'Temple left':    '#c4b07f', 'Temple right':   '#a89769',
+  'Eye left':       '#b07a3c', 'Eye right':      '#c99a5e',
+  'Nose':           '#9a9384',
+  'Cheek left':     '#a65a52', 'Cheek right':    '#c17f77',
+  'Jaw left':       '#b08a70', 'Jaw right':      '#93705c',
+  'Crown left':     '#a9bfad', 'Crown right':    '#6e8b74',
+  'Occiput left':   '#8e8a7e', 'Occiput right':  '#77716a',
+  'Nape left':      '#87a98f', 'Nape right':     '#5f7a66',
 };
 
 function getColor(area: string): string {
-  return AREA_COLORS[area] ?? '#7d8599';
+  return AREA_COLORS[area] ?? '#a39d92';
 }
 
 interface Props {
@@ -101,7 +103,7 @@ export function SeverityChart({ attack, height = 200 }: Props) {
           type="number"
           domain={['dataMin', 'dataMax']}
           tickFormatter={(v) => formatTime(new Date(v).toISOString())}
-          tick={{ fill: '#7d8599', fontSize: '0.6875rem' }}
+          tick={{ fill: '#a39d92', fontSize: '0.6875rem' }}
           axisLine={false}
           tickLine={false}
           scale="time"
@@ -109,23 +111,23 @@ export function SeverityChart({ attack, height = 200 }: Props) {
         <YAxis
           domain={[0, 10]}
           ticks={[0, 2, 4, 6, 8, 10]}
-          tick={{ fill: '#7d8599', fontSize: '0.6875rem' }}
+          tick={{ fill: '#a39d92', fontSize: '0.6875rem' }}
           axisLine={false}
           tickLine={false}
         />
         <Tooltip
-          contentStyle={{ background: '#1e2028', border: '1px solid #2a2d3a', borderRadius: 8, fontSize: '0.75rem' }}
+          contentStyle={{ background: '#302d29', border: '1px solid #3a3733', borderRadius: 8, fontSize: '0.75rem' }}
           labelFormatter={(v) => formatTime(new Date(Number(v)).toISOString())}
-          labelStyle={{ color: '#7d8599' }}
-          itemStyle={{ color: '#dde1eb' }}
+          labelStyle={{ color: '#a39d92' }}
+          itemStyle={{ color: '#e4dfd6' }}
         />
         {medEvents.map((s, i) => (
           <ReferenceLine
             key={i}
             x={new Date(s.time).getTime()}
-            stroke="#5a9e7a"
+            stroke="#7fa187"
             strokeDasharray="4 2"
-            label={{ value: `💊 ${s.medication?.name}`, position: 'top', fill: '#7fc4a0', fontSize: '0.625rem' }}
+            label={{ value: `💊 ${s.medication?.name}`, position: 'top', fill: '#9bb9a1', fontSize: '0.625rem' }}
           />
         ))}
         {/* Animation off, everywhere a Line is drawn. Recharts paints the
@@ -154,7 +156,7 @@ export function SeverityChart({ attack, height = 200 }: Props) {
             verticalAlign="bottom"
             height={24}
             wrapperStyle={{ fontSize: '0.6875rem' }}
-            formatter={(value) => <span style={{ color: '#dde1eb' }}>{value}</span>}
+            formatter={(value) => <span style={{ color: '#e4dfd6' }}>{value}</span>}
           />
         )}
     </LineChart>
@@ -174,7 +176,7 @@ export function SeveritySparkline({ attack }: { attack: Attack }) {
   return (
     <ResponsiveContainer width={72} height={28}>
       <LineChart data={data}>
-        <Line type="monotone" dataKey="v" stroke="#7fc4a0" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+        <Line type="monotone" dataKey="v" stroke="#9bb9a1" strokeWidth={1.5} dot={false} isAnimationActive={false} />
       </LineChart>
     </ResponsiveContainer>
   );

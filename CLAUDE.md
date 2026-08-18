@@ -74,9 +74,29 @@ First launch on a device is refused until the certificate is trusted under **Set
 
 **Simulator caveat:** trackpad scrolling doesn't scroll the app. The document never scrolls (see the viewport section) — only nested containers do — and the Simulator delivers trackpad input to the WebView's own scroll view, which has nothing to scroll. Touch drags work, and a real device only ever produces touch, so this is a Simulator artefact and not worth "fixing".
 
-## Dark-first design
+## Dark-first design, photophobia-aware
 
-The app is always dark. `color-scheme: dark` is set globally; `bg-slate-950` is the page background. Never use `dark:` prefixes — dark styles are just the base styles.
+The app is always dark. `color-scheme: dark` is set globally. Never use `dark:` prefixes — dark styles are just the base styles.
+
+The palette follows a photophobia spec (2026-08-18): wavelength matters, not just brightness, so **saturated blue is avoided everywhere** and the accent is a low-saturation sage. The old palette was blue-leaning slate through every surface; it is now warm charcoal. **Neither end of the contrast range is pure** — no `#fff`, no `#000`, no max-contrast pairing — contrast lands at WCAG AA with both ends pulled inward on purpose.
+
+- **Tokens live in `src/index.css` under `@theme`.** `--color-bg-base` `#1b1a18` · `--color-text-primary` `#e4dfd6` · `--color-accent` `#7fa187` · severity low/mid/high `#7fa187` / `#b07a3c` (muted amber) / `#a65a52` (desaturated terracotta).
+- **Also still true** (`cf621be`): no purple or blue, no drop shadows.
+- **SVG and Recharts mirror the tokens by hand** (`headDiagram.ts`, `SeverityChart.tsx`, `HeadHeatmap.tsx`, `StatsView.tsx`, `medDisplay.ts`, `AreaSeverityPicker.tsx`) — a presentation attribute can't read `var()`. Change a token and these need changing with it. The fixed zone colours are now `#a39d92` (disabled) and `#7fa187` (selected).
+- **Type**: `Atkinson Hyperlegible`, self-hosted from `src/assets/fonts/` (SIL Open Font License, latin subset, ~22KB for both weights) — a CDN is ruled out by the offline bundle and the CSP. Only 400 and 700 are bundled: **no light or thin weight anywhere**, because thin strokes shimmer for light-sensitive eyes.
+- **Type scale floors**: body never below 16px, captions never below 14px — so `text-xs` is `0.875rem` and `text-sm` is `1rem`, both with a **1.5 line-height** that every step preserves.
+- **Text scale reaches 200%** (`[data-scale]` on `<html>`: 14 / 15 / 16 / 22 / 32px). The 32px step is WCAG 1.4.4's reflow requirement, and it is not free: **`BottomNav` and the floating pill cap their own font and icon sizes** (`min(0.875rem, 16px)` and friends), because at 200% the unclamped nav pushed Insights into a clip and Profile off the screen entirely — a whole tab becoming unreachable. Anything else added to the persistent chrome needs the same treatment.
+
+### Attack mode
+
+A third theme, not a filter: `data-theme="attack"` on `<html>` (`useSettings`, persisted to `hd_attack_mode`). Reachable in one tap from **`AttackModePill`**, the floating pill on every screen, and from Profile → Accessibility.
+
+- Darker, warmer, lower-contrast tokens (`--color-bg-base` `#14140f`, text `#c9c4b8`).
+- **Body text floor of 20px** — `[data-theme="attack"][data-scale="xs"|"sm"|"md"]` — but never drags a larger choice back down.
+- **All animation is cut** (and `prefers-reduced-motion` is honoured for everyone, attack mode or not — movement is itself a trigger).
+- **A dim floor of 0.35 applied at render**, in `BrightnessOverlay`, *not* written back to `hd_brightness`: turning attack mode off has to restore exactly the brightness the user chose. The scrim is warm (`rgba(20,20,15,…)`) rather than neutral black, which would pull the UI back toward blue.
+- **The pill sits at `z-45`, above the dim scrim at `z-35`.** It is the control that turns attack mode *off*, so it is the one thing the scrim must not dim. The brightness pill hides while attack mode is on — same screen position, and the dim isn't the user's setting in that state.
+- **Not done: "fewer elements per screen."** The spec asks for a reduced UI in attack mode; that means redesigning each screen's content, not restyling it, and nothing here attempts it.
 
 ## The snapshot data model
 
@@ -116,7 +136,8 @@ interface Attack {
 | `hd_reliefs` | `string[]` | User's relief-method list (seeded from `DEFAULT_RELIEFS`) |
 | `hd_medications` | `{ items: Medication[]; updatedAt: string }` | The user's medication library (acute + preventive) |
 | `hd_notification_default` | `NotificationConfig` | Saved notification preference |
-| `hd_text_scale` | `TextScale` | UI text-size setting |
+| `hd_text_scale` | `TextScale` | UI text-size setting (87.5%–200%) |
+| `hd_attack_mode` | `boolean` | Attack-mode theme on/off |
 | `hd_brightness` | `number` | Brightness-overlay setting |
 
 All reads/writes go through the hooks (`useAttacks`, `useUserPrefs`, `useMedications`, `useSettings`) — no direct `localStorage` calls elsewhere except `src/utils/backup.ts`.
@@ -393,5 +414,5 @@ Why each of the above is the way it is, what was tried, and what was rejected �
 
 Two live rules that used to be recorded only there, kept here because they constrain new work:
 
-- **Palette rules** (`cf621be`): no pure black or white, no purple or blue, no drop shadows. Fixed zone colours are `#7d8599` (disabled) and `#5a9e7a` (selected).
+- **Palette rules**: see "Dark-first design, photophobia-aware" above — the `cf621be` rules still hold, with the values retuned warm on 2026-08-18.
 - **App icon and splash** live in `assets/` (`icon.png` 1024², `splash.png`/`splash-dark.png` 2732²); regenerate with `npx @capacitor/assets generate --ios`. **The icon must have no alpha channel** — flatten RGBA to RGB or iOS tooling can reject it.

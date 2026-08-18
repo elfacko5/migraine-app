@@ -61,7 +61,8 @@ export function BottomNav({ active, onChange, onAdd }: Props) {
             type="button"
             aria-label="Log a migraine"
             onClick={onAdd}
-            className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-bg-base ring-4 ring-bg-base transition-colors hover:bg-accent-light active:scale-95"
+            className="-mt-8 flex items-center justify-center rounded-full bg-accent text-bg-base ring-4 ring-bg-base transition-colors hover:bg-accent-light active:scale-95 [&_svg]:h-[min(1.75rem,32px)] [&_svg]:w-[min(1.75rem,32px)]"
+            style={{ height: 'min(3.5rem, 68px)', width: 'min(3.5rem, 68px)' }}
           >
             <PlusIcon />
           </button>
@@ -83,10 +84,16 @@ function TabBtn({ tab, isActive, onClick }: { tab: NavItem; isActive: boolean; o
     <button
       onClick={onClick}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex w-full flex-col items-center gap-1 border-t-2 px-1 pt-2 pb-1 text-xs font-medium transition-colors ${isActive ? 'border-border-subtle text-accent-light' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
+      className={`flex w-full flex-col items-center gap-1 border-t-2 px-1 pt-2 pb-1 font-medium transition-colors [&_svg]:h-[min(1.5rem,28px)] [&_svg]:w-[min(1.5rem,28px)] ${isActive ? 'border-border-subtle text-accent-light' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
+      // The bar is fixed-width chrome with five slots, so its labels grow only
+      // so far: at the 200% text setting the unclamped labels pushed Insights
+      // into a clip and Profile off the screen entirely, which is a whole tab
+      // becoming unreachable — the exact loss of functionality WCAG 1.4.4
+      // forbids. The icons stay, the labels stay, they just stop growing.
+      style={{ fontSize: 'min(0.875rem, 16px)' }}
     >
       <span aria-hidden="true">{tab.icon}</span>
-      {tab.label}
+      <span className="max-w-full truncate">{tab.label}</span>
     </button>
   );
 }

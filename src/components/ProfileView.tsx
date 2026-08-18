@@ -60,13 +60,45 @@ interface AccessibilityProps {
   onTextScale: (s: TextScale) => void;
   brightness: number;
   onBrightness: (v: number) => void;
+  attackMode: boolean;
+  onAttackMode: (on: boolean) => void;
   onClose: () => void;
 }
 
-export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrightness, onClose }: AccessibilityProps) {
+export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrightness, attackMode, onAttackMode, onClose }: AccessibilityProps) {
   return (
     <ProfileSubPage title="Accessibility" onClose={onClose}>
       <div className="space-y-8">
+
+      {/* Attack mode — also one tap from the floating pill on every screen;
+          it lives here too so it's discoverable when nothing hurts yet. */}
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-text-primary">Attack mode</p>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={attackMode}
+          onClick={() => onAttackMode(!attackMode)}
+          className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
+        >
+          <span aria-hidden="true" className="text-lg">🌙</span>
+          <span className="min-w-0 flex-1 text-sm text-text-primary">
+            {attackMode ? 'On' : 'Off'}
+          </span>
+          <span
+            aria-hidden="true"
+            className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${attackMode ? 'bg-accent' : 'bg-bg-border'}`}
+          >
+            <span
+              className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-text-primary transition-transform ${attackMode ? 'translate-x-5' : ''}`}
+            />
+          </span>
+        </button>
+        <p className="text-xs text-text-secondary">
+          Dims the screen, warms and lowers the contrast, enlarges body text and stops all animation.
+          Everything you logged stays exactly as it is.
+        </p>
+      </div>
       {/* Accessibility — text size and brightness were two sibling sections;
           they're one group now, since both answer "make this easier to look
           at" and neither means much on its own. */}
@@ -121,7 +153,7 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
         </div>
 
         <p className="text-xs text-text-secondary">
-          Changes apply instantly across the app. Use the A+ button (bottom‑right) for quick cycling at medium and above.
+          Changes apply instantly across the app, and every screen reflows rather than clipping — XL is twice the default size.
         </p>
       </div>
 
