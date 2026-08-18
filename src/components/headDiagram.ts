@@ -32,14 +32,14 @@ export const HEAD_FILL = '#2b2823';
 export const LINE_COLOR = 'rgba(208,216,230,0.55)';
 export const DIVIDER_COLOR = 'rgba(208,216,230,0.45)';
 export const DISABLED_FILL = '#a39d92';
-export const SELECTED_FILL = '#7fa187';
+export const SELECTED_FILL = '#8fb096';
 export const HOVER_FILL = 'rgba(208,216,230,0.14)';
 
 // Same low/mid/high thresholds and colours as the severity-* CSS tokens
 // (index.css) — used to tint each selected zone by its own severity.
-const SEVERITY_LOW = '#7fa187';
-const SEVERITY_MID = '#b07a3c';
-const SEVERITY_HIGH = '#a65a52';
+const SEVERITY_LOW = '#8fb096';
+const SEVERITY_MID = '#c39257';
+const SEVERITY_HIGH = '#c68880';
 
 export function sevFill(s: number): string {
   if (s <= 3) return SEVERITY_LOW;

@@ -66,9 +66,14 @@
   --color-accent-light:   #9bb9a1;
   --color-button-secondary-bg:     #262421;
   --color-button-secondary-border: #47433d;
-  --color-severity-low:   #7fa187;
-  --color-severity-mid:   #b07a3c;  /* muted amber, used sparingly */
-  --color-severity-high:  #a65a52;  /* desaturated terracotta, not bright red */
+  /* Lifted off the spec's literal values so severity text clears AA on a
+     raised card. #7fa187/#b07a3c/#a65a52 measured 4.8 / 3.7 / 2.7:1 against
+     bg-raised — meaning the higher the severity, the dimmer it rendered, and
+     a 9 or 10 came out as the least legible text on screen. These measure
+     5.8 / 4.9 / 4.7:1 and stay recognisably sage, amber and terracotta. */
+  --color-severity-low:   #8fb096;
+  --color-severity-mid:   #c39257;  /* muted amber, used sparingly */
+  --color-severity-high:  #c68880;  /* desaturated terracotta, not bright red */
   --color-warning:        #b07a3c;
   --color-positive:       #7fa187;
 }

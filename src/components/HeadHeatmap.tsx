@@ -48,7 +48,7 @@ export function HeadHeatmap({ data, label = 'attacks' }: Props) {
       <div className="flex items-center gap-2 justify-center pt-1">
         <span className="text-[0.6rem] text-text-secondary uppercase tracking-wider">Less</span>
         <div className="h-2 w-28 rounded-full"
-          style={{ background: 'linear-gradient(to right, #7fa187, #b07a3c, #a65a52)' }}/>
+          style={{ background: 'linear-gradient(to right, #8fb096, #c39257, #c68880)' }}/>
         <span className="text-[0.6rem] text-text-secondary uppercase tracking-wider">More {label}</span>
       </div>
     </div>
