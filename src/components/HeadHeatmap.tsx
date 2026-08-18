@@ -66,14 +66,15 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
   const t = (area: string) => (byArea[area] ?? 0) / maxVal;
 
   return (
-    <div className="w-full max-w-[190px]">
-      <div className="flex justify-between px-1 text-[0.6rem] font-medium uppercase tracking-wider text-text-secondary">
-        <span>{view.sideLabels.left}</span>
-        <span className="text-text-secondary/70 normal-case tracking-normal">{view.label}</span>
-        <span>{view.sideLabels.right}</span>
-      </div>
+    // Labels beside the head, not above it, and no view name — see the
+    // matching note in AreaSeverityPicker. Here the view is named by the
+    // heading over the whole section instead of a control.
+    <div className="flex w-full items-center justify-center gap-2">
+      <span className="shrink-0 text-[0.6rem] font-medium uppercase tracking-wider text-text-secondary">
+        {view.sideLabels.left}
+      </span>
 
-      <svg viewBox={view.viewBox} className="block w-full"
+      <svg viewBox={view.viewBox} className="block w-full max-w-[190px]"
         aria-label={`${view.label} pain area heatmap`}>
         <defs>
           <clipPath id={clip}>
@@ -150,6 +151,10 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
           );
         })}
       </svg>
+
+      <span className="shrink-0 text-[0.6rem] font-medium uppercase tracking-wider text-text-secondary">
+        {view.sideLabels.right}
+      </span>
     </div>
   );
 }

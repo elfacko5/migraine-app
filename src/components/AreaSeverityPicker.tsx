@@ -146,14 +146,15 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
   const clip = `clip-${view.id}`;
 
   return (
-    <div className="w-full max-w-[230px]">
-      <div className="flex justify-between px-1 text-[0.65rem] font-medium uppercase tracking-wider text-text-secondary">
-        <span>{view.sideLabels.left}</span>
-        <span className="text-text-secondary/70 normal-case tracking-normal">{view.label}</span>
-        <span>{view.sideLabels.right}</span>
-      </div>
+    // Side labels sit beside the head rather than above it: the head is
+    // narrow and the space either side was empty. The view's own name is gone
+    // from here — the Front/Back control above already says which is showing.
+    <div className="flex w-full items-center justify-center gap-2">
+      <span className="shrink-0 text-[0.65rem] font-medium uppercase tracking-wider text-text-secondary">
+        {view.sideLabels.left}
+      </span>
 
-      <svg viewBox={view.viewBox} className="block w-full"
+      <svg viewBox={view.viewBox} className="block w-full max-w-[230px]"
         aria-label={`${view.label} of head — tap a region to select it`}>
         <defs>
           <clipPath id={clip}>
@@ -258,6 +259,10 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           );
         })}
       </svg>
+
+      <span className="shrink-0 text-[0.65rem] font-medium uppercase tracking-wider text-text-secondary">
+        {view.sideLabels.right}
+      </span>
     </div>
   );
 }

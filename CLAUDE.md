@@ -398,6 +398,8 @@ The picker (`AreaSeverityPicker`) and the stats heatmap (`HeadHeatmap`) share ge
 - **Front (mirrored — screen-left = subject's right), 11 zones:** `Forehead/Temple/Eye/Cheek/Jaw left+right` + `Nose`.
 - **Back (not mirrored — screen-left = subject's left), 6 zones:** `Crown/Occiput/Nape left+right`.
 
+**The RIGHT/LEFT labels sit either side of the head, not above it** — the head is narrow and that space was empty — and neither diagram prints its own view name any more: in the picker the Front/Back control above already says which is showing, and in the heatmap the section heading does. The labels still come from `sideLabels` per view, which is what handles the front being mirrored and the back not.
+
 A Front/Back toggle switches views (each shows a per-view selected count). It is sized as a **segmented control — 32px overall**, a 28px segment inside a 2px track: at button height it carried the same weight as the wizard's primary/secondary actions and read as something to press to continue, rather than as a switch between two views of the same step. Tapping a zone selects + focuses it; a **single** severity slider follows the focused zone (tapping the focused zone again deselects it). Each selected zone shows its score as a badge on the diagram.
 
 Renaming zones or editing `PAIN_AREAS` strands existing `snapshot.areas` data (which stores the exact strings) — keep the zone-name strings stable. If the user re-exports SVGs, re-inline the path data into the matching `DiagramView`.
