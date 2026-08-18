@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import type { Tab, Attack, Snapshot } from './types';
+import type { Tab, Attack, Snapshot, Medication } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useMedications } from './hooks/useMedications';
@@ -326,13 +326,6 @@ export default function App() {
   // "Nothing changed" only applies to an ongoing attack — a past attack has
   // no "right now" to log against, so QuickUpdateForm doesn't offer this
   // option once attack.end is set.
-  function handleNoChange() {
-    if (!updateAttack || updateAttack.end) return;
-    const prev = updateAttack.snapshots[updateAttack.snapshots.length - 1];
-    addSnapshot(updateAttack.id, { time: new Date().toISOString(), areas: { ...prev.areas }, symptoms: [...prev.symptoms], reliefs: [...(prev.reliefs ?? [])], medication: null, note: null }, 'notification_no_change');
-    closeUpdateSheet();
-  }
-
   return (
     <div
       // `relative` + an explicit height from --app-height (rather than
@@ -475,7 +468,6 @@ export default function App() {
             onAddSymptom={addSymptom}
             onAddRelief={addRelief}
             onSave={handleUpdateSave}
-            onNoChange={handleNoChange}
             onClose={closeUpdateSheet}
             // Only for the attack that's actually in progress: the same sheet
             // also backfills past attacks, which have already ended.

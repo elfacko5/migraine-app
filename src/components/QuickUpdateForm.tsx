@@ -2,14 +2,12 @@ import { useState } from 'react';
 import type { Attack, Snapshot } from '../types';
 import type { TextScale } from '../hooks/useSettings';
 import type { VoiceDraft } from '../utils/voiceParse';
-import { isoToLocalInput, localInputToIso, formatTime, formatDate, formatDuration } from '../utils/format';
-import { maxSeverity, attackMaxSeverity } from '../utils/stats';
+import { isoToLocalInput, localInputToIso, formatTime } from '../utils/format';
+import { maxSeverity } from '../utils/stats';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { ChipSelector } from './ChipSelector';
 import { MedicationInput } from './MedicationInput';
 import { TextScaleControl } from './TextScaleControl';
-import { SeverityChart } from './SeverityChart';
-import { SnapshotRow } from './SnapshotRow';
 
 interface Props {
   attack: Attack;
@@ -21,7 +19,6 @@ interface Props {
   onAddSymptom: (s: string) => void;
   onAddRelief: (r: string) => void;
   onSave: (snapshot: Omit<Snapshot, 'source'>) => void;
-  onNoChange: () => void;
   onClose: () => void;
   // Only passed for an attack still in progress. A reminder asks "how's your
   // migraine?", and "it's over" is one of the three honest answers — without
@@ -97,7 +94,7 @@ function lastEntryCaption(step: number, prev: Snapshot): string | null {
   return null;
 }
 
-export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onNoChange, onClose, onEndAttack, voiceDraft }: Props) {
+export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onClose, onEndAttack, voiceDraft }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
   const isPast = attack.end !== null;
   // A new update must land after the last reading, and — for a past attack —
@@ -106,13 +103,14 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
   const minTime = prev.time;
   const maxTime = attack.end ?? new Date().toISOString();
 
-  // step 0 = the initial "nothing changed / log what changed" choice screen;
-  // steps 1..TOTAL_STEPS = the wizard. A past attack has no "nothing
-  // changed" option (see below), so that screen would only ever offer the
-  // one "Log what changed" button — skip straight to the wizard instead.
-  // A voice-dictated update always has *something* to say, so it skips the
-  // choice screen too, straight into the (prefilled) wizard.
-  const [step, setStep] = useState(() => (voiceDraft || isPast ? 1 : 0));
+  // Opens straight into the wizard, at the time step. There used to be a
+  // choice screen first — "nothing changed" / "log what changed" / "it's
+  // over" — but tapping "Add update" already says which of those you meant.
+  // "Nothing changed" is a reminder's job: it's a quick action on the
+  // notification, answerable from the lock screen or a watch without
+  // unlocking anything, which is the only place it saves work. Someone who
+  // opens the app to log nothing can pick the pain areas and use Finish now.
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(() => {
     // Defaults to *now* — the moment this sheet was opened — not to the last
     // reading's time. Seeding it with `minTime` meant the first update on an
@@ -193,7 +191,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
         </button>
 
         <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-medium tabular-nums text-text-primary">
-          {step === 0 ? 'Add update' : `${step} / ${TOTAL_STEPS}`}
+          {`${step} / ${TOTAL_STEPS}`}
         </span>
 
         <div className="ml-auto flex items-center">
@@ -208,32 +206,6 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
 
       {/* Scrolling content — the only scrolling region */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-5 pb-4 flex flex-col">
-        {step === 0 ? (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-medium text-text-primary">{formatDate(attack.snapshots[0].time)}</h2>
-              <p className="text-sm text-text-secondary">
-                {isPast ? formatDuration(attack.snapshots[0].time, attack.end) + ' duration' : 'Ongoing'}
-                {' · '}max severity {attackMaxSeverity(attack)}
-              </p>
-              {attack.triggers.length > 0 && (
-                <p className="text-xs text-text-secondary mt-1">{attack.triggers.join(', ')}</p>
-              )}
-            </div>
-
-            {attack.snapshots.length >= 2 && (
-              <SeverityChart attack={attack} height={150} />
-            )}
-
-            <div>
-              <p className="text-xs uppercase tracking-wider font-medium text-text-secondary mb-3">Timeline</p>
-              {attack.snapshots.map((snap, i) => (
-                <SnapshotRow key={i} snap={snap} />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <>
             {/* Section header — H2 title + instruction, with the text-size stepper
                 pinned to its right. */}
             <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
@@ -325,53 +297,31 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
                 <p className="text-xs leading-relaxed text-text-secondary">{caption}</p>
               </div>
             )}
-          </>
-        )}
       </div>
+
+      {/* The one thing the choice screen offered that nothing else here
+          does: an ongoing attack that has actually stopped. Losing it would
+          send someone back out to the Today card to end it, which is the
+          detour it was added to remove. Quiet, and only on the first step. */}
+      {step === 1 && !isPast && onEndAttack && (
+        <div className="px-4 sm:px-6 pb-2 shrink-0">
+          <button
+            type="button"
+            onClick={onEndAttack}
+            className="btn-tertiary w-full rounded-xl py-2 text-sm font-medium transition-colors"
+          >
+            It's over — end attack
+          </button>
+        </div>
+      )}
 
       {/* Actions — flex-pinned to the bottom (above the home indicator) */}
       <div
         className="flex gap-3 border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
         style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
       >
-        {step === 0 ? (
-          <div className="flex flex-col gap-3 w-full">
-            {/* "Right now, nothing changed" only means something for an
-                attack still in progress — a past attack has no "now" to
-                log against, so it always needs an explicit time instead. */}
-            {/* Sits above the two logging options and is styled quieter than
-                both: it's the least frequent answer, but the one with no other
-                route out of this sheet. */}
-            {!isPast && onEndAttack && (
-              <button
-                type="button"
-                onClick={onEndAttack}
-                className="btn-tertiary w-full rounded-xl py-2 text-sm font-medium transition-colors"
-              >
-                It's over — end attack
-              </button>
-            )}
-            {!isPast && (
-              <button
-                type="button"
-                onClick={onNoChange}
-                className="btn-secondary w-full rounded-xl py-3 text-sm font-medium transition-colors"
-              >
-                Nothing changed — log no change
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors"
-            >
-              Log what changed
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* No choice screen to go back to for a past attack's first step */}
-            {!(isPast && step === 1) && (
+            {/* Nothing behind step 1 any more — the wizard is the whole flow */}
+            {step > 1 && (
               <button type="button" onClick={goBack}
                 className="btn-secondary flex-1 rounded-xl py-3 text-sm font-medium transition-colors">
                 Back
@@ -381,8 +331,6 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
               className="btn-primary flex-1 rounded-xl py-3 text-sm font-medium transition-colors">
               {step === TOTAL_STEPS ? 'Save update' : 'Next'}
             </button>
-          </>
-        )}
       </div>
     </div>
   );
