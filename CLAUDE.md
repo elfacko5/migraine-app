@@ -244,6 +244,14 @@ Every rule below exists because a real transcript broke without it. The worked e
 - A number word between the form and the drug name is skipped.
 - Medications match `recentMeds` first (which brings the usual dose), then phrasing; a dose said out loud beats the remembered one. `NOT_A_MED` holds number and time words. Names are only ever corrected against the user's own history.
 
+## Profile tab
+
+Four rows, each opening a full-screen sub-page: **My medications** · **Accessibility** (text size + brightness) · **Account & sync** (hidden unless `supabase` is non-null) · **Data** (export/import). `ProfileView.tsx` holds the menu and exports `AccessibilityPanel` / `AccountPanel` / `DataPanel`; `MedicationsView.tsx` is the fourth. Every panel wraps itself in **`ProfileSubPage`**, which owns the top bar and the scroll region — so a new sub-page never re-derives the safe-area padding or the close button.
+
+**The Sheets live in `App.tsx`, not inside `ProfileView`.** `Sheet` is `absolute inset-0` against the app root; rendered from inside the tab's scroll container it would anchor to the wrong ancestor and reintroduce exactly the clipping the viewport architecture exists to avoid. One `Sheet` switches its contents on `profileSheet: ProfileSection | null`.
+
+**It's a menu or it isn't.** A first version kept these flat and gave only medications a row, which left one row sitting above three loose sections — it read as an accident rather than a choice. If a fifth group is added, it gets a row too.
+
 ## Medications (Profile → My medications)
 
 The user's own medication library, in two kinds. `Medication` (`src/types/index.ts`) is `{ id, name, dose, kind: 'acute' | 'preventive', createdAt }`, stored under `hd_medications` and owned by `src/hooks/useMedications.ts`.
@@ -295,7 +303,7 @@ Both of these are invisible in a desktop browser and only surfaced on device/sim
 
 When no attack is ongoing, the Today tab shows `AttackFreeCard` (time since the most recent attack `end`, ticking each minute) or a "no attacks yet" prompt.
 
-**Anything showing a live duration must use `useNowTick` (`src/hooks/useNowTick.ts`), not a bare `setInterval`.** A value derived from `Date.now()` during render is only as fresh as the last render, and an interval alone does not guarantee one: iOS keeps a backgrounded PWA/WKWebView page alive in memory rather than reloading it, and suspends its timers while it's there. On resume the component paints whatever it computed *before* backgrounding, until some unrelated state change re-renders it. Seen on device — the Today card read "Started 1h" for an attack logged the previous day, and only corrected after a tab switch. The hook adds `visibilitychange` + `focus` on top of the interval (the same pair the sync hooks use). Used by `OngoingAttackBanner`, `AttackFreeCard`, and `ProfileView`'s "Synced 3m ago" line. Note that only the `visibilitychange` path checks `visibilityState` — `focus` refreshes unconditionally, because some environments hand a page focus while still reporting it hidden (the sandboxed preview browser does exactly this, which is how that branch got found).
+**Anything showing a live duration must use `useNowTick` (`src/hooks/useNowTick.ts`), not a bare `setInterval`.** A value derived from `Date.now()` during render is only as fresh as the last render, and an interval alone does not guarantee one: iOS keeps a backgrounded PWA/WKWebView page alive in memory rather than reloading it, and suspends its timers while it's there. On resume the component paints whatever it computed *before* backgrounding, until some unrelated state change re-renders it. Seen on device — the Today card read "Started 1h" for an attack logged the previous day, and only corrected after a tab switch. The hook adds `visibilitychange` + `focus` on top of the interval (the same pair the sync hooks use). Used by `OngoingAttackBanner`, `AttackFreeCard`, and `AccountPanel`'s "Synced 3m ago" line. Note that only the `visibilitychange` path checks `visibilityState` — `focus` refreshes unconditionally, because some environments hand a page focus while still reporting it hidden (the sandboxed preview browser does exactly this, which is how that branch got found).
 
 ### The Today hero cards
 

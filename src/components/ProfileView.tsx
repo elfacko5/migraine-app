@@ -6,64 +6,70 @@ import { formatSince } from '../utils/format';
 import { useNowTick } from '../hooks/useNowTick';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
+import { ProfileSubPage } from './ProfileSubPage';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
 // Fixed px values used only in this picker as a visual size-comparison reference.
 const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
 
-interface Props {
-  onOpenMedications: () => void;
+export type ProfileSection = 'medications' | 'accessibility' | 'account' | 'data';
+
+interface MenuProps {
+  onOpen: (section: ProfileSection) => void;
+  accountEnabled: boolean;
+}
+
+const MENU: { id: ProfileSection; icon: string; label: string; hint: string }[] = [
+  { id: 'medications',   icon: '💊', label: 'My medications', hint: 'Acute and preventive' },
+  { id: 'accessibility', icon: '👁', label: 'Accessibility',  hint: 'Text size and screen brightness' },
+  { id: 'account',       icon: '☁️', label: 'Account & sync', hint: 'Sign in to sync across devices' },
+  { id: 'data',          icon: '💾', label: 'Data',           hint: 'Export or import a backup' },
+];
+
+// Every group is its own sub-page. An earlier version kept these flat and
+// gave only medications a row, which left one row sitting above three loose
+// sections and read as an accident rather than a choice — the page needs to
+// be one thing or the other.
+export function ProfileView({ onOpen, accountEnabled }: MenuProps) {
+  return (
+    <div className="space-y-2">
+      {MENU.filter((m) => m.id !== 'account' || accountEnabled).map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => onOpen(item.id)}
+          className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-4 text-left transition-colors hover:bg-bg-raised"
+        >
+          <span aria-hidden="true" className="text-lg">{item.icon}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium text-text-primary">{item.label}</span>
+            <span className="block text-xs text-text-secondary">{item.hint}</span>
+          </span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-text-secondary" aria-hidden="true">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+interface AccessibilityProps {
   textScale: TextScale;
   onTextScale: (s: TextScale) => void;
   brightness: number;
   onBrightness: (v: number) => void;
-  auth: ReturnType<typeof useAuth>;
-  syncStatus: SyncStatus;
-  lastSyncedAt: string | null;
+  onClose: () => void;
 }
 
-export function ProfileView({ onOpenMedications, textScale, onTextScale, brightness, onBrightness, auth, syncStatus, lastSyncedAt }: Props) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [importErr, setImportErr] = useState<string | null>(null);
-  const [pending, setPending] = useState<ParsedBackup | null>(null);
-  // Keeps a relative "synced Xm ago" string fresh — on a timer while the tab
-  // is open, and on return to the foreground, when the timer has been asleep.
-  useNowTick(30_000);
-
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-picking the same file
-    if (!file) return;
-    setImportErr(null);
-    const res = await readBackupFile(file);
-    if (res.ok) setPending(res.backup);
-    else setImportErr(res.error);
-  }
-
+export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrightness, onClose }: AccessibilityProps) {
   return (
-    <div className="space-y-8">
-
-      {/* My medications — the only group with enough inside it to be worth a
-          tap. Everything below stays flat: text size and brightness are what
-          someone reaches for mid-attack and shouldn't cost a navigation. */}
-      <button
-        type="button"
-        onClick={onOpenMedications}
-        className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-4 text-left transition-colors hover:bg-bg-raised"
-      >
-        <span aria-hidden="true" className="text-lg">💊</span>
-        <span className="flex-1 text-sm font-medium text-text-primary">My medications</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-text-secondary" aria-hidden="true">
-          <path d="m9 18 6-6-6-6"/>
-        </svg>
-      </button>
-
+    <ProfileSubPage title="Accessibility" onClose={onClose}>
+      <div className="space-y-8">
       {/* Accessibility — text size and brightness were two sibling sections;
           they're one group now, since both answer "make this easier to look
           at" and neither means much on its own. */}
-      <section className="space-y-6">
-        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Accessibility</p>
 
       <div className="space-y-4">
         <p className="text-sm font-medium text-text-primary">Text size</p>
@@ -143,12 +149,25 @@ export function ProfileView({ onOpenMedications, textScale, onTextScale, brightn
           </p>
         </div>
       </div>
-      </section>
+      </div>
+    </ProfileSubPage>
+  );
+}
 
-      {/* Account & sync — only rendered when Supabase is actually configured */}
+interface AccountProps {
+  auth: ReturnType<typeof useAuth>;
+  syncStatus: SyncStatus;
+  lastSyncedAt: string | null;
+  onClose: () => void;
+}
+
+export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: AccountProps) {
+  // Keeps the relative "synced Xm ago" string fresh — on a timer while this
+  // is open, and on return to the foreground, when the timer has been asleep.
+  useNowTick(30_000);
+  return (
+    <ProfileSubPage title="Account & sync" onClose={onClose}>
       {auth.enabled && (
-        <section className="space-y-4">
-          <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Account &amp; sync</p>
           <div className="rounded-xl border border-bg-border bg-bg-raised/40 p-4 space-y-3">
             {auth.session ? (
               <>
@@ -169,12 +188,28 @@ export function ProfileView({ onOpenMedications, textScale, onTextScale, brightn
               <SignInForm auth={auth} />
             )}
           </div>
-        </section>
       )}
+    </ProfileSubPage>
+  );
+}
 
-      {/* Data */}
-      <section className="space-y-4">
-        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Data</p>
+export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>; onClose: () => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importErr, setImportErr] = useState<string | null>(null);
+  const [pending, setPending] = useState<ParsedBackup | null>(null);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-picking the same file
+    if (!file) return;
+    setImportErr(null);
+    const res = await readBackupFile(file);
+    if (res.ok) setPending(res.backup);
+    else setImportErr(res.error);
+  }
+
+  return (
+    <ProfileSubPage title="Data" onClose={onClose}>
 
         <div className="rounded-xl border border-bg-border bg-bg-raised/40 p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -208,7 +243,6 @@ export function ProfileView({ onOpenMedications, textScale, onTextScale, brightn
           </p>
           {importErr && <p className="text-xs text-severity-high">{importErr}</p>}
         </div>
-      </section>
 
       <ConfirmDialog
         open={!!pending}
@@ -228,8 +262,7 @@ export function ProfileView({ onOpenMedications, textScale, onTextScale, brightn
           }
         }}
       />
-
-    </div>
+    </ProfileSubPage>
   );
 }
 

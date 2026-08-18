@@ -33,7 +33,7 @@ import { AttackFreeCard } from './components/AttackFreeCard';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
 import { HistoryView } from './components/HistoryView';
-import { ProfileView } from './components/ProfileView';
+import { ProfileView, AccessibilityPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
 import { TextScalePill } from './components/TextScalePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
@@ -49,7 +49,7 @@ export default function App() {
   const [updateAttackId, setUpdateAttackId] = useState<number | null>(null);
   const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
-  const [medsSheetOpen, setMedsSheetOpen] = useState(false);
+  const [profileSheet, setProfileSheet] = useState<ProfileSection | null>(null);
   // Set when either sheet below was opened by voice — the Siri App Intent or
   // the Shortcut deep link (see the voice effect below) — and cleared whenever
   // that sheet closes so a stray prefill never leaks into a later manual open.
@@ -416,16 +416,7 @@ export default function App() {
         {/* ── Settings tab ─────────────────────────── */}
         {tab === 'profile' && (
           <section className="space-y-4">
-            <ProfileView
-              onOpenMedications={() => setMedsSheetOpen(true)}
-              textScale={textScale}
-              onTextScale={setTextScale}
-              brightness={brightness}
-              onBrightness={setBrightness}
-              auth={auth}
-              syncStatus={syncStatus}
-              lastSyncedAt={lastSyncedAt}
-            />
+            <ProfileView onOpen={setProfileSheet} accountEnabled={auth.enabled} />
           </section>
         )}
         </div>
@@ -489,17 +480,46 @@ export default function App() {
         </Sheet>
       )}
 
-      {/* Medications library — flush/bareHeader for the same reason as the
-          detail sheet: it owns its top bar and pins nothing to a sticky
-          footer inside an iOS scroll container. */}
-      <Sheet open={medsSheetOpen} onClose={() => setMedsSheetOpen(false)} title="My medications" flush bareHeader>
-        <MedicationsView
-          medications={medications}
-          onAdd={addMedication}
-          onUpdate={updateMedication}
-          onRemove={removeMedication}
-          onClose={() => setMedsSheetOpen(false)}
-        />
+      {/* Profile sub-pages — one Sheet, contents switched by which row was
+          tapped. flush/bareHeader for the same reason as the detail sheet:
+          each panel owns its top bar via ProfileSubPage and pins nothing to
+          a sticky footer inside an iOS scroll container. */}
+      <Sheet
+        open={profileSheet !== null}
+        onClose={() => setProfileSheet(null)}
+        title="Profile"
+        flush
+        bareHeader
+      >
+        {profileSheet === 'medications' && (
+          <MedicationsView
+            medications={medications}
+            onAdd={addMedication}
+            onUpdate={updateMedication}
+            onRemove={removeMedication}
+            onClose={() => setProfileSheet(null)}
+          />
+        )}
+        {profileSheet === 'accessibility' && (
+          <AccessibilityPanel
+            textScale={textScale}
+            onTextScale={setTextScale}
+            brightness={brightness}
+            onBrightness={setBrightness}
+            onClose={() => setProfileSheet(null)}
+          />
+        )}
+        {profileSheet === 'account' && (
+          <AccountPanel
+            auth={auth}
+            syncStatus={syncStatus}
+            lastSyncedAt={lastSyncedAt}
+            onClose={() => setProfileSheet(null)}
+          />
+        )}
+        {profileSheet === 'data' && (
+          <DataPanel auth={auth} onClose={() => setProfileSheet(null)} />
+        )}
       </Sheet>
 
       {/* Attack detail sheet — flush/bareHeader because AttackDetail brings
