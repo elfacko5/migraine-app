@@ -46,13 +46,21 @@
      the worst hue for photophobia, and the previous palette had a blue cast
      through every surface. No pure black and no pure white at either end —
      both ends are pulled inward on purpose, so contrast lands at AA without
-     the max-contrast pairing that hurts to look at. */
+     the max-contrast pairing that hurts to look at.
+
+     --color-text-primary is #cdc7bb rather than the spec's literal #e4dfd6.
+     That value measured 13.1:1 against the page and 10.3:1 against a raised
+     card, which is close to max contrast and read as glare on device — the
+     spec asks for AA (4.5:1) with *both* ends pulled inward, so the literal
+     value was working against the rule it was given under. #cdc7bb measures
+     10.3:1 and 8.1:1, still past AAA (7:1) for body text, with the glare
+     gone. Don't "restore" #e4dfd6 as a spec correction. */
   --color-bg-base:        #1b1a18;  /* warm charcoal */
   --color-bg-surface:     #262421;
   --color-bg-raised:      #302d29;
   --color-bg-border:      #3a3733;
   --color-border-subtle:  #47433d;
-  --color-text-primary:   #e4dfd6;  /* soft off-white, never #fff */
+  --color-text-primary:   #cdc7bb;  /* soft, never #fff — see the note below */
   --color-text-secondary: #a39d92;
   --color-accent:         #7fa187;  /* muted sage — the safest hue */
   --color-accent-light:   #9bb9a1;
