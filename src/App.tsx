@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { Tab, Attack, Snapshot } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
+import { useMedications } from './hooks/useMedications';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
 import { useAuth } from './hooks/useAuth';
@@ -23,7 +24,7 @@ const TAB_TITLES: Record<Tab, string> = {
   log: 'Hello',
   history: 'Logs',
   stats: 'Insights',
-  settings: 'Settings',
+  profile: 'Profile',
 };
 import { LogForm } from './components/LogForm';
 import { QuickUpdateForm } from './components/QuickUpdateForm';
@@ -32,7 +33,8 @@ import { AttackFreeCard } from './components/AttackFreeCard';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
 import { HistoryView } from './components/HistoryView';
-import { SettingsView } from './components/SettingsView';
+import { ProfileView } from './components/ProfileView';
+import { MedicationsView } from './components/MedicationsView';
 import { TextScalePill } from './components/TextScalePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
 
@@ -47,6 +49,7 @@ export default function App() {
   const [updateAttackId, setUpdateAttackId] = useState<number | null>(null);
   const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+  const [medsSheetOpen, setMedsSheetOpen] = useState(false);
   // Set when either sheet below was opened by voice — the Siri App Intent or
   // the Shortcut deep link (see the voice effect below) — and cleared whenever
   // that sheet closes so a stray prefill never leaks into a later manual open.
@@ -62,26 +65,47 @@ export default function App() {
     triggers, symptoms, reliefs, addTrigger, addSymptom, addRelief, defaultNotifConfig,
     syncStatus: prefsSyncStatus, lastSyncedAt: prefsLastSyncedAt,
   } = useUserPrefs(userId);
+  const {
+    medications, addMedication, updateMedication, removeMedication,
+    syncStatus: medsSyncStatus, lastSyncedAt: medsLastSyncedAt,
+  } = useMedications(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
   const { textScale, setTextScale, brightness, setBrightness } = useSettings();
 
-  // Combine the two independent sync hooks into one status for Settings:
-  // an error in either takes priority, then in-flight, then the more
-  // recent successful sync of the two.
+  // Combine the independent sync hooks into one status for Profile: an error
+  // in any takes priority, then in-flight, then the most recent successful
+  // sync of the three.
   const syncStatus = useMemo(() => {
-    if (attacksSyncStatus === 'error' || prefsSyncStatus === 'error') return 'error' as const;
-    if (attacksSyncStatus === 'syncing' || prefsSyncStatus === 'syncing') return 'syncing' as const;
-    if (attacksLastSyncedAt || prefsLastSyncedAt) return 'synced' as const;
+    const all = [attacksSyncStatus, prefsSyncStatus, medsSyncStatus];
+    if (all.includes('error')) return 'error' as const;
+    if (all.includes('syncing')) return 'syncing' as const;
+    if (attacksLastSyncedAt || prefsLastSyncedAt || medsLastSyncedAt) return 'synced' as const;
     return 'idle' as const;
-  }, [attacksSyncStatus, prefsSyncStatus, attacksLastSyncedAt, prefsLastSyncedAt]);
+  }, [attacksSyncStatus, prefsSyncStatus, medsSyncStatus, attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt]);
   const lastSyncedAt = useMemo(() => {
-    if (attacksLastSyncedAt && prefsLastSyncedAt) return attacksLastSyncedAt > prefsLastSyncedAt ? attacksLastSyncedAt : prefsLastSyncedAt;
-    return attacksLastSyncedAt ?? prefsLastSyncedAt;
-  }, [attacksLastSyncedAt, prefsLastSyncedAt]);
+    const stamps = [attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt].filter(Boolean) as string[];
+    return stamps.length ? stamps.reduce((a, b) => (a > b ? a : b)) : null;
+  }, [attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt]);
 
-  // Collect unique medications from history, most-recently-used first.
+  // Medications offered in the logging wizard and used to correct spoken drug
+  // names in voiceParse: the user's own acute library first, in their order,
+  // then anything found in history that isn't already there.
+  //
+  // The history scan is what makes this work with no setup at all — someone
+  // who never opens Profile → My medications keeps exactly today's behaviour.
+  // The library half is what lets a newly-added medication appear before it
+  // has ever been logged, which is the point of curating one.
+  //
+  // Preventives are excluded: this list feeds the "what did you take for this
+  // attack" step, and a daily dose taken regardless is not a treatment for
+  // the attack it happens to coincide with.
   const recentMeds = useMemo(() => {
     const seen = new Map<string, string>();
+    for (const med of medications) {
+      if (med.kind !== 'acute') continue;
+      const name = med.name.trim();
+      if (name && !seen.has(name)) seen.set(name, med.dose);
+    }
     for (const attack of attacks) {
       for (const snap of [...attack.snapshots].reverse()) {
         const name = snap.medication?.name?.trim();
@@ -91,7 +115,7 @@ export default function App() {
       }
     }
     return Array.from(seen.entries()).map(([name, dose]) => ({ name, dose }));
-  }, [attacks]);
+  }, [attacks, medications]);
 
   // Most recent attack end (ISO strings compare chronologically) — for the
   // "attack-free" card shown when nothing is ongoing.
@@ -329,7 +353,7 @@ export default function App() {
         transform: 'translateY(var(--app-offset, 0px))',
       }}
     >
-      <BrightnessOverlay brightness={brightness} onOpenSettings={() => setTab('settings')} />
+      <BrightnessOverlay brightness={brightness} onOpenProfile={() => setTab('profile')} />
 
       <div className="h-full overflow-y-auto">
         <TopBar title={TAB_TITLES[tab]} />
@@ -390,9 +414,10 @@ export default function App() {
         )}
 
         {/* ── Settings tab ─────────────────────────── */}
-        {tab === 'settings' && (
+        {tab === 'profile' && (
           <section className="space-y-4">
-            <SettingsView
+            <ProfileView
+              onOpenMedications={() => setMedsSheetOpen(true)}
               textScale={textScale}
               onTextScale={setTextScale}
               brightness={brightness}
@@ -463,6 +488,19 @@ export default function App() {
           />
         </Sheet>
       )}
+
+      {/* Medications library — flush/bareHeader for the same reason as the
+          detail sheet: it owns its top bar and pins nothing to a sticky
+          footer inside an iOS scroll container. */}
+      <Sheet open={medsSheetOpen} onClose={() => setMedsSheetOpen(false)} title="My medications" flush bareHeader>
+        <MedicationsView
+          medications={medications}
+          onAdd={addMedication}
+          onUpdate={updateMedication}
+          onRemove={removeMedication}
+          onClose={() => setMedsSheetOpen(false)}
+        />
+      </Sheet>
 
       {/* Attack detail sheet — flush/bareHeader because AttackDetail brings
           its own top bar and pins its own footer. */}

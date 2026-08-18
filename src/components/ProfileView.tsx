@@ -13,6 +13,7 @@ const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', 
 const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
 
 interface Props {
+  onOpenMedications: () => void;
   textScale: TextScale;
   onTextScale: (s: TextScale) => void;
   brightness: number;
@@ -22,7 +23,7 @@ interface Props {
   lastSyncedAt: string | null;
 }
 
-export function SettingsView({ textScale, onTextScale, brightness, onBrightness, auth, syncStatus, lastSyncedAt }: Props) {
+export function ProfileView({ onOpenMedications, textScale, onTextScale, brightness, onBrightness, auth, syncStatus, lastSyncedAt }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importErr, setImportErr] = useState<string | null>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
@@ -43,9 +44,29 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness,
   return (
     <div className="space-y-8">
 
-      {/* Text size */}
-      <section className="space-y-4">
-        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Text size</p>
+      {/* My medications — the only group with enough inside it to be worth a
+          tap. Everything below stays flat: text size and brightness are what
+          someone reaches for mid-attack and shouldn't cost a navigation. */}
+      <button
+        type="button"
+        onClick={onOpenMedications}
+        className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-4 text-left transition-colors hover:bg-bg-raised"
+      >
+        <span aria-hidden="true" className="text-lg">💊</span>
+        <span className="flex-1 text-sm font-medium text-text-primary">My medications</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-text-secondary" aria-hidden="true">
+          <path d="m9 18 6-6-6-6"/>
+        </svg>
+      </button>
+
+      {/* Accessibility — text size and brightness were two sibling sections;
+          they're one group now, since both answer "make this easier to look
+          at" and neither means much on its own. */}
+      <section className="space-y-6">
+        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Accessibility</p>
+
+      <div className="space-y-4">
+        <p className="text-sm font-medium text-text-primary">Text size</p>
 
         {/* Five-segment picker */}
         <div className="flex rounded-xl overflow-hidden border border-bg-border">
@@ -96,11 +117,10 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness,
         <p className="text-xs text-text-secondary">
           Changes apply instantly across the app. Use the A+ button (bottom‑right) for quick cycling at medium and above.
         </p>
-      </section>
+      </div>
 
-      {/* Screen brightness */}
-      <section className="space-y-4">
-        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Screen brightness</p>
+      <div className="space-y-4">
+        <p className="text-sm font-medium text-text-primary">Screen brightness</p>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -122,6 +142,7 @@ export function SettingsView({ textScale, onTextScale, brightness, onBrightness,
             Dims the screen during attacks without changing your phone's system brightness
           </p>
         </div>
+      </div>
       </section>
 
       {/* Account & sync — only rendered when Supabase is actually configured */}

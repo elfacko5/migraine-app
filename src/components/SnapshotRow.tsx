@@ -1,38 +1,11 @@
 import type { Snapshot } from '../types';
 import { formatTime } from '../utils/format';
+import { medIcon, medColor } from '../utils/medDisplay';
 
 function sevColor(s: number): string {
   if (s <= 3) return 'text-severity-low';
   if (s <= 8) return 'text-severity-mid';
   return 'text-severity-high';
-}
-
-// Best-effort form-icon detection from the medication's own name/dose text —
-// not a real drug database, just enough to tell a soluble/effervescent
-// tablet (e.g. Treo) apart from a swallowed one at a glance. Extend the
-// patterns below as new forms come up; unmatched medications fall back to a
-// plain tablet.
-const MED_ICON_RULES: { pattern: RegExp; icon: string }[] = [
-  { pattern: /\btreo\b|soluble|effervescent/i, icon: '🫧' },
-  { pattern: /spray|nasal/i, icon: '💨' },
-  { pattern: /inject|autoinjector|\bshot\b/i, icon: '💉' },
-  { pattern: /suppository/i, icon: '🔻' },
-  { pattern: /patch/i, icon: '🩹' },
-];
-
-function medIcon(name: string, dose: string): string {
-  const text = `${name} ${dose}`;
-  return MED_ICON_RULES.find((r) => r.pattern.test(text))?.icon ?? '💊';
-}
-
-// Deterministic per-name color so different medications stay visually
-// distinct across a timeline without needing a maintained name→color map.
-const MED_COLOR_PALETTE = ['#7fc4a0', '#c97c2a', '#b85c5c', '#9ad0b0', '#c4b07f', '#87c9a6', '#aab0c0', '#d2c29a'];
-
-function medColor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return MED_COLOR_PALETTE[hash % MED_COLOR_PALETTE.length];
 }
 
 // dateLabel is only passed when the attack spans multiple calendar days —

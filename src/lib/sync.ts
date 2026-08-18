@@ -1,4 +1,4 @@
-import type { Attack, NotificationConfig } from '../types';
+import type { Attack, NotificationConfig, Medication } from '../types';
 import { supabase } from './supabase';
 
 interface AttackRow {
@@ -62,6 +62,8 @@ interface UserPrefsRow {
   symptoms: string[];
   reliefs: string[];
   notification_default: NotificationConfig | null;
+  medications: Medication[] | null;
+  medications_updated_at: string | null;
 }
 
 export async function pullUserPrefs(): Promise<UserPrefsRow | null> {
@@ -69,6 +71,21 @@ export async function pullUserPrefs(): Promise<UserPrefsRow | null> {
   const { data, error } = await supabase.from('user_prefs').select('*').maybeSingle();
   if (error) throw error;
   return data as UserPrefsRow | null;
+}
+
+// Medications live in the same one-row-per-user table, but push on their own
+// path: useMedications owns them and must not clobber the trigger/symptom/
+// relief lists it doesn't hold (upsert would null out any column it omits if
+// they were pushed together from two hooks).
+export async function pushMedications(items: Medication[], updatedAt: string, userId: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.from('user_prefs').upsert({
+    user_id: userId,
+    medications: items,
+    medications_updated_at: updatedAt,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
 }
 
 export async function pushUserPrefs(prefs: {

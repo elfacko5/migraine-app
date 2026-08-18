@@ -24,7 +24,20 @@ export interface Attack {
   wokeWithMigraine?: boolean; // set at logging time — the attack was already present on waking, not noticed while awake
 }
 
-export type Tab = 'log' | 'history' | 'stats' | 'settings';
+// The user's own medication library (Profile → My medications). Acute meds
+// are taken to treat an attack and feed the logging wizard's chips;
+// preventives are taken daily — including on attack days — and deliberately
+// stay out of the wizard, so a daily dose is never recorded as a treatment
+// for the attack it happens to coincide with.
+export interface Medication {
+  id: string;
+  name: string;
+  dose: string;
+  kind: 'acute' | 'preventive';
+  createdAt: string;
+}
+
+export type Tab = 'log' | 'history' | 'stats' | 'profile';
 
 // Reported by useAttacks/useUserPrefs so Settings can show a combined
 // "synced just now" / "sync failed" indicator instead of failing silently.

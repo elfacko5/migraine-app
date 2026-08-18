@@ -37,8 +37,17 @@ create table if not exists user_prefs (
   notification_default jsonb,
   text_scale text,
   brightness numeric,
+  medications jsonb,
+  medications_updated_at timestamptz,
   updated_at timestamptz not null default now()
 );
+
+-- If this table already existed before the medications library was added,
+-- run these once — `create table if not exists` above will not retroactively
+-- add columns, and every medications push fails with an unknown-column error
+-- until they exist:
+-- alter table user_prefs add column if not exists medications jsonb;
+-- alter table user_prefs add column if not exists medications_updated_at timestamptz;
 
 alter table user_prefs enable row level security;
 
