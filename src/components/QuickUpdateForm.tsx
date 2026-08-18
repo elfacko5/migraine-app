@@ -192,7 +192,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
           </svg>
         </button>
 
-        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-semibold tabular-nums text-text-primary">
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-medium tabular-nums text-text-primary">
           {step === 0 ? 'Add update' : `${step} / ${TOTAL_STEPS}`}
         </span>
 
@@ -211,7 +211,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
         {step === 0 ? (
           <div className="space-y-5">
             <div>
-              <h2 className="text-lg font-semibold text-text-primary">{formatDate(attack.snapshots[0].time)}</h2>
+              <h2 className="text-lg font-medium text-text-primary">{formatDate(attack.snapshots[0].time)}</h2>
               <p className="text-sm text-text-secondary">
                 {isPast ? formatDuration(attack.snapshots[0].time, attack.end) + ' duration' : 'Ongoing'}
                 {' · '}max severity {attackMaxSeverity(attack)}
@@ -238,7 +238,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
                 pinned to its right. */}
             <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
               <div className="min-w-0">
-                <h2 className="text-xl font-semibold text-text-primary">{STEP_LABELS[step - 1]}</h2>
+                <h2 className="text-xl font-medium text-text-primary">{STEP_LABELS[step - 1]}</h2>
                 <p className="mt-1 text-sm text-text-secondary">{STEP_SUBHEADS[step - 1]}</p>
               </div>
               <div className="shrink-0">
@@ -363,7 +363,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="btn-primary w-full rounded-xl py-3 text-sm font-semibold transition-colors"
+              className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors"
             >
               Log what changed
             </button>
@@ -378,7 +378,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
               </button>
             )}
             <button type="button" onClick={goNext}
-              className="btn-primary flex-1 rounded-xl py-3 text-sm font-semibold transition-colors">
+              className="btn-primary flex-1 rounded-xl py-3 text-sm font-medium transition-colors">
               {step === TOTAL_STEPS ? 'Save update' : 'Next'}
             </button>
           </>

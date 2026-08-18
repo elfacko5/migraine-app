@@ -1,30 +1,26 @@
 @import "tailwindcss";
 
 /* ── Typeface ───────────────────────────────────────────
-   Atkinson Hyperlegible, designed by the Braille Institute for low vision —
-   every letter is drawn to be told apart from its lookalikes, which is what
-   this app needs when it's read mid-attack. Self-hosted (SIL Open Font
-   License): the app has to work offline and a CDN is ruled out by both that
-   and the CSP. Latin subset only, ~22KB for both weights.
-   Only 400 and 700 are bundled — no light or thin weight is used anywhere,
-   because thin strokes shimmer for light-sensitive eyes. */
+   Atkinson Hyperlegible Next, designed by the Braille Institute for low
+   vision — every letter is drawn to be told apart from its lookalikes, which
+   is what this app needs when it's read mid-attack. Self-hosted (SIL Open
+   Font License): the app has to work offline and a CDN is ruled out by both
+   that and the CSP. Latin subset, one 34KB variable file.
+
+   Variable specifically so 500 is a real weight. With the two static files
+   this started as (400 + 700 only), CSS weight matching sent every
+   `font-semibold` (600) up to 700 — Atkinson's bold is heavy, and every
+   button label in the app came out looking slabbed. */
 @font-face {
-  font-family: 'Atkinson Hyperlegible';
+  font-family: 'Atkinson Hyperlegible Next';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 400 700;
   font-display: swap;
-  src: url('./assets/fonts/AtkinsonHyperlegible-Regular.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Atkinson Hyperlegible';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('./assets/fonts/AtkinsonHyperlegible-Bold.woff2') format('woff2');
+  src: url('./assets/fonts/AtkinsonHyperlegibleNext-Variable.woff2') format('woff2-variations');
 }
 
 @theme {
-  --font-sans: 'Atkinson Hyperlegible', 'Lexend', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', 'Lexend', system-ui, -apple-system, sans-serif;
 
   /* ── Type scale ──────────────────────────────────────
      Floors from the photophobia spec: body never below 16px, captions never
@@ -105,16 +101,21 @@
 }
 
 /* ── Text scale ──────────────────────────────────────
-   Anchored on md = 16px = 100%, and reaching 200% at xl, which is the
-   reflow requirement in WCAG 1.4.4. The floor is 87.5% rather than the old
-   81%, because 13px broke the spec's caption floor once text-xs scaled with
-   it. Everything is in rem off this root size, so the whole UI reflows. */
+   Anchored on md = 16px = 100%. The floor is 87.5% rather than the old 81%,
+   because 13px broke the spec's caption floor once text-xs scaled with it.
+   Everything is in rem off this root size, so the whole UI reflows.
+
+   The top step is 150%, not the 200% the spec asks for: at 200% the app is
+   four words to a line and unusable for its own purpose, which is a worse
+   accessibility outcome than a slightly lower ceiling. The chrome caps in
+   BottomNav and AttackModePill stay regardless — they're what stops a tab
+   being pushed off screen, and they cost nothing at 150%. */
 :root,
 [data-scale="md"] { font-size: 16px; }   /* 100% */
 [data-scale="xs"] { font-size: 14px; }   /*  87.5% */
 [data-scale="sm"] { font-size: 15px; }   /*  94% */
 [data-scale="lg"] { font-size: 22px; }   /* 137% */
-[data-scale="xl"] { font-size: 32px; }   /* 200% */
+[data-scale="xl"] { font-size: 24px; }   /* 150% */
 
 /* Attack mode lifts body text to the spec's 20px floor, but never drags a
    larger choice back down — lg and xl are already past it. */

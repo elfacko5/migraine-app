@@ -26,8 +26,8 @@ export function TextScaleControl({ scale, onScale }: Props) {
       </button>
 
       <span aria-hidden="true" className="flex items-baseline gap-0.5 text-text-primary">
-        <span className="text-xs font-semibold">A</span>
-        <span className="text-base font-semibold">A</span>
+        <span className="text-xs font-medium">A</span>
+        <span className="text-base font-medium">A</span>
       </span>
 
       <button

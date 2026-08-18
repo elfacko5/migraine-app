@@ -390,7 +390,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setLogSheetOpen(true)}
-                  className="btn-primary rounded-xl px-6 py-2.5 text-sm font-semibold transition-colors"
+                  className="btn-primary rounded-xl px-6 py-2.5 text-sm font-medium transition-colors"
                 >
                   Start logging
                 </button>

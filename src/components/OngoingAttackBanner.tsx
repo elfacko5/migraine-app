@@ -37,14 +37,14 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }
       <button
         type="button"
         onClick={onAddUpdate}
-        className="btn-primary rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors"
+        className="btn-primary rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
       >
         Add update
       </button>
       <button
         type="button"
         onClick={onEnd}
-        className="btn-secondary rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors"
+        className="btn-secondary rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
       >
         End attack
       </button>

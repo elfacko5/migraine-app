@@ -57,7 +57,7 @@ export function ConfirmDialog({
         aria-label={title}
         className={`relative w-full max-w-sm rounded-2xl border border-bg-border bg-bg-surface p-5 transition-all duration-200 ${open ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
       >
-        <h2 className="text-base font-semibold text-text-primary">{title}</h2>
+        <h2 className="text-base font-medium text-text-primary">{title}</h2>
         {message && <p className="mt-1.5 text-sm text-text-secondary leading-relaxed">{message}</p>}
         <div className="mt-5 flex gap-3">
           <button
@@ -72,7 +72,7 @@ export function ConfirmDialog({
             ref={confirmRef}
             type="button"
             onClick={onConfirm}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-colors ${
+            className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
               danger
                 ? 'bg-severity-high text-text-primary hover:opacity-90'
                 : 'btn-primary'

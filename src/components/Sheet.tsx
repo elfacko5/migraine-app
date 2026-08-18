@@ -60,7 +60,7 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
             </button>
 
             {/* Title — centered */}
-            <h2 className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-semibold text-text-primary">
+            <h2 className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-medium text-text-primary">
               {title}
             </h2>
 

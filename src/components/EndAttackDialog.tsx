@@ -73,7 +73,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
         // would push the whole dialog wider instead of fitting inside it.
         className={`relative w-full min-w-0 max-w-sm rounded-2xl border border-bg-border bg-bg-surface p-5 transition-all duration-200 ${open ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
       >
-        <h2 className="text-base font-semibold text-text-primary">End this attack?</h2>
+        <h2 className="text-base font-medium text-text-primary">End this attack?</h2>
         <p className="mt-1.5 text-sm text-text-secondary leading-relaxed">
           This marks the attack as resolved and stops update reminders. You can still view it in your logs.
         </p>
@@ -128,7 +128,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
             ref={confirmRef}
             type="button"
             onClick={confirm}
-            className="btn-primary flex-1 rounded-xl py-2.5 text-sm font-semibold transition-colors"
+            className="btn-primary flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors"
           >
             End attack
           </button>

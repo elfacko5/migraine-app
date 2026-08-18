@@ -43,13 +43,13 @@ export function SnapshotRow({ snap, isFirst, dateLabel }: Props) {
         {areaCount > 0 && (
           <div className="flex flex-wrap gap-x-2 gap-y-0.5">
             {Object.entries(snap.areas).map(([area, s]) => (
-              <span key={area} className={`text-sm font-semibold ${sevColor(s)}`}>{area} {s}</span>
+              <span key={area} className={`text-sm font-medium ${sevColor(s)}`}>{area} {s}</span>
             ))}
           </div>
         )}
 
         {label && (
-          <p className={`mt-0.5 text-xs ${isFirst ? 'font-semibold text-accent-light' : 'text-text-secondary'}`}>{label}</p>
+          <p className={`mt-0.5 text-xs ${isFirst ? 'font-medium text-accent-light' : 'text-text-secondary'}`}>{label}</p>
         )}
 
         {snap.symptoms.length > 0 && (

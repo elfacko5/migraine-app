@@ -60,7 +60,7 @@ export function HistoryView({ attacks, onAttackClick }: Props) {
       {/* Count + sort toggle */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-text-secondary">
-          <span className="text-text-primary font-semibold">{shown}</span>
+          <span className="text-text-primary font-medium">{shown}</span>
           {shown !== total && <span> of {total}</span>}
           <span> {shown === 1 ? 'attack' : 'attacks'}</span>
         </p>

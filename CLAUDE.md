@@ -83,9 +83,9 @@ The palette follows a photophobia spec (2026-08-18): wavelength matters, not jus
 - **Tokens live in `src/index.css` under `@theme`.** `--color-bg-base` `#1b1a18` · `--color-text-primary` `#e4dfd6` · `--color-accent` `#7fa187` · severity low/mid/high `#7fa187` / `#b07a3c` (muted amber) / `#a65a52` (desaturated terracotta).
 - **Also still true** (`cf621be`): no purple or blue, no drop shadows.
 - **SVG and Recharts mirror the tokens by hand** (`headDiagram.ts`, `SeverityChart.tsx`, `HeadHeatmap.tsx`, `StatsView.tsx`, `medDisplay.ts`, `AreaSeverityPicker.tsx`) — a presentation attribute can't read `var()`. Change a token and these need changing with it. The fixed zone colours are now `#a39d92` (disabled) and `#7fa187` (selected).
-- **Type**: `Atkinson Hyperlegible`, self-hosted from `src/assets/fonts/` (SIL Open Font License, latin subset, ~22KB for both weights) — a CDN is ruled out by the offline bundle and the CSP. Only 400 and 700 are bundled: **no light or thin weight anywhere**, because thin strokes shimmer for light-sensitive eyes.
+- **Type**: `Atkinson Hyperlegible Next`, self-hosted from `src/assets/fonts/` (SIL Open Font License, latin subset, one 34KB **variable** file, 400–700) — a CDN is ruled out by the offline bundle and the CSP. **Variable specifically so 500 is a real weight**: this shipped first as static 400 + 700, and CSS weight matching sent every `font-semibold` (600) up to 700, which made every button label in the app read as slabbed. Emphasis is `font-medium` (500) throughout; `font-bold` is reserved for headline numbers. **No light or thin weight anywhere** — thin strokes shimmer for light-sensitive eyes.
 - **Type scale floors**: body never below 16px, captions never below 14px — so `text-xs` is `0.875rem` and `text-sm` is `1rem`, both with a **1.5 line-height** that every step preserves.
-- **Text scale reaches 200%** (`[data-scale]` on `<html>`: 14 / 15 / 16 / 22 / 32px). The 32px step is WCAG 1.4.4's reflow requirement, and it is not free: **`BottomNav` and the floating pill cap their own font and icon sizes** (`min(0.875rem, 16px)` and friends), because at 200% the unclamped nav pushed Insights into a clip and Profile off the screen entirely — a whole tab becoming unreachable. Anything else added to the persistent chrome needs the same treatment.
+- **Text scale runs 87.5%–150%** (`[data-scale]` on `<html>`: 14 / 15 / 16 / 22 / 24px). It briefly went to 200% for WCAG 1.4.4, and 200% made the app four words to a line — a worse accessibility outcome than a lower ceiling, on an app whose whole job is to be usable mid-attack. **`BottomNav` and `AttackModePill` still cap their own font and icon sizes** (`min(0.875rem, 16px)` and friends); that was found at 200%, where the unclamped nav pushed Insights into a clip and Profile off screen entirely — a whole tab unreachable — and it costs nothing at 150%. Anything added to the persistent chrome needs the same treatment.
 
 ### Attack mode
 
@@ -95,6 +95,7 @@ A third theme, not a filter: `data-theme="attack"` on `<html>` (`useSettings`, p
 - **Body text floor of 20px** — `[data-theme="attack"][data-scale="xs"|"sm"|"md"]` — but never drags a larger choice back down.
 - **All animation is cut** (and `prefers-reduced-motion` is honoured for everyone, attack mode or not — movement is itself a trigger).
 - **A dim floor of 0.35 applied at render**, in `BrightnessOverlay`, *not* written back to `hd_brightness`: turning attack mode off has to restore exactly the brightness the user chose. The scrim is warm (`rgba(20,20,15,…)`) rather than neutral black, which would pull the UI back toward blue.
+- **The pill's icon is a half-filled circle, not a crescent moon** — the moon already means "woke up with this migraine" on the attack header, and it's drawn as a stroke SVG in `currentColor` so the control isn't the brightest thing on a screen designed to be easy on the eyes. Its bottom offset is `calc(4.5rem + 1rem + env(safe-area-inset-bottom))`: measured off the nav's real height and growing with the inset, because a flat offset sat directly on top of the nav on device.
 - **The pill sits at `z-45`, above the dim scrim at `z-35`.** It is the control that turns attack mode *off*, so it is the one thing the scrim must not dim. The brightness pill hides while attack mode is on — same screen position, and the dim isn't the user's setting in that state.
 - **Not done: "fewer elements per screen."** The spec asks for a reduced UI in attack mode; that means redesigning each screen's content, not restyling it, and nothing here attempts it.
 
@@ -136,7 +137,7 @@ interface Attack {
 | `hd_reliefs` | `string[]` | User's relief-method list (seeded from `DEFAULT_RELIEFS`) |
 | `hd_medications` | `{ items: Medication[]; updatedAt: string }` | The user's medication library (acute + preventive) |
 | `hd_notification_default` | `NotificationConfig` | Saved notification preference |
-| `hd_text_scale` | `TextScale` | UI text-size setting (87.5%–200%) |
+| `hd_text_scale` | `TextScale` | UI text-size setting (87.5%–150%) |
 | `hd_attack_mode` | `boolean` | Attack-mode theme on/off |
 | `hd_brightness` | `number` | Brightness-overlay setting |
 

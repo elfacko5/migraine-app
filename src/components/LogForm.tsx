@@ -274,7 +274,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
           </svg>
         </button>
 
-        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-semibold tabular-nums text-text-primary">
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-medium tabular-nums text-text-primary">
           {step === 0 ? 'From your voice note' : `${step} / ${totalSteps}`}
         </span>
 
@@ -306,7 +306,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
             pinned to its right. */}
         <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold text-text-primary">
+            <h2 className="text-xl font-medium text-text-primary">
               {step === 0 ? 'Here’s what I heard' : STEP_LABELS[step - 1]}
             </h2>
             <p className="mt-1 text-sm text-text-secondary">
@@ -346,7 +346,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                       <li key={name} className="flex items-baseline justify-between gap-3">
                         <span className="text-base text-text-primary">{name}</span>
                         {voiceDraft.severityHeardFor[name] ? (
-                          <span className="text-base font-semibold tabular-nums text-text-primary">{form.areas[name]}</span>
+                          <span className="text-base font-medium tabular-nums text-text-primary">{form.areas[name]}</span>
                         ) : (
                           // The reason the save button is disabled, said where
                           // the user is looking rather than left to be deduced.
@@ -581,7 +581,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               type="button"
               onClick={submit}
               disabled={!canSaveFromReview}
-              className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-all ${
+              className={`flex-1 rounded-xl py-3 text-sm font-medium transition-all ${
                 canSaveFromReview
                   ? 'btn-primary active:scale-[.99]'
                   : 'bg-bg-raised text-text-secondary cursor-not-allowed'
@@ -602,7 +602,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               type="button"
               onClick={goNext}
               disabled={nextDisabled}
-              className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-all ${
+              className={`flex-1 rounded-xl py-3 text-sm font-medium transition-all ${
                 nextDisabled
                   ? 'bg-bg-raised text-text-secondary cursor-not-allowed'
                   : 'btn-primary active:scale-[.99]'

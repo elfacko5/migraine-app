@@ -81,7 +81,10 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
           onClick={() => onAttackMode(!attackMode)}
           className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
         >
-          <span aria-hidden="true" className="text-lg">🌙</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5 shrink-0 text-text-secondary" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
           <span className="min-w-0 flex-1 text-sm text-text-primary">
             {attackMode ? 'On' : 'Off'}
           </span>
@@ -414,7 +417,7 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="btn-primary w-full rounded-lg py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
+        className="btn-primary w-full rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
       >
         {status === 'sending' ? 'Sending…' : 'Send sign-in link'}
       </button>

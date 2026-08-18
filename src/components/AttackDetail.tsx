@@ -60,7 +60,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           </svg>
         </button>
 
-        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-semibold text-text-primary">
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-medium text-text-primary">
           Attack details
         </span>
 
@@ -81,7 +81,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
       <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-5 space-y-5">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-semibold text-text-primary">{formatDate(start.time)}</h2>
+        <h2 className="text-lg font-medium text-text-primary">{formatDate(start.time)}</h2>
         <p className="text-sm text-text-secondary">
           {attack.end
             ? formatDuration(start.time, attack.end) + ' duration'
@@ -113,7 +113,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
                 {formatTime(attack.end)}
               </span>
             </div>
-            <p className="pt-1.5 pb-4 text-sm font-semibold text-accent-light">
+            <p className="pt-1.5 pb-4 text-sm font-medium text-accent-light">
               Attack ended
             </p>
           </div>
@@ -148,7 +148,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           <button
             type="button"
             onClick={onAddUpdate}
-            className="btn-primary w-full rounded-xl py-3 text-sm font-semibold transition-colors"
+            className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors"
           >
             Add update
           </button>

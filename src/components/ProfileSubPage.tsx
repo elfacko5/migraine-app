@@ -26,7 +26,7 @@ export function ProfileSubPage({ title, onClose, children }: Props) {
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
-        <h2 className="flex-1 text-center text-base font-semibold text-text-primary">{title}</h2>
+        <h2 className="flex-1 text-center text-base font-medium text-text-primary">{title}</h2>
         <span className="h-9 w-9" aria-hidden="true" />
       </div>
 
