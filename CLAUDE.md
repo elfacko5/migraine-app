@@ -350,6 +350,18 @@ Constraints a change here has to respect — the reasoning is in [`docs/today-ca
 
 `Sheet.tsx` is the reusable full-screen bottom sheet (backdrop/Escape close, body scroll lock, children mounted only when open). It has two opt-in modes: `flush` (non-scrolling flex body, so a child owns its own scroll region — needed because sticky footers were unreliable in iOS PWA scroll containers) and `bareHeader` (Sheet renders no header of its own; the child provides its full top app bar). `LogForm` and `QuickUpdateForm` both use `flush bareHeader` since their top bar shows a live step count and a "Finish now" quick-exit that the generic Sheet header can't express.
 
+## Severity breakdown (`SeverityBreakdown.tsx`)
+
+Replaces the multi-line severity chart on `AttackDetail`. One row per pain area — name, a sparkline, then **peak** and **now**.
+
+**Why the chart went.** It gave every zone its own categorical hue, and there are 17 zones against a ceiling of 8. Measured with the dataviz validator, the worst adjacent pair came out at **ΔE 4.5 in normal vision** (floor is 15) and 2.3 under protanopia — two lines nobody could tell apart, colour-vision deficiency or not. That isn't fixable with better hues; it needs a different encoding. Here colour carries **magnitude** (the shared severity ramp) and identity is carried by a row label.
+
+- **It is width-stable, which is the other half of the reason.** A column per reading stops fitting a 375px screen at about five readings, sooner at larger text scales, and an overnight attack on 2-hourly reminders produces far more than five. Peak/now is a fixed two columns whatever the reading count. Verified at 375px at both the default and the 150% text setting, with no horizontal overflow — and note that a sideways-scrolling table would fight `html { overflow-x: hidden }` and the iOS scroll rules the shell depends on.
+- **A missing area means *not recorded*, never zero, and is never interpolated.** The update wizard starts blank every time, so an area absent from a reading can equally mean "it stopped" or "I only logged the worst one" — the app cannot currently tell those apart. Gaps render as a dashed span in the sparkline and a `·` in the now column, with a `last 6:28` line under the area name. The old chart had `connectNulls` on and drew a solid line straight across, which read as a severity that was never reported. **If the app ever gains a way to mark an area resolved, this is the code that should stop guessing.**
+- **Rows sort by peak descending**, so the worst area is always first.
+- **Sparklines are `aria-hidden`** — every value they encode is printed in the two cells beside them, so a screen reader gets numbers rather than a shape. Dot colour comes from `sevFill` in `headDiagram.ts`, the same function the diagram uses.
+- `SeverityChart.tsx` now holds only `SeveritySparkline`, the single-series trend on the Logs list rows. `StatsView`'s severity-trend chart is also single-series and was never affected.
+
 ## Attack detail (`AttackDetail.tsx`)
 
 Opened from the Logs list and from the Today card's text block. Rendered through `Sheet`'s **`flush bareHeader`** mode, like the two wizards — it owns its top bar and flex-pins its own footer, because a footer that must sit above the home indicator is more reliable pinned than `sticky` inside an iOS PWA scroll container.

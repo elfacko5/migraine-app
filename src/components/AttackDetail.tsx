@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Attack } from '../types';
 import { formatDate, formatTime, formatDuration } from '../utils/format';
 import { attackMaxSeverity } from '../utils/stats';
-import { SeverityChart } from './SeverityChart';
+import { SeverityBreakdown } from './SeverityBreakdown';
 import { SnapshotRow } from './SnapshotRow';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -97,7 +97,13 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
       </div>
 
       {/* Severity chart */}
-      <SeverityChart attack={attack} height={180} />
+      {attack.snapshots.length >= 2 ? (
+        <SeverityBreakdown attack={attack} />
+      ) : (
+        <p className="rounded-xl bg-bg-raised/60 px-4 py-6 text-center text-sm text-text-secondary">
+          Add another update to see how this changes.
+        </p>
+      )}
 
       {/* Snapshot timeline — newest first; attack start anchors the bottom */}
       <div>
