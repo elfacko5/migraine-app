@@ -136,7 +136,7 @@ export function StatsView({ attacks }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Period filter chips */}
       <div className="flex gap-2 flex-wrap">
         {PERIOD_OPTIONS.map(({ value, label }) => (
@@ -155,22 +155,13 @@ export function StatsView({ attacks }: Props) {
         ))}
       </div>
 
-      {/* These two ignore the period filter — "days per month" and the
-          overuse thresholds are monthly figures, and a rolling 7-day window
-          can't express either. That also means they must sit *outside* the
-          empty-period branch below: picking "7 days" in a quiet week used to
-          hide the month's medication count, which is exactly the number
-          someone would be checking. */}
-      <MigraineDaysChart attacks={attacks} />
-      <MedicationInsights attacks={attacks} />
-
+      {/* The tiles answer the period the pills just set, so they stay
+          directly under them. */}
       {filtered.length === 0 ? (
         <div className="py-12 text-center text-text-secondary text-sm">
           No attacks in this period.
         </div>
       ) : (
-        <>
-          {/* Summary cards */}
           <div className="grid grid-cols-2 gap-3">
             {/* No period sub-label: the selected pill above already says it,
                 and repeating it on every card cost a line each. The cards
@@ -186,7 +177,18 @@ export function StatsView({ attacks }: Props) {
               <StatCard label="Avg time ≥5" value={`${Math.floor(stats.avgAbove5 / 60)}h ${stats.avgAbove5 % 60}m`} sub="per attack" />
             )}
           </div>
+      )}
 
+      {/* These two ignore the period filter — "days per month" and the overuse
+          thresholds are monthly figures, and a rolling 7-day window can't
+          express either. They also sit outside the empty-period branch above:
+          picking "7 days" in a quiet week must not hide the month's
+          medication count, which is the number someone would be checking. */}
+      <MigraineDaysChart attacks={attacks} />
+      <MedicationInsights attacks={attacks} />
+
+      {filtered.length > 0 && (
+        <>
           {/* Severity trend */}
           {stats.severityTrend.length >= 2 && (
             <InsightSection title={`Severity trend · ${PERIOD_SUB[period]}`}>
