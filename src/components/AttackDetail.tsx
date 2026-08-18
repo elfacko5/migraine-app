@@ -104,12 +104,12 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         <p className="text-xs uppercase tracking-wider font-medium text-text-secondary mb-3">Timeline</p>
         {attack.end && (
           <div className="flex gap-3">
-            <div className="relative w-16 shrink-0 pl-3">
-              <div className="absolute inset-y-0 left-0 w-px bg-bg-border" />
+            <div className="relative flex w-16 shrink-0 flex-col items-center">
+              <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-bg-border" />
               {spansMultipleDays && (
-                <span className="relative block text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{formatDate(attack.end)}</span>
+                <span className="relative bg-bg-surface px-1.5 py-1 text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{formatDate(attack.end)}</span>
               )}
-              <span className="relative block pt-3.5 text-xs tabular-nums text-text-secondary whitespace-nowrap">
+              <span className="relative mt-1.5 bg-bg-surface px-1.5 py-1.5 text-xs tabular-nums text-text-secondary whitespace-nowrap">
                 {formatTime(attack.end)}
               </span>
             </div>
