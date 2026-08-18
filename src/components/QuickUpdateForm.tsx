@@ -228,7 +228,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
             <div>
               <p className="text-xs uppercase tracking-wider font-medium text-text-secondary mb-3">Timeline</p>
               {attack.snapshots.map((snap, i) => (
-                <SnapshotRow key={i} snap={snap} isFirst={i === 0} />
+                <SnapshotRow key={i} snap={snap} />
               ))}
             </div>
           </div>

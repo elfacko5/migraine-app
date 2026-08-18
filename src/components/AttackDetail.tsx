@@ -104,25 +104,26 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         <p className="text-xs uppercase tracking-wider font-medium text-text-secondary mb-3">Timeline</p>
         {attack.end && (
           <div className="flex gap-3">
-            <div className="relative flex flex-col items-center w-16 shrink-0">
-              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-bg-border" />
+            <div className="relative w-14 shrink-0 pr-3 text-right">
+              <div className="absolute inset-y-0 right-0 w-px bg-bg-border" />
               {spansMultipleDays && (
-                <span className="relative mb-1 text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{formatDate(attack.end)}</span>
+                <span className="relative block text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{formatDate(attack.end)}</span>
               )}
-              <span className="relative shrink-0 rounded-full bg-bg-raised border border-bg-border px-2.5 py-1 text-xs font-bold tabular-nums text-text-primary whitespace-nowrap">
+              <span className="relative block pt-3 text-sm tabular-nums text-text-secondary whitespace-nowrap">
                 {formatTime(attack.end)}
               </span>
             </div>
-            <p className="pt-1.5 pb-4 text-sm font-medium text-accent-light">
-              Attack ended
-            </p>
+            <div className="min-w-0 flex-1 pb-4">
+              <div className="rounded-xl border border-bg-border bg-bg-surface px-4 py-3">
+                <p className="text-sm text-text-secondary">Attack ended</p>
+              </div>
+            </div>
           </div>
         )}
-        {reversedSnapshots.map((snap, i) => (
+        {reversedSnapshots.map((snap) => (
           <SnapshotRow
             key={snap.time}
             snap={snap}
-            isFirst={i === reversedSnapshots.length - 1}
             dateLabel={spansMultipleDays ? formatDate(snap.time) : undefined}
           />
         ))}
