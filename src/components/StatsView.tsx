@@ -184,7 +184,7 @@ export function StatsView({ attacks }: Props) {
                       labelStyle={{ color: '#7d8599' }}
                       itemStyle={{ color: '#dde1eb' }}
                     />
-                    <Line type="monotone" dataKey="severity" stroke="#7fc4a0" strokeWidth={2} dot={{ r: 3, fill: '#7fc4a0' }} />
+                    <Line type="monotone" dataKey="severity" stroke="#7fc4a0" strokeWidth={2} dot={{ r: 3, fill: '#7fc4a0' }} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

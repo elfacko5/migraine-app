@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { Attack } from '../types';
 import { formatTime } from '../utils/format';
@@ -25,7 +26,48 @@ interface Props {
   height?: number;
 }
 
+// Recharts' own ResponsiveContainer sizes itself from `getBoundingClientRect()`,
+// which is measured through every ancestor transform. `Sheet`'s panel animates
+// in on `translate-y-full → translate-y-0`, so a chart mounted inside it is
+// measured mid-transform — and on WebKit that first read can come back 0.
+// Nothing resizes afterwards (the element really was its final width all
+// along), so the ResizeObserver never fires a correction and the chart stays
+// unpainted: reserved height, no lines. Opening the same attack from Logs
+// happened to measure late enough to get a real number; from the Today card it
+// didn't, which is why one entry point drew the chart and the other didn't.
+//
+// `clientWidth` is the layout box and ignores ancestor transforms entirely, so
+// it reads the true width whatever the animation is doing. The extra
+// post-layout re-measure covers a mount that lands before layout has settled.
+function useMeasuredWidth() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setWidth(el.clientWidth);
+    measure();
+    const raf = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, []);
+
+  // A width of 0 after layout means the read itself was wrong, not that the
+  // element is genuinely collapsed — retry once past the sheet's 300ms open
+  // transition rather than leaving a permanently blank chart.
+  useEffect(() => {
+    if (width > 0) return;
+    const t = setTimeout(() => setWidth(ref.current?.clientWidth ?? 0), 350);
+    return () => clearTimeout(t);
+  }, [width]);
+
+  return { ref, width };
+}
+
 export function SeverityChart({ attack, height = 200 }: Props) {
+  const { ref, width } = useMeasuredWidth();
   const data = attack.snapshots.map((s) => ({
     time: new Date(s.time).getTime(),
     ...s.areas,
@@ -51,9 +93,9 @@ export function SeverityChart({ attack, height = 200 }: Props) {
     // Clips the chart's negative left margin (used to pull the Y-axis in)
     // so it can never register as extra horizontal scroll width on the page —
     // that overflow was making the whole sheet scrollable sideways on iOS.
-    <div style={{ overflowX: 'hidden' }}>
-    <ResponsiveContainer width="100%" height={showLegend ? height + 28 : height}>
-      <LineChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: -20 }}>
+    <div ref={ref} style={{ overflowX: 'hidden' }}>
+    {width > 0 && (
+    <LineChart data={data} width={width} height={showLegend ? height + 28 : height} margin={{ top: 4, right: 8, bottom: 4, left: -20 }}>
         <XAxis
           dataKey="time"
           type="number"
@@ -86,6 +128,14 @@ export function SeverityChart({ attack, height = 200 }: Props) {
             label={{ value: `💊 ${s.medication?.name}`, position: 'top', fill: '#7fc4a0', fontSize: '0.625rem' }}
           />
         ))}
+        {/* Animation off, everywhere a Line is drawn. Recharts paints the
+            line by growing its `stroke-dasharray` from 0 to the path length,
+            and here that animation started and never finished — the geometry
+            was right (`M40,33.2 L335,33.2`) while the dash stayed at
+            `11.32px 295px`, so the dots appeared at both ends with 11px of a
+            295px line between them. The sparkline in the Logs list was stuck
+            at `0px` and drew no line at all. A chart read mid-migraine has
+            nothing to gain from drawing itself in anyway. */}
         {activeAreas.map((area) => (
           <Line
             key={area}
@@ -96,6 +146,7 @@ export function SeverityChart({ attack, height = 200 }: Props) {
             dot={{ r: 3, fill: getColor(area) }}
             activeDot={{ r: 5 }}
             connectNulls
+            isAnimationActive={false}
           />
         ))}
         {showLegend && (
@@ -106,8 +157,8 @@ export function SeverityChart({ attack, height = 200 }: Props) {
             formatter={(value) => <span style={{ color: '#dde1eb' }}>{value}</span>}
           />
         )}
-      </LineChart>
-    </ResponsiveContainer>
+    </LineChart>
+    )}
     </div>
   );
 }
@@ -123,7 +174,7 @@ export function SeveritySparkline({ attack }: { attack: Attack }) {
   return (
     <ResponsiveContainer width={72} height={28}>
       <LineChart data={data}>
-        <Line type="monotone" dataKey="v" stroke="#7fc4a0" strokeWidth={1.5} dot={false} />
+        <Line type="monotone" dataKey="v" stroke="#7fc4a0" strokeWidth={1.5} dot={false} isAnimationActive={false} />
       </LineChart>
     </ResponsiveContainer>
   );
