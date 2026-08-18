@@ -57,7 +57,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 function FreqBars({ data, color }: { data: Freq[]; color: string }) {
   const max = data[0]?.count ?? 1;
   return (
-    <div className="rounded-xl bg-bg-raised p-4 space-y-2.5">
+    <div className="space-y-2.5">
       {data.slice(0, 8).map((f) => (
         <div key={f.name} className="space-y-1">
           <div className="flex items-center justify-between text-xs">
@@ -181,7 +181,7 @@ export function StatsView({ attacks }: Props) {
           {/* Severity trend */}
           {stats.severityTrend.length >= 2 && (
             <InsightSection title={`Severity trend · ${PERIOD_SUB[period]}`}>
-              <div className="rounded-xl bg-bg-raised p-3">
+              <div>
                 <ResponsiveContainer width="100%" height={140}>
                   <LineChart data={stats.severityTrend} margin={{ top: 4, right: 8, bottom: 4, left: -20 }}>
                     <XAxis dataKey="date" tick={{ fill: '#a39d92', fontSize: '0.625rem' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
@@ -209,9 +209,7 @@ export function StatsView({ attacks }: Props) {
           {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
             <InsightSection title="Pain area frequency">
-              <div className="rounded-xl bg-bg-raised p-4">
-                <HeadHeatmap data={stats.areas.map((a) => ({ area: a.area, value: a.count }))} label="attacks" />
-              </div>
+              <HeadHeatmap data={stats.areas.map((a) => ({ area: a.area, value: a.count }))} label="attacks" />
             </InsightSection>
           )}
 

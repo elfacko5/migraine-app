@@ -33,7 +33,7 @@ export function MedicationInsights({ attacks }: Props) {
         </>
       }
     >
-      <div className="space-y-3 rounded-xl bg-bg-raised px-3 py-3">
+      <div className="space-y-3">
         {days.map((med) => {
           const r = byName.get(med.name);
           // Marked against the lower of the two guideline numbers, because

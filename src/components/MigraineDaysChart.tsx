@@ -29,7 +29,7 @@ export function MigraineDaysChart({ attacks }: Props) {
         </>
       }
     >
-      <div className="space-y-1.5 rounded-xl bg-bg-raised px-3 py-3">
+      <div className="space-y-1.5">
         {months.map((m) => {
           const pct = Math.min(100, (m.days / BAR_MAX) * 100);
           const chronic = m.days >= CHRONIC_DAYS_THRESHOLD;
