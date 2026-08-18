@@ -318,14 +318,10 @@ export default function App() {
     closeLogSheet();
   }
 
-  function handleUpdateSave(snapshot: Omit<Snapshot, 'source'>) {
-    if (updateAttackId !== null) addSnapshot(updateAttackId, snapshot);
+  function handleUpdateSave(snapshot: Omit<Snapshot, 'source'>, source: Snapshot['source'] = 'manual') {
+    if (updateAttackId !== null) addSnapshot(updateAttackId, snapshot, source);
     closeUpdateSheet();
   }
-
-  // "Nothing changed" only applies to an ongoing attack — a past attack has
-  // no "right now" to log against, so QuickUpdateForm doesn't offer this
-  // option once attack.end is set.
   return (
     <div
       // `relative` + an explicit height from --app-height (rather than

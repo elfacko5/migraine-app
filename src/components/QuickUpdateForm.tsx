@@ -8,6 +8,7 @@ import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { ChipSelector } from './ChipSelector';
 import { MedicationInput } from './MedicationInput';
 import { TextScaleControl } from './TextScaleControl';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface Props {
   attack: Attack;
@@ -18,7 +19,7 @@ interface Props {
   onTextScale: (s: TextScale) => void;
   onAddSymptom: (s: string) => void;
   onAddRelief: (r: string) => void;
-  onSave: (snapshot: Omit<Snapshot, 'source'>) => void;
+  onSave: (snapshot: Omit<Snapshot, 'source'>, source?: Snapshot['source']) => void;
   onClose: () => void;
   // Only passed for an attack still in progress. A reminder asks "how's your
   // migraine?", and "it's over" is one of the three honest answers — without
@@ -149,6 +150,36 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
     setStep((s) => s - 1);
   }
 
+  // Everything on this update is still blank. On step 1 that's always true —
+  // there has been nothing to fill in yet — which is what makes "Finish now"
+  // there mean something different from "Finish now" further in.
+  const isBlank =
+    Object.keys(form.areas).length === 0 &&
+    !form.medication.name.trim() &&
+    form.reliefs.length === 0 &&
+    form.symptoms.length === 0 &&
+    !form.note.trim();
+
+  // Saving a blank form would record a reading with no pain areas at all,
+  // which the breakdown then has to show as "not recorded" for every area —
+  // that isn't "nothing changed", it's "nothing was said". A no-change
+  // reading carries the previous state forward, at the time on the picker,
+  // and is marked `no_change` so the plateau stats count it as severity
+  // holding rather than as a gap.
+  function submitNoChange() {
+    let time = localInputToIso(form.time);
+    if (time < minTime) time = minTime;
+    if (time > maxTime) time = maxTime;
+    onSave({
+      time,
+      areas: { ...prev.areas },
+      symptoms: [...prev.symptoms],
+      reliefs: [...(prev.reliefs ?? [])],
+      medication: null,
+      note: null,
+    }, 'notification_no_change');
+  }
+
   function submit() {
     // Minute-precision picker vs second-precision snapshots means the exact
     // bounds can otherwise land a few seconds outside them — clamp instead
@@ -169,6 +200,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
   }
 
   const caption = step >= 1 ? lastEntryCaption(step, prev) : null;
+  const [confirmNoChange, setConfirmNoChange] = useState(false);
 
   return (
     <div className="flex flex-col flex-1 min-h-0 mx-auto w-full max-w-2xl">
@@ -194,7 +226,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
 
         <div className="ml-auto flex items-center">
           {step >= 1 && step < TOTAL_STEPS && (
-            <button type="button" onClick={submit}
+            <button type="button" onClick={() => (isBlank ? setConfirmNoChange(true) : submit())}
               className="px-2 py-1 text-sm font-medium text-accent-light hover:text-accent transition-colors">
               Finish now
             </button>
@@ -314,6 +346,20 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
               {step === TOTAL_STEPS ? 'Save update' : 'Next'}
             </button>
       </div>
+
+      {/* Finishing with nothing filled in is a real answer — the pain is the
+          same as last time — but it's also what a mis-tap looks like, and it
+          writes a reading either way. The dialog says which of the two it is
+          about to record. */}
+      <ConfirmDialog
+        open={confirmNoChange}
+        title="Log that nothing has changed?"
+        message={`This saves a reading at ${formatTime(localInputToIso(form.time))} carrying your last entry forward — same pain areas and severities. Go back if you want to record something different.`}
+        confirmLabel="Log no change"
+        cancelLabel="Go back"
+        onConfirm={() => { setConfirmNoChange(false); submitNoChange(); }}
+        onCancel={() => setConfirmNoChange(false)}
+      />
     </div>
   );
 }
