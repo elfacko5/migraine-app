@@ -35,6 +35,7 @@ import { StatsView } from './components/StatsView';
 import { HistoryView } from './components/HistoryView';
 import { ProfileView, AccessibilityPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
+import { MedicationEditor } from './components/MedicationEditor';
 import { AttackModePill } from './components/AttackModePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
 
@@ -50,6 +51,10 @@ export default function App() {
   const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [profileSheet, setProfileSheet] = useState<ProfileSection | null>(null);
+  // Which medication the editor sheet is open on: an existing one, or a new
+  // one of a given kind. Kept here rather than inside MedicationsView because
+  // Sheet anchors to the app root — see the Profile tab notes in CLAUDE.md.
+  const [medEditor, setMedEditor] = useState<{ med: Medication } | { newKind: Medication['kind'] } | null>(null);
   // Set when either sheet below was opened by voice — the Siri App Intent or
   // the Shortcut deep link (see the voice effect below) — and cleared whenever
   // that sheet closes so a stray prefill never leaks into a later manual open.
@@ -495,9 +500,8 @@ export default function App() {
         {profileSheet === 'medications' && (
           <MedicationsView
             medications={medications}
-            onAdd={addMedication}
-            onUpdate={updateMedication}
-            onRemove={removeMedication}
+            onEdit={(med) => setMedEditor({ med })}
+            onAddNew={(kind) => setMedEditor({ newKind: kind })}
             onClose={() => setProfileSheet(null)}
           />
         )}
@@ -522,6 +526,29 @@ export default function App() {
         )}
         {profileSheet === 'data' && (
           <DataPanel auth={auth} onClose={() => setProfileSheet(null)} />
+        )}
+      </Sheet>
+
+      {/* Medication editor — a bottom-entering modal on top of the Profile
+          drill-down, with Sheet's own header and close X: it interrupts the
+          list rather than being another level of it. */}
+      <Sheet
+        open={medEditor !== null}
+        onClose={() => setMedEditor(null)}
+        title={medEditor && 'med' in medEditor ? 'Edit medication' : 'Add medication'}
+      >
+        {medEditor && (
+          <MedicationEditor
+            medication={'med' in medEditor ? medEditor.med : undefined}
+            kind={'med' in medEditor ? medEditor.med.kind : medEditor.newKind}
+            onSave={(next) => {
+              if ('med' in medEditor) updateMedication(medEditor.med.id, next);
+              else addMedication({ ...next, kind: medEditor.newKind });
+              setMedEditor(null);
+            }}
+            onDelete={'med' in medEditor ? () => { removeMedication(medEditor.med.id); setMedEditor(null); } : undefined}
+            onClose={() => setMedEditor(null)}
+          />
         )}
       </Sheet>
 
