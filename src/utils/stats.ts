@@ -272,3 +272,120 @@ export function migraineDaysByMonth(attacks: Attack[], months = 6, now: number =
 
 /** The 15-days-a-month line ICHD-3 draws between episodic and chronic migraine. */
 export const CHRONIC_DAYS_THRESHOLD = 15;
+
+/**
+ * Medication-overuse reference points from ICHD-3, in days per month:
+ * roughly 10 for triptans and combination analgesics, 15 for simple ones,
+ * sustained over three months. They are *reference points for a
+ * conversation*, not a diagnosis — the app counts days and says what the
+ * guideline numbers are; it never concludes anything.
+ */
+export const MOH_DAYS_TRIPTAN = 10;
+export const MOH_DAYS_SIMPLE = 15;
+
+export interface MedMonth {
+  name: string;
+  /** YYYY-MM → number of distinct local days a dose was logged. */
+  byMonth: Map<string, number>;
+  /** Days in the current calendar month so far. */
+  thisMonth: number;
+}
+
+/**
+ * Days per month on which each medication was logged — days, not doses, since
+ * that is the unit every overuse threshold is stated in. Two doses of the
+ * same drug in one day are one day.
+ *
+ * Only counts what was logged inside an attack, which is the only place
+ * medication exists in this app. Taking something without logging an attack
+ * under-reports here, and the UI says so rather than implying the count is
+ * complete.
+ */
+export function medicationDaysByMonth(attacks: Attack[], now: number = Date.now()): MedMonth[] {
+  const seen = new Map<string, Map<string, Set<string>>>();
+  for (const a of attacks) {
+    for (const snap of a.snapshots) {
+      const name = snap.medication?.name?.trim();
+      if (!name) continue;
+      const d = new Date(snap.time);
+      const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const month = day.slice(0, 7);
+      if (!seen.has(name)) seen.set(name, new Map());
+      const months = seen.get(name)!;
+      if (!months.has(month)) months.set(month, new Set());
+      months.get(month)!.add(day);
+    }
+  }
+
+  const cur = new Date(now);
+  const thisMonthKey = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
+  return [...seen.entries()]
+    .map(([name, months]) => ({
+      name,
+      byMonth: new Map([...months.entries()].map(([m, days]) => [m, days.size])),
+      thisMonth: months.get(thisMonthKey)?.size ?? 0,
+    }))
+    .sort((a, b) => b.thisMonth - a.thisMonth || a.name.localeCompare(b.name));
+}
+
+export interface MedResponse {
+  name: string;
+  /** Doses that have a follow-up reading in the window. */
+  measured: number;
+  /** Doses with no reading in the window — the honest denominator. */
+  unmeasured: number;
+  /** Median severity change at ~2h. Negative is improvement. */
+  medianChange: number | null;
+  /** Doses where severity at least halved or fell to 3 or below. */
+  helped: number;
+}
+
+// The clinical endpoint is pain freedom or pain relief at two hours, so the
+// follow-up reading is whichever one falls closest to dose + 2h. A window of
+// 1-4h keeps a reading that arrived late (the reminder is answered when it's
+// answered) while refusing one so far out that it says nothing about the dose.
+const FOLLOW_UP_MIN_MS = 60 * 60 * 1000;
+const FOLLOW_UP_MAX_MS = 4 * 60 * 60 * 1000;
+const TARGET_MS = 2 * 60 * 60 * 1000;
+
+export function medicationResponse(attacks: Attack[]): MedResponse[] {
+  const acc = new Map<string, { changes: number[]; unmeasured: number; helped: number }>();
+
+  for (const a of attacks) {
+    const snaps = a.snapshots;
+    for (let i = 0; i < snaps.length; i++) {
+      const name = snaps[i].medication?.name?.trim();
+      if (!name) continue;
+      if (!acc.has(name)) acc.set(name, { changes: [], unmeasured: 0, helped: 0 });
+      const entry = acc.get(name)!;
+
+      const doseTime = new Date(snaps[i].time).getTime();
+      const before = maxSeverity(snaps[i]);
+      let best: { delta: number; sev: number } | null = null;
+      for (let j = i + 1; j < snaps.length; j++) {
+        const dt = new Date(snaps[j].time).getTime() - doseTime;
+        if (dt < FOLLOW_UP_MIN_MS) continue;
+        if (dt > FOLLOW_UP_MAX_MS) break;
+        const distance = Math.abs(dt - TARGET_MS);
+        if (!best || distance < best.delta) best = { delta: distance, sev: maxSeverity(snaps[j]) };
+      }
+
+      if (!best) { entry.unmeasured++; continue; }
+      entry.changes.push(best.sev - before);
+      // "Helped" mirrors the trial definition of pain relief: severity at
+      // least halved, or down to mild.
+      if (best.sev <= before / 2 || best.sev <= 3) entry.helped++;
+    }
+  }
+
+  return [...acc.entries()]
+    .map(([name, e]) => {
+      const sorted = [...e.changes].sort((x, y) => x - y);
+      const mid = Math.floor(sorted.length / 2);
+      const medianChange = sorted.length === 0
+        ? null
+        : sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+      return { name, measured: e.changes.length, unmeasured: e.unmeasured, medianChange, helped: e.helped };
+    })
+    .sort((a, b) => (b.measured + b.unmeasured) - (a.measured + a.unmeasured) || a.name.localeCompare(b.name));
+}

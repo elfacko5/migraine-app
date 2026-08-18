@@ -8,10 +8,11 @@ import { formatDate } from '../utils/format';
 import {
   attackMaxSeverity, currentAttackStreak, currentPainFreeStreak,
   areaFrequency, avgTimeToPeak, minutesAboveSeverity,
-  triggerFrequency, symptomFrequency, reliefFrequency, medicationFrequency, type Freq,
+  triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
 } from '../utils/stats';
 import { HeadHeatmap } from './HeadHeatmap';
 import { MigraineDaysChart } from './MigraineDaysChart';
+import { MedicationInsights } from './MedicationInsights';
 
 type Period = 'all' | '7d' | '30d' | '3m';
 
@@ -117,7 +118,6 @@ export function StatsView({ attacks }: Props) {
       triggers: triggerFrequency(filtered),
       symptoms: symptomFrequency(filtered),
       reliefs: reliefFrequency(filtered),
-      medications: medicationFrequency(filtered),
     };
   }, [attacks, filtered]);
 
@@ -198,6 +198,9 @@ export function StatsView({ attacks }: Props) {
               7-day window can't express it. */}
           <MigraineDaysChart attacks={attacks} />
 
+          {/* Also outside the period filter: overuse thresholds are monthly. */}
+          <MedicationInsights attacks={attacks} />
+
           {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
             <section className="space-y-2">
@@ -223,7 +226,6 @@ export function StatsView({ attacks }: Props) {
           />
           <FreqSection title="Top symptoms"       sub={PERIOD_SUB[period]} data={stats.symptoms}    color="#a65a52" />
           <FreqSection title="Top reliefs"        sub={PERIOD_SUB[period]} data={stats.reliefs}     color="#7fa187" />
-          <FreqSection title="Medication intake"  sub={PERIOD_SUB[period]} data={stats.medications} color="#9bb9a1" />
         </>
       )}
     </div>
