@@ -356,14 +356,19 @@ export default function App() {
         <TopBar title={TAB_TITLES[tab]} />
         <div
           className="mx-auto max-w-2xl px-4 pt-5 sm:px-6"
-          // Fixed pb-28 isn't enough on devices with a taller home-indicator
-          // safe area: BottomNav's own height grows with
-          // env(safe-area-inset-bottom), so a flat reserve tuned against a
-          // zero-inset preview leaves the last bit of content hidden behind
-          // the nav on real devices. Every other bottom-clearance spot in
-          // the app (Sheet, LogForm, QuickUpdateForm) already adds the inset
-          // explicitly — this one was the one place that didn't.
-          style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom))' }}
+          // The reserve has to clear the floating pill, not just the nav —
+          // AttackModePill sits at calc(4.5rem + 1rem + inset) and is up to
+          // 52px tall, so it ends around 8.5rem up. At the old 7rem the last
+          // thing on a page (the heatmap's LESS/MORE scale) sat underneath it
+          // with nothing left to scroll. 10rem clears the pill with a little
+          // air; anything added to the floating layer has to be checked
+          // against this number.
+          //
+          // The inset is added rather than assumed: BottomNav's own height
+          // grows with env(safe-area-inset-bottom), so a flat reserve tuned
+          // against a zero-inset preview leaves content behind the nav on a
+          // real device.
+          style={{ paddingBottom: 'calc(10rem + env(safe-area-inset-bottom))' }}
         >
         {/* ── Today tab ───────────────────────────── */}
         {tab === 'log' && (

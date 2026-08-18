@@ -314,7 +314,7 @@ The user's own medication library, in two kinds. `Medication` (`src/types/index.
 
 **`TopBar` must stay *inside* the scroll div.** It sat outside once, as a sibling ahead of it: since the scroll div is `h-full` (100% of the root) but `TopBar` also took space in normal flow, the two together overflowed the fixed-height root and its `overflow-hidden` silently clipped a `TopBar`'s worth of content off the bottom of **every** tab. It also made scrolling seize up, because the scroll box's real geometry disagreed with what was painted — leaving and re-entering a tab reset it, which is what made it look intermittent. Nesting it also restores its `sticky top-0`, which is inert without a scrolling parent.
 
-**Bottom clearance uses `calc(7rem + env(safe-area-inset-bottom))`, not a flat `pb-28`.** `BottomNav`'s height grows with the home-indicator inset, so a fixed reserve tuned against a zero-inset preview leaves the last card behind the nav on a real device.
+**Bottom clearance uses `calc(10rem + env(safe-area-inset-bottom))`, not a flat `pb-28`.** Two things it has to clear, and the second is easy to forget: `BottomNav`, whose height grows with the home-indicator inset — so a fixed reserve tuned against a zero-inset preview leaves the last card behind the nav on a real device — **and `AttackModePill`**, which floats at `calc(4.5rem + 1rem + inset)` and stands up to 52px tall, ending around 8.5rem up. At 7rem the last thing on the Insights page sat under the pill with nothing left to scroll. **Anything added to the floating layer has to be checked against this number.**
 
 ### Viewport-height architecture (don't revert to `position: fixed` + `min-h-dvh`)
 
