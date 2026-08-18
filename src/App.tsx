@@ -536,6 +536,8 @@ export default function App() {
         open={medEditor !== null}
         onClose={() => setMedEditor(null)}
         title={medEditor && 'med' in medEditor ? 'Edit medication' : 'Add medication'}
+        flush
+        bareHeader
       >
         {medEditor && (
           <MedicationEditor
