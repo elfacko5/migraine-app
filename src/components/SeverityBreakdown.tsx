@@ -93,7 +93,13 @@ export function SeverityBreakdown({ attack }: Props) {
             {now ? (
               <span className={`rounded-md py-1 text-center text-xs ${now.bg} ${now.text}`}>{row.now}</span>
             ) : (
-              <span className="text-center text-xs text-text-secondary" title="Not recorded in the latest update">·</span>
+              // A dot here read as a speck of dirt on the screen. A short rule
+              // says "no value" the way a dash does in any table, and it's the
+              // same mark the sparkline uses for a stretch with no reading.
+              <span className="flex items-center justify-center" title="Not recorded in the latest update">
+                <span className="sr-only">Not recorded</span>
+                <span aria-hidden="true" className="block h-0.5 w-3 rounded-full bg-text-secondary/50" />
+              </span>
             )}
           </div>
         );
