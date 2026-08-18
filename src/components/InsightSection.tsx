@@ -7,6 +7,10 @@
 // nothing to separate, and a box inside a box is just a second border. So a
 // section either has three tones (page / section / content) or two, and this
 // component decides which — callers pass bare content and never wrap it.
+//
+// The inner surface is `bg-elevated`, a step lighter than `bg-raised`: three
+// stacked surfaces (page, section, content) need more separation between the
+// top two than one step gives.
 interface Props {
   title: string;
   children: React.ReactNode;
@@ -26,7 +30,7 @@ export function InsightSection({ title, children, note }: Props) {
       <div className="space-y-2 rounded-2xl bg-bg-surface p-3">
         {note ? (
           <>
-            <div className="rounded-xl bg-bg-raised p-3">{children}</div>
+            <div className="rounded-xl bg-bg-elevated p-3">{children}</div>
             <p className="text-xs text-text-secondary">{note}</p>
           </>
         ) : (

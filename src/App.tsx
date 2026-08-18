@@ -30,6 +30,7 @@ import { LogForm } from './components/LogForm';
 import { QuickUpdateForm } from './components/QuickUpdateForm';
 import { OngoingAttackBanner } from './components/OngoingAttackBanner';
 import { AttackFreeCard } from './components/AttackFreeCard';
+import { TodaySummary } from './components/TodaySummary';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
 import { HistoryView } from './components/HistoryView';
@@ -384,6 +385,12 @@ export default function App() {
 
             {!ongoingAttack && lastAttackEnd && (
               <AttackFreeCard lastEnd={lastAttackEnd} onStart={() => setLogSheetOpen(true)} />
+            )}
+
+            {/* Below the hero card: the month's two figures, and — only when
+                they apply — an overuse warning and the last dose taken. */}
+            {(ongoingAttack || lastAttackEnd) && (
+              <TodaySummary attacks={attacks} ongoing={ongoingAttack} />
             )}
 
             {!ongoingAttack && !lastAttackEnd && (

@@ -35,6 +35,25 @@ export const PAIN_AREAS = [
   'Nape left', 'Nape right',
 ];
 
+/**
+ * Entries retired from the trigger/symptom/relief lists.
+ *
+ * The lists are add-only and have no removal UI, and they merge across
+ * devices as a union — so a junk entry typed once cannot be got rid of by
+ * deleting it locally: the next sync unions it straight back from the
+ * remote copy. Pruning here instead, on every path that produces a list,
+ * removes it locally *and* means the pruned list is what gets pushed, so it
+ * goes from Supabase on the next write too.
+ *
+ * Matched case-insensitively on the trimmed string. Add to this list rather
+ * than editing stored data by hand; it is the only mechanism there is.
+ */
+const RETIRED_ENTRIES = ['a beer and dry', 'hjgkfdgkdfjgkdfg'];
+
+function prune(list: string[]): string[] {
+  return list.filter((item) => !RETIRED_ENTRIES.includes(item.trim().toLowerCase()));
+}
+
 function loadList(key: string, defaults: string[]): string[] {
   try {
     const raw = localStorage.getItem(key);
@@ -45,7 +64,7 @@ function loadList(key: string, defaults: string[]): string[] {
     // options propagate to existing users (the list is add-only — never pruned).
     const merged = [...stored];
     for (const d of defaults) if (!merged.includes(d)) merged.push(d);
-    return merged;
+    return prune(merged);
   } catch { return defaults; }
 }
 
@@ -61,7 +80,9 @@ function loadNotifDefault(): NotificationConfig {
 function union(a: string[], b: string[]): string[] {
   const merged = [...a];
   for (const item of b) if (!merged.includes(item)) merged.push(item);
-  return merged;
+  // Pruned after the union, not before: the remote copy is the half that
+  // would otherwise put a retired entry back.
+  return prune(merged);
 }
 
 export function useUserPrefs(userId: string | null) {
