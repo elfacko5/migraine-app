@@ -1,10 +1,11 @@
-import type { Attack } from '../types';
-import {
-  migraineDaysByMonth, medicationDaysByMonth,
-  MOH_DAYS_TRIPTAN,
-} from '../utils/stats';
+import type { Attack, Medication } from '../types';
+import { useNowTick } from '../hooks/useNowTick';
+import { migraineDaysByMonth, medicationDaysByMonth } from '../utils/stats';
 import { formatTime } from '../utils/format';
 import { medIcon } from '../utils/medDisplay';
+import {
+  checkDose, doseUnits, findMedication, lastDoseSnapshot, mohDaysFor, unitsInWindow,
+} from '../utils/medGuardrails';
 
 // What belongs under the hero card on Today: figures that need no
 // interpretation, and one warning that has to arrive before it's too late to
@@ -12,14 +13,21 @@ import { medIcon } from '../utils/medDisplay';
 interface Props {
   attacks: Attack[];
   ongoing: Attack | null;
+  /** The library — for each drug's overuse reference point and its own
+   *  per-intake / per-day / minimum-gap limits. */
+  medications?: Medication[];
   /** Attack mode strips this down to what's actionable — see below. */
   attackMode?: boolean;
 }
 
-// Warn at 70% of the lower overuse reference point, not at it. The number is
-// only useful while there's still room to change course; at 10 of 10 it's a
-// fact about the past.
-const WARN_AT = Math.ceil(MOH_DAYS_TRIPTAN * 0.7);
+// Warn at 70% of whichever overuse reference point applies to *that* drug, not
+// at it. The number is only useful while there's still room to change course;
+// at 10 of 10 it's a fact about the past.
+//
+// The threshold is now per medication rather than a module constant: it used
+// to be 70% of 10 for everything, because nothing knew a drug's class, so a
+// simple analgesic was warned about five days early.
+const warnAt = (threshold: number) => Math.ceil(threshold * 0.7);
 
 // In attack mode the page keeps only what changes what you do in the next
 // hour, which the dossier's "fewer elements per screen" asks for and which
@@ -38,19 +46,33 @@ const WARN_AT = Math.ceil(MOH_DAYS_TRIPTAN * 0.7);
 //     mode exists to avoid; the count and the drug name carry the point.
 //   - **The last dose stays as-is.** One line, and it's the question people
 //     actually open the app mid-attack to answer.
-export function TodaySummary({ attacks, ongoing, attackMode = false }: Props) {
+export function TodaySummary({ attacks, ongoing, medications = [], attackMode = false }: Props) {
   const months = migraineDaysByMonth(attacks, 1);
   const migraineDays = months[months.length - 1]?.days ?? 0;
 
   const meds = medicationDaysByMonth(attacks);
   const totalMedDays = meds.reduce((n, m) => Math.max(n, m.thisMonth), 0);
-  const nearing = meds.filter((m) => m.thisMonth >= WARN_AT);
+  const nearing = meds
+    .map((m) => ({ ...m, threshold: mohDaysFor(m.name, medications) }))
+    .filter((m) => m.thisMonth >= warnAt(m.threshold));
 
   // Mid-attack, the question is "when did I last take something" — the one
-  // thing here that changes what you do in the next hour.
-  const lastDose = ongoing
-    ? [...ongoing.snapshots].reverse().find((s) => s.medication?.name)
-    : null;
+  // thing here that changes what you do in the next hour. It now carries the
+  // running 24-hour total beside it, which is the same question asked one step
+  // further on: not just when, but how much is already in.
+  const lastDose = ongoing ? lastDoseSnapshot(ongoing) : null;
+  const lastName = lastDose?.medication?.name ?? '';
+  const lastLibrary = findMedication(medications, lastName);
+  // The 24-hour figure is a rolling window, so it goes stale on its own as
+  // doses age out of it — the same reason every live duration in the app ticks
+  // rather than trusting the last render. Cheap here: Today already re-renders
+  // on this cadence for the hero card's elapsed time. Both helpers read the
+  // clock themselves, which is also what keeps `Date.now()` out of this render.
+  useNowTick(60_000);
+  const takenIn24h = lastDose ? unitsInWindow(attacks, lastName) : 0;
+  // Asked with zero further units, so this reports where the *last* dose left
+  // things rather than pre-judging a dose nobody has said they're taking.
+  const position = lastDose ? checkDose(lastLibrary, attacks, lastName, 0) : null;
 
   if (migraineDays === 0 && meds.length === 0 && !lastDose) return null;
   // Attack mode drops everything but these two, so with neither of them there
@@ -72,22 +94,40 @@ export function TodaySummary({ attacks, ongoing, attackMode = false }: Props) {
               means is a conversation with a doctor. */}
           {!attackMode && (
             <p className="mt-0.5 text-xs text-text-secondary">
-              Guidelines put medication-overuse headache at around {MOH_DAYS_TRIPTAN} days a month for
-              triptans, sustained over three months. Worth raising at your next appointment.
+              {findMedication(medications, m.name)?.maxDaysPerMonth
+                ? `You entered a limit of ${m.threshold} days a month for this one.`
+                : `Guidelines put medication-overuse headache at around ${m.threshold} days a month for this type of medication, sustained over three months.`}{' '}
+              Worth raising at your next appointment.
             </p>
           )}
         </div>
       ))}
 
       {lastDose?.medication && (
-        <div className="flex items-center gap-2 rounded-xl bg-bg-surface px-4 py-3">
+        <div className="flex items-start gap-2 rounded-xl bg-bg-surface px-4 py-3">
           <span aria-hidden="true">{medIcon(lastDose.medication.name, lastDose.medication.dose)}</span>
-          {/* "Treo at 20:51" reads as a label with a timestamp — it could as
-              easily mean a reminder due then, or when it was logged. The verb
-              is what makes it a statement about a dose that was taken. */}
-          <p className="text-sm text-text-primary">
-            {lastDose.medication.name} taken at {formatTime(lastDose.time)}
-          </p>
+          <div className="min-w-0">
+            {/* "Treo at 20:51" reads as a label with a timestamp — it could as
+                easily mean a reminder due then, or when it was logged. The
+                verb is what makes it a statement about a dose that was taken,
+                and it stays in the line however much else joins it. */}
+            <p className="text-sm text-text-primary">
+              {lastDose.medication.name}
+              {lastLibrary?.maxPerDay
+                ? ` · ${takenIn24h} of ${lastLibrary.maxPerDay} in the last 24h`
+                : ''}
+              {' · '}
+              {takenIn24h > doseUnits(lastDose.medication) ? 'last taken at ' : 'taken at '}
+              {formatTime(lastDose.time)}
+            </p>
+            {/* Only when a minimum gap was entered and it hasn't elapsed. A
+                statement of the user's own number, never an instruction. */}
+            {position?.tooSoon && position.nextAllowedAt && (
+              <p className="mt-0.5 text-xs text-text-secondary">
+                Next dose from {formatTime(position.nextAllowedAt)}, by the gap you entered.
+              </p>
+            )}
+          </div>
         </div>
       )}
 

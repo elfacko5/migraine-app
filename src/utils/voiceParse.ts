@@ -537,6 +537,11 @@ function extractFromList(text: string, options: string[]): string[] {
 export interface VoiceDose {
   name: string;
   dose: string;
+  /** Units, kept as the number it was parsed as rather than only flattened
+   *  into `dose`. The quantity was always read out of the transcript ("two
+   *  tablets of Treo"); keeping it means a spoken dose counts against the
+   *  medication's own limits as two units and not as one. */
+  amount: number;
   /**
    * When it was taken, from the words following it — "…two tablets of Treo
    * last night around six". Null when no time was said, in which case it
@@ -677,9 +682,16 @@ function extractDoses(text: string, startMinutesAgo: number | null = null): Voic
     const from = (name === '' && formEnd !== undefined ? formEnd : m.index + m[0].length);
     const to = i + 1 < matches.length ? matches[i + 1].index : text.length;
     const window = text.slice(from, to);
+    // `quantityToNumber` returns a string because that's what the displayed
+    // dose needs ("2 tablets"). The unit count is the same figure as a number,
+    // falling back to 1 when the token wasn't a number at all — the same safe
+    // direction `doseUnits` takes, since it can only ever under-report.
+    const quantity = quantityToNumber(m[1]);
+    const amount = Number(quantity);
     return {
       name,
-      dose: `${quantityToNumber(m[1])} ${m[2].toLowerCase()}`,
+      amount: Number.isFinite(amount) && amount > 0 ? amount : 1,
+      dose: `${quantity} ${m[2].toLowerCase()}`,
       minutesAgo: parseStartOffset(window) ?? resolveBareHour(window, startMinutesAgo),
     };
   });

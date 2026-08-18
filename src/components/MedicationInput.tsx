@@ -1,18 +1,62 @@
 import { useState } from 'react';
+import type { Attack, Medication } from '../types';
+import { formatTime } from '../utils/format';
 import { medIcon } from '../utils/medDisplay';
+import {
+  checkDose, doseUnits, findMedication, DEFAULT_UNIT, unitsLabel,
+} from '../utils/medGuardrails';
 
-interface Value { name: string; dose: string }
+interface Value { name: string; dose: string; amount?: number }
 
 interface Props {
   value: Value;
   onChange: (next: Value) => void;
   recentMeds?: Array<{ name: string; dose: string }>;
+  /** The library, for whichever limits this drug has. */
+  medications?: Medication[];
+  /** Every attack — the only record of medication there is. */
+  attacks?: Attack[];
+  /** When this dose is being recorded, which is the wizard's own time picker
+   *  and not necessarily now: a backfilled reading counts in *its* 24 hours. */
+  atIso?: string;
 }
 
-const QTY_OPTIONS = ['1 tablet', '2 tablets', '3 tablets'];
+/** Units offered, not doses — the quick-pick was already 1/2/3. */
+const QTY_OPTIONS = [1, 2, 3];
 
-export function MedicationInput({ value, onChange, recentMeds = [] }: Props) {
+/** Does this free-text dose look like a unit count we can safely restate? */
+const LOOKS_LIKE_UNITS = /^\d{1,2}\s*[a-z]+s?$/i;
+const HAS_STRENGTH = /\d\s*(mg|mcg|µg|g|ml)\b/i;
+
+export function MedicationInput({
+  value, onChange, recentMeds = [], medications = [], attacks = [], atIso,
+}: Props) {
   const selected = recentMeds.find((m) => m.name === value.name);
+  const library = findMedication(medications, value.name);
+  const unit = library?.unitLabel?.trim() || DEFAULT_UNIT;
+
+  // The dose about to be recorded, and where it sits against this drug's own
+  // limits. Only shown when the user has entered limits for it — a medication
+  // with none behaves exactly as it did before any of this existed.
+  const units = doseUnits(value);
+  const hasLimits =
+    !!library && (!!library.maxPerIntake || !!library.maxPerDay || !!library.minHoursBetween);
+  // `atIso` is optional all the way down — checkDose reads the clock itself
+  // when the caller has no reading time of its own.
+  const check = hasLimits ? checkDose(library, attacks, value.name, units, atIso) : null;
+
+  // Sets the number of units. `dose` keeps its own meaning: a strength like
+  // "50mg" is left alone, since restating it as "2 tablets" would throw away
+  // the one fact the field was holding.
+  function setUnits(n: number) {
+    const text = value.dose.trim();
+    const keepText = HAS_STRENGTH.test(text) || (text !== '' && !LOOKS_LIKE_UNITS.test(text));
+    onChange({
+      ...value,
+      amount: n,
+      dose: keepText ? value.dose : unitsLabel(n, library),
+    });
+  }
 
   // Typing is the exception now that the library exists, so the free-text
   // fields start collapsed behind a ghost button. Two cases open them at
@@ -77,26 +121,6 @@ export function MedicationInput({ value, onChange, recentMeds = [] }: Props) {
             />
           </div>
 
-          {value.name && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-text-secondary shrink-0">Qty:</span>
-              {QTY_OPTIONS.map((qty) => (
-                <button
-                  key={qty}
-                  type="button"
-                  onClick={() => onChange({ ...value, dose: qty })}
-                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                    value.dose === qty
-                      ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/40'
-                      : 'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-border hover:text-text-primary'
-                  }`}
-                >
-                  {qty}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* Collapsing clears what was typed: a value left behind a closed
               panel would be saved without being visible anywhere. */}
           {recentMeds.length > 0 && (
@@ -117,6 +141,62 @@ export function MedicationInput({ value, onChange, recentMeds = [] }: Props) {
         >
           + Add a different medication
         </button>
+      )}
+
+      {/* Quantity and the running position, for whichever drug is selected —
+          outside the collapsible panel, since picking a chip collapses it and
+          the number of units is a question either way. */}
+      {value.name && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-secondary shrink-0">Qty:</span>
+            {QTY_OPTIONS.map((n) => (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={units === n}
+                onClick={() => setUnits(n)}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  units === n
+                    ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/40'
+                    : 'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-border hover:text-text-primary'
+                }`}
+              >
+                {n} {n === 1 ? unit : `${unit}s`}
+              </button>
+            ))}
+          </div>
+
+          {/* Only when limits were entered for this drug. The wording states
+              the count and the user's own number and stops there — it is
+              never an instruction, and it never blocks the save: if four
+              tablets were taken, the diary has to be able to say four. */}
+          {check && (
+            <div className="space-y-1">
+              <p className="text-xs text-text-secondary">
+                {library?.maxPerDay
+                  ? `${check.unitsInWindow + units} of ${library.maxPerDay} in the last 24h`
+                  : `${check.unitsInWindow + units} in the last 24h`}
+              </p>
+              {check.exceedsIntake && library?.maxPerIntake && (
+                <p className="text-xs text-severity-mid">
+                  You entered a limit of {unitsLabel(library.maxPerIntake, library)} in one go.
+                </p>
+              )}
+              {check.exceedsDaily && library?.maxPerDay && (
+                <p className="text-xs text-severity-mid">
+                  That would put you past the {unitsLabel(library.maxPerDay, library)} in 24 hours you entered.
+                </p>
+              )}
+              {check.tooSoon && check.nextAllowedAt && library?.minHoursBetween && (
+                <p className="text-xs text-severity-mid">
+                  You entered a {library.minHoursBetween}-hour gap between doses — the next one falls at{' '}
+                  {formatTime(check.nextAllowedAt)}.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

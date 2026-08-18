@@ -453,7 +453,7 @@ export default function App() {
             {/* Below the hero card: the month's two figures, and — only when
                 they apply — an overuse warning and the last dose taken. */}
             {(ongoingAttack || lastAttackEnd) && (
-              <TodaySummary attacks={attacks} ongoing={ongoingAttack} attackMode={attackMode} />
+              <TodaySummary attacks={attacks} ongoing={ongoingAttack} medications={medications} attackMode={attackMode} />
             )}
 
             {!ongoingAttack && !lastAttackEnd && (
@@ -491,7 +491,7 @@ export default function App() {
         {/* ── Insights tab ─────────────────────────── */}
         {tab === 'stats' && (
           <section className="space-y-4">
-            <StatsView attacks={attacks} />
+            <StatsView attacks={attacks} medications={medications} />
           </section>
         )}
 
@@ -527,6 +527,8 @@ export default function App() {
           reliefs={sortedReliefs}
           defaultNotifConfig={defaultNotifConfig}
           recentMeds={recentMeds}
+          medications={medications}
+          attacks={attacks}
           textScale={textScale}
           onTextScale={setTextScale}
           onAddTrigger={addTrigger}
@@ -547,6 +549,8 @@ export default function App() {
             symptoms={sortedSymptoms}
             reliefs={sortedReliefs}
             recentMeds={recentMeds}
+            medications={medications}
+            attacks={attacks}
             textScale={textScale}
             onTextScale={setTextScale}
             onAddSymptom={addSymptom}

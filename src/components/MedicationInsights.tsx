@@ -1,17 +1,23 @@
-import type { Attack } from '../types';
+import type { Attack, Medication } from '../types';
 import {
   medicationDaysByMonth, medicationResponse,
   MOH_DAYS_TRIPTAN, MOH_DAYS_SIMPLE,
 } from '../utils/stats';
 import { medIcon } from '../utils/medDisplay';
+import { mohDaysFor } from '../utils/medGuardrails';
 import { InsightSection } from './InsightSection';
 
 // Two questions a clinician asks about medication, and neither of them is
 // "how many doses". How many *days a month* is it being taken — the unit
 // every overuse threshold is stated in — and does it work.
-interface Props { attacks: Attack[] }
+interface Props {
+  attacks: Attack[];
+  /** The library, for each drug's class — which is the only thing that decides
+   *  which of the two guideline numbers applies to it. */
+  medications?: Medication[];
+}
 
-export function MedicationInsights({ attacks }: Props) {
+export function MedicationInsights({ attacks, medications = [] }: Props) {
   const days = medicationDaysByMonth(attacks);
   const response = medicationResponse(attacks);
   if (days.length === 0) return null;
@@ -29,16 +35,19 @@ export function MedicationInsights({ attacks }: Props) {
           Days you logged taking each medication this month. Guidelines put medication-overuse headache at
           around {MOH_DAYS_TRIPTAN} days a month for triptans and {MOH_DAYS_SIMPLE} for simple painkillers,
           sustained over three months — worth raising with your doctor rather than acting on alone.
-          Doses taken without logging an attack aren't counted.
+          Each drug is measured against the number for its own type, or the limit you entered for it in
+          My medications. Doses taken without logging an attack aren't counted.
         </>
       }
     >
       <div className="space-y-3">
         {days.map((med) => {
           const r = byName.get(med.name);
-          // Marked against the lower of the two guideline numbers, because
-          // the app doesn't yet know which class a medication belongs to.
-          const nearing = med.thisMonth >= MOH_DAYS_TRIPTAN;
+          // Marked against *this* drug's reference point: the limit off its
+          // label if one was entered, else the ICHD number for its class, else
+          // 10. It used to be 10 for everything, because nothing knew a drug's
+          // class — so a simple analgesic was flagged five days early.
+          const nearing = med.thisMonth >= mohDaysFor(med.name, medications);
           return (
             <div key={med.name} className="space-y-1">
               <div className="flex items-baseline gap-2">

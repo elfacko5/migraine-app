@@ -3,7 +3,13 @@ export interface Snapshot {
   areas: Record<string, number>;      // { 'Right eye': 6, 'Left temple': 3 }
   symptoms: string[];
   reliefs: string[];
-  medication: { name: string; dose: string } | null;
+  // `dose` stays free text and keeps its display role ("50mg", "2 tablets").
+  // `amount` is the number of *units* taken at this intake, added alongside it
+  // rather than replacing it: every historical dose still renders, and nothing
+  // is back-filled, because you can't know now whether an old "1 tablet" meant
+  // one unit or two. See src/utils/medGuardrails.ts for how a legacy dose is
+  // read when `amount` is absent.
+  medication: { name: string; dose: string; amount?: number } | null;
   note: string | null;
   source: 'manual' | 'notification_yes' | 'notification_no_change';
 }
@@ -33,12 +39,46 @@ export interface Attack {
 // preventives are taken daily — including on attack days — and deliberately
 // stay out of the wizard, so a daily dose is never recorded as a treatment
 // for the attack it happens to coincide with.
+// The class an acute drug belongs to, which is the only thing that decides
+// which ICHD-3 medication-overuse reference point applies to it. Both numbers
+// have always existed in stats.ts, but nothing knew a drug's class, so 10 was
+// applied to everything and simple analgesics were flagged five days early.
+export type MedClass = 'triptan' | 'combination' | 'simple' | 'other';
+
 export interface Medication {
   id: string;
   name: string;
   dose: string;
   kind: 'acute' | 'preventive';
   createdAt: string;
+
+  // ---- Acute only: the prescription's own limits -------------------------
+  //
+  // **These come from the user, transcribed off a prescription or leaflet —
+  // the app never infers one.** All optional: a medication with none set
+  // behaves exactly as it did before any of this existed. The app counts
+  // against them and repeats the number back; it never blocks a dose and
+  // never phrases a warning as an instruction.
+  class?: MedClass;
+  /** 'tablet' | 'spray' | 'capsule' … defaults to 'tablet' when unset. */
+  unitLabel?: string;
+  /** Units in one intake. */
+  maxPerIntake?: number;
+  /** Units per *rolling* 24 hours — how a leaflet states it, and what catches
+   *  the late-night-plus-early-morning run a calendar day silently allows. */
+  maxPerDay?: number;
+  /** Hours to leave between intakes. */
+  minHoursBetween?: number;
+  /** Days a month off the label — Treo prints "højst 10 dage om måneden".
+   *  Beats the class-derived ICHD number when set. */
+  maxDaysPerMonth?: number;
+
+  // ---- Preventive only ---------------------------------------------------
+  /** Local date (YYYY-MM-DD) the preventive was started. It's what makes the
+   *  ≥50%-reduction question answerable: monthly migraine days before this
+   *  date against after. Adherence — "the drug didn't work" vs "I didn't take
+   *  it" — is a separate and later question, and isn't needed for this. */
+  startedOn?: string;
 }
 
 export type Tab = 'log' | 'history' | 'stats' | 'profile';

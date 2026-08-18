@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { Attack, Snapshot } from '../types';
+import type { Attack, Medication, Snapshot } from '../types';
 import type { TextScale } from '../hooks/useSettings';
 import type { VoiceDraft } from '../utils/voiceParse';
 import { isoToLocalInput, localInputToIso, formatTime, formatDatetime } from '../utils/format';
 import { maxSeverity } from '../utils/stats';
+import { findMedication } from '../utils/medGuardrails';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { ChipSelector } from './ChipSelector';
 import { MedicationInput } from './MedicationInput';
@@ -15,6 +16,11 @@ interface Props {
   symptoms: string[];
   reliefs: string[];
   recentMeds: Array<{ name: string; dose: string }>;
+  /** The library and the full history — the medication step shows where a
+   *  dose sits against this drug's own limits, and the last-entry note says
+   *  when the next one falls due by the gap the user entered. */
+  medications?: Medication[];
+  attacks?: Attack[];
   textScale: TextScale;
   onTextScale: (s: TextScale) => void;
   onAddSymptom: (s: string) => void;
@@ -37,7 +43,7 @@ interface FormState {
   areas: Record<string, number>;
   symptoms: string[];
   reliefs: string[];
-  medication: { name: string; dose: string };
+  medication: { name: string; dose: string; amount?: number };
   note: string;
 }
 
@@ -65,7 +71,7 @@ const STEP_SUBHEADS = [
 // Small "last entry" caption text shown below each step's picker — a reference
 // only, never pre-filled, since an update is a new reading, not an edit of
 // what was logged before.
-function lastEntryCaption(step: number, prev: Snapshot): string | null {
+function lastEntryCaption(step: number, prev: Snapshot, medications: Medication[]): string | null {
   const at = formatTime(prev.time);
   if (step === 1) {
     // **The one caption that carries its date when the day differs.** Every
@@ -87,7 +93,19 @@ function lastEntryCaption(step: number, prev: Snapshot): string | null {
   if (step === 3) {
     if (!prev.medication) return null;
     const dose = prev.medication.dose ? ` ${prev.medication.dose}` : '';
-    return `Took ${prev.medication.name}${dose} at ${at} (last entry)`;
+    // When a minimum gap was entered for this drug, say when the next dose
+    // falls due by it. Measured from *this* dose rather than through
+    // checkDose, which answers a different question — where a dose being
+    // logged now sits — and would look past the reading this caption is about.
+    // The user's own number, restated: not an instruction, and nothing here
+    // refuses a dose logged before it.
+    const med = findMedication(medications, prev.medication.name);
+    const gap = med?.minHoursBetween
+      ? ` · next dose from ${formatTime(
+          new Date(new Date(prev.time).getTime() + med.minHoursBetween * 60 * 60 * 1000).toISOString(),
+        )}`
+      : '';
+    return `Took ${prev.medication.name}${dose} at ${at} (last entry)${gap}`;
   }
   if (step === 4) {
     if (!prev.reliefs || prev.reliefs.length === 0) return null;
@@ -104,7 +122,7 @@ function lastEntryCaption(step: number, prev: Snapshot): string | null {
   return null;
 }
 
-export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onClose, voiceDraft }: Props) {
+export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onClose, voiceDraft }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
   // A new update must land after the last reading, and — for a past attack —
   // no later than when it ended (an ongoing attack has no such ceiling
@@ -205,13 +223,19 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
       symptoms: form.symptoms,
       reliefs: form.reliefs,
       medication: form.medication.name.trim()
-        ? { name: form.medication.name.trim(), dose: form.medication.dose }
+        ? {
+            name: form.medication.name.trim(),
+            dose: form.medication.dose,
+            // Units, when the quick-pick was used. Absent otherwise, which
+            // medGuardrails reads as one — never as zero.
+            ...(form.medication.amount ? { amount: form.medication.amount } : {}),
+          }
         : null,
       note: form.note.trim() || null,
     });
   }
 
-  const caption = step >= 1 ? lastEntryCaption(step, prev) : null;
+  const caption = step >= 1 ? lastEntryCaption(step, prev, medications) : null;
   const [confirmNoChange, setConfirmNoChange] = useState(false);
 
   return (
@@ -294,7 +318,16 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
 
             {/* ── Step 3: Medication ── */}
             {step === 3 && (
-              <MedicationInput value={form.medication} onChange={(v) => set('medication', v)} recentMeds={recentMeds} />
+              <MedicationInput
+                value={form.medication}
+                onChange={(v) => set('medication', v)}
+                recentMeds={recentMeds}
+                medications={medications}
+                attacks={attacks}
+                // The reading's own time, not now: a backfilled dose counts in
+                // *its* 24 hours, which is the whole point of a rolling window.
+                atIso={localInputToIso(form.time)}
+              />
             )}
 
             {/* ── Step 4: Relief methods ── */}

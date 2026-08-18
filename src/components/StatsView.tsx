@@ -3,7 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import type { Attack } from '../types';
+import type { Attack, Medication } from '../types';
 import { formatDateShort } from '../utils/format';
 import {
   attackMaxSeverity, currentAttackStreak, currentPainFreeStreak,
@@ -38,7 +38,12 @@ const PERIOD_SUB: Record<Period, string> = {
   '3m': 'last 3 months',
 };
 
-interface Props { attacks: Attack[] }
+interface Props {
+  attacks: Attack[];
+  /** Passed straight through to MedicationInsights, for each drug's own
+   *  overuse reference point. */
+  medications?: Medication[];
+}
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -83,7 +88,7 @@ function FreqSection({ title, sub, data, color, note }: { title: string; sub: st
   );
 }
 
-export function StatsView({ attacks }: Props) {
+export function StatsView({ attacks, medications = [] }: Props) {
   // 30 days, not 7. Every clinical figure on this page is monthly — the
   // overuse thresholds, the 15-day episodic/chronic line — and a 7-day window
   // in a quiet week shows an empty page to someone with a perfectly normal
@@ -189,7 +194,7 @@ export function StatsView({ attacks }: Props) {
           picking "7 days" in a quiet week must not hide the month's
           medication count, which is the number someone would be checking. */}
       <MigraineDaysChart attacks={attacks} />
-      <MedicationInsights attacks={attacks} />
+      <MedicationInsights attacks={attacks} medications={medications} />
 
       {filtered.length > 0 && (
         <>

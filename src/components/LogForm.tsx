@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import type { NotificationConfig, Snapshot } from '../types';
+import type { Attack, Medication, NotificationConfig, Snapshot } from '../types';
 import type { TextScale } from '../hooks/useSettings';
 import type { VoiceDraft } from '../utils/voiceParse';
 import { isoToLocalInput, localInputToIso, formatDatetime } from '../utils/format';
@@ -17,6 +17,11 @@ interface Props {
   reliefs: string[];
   defaultNotifConfig: NotificationConfig;
   recentMeds: Array<{ name: string; dose: string }>;
+  /** The library and the full history, so the medication step can show where
+   *  a dose sits against this drug's own limits. Both optional to the input
+   *  itself — a drug with no limits set behaves exactly as it always did. */
+  medications?: Medication[];
+  attacks?: Attack[];
   textScale: TextScale;
   onTextScale: (s: TextScale) => void;
   onAddTrigger: (t: string) => void;
@@ -51,7 +56,7 @@ interface FormState {
   triggers: string[];
   symptoms: string[];
   reliefs: string[];
-  medication: { name: string; dose: string };
+  medication: { name: string; dose: string; amount?: number };
   note: string;
   notifConfig: NotificationConfig;
 }
@@ -130,7 +135,7 @@ const STEP_SUBHEADS = [
   'Get reminded to check in during your attack',
 ];
 
-export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, textScale, onTextScale, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave, voiceDraft }: Props) {
+export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, medications, attacks, textScale, onTextScale, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave, voiceDraft }: Props) {
   // Step 0 is the voice review screen and exists only for a voice draft; manual
   // logging starts at 1 as it always has.
   const [step, setStep] = useState(voiceDraft ? 0 : 1);
@@ -245,7 +250,13 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         symptoms: form.symptoms,
         reliefs: form.reliefs,
         medication: form.medication.name.trim()
-          ? { name: form.medication.name.trim(), dose: form.medication.dose }
+          ? {
+              name: form.medication.name.trim(),
+              dose: form.medication.dose,
+              // Units, when the quick-pick was used. Absent otherwise, which
+              // medGuardrails reads as one — never as zero.
+              ...(form.medication.amount ? { amount: form.medication.amount } : {}),
+            }
           : null,
         note: form.note.trim() || null,
       },
@@ -267,7 +278,10 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
             areas: { ...form.areas },
             symptoms: [],
             reliefs: [],
-            medication: { name: d.name, dose: d.dose },
+            // The quantity was already parsed out of the transcript ("two
+            // tablets of Treo") and flattened into `dose`; keeping the number
+            // means a spoken dose counts as two units, not one.
+            medication: { name: d.name, dose: d.dose, ...(d.amount ? { amount: d.amount } : {}) },
             note: null,
           };
         }),
@@ -553,7 +567,13 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
 
         {/* ── Step 3: Medication ── */}
         {step === 3 && (
-          <MedicationInput value={form.medication} onChange={(v) => set('medication', v)} recentMeds={recentMeds} />
+          <MedicationInput
+            value={form.medication}
+            onChange={(v) => set('medication', v)}
+            recentMeds={recentMeds}
+            medications={medications}
+            attacks={attacks}
+          />
         )}
 
         {/* ── Step 4: Relief methods ── */}
