@@ -81,6 +81,136 @@ From a device pass over the logging flows. One theme runs through all of it: **a
 - **Delete moved from the footer to the top bar.** It was one mis-tap from the primary action. Destructive actions get distance, not just a confirm dialog — though it keeps the dialog too.
 - **"Edit details" is specified but deliberately unbuilt.** It needs a decision about whether snapshots become mutable, which is a data-model question rather than a UI one — a snapshot currently means "the state at that time", and editing one rewrites history. Parked at the user's request; Add update holds the primary slot on past attacks meanwhile, rather than shipping a button that does nothing. It likely wants settling together with the summary screen's per-section edits (see Known gaps), since both are "change one part of an existing record".
 
+## Records, filters and impact (2026-08-18)
+
+A pass over the Logs list, the Insights page and where `impact` gets asked. The
+theme: **a screen that is scanned and a screen that is read want different
+things on them**, and colour in this app carries meaning, so it can't be spent
+decoratively.
+
+- **The Logs card carries symptoms and not triggers.** Nausea/vomiting and
+  photophobia + phonophobia are ICHD-3 criterion C — part of what makes an
+  attack migraine rather than headache — while §4 of the dossier is a warning
+  about triggers specifically: many can't be confirmed, some are premonitory
+  symptoms mistaken for causes, and prominence invites the false-pattern
+  hunting it says to avoid. Chips for triggers and nothing for symptoms
+  promoted the speculative field over the diagnostic one. Triggers are still
+  recorded and still shown in `AttackDetail`.
+- **Impact left the end-attack dialog.** Carrying two questions and six
+  controls made it a form in an alert's shell, which is what neither HIG nor
+  Material wants in a modal, and it forced a judgement about the whole episode
+  into the same tap as closing it down. *Rejected:* two sequential dialogs —
+  the second modal is the pattern both guidelines dislike, and arriving
+  unbidden in postdrome is the worst moment for it.
+- **Impact is offered for 24h after an attack ends, then never again.** The
+  prompt is its own card on Today; `AttackDetail` shows the answer read-only
+  and shows nothing at all when unanswered. **A late answer is the bad
+  outcome, not the missing one**: a day later it's reconstruction, which is the
+  recall bias a prospective diary exists to avoid, and a badly remembered "2"
+  counts in the disability figures where an absent one doesn't. The window
+  closing by itself is also why dismissal needs no persistence — no new
+  `localStorage` key, no `Attack` field, no migration. **The cost is accepted,
+  not overlooked:** a missed prompt means that attack is unanswered forever and
+  a mis-tap can't be corrected.
+- **Filter options come only from sets the product defines** — severity bands,
+  impact levels, treated/untreated, `PAIN_AREAS`, onset. Never free text: the
+  medication filter was offering "Dry", the mis-parsed tail of a retired entry,
+  as a drug to filter by. Open text grows forever and arrives mis-dictated.
+  Treated/untreated answers the medication question inside a closed set, and is
+  the more useful form anyway since ICHD-3's 4–72h duration criterion is
+  defined for *untreated* attacks.
+- **Filter and sort share one sheet reached by one button.** They were two
+  buttons opening the same sheet — two affordances with one outcome, which is a
+  false affordance however tidy. They are genuinely different operations and
+  with two or three sort options would deserve separate controls; with five and
+  no menu primitive here, one sheet is honest. Combining costs one thing and it
+  is paid for: a non-default sort shows as a removable chip, so the current
+  order is readable without opening anything.
+- **Selection is a tint, never the solid accent fill.** Solid accent means
+  *action* — `btn-primary`, the FAB. Half the app already worked this way
+  (`ChipSelector`, `MedicationInput`, the impact pills) while seven controls
+  did not, which is why one End-attack dialog showed a solid time preset above
+  tinted impact pills. Neither iOS nor Material uses the primary colour for a
+  selected state. Now one rule in `src/utils/chipStyles.ts`.
+- **Both states of a toggleable chip carry a `ring`, never a `border`.** A ring
+  is a box-shadow and takes no layout space; a border does. Mixing them made
+  the unselected pill 2px taller — invisible in a flex row where siblings
+  stretch, obvious on a control sitting alone, which is how the "Woke up with
+  this migraine" toggle was caught changing height as it toggled.
+- **Three constants had each been hand-copied into three files, and two of the
+  three had drifted.** The severity ramp used `<= 8` for the middle band in the
+  Logs badge and the timeline row against `<= 7` in `sevFill`, so a severity 8
+  rendered amber in two places and terracotta everywhere else; the impact
+  labels existed in two versions with different wording. They are now
+  `src/utils/severity.ts`, `src/utils/impact.ts` and `src/utils/chipStyles.ts`.
+  **A shared value in this codebase gets a module, not a copy** — this has now
+  happened three times.
+- **The Logs sparkline was green regardless of severity.** Its stroke was a
+  fixed `#9bb9a1`, within a few points of the app's own low-severity colour, so
+  a peak-10 attack drew a terracotta badge beside a green line and the row
+  contradicted itself. It takes `sevFill` of the figure it plots. Its y-domain
+  is pinned to `[0, 10]` for the same class of reason: unpinned, Recharts fit
+  each attack to its own range, so a 3→4 run drew the same slope as 2→9 on a
+  page whose purpose is comparing rows.
+- **Medication timing lives on the detail sheet, not the card.** "Taken early"
+  is the most actionable fact about acute treatment (§5), but it is read rather
+  than glanced at, and a duration in a chip is a question nobody asked of a
+  scanned row. Both cases are labelled — "after 4h 59m" or **"at onset"** —
+  because showing nothing for a dose on the first reading read as missing data
+  when it is in fact the most useful answer.
+- **Insights opens on 30 days, Logs on 7.** Every figure on Insights is monthly
+  — the overuse thresholds, the 15-day episodic/chronic line — so a 7-day
+  window showed an empty page to someone with a perfectly ordinary number of
+  attacks. "What happened recently" and "what does my month look like" are
+  different questions.
+
+## Head diagram (2026-08-18)
+
+- **Both views share one viewBox, aligned on the crown.** Three attempts. Cropped
+  independently (`112 235 336 525` / `165 200 350 540`) they rendered at
+  different scales *and* centres — the back head measured 211.7px wide against
+  the front's 219.8px, 1.9px off-centre, so switching Front/Back resized and
+  shifted it. Matching the box sizes and centring each **silhouette** fixed the
+  scale but not the movement: the front carries a long neck and the back a wide
+  nape, so centring the whole outline puts the skull elsewhere. Centring the
+  **skull's** own bounding box fails one level down — the front's face path runs
+  to the chin (445.8 tall), the back's stops above the nape (373.1). The crown
+  is the only landmark meaning the same thing in both, and the skulls are the
+  same width (321.1) in the artwork. Measured after: 0.02px apart on crown
+  height, width and centre. **Re-measure both if the art is re-exported.**
+- **Paint order is disabled → dividers → selected fills, and all three
+  positions matter.** Dividers above the disabled fill or the jaw's boundaries
+  vanish under it; below the selected fills or the dashes sit on top of a
+  selected zone and make an opaque fill read as a translucent overlay on a
+  grid. Selected fills are additionally stroked in their own colour: adjacent
+  zone paths don't meet exactly in the exported artwork, and once the dividers
+  moved underneath, that sub-pixel gap showed as a ragged dotted seam.
+- **The focused zone's outline is a darker shade of its own severity**
+  (`sevStroke`), never the accent. A green ring on an amber fill made the
+  focused zone carry two unrelated colour signals and the ring won.
+- **The mouth is no longer drawn.** The only facial feature in what is
+  otherwise a set of selectable regions, so it read as decoration on a control
+  — and it sat inside the disabled jaw, drawing the eye to the one part of the
+  head that can't be tapped. Path data kept in `details`.
+- **Open: the disabled regions are now darker than the head, which is against
+  convention.** They were the *lightest* thing in the diagram at `#a39d92`, so
+  the two areas you cannot touch drew the eye first. Dark reads as inert but
+  inverts the usual "disabled is greyed out". Parked pending a possible redraw
+  of the head.
+
+## Working practice (2026-08-18)
+
+- **Never drive the live app by selector.** Verifying UI changes by calling
+  `element.click()` on selectors, in a DOM being hot-reloaded underneath,
+  deleted one of the user's real attacks: a selector matched something other
+  than intended and the click went through the delete confirm. Recovery exists
+  only because `useAttacks.sync()` merges local-first, so the phone still held
+  it and re-pushed it. **Interactive verification belongs on a throwaway
+  profile** — a second dev server on another port is a different origin and
+  therefore a separate `localStorage`. Where possible, read state instead of
+  clicking: geometry, computed styles and colours were all measurable without
+  touching anything.
+
 ## Config tried and reverted
 
 Both were plausible, neither had a measurable effect; they're recorded so they aren't tried again as fixes for the same symptoms.
@@ -90,6 +220,17 @@ Both were plausible, neither had a measurable effect; they're recorded so they a
 
 ## Tooling
 
+- **`npm run build` never type-checked, and this file used to say it did.** It
+  is a bare `vite build`, and Vite strips types without checking them, so a
+  type error can sit in the tree indefinitely while every build passes — which
+  is exactly what happened to `voiceParse`'s `m.indices` (fixed by adding
+  `ES2022.RegExp` to `lib`, the narrow entry rather than a target bump, since
+  the runtime guard is the existing `?.` and the deployment target is iOS 15).
+  **`npm run typecheck` is the gate**; it should report zero.
+- **`npm run ios` is `vite build && cap copy ios`.** Xcode compiles
+  `ios/App/App/public/`, which only `cap copy` refreshes, so Run rebuilds the
+  last-copied bundle with no error anywhere — the phone sat three rounds of
+  changes behind before this was noticed. Reach for it before every device run.
 - **Node 22 for the Capacitor CLI** (installed via nvm; the repo default stays on 20).
 - **`pod install` needs a UTF-8 locale**, or it dies inside Ruby's Unicode normalisation.
 - **Add Swift files to the target with the `xcodeproj` gem** (ships with CocoaPods), not by hand-editing `project.pbxproj`.
@@ -107,7 +248,29 @@ Both were plausible, neither had a measurable effect; they're recorded so they a
 
 Ordered as agreed on 2026-08-18. The first two of the four are done; these are the rest, with the constraints already worked out so the next session doesn't re-derive them.
 
-- **Medication guardrails.** Three optional fields captured once in `MedicationEditor`: minimum hours between doses, max doses per day, max days per month. The wizard's existing "Took Sumatriptan 1 tablet at 20:36" note becomes "· next dose from 00:36", and a dose taken early gets a **warning, never a block**. The max-days field is the ICHD number — suggest 10 for a triptan and 15 for a simple analgesic when the user picks a type, never assume it. **The rule this must obey:** the app repeats back what the user entered from the label. It never infers a limit, never blocks a dose, and never phrases a warning as an instruction — "you entered a 4-hour minimum; the last dose was 2 hours ago", not "do not take this yet". An app that looks like it is dosing someone is a different and much heavier thing than an app that counts.
+- **Medication guardrails.** *Design settled 2026-08-18, not yet built — see the plan file.* Optional fields captured once in `MedicationEditor`: minimum hours between doses, max doses per day, max days per month. The wizard's existing "Took Sumatriptan 1 tablet at 20:36" note becomes "· next dose from 00:36", and a dose taken early gets a **warning, never a block**. The max-days field is the ICHD number — suggest 10 for a triptan and 15 for a simple analgesic when the user picks a type, never assume it.
+
+  Settled in design: limits count **units** (tablets/sprays), not milligrams —
+  "max dose per intake" *is* a quantity, and counting doses can't express it.
+  "Per day" is a **rolling 24 hours**, how a leaflet states it, which catches
+  the late-night-plus-early-morning run a calendar day silently allows.
+  `Snapshot.medication` gains an optional `amount` **alongside** the existing
+  free-text `dose`, never replacing it, so every historical dose still renders
+  and nothing is back-filled — you can't know now whether an old "1 tablet"
+  was one unit or two. Parsing a legacy `dose` must stay narrow: `"50mg"` must
+  never come back as 50 units, so only a small integer followed by a real unit
+  word counts and everything else falls back to 1, which under-reports and can
+  therefore only warn late, never invent an overdose.
+
+  Two things ride along. `Medication` gains a `class`, because
+  `MOH_DAYS_TRIPTAN` (10) and `MOH_DAYS_SIMPLE` (15) both exist but nothing
+  knew a drug's class, so **10 was being applied to everything** and simple
+  analgesics were flagged five days early. And a `maxDaysPerMonth` off the
+  label beats the class-derived number — Treo prints "højst 10 dage om
+  måneden" on the box. Neither needs a Supabase migration: `medications` and
+  `snapshots` are both `jsonb` passed through wholesale, unlike `impact`.
+
+ **The rule this must obey:** the app repeats back what the user entered from the label. It never infers a limit, never blocks a dose, and never phrases a warning as an instruction — "you entered a 4-hour minimum; the last dose was 2 hours ago", not "do not take this yet". An app that looks like it is dosing someone is a different and much heavier thing than an app that counts.
 - **`startedOn` for preventives**, in the same pass. It's what makes the ≥50%-reduction metric possible: monthly migraine days before the start date against after. Full adherence tracking is *not* required for that — adherence is what distinguishes "the drug didn't work" from "I didn't take it", which is a later question.
 - **The 2-hour check-in notification.** Scheduled at dose + 2h, asking for a severity reading rather than a yes/no: relief is already computed from the trajectory, and a binary would be softer data that could contradict the numbers. Two constraints to solve in the design rather than discover on device: the attack reminder runs +1h/+2h from each reading, so a dose check-in landing within ~30 minutes of one should suppress it; and `notifId()` is `attackId % 2_000_000_000`, which uses the whole id space — a second notification per attack needs its own namespace (attacks into `[0, 1e9)`, check-ins into `[1e9, 2e9)`) or scheduling one silently replaces the other.
 
@@ -124,7 +287,7 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
 - **Preventive adherence isn't tracked.** Parked with the preventive reminders. It's the difference between "the drug didn't work" and "I didn't take it".
 - **Open: `--color-text-primary` is unresolved.** It shipped at the dossier's `#e4dfd6`, measured 13.1:1 against the page and 10.3:1 against a raised card — near max contrast, which is the harsh pairing the photophobia research warns against — and was softened to `#cdc7bb` (10.3:1 / 8.1:1, still past AAA). That's a measured improvement, not a settled value: the right number is somewhere in a band, and the only way to pick it is on a real screen mid-attack. `#d7d1c6` sits midway if `#cdc7bb` reads too soft. **Left open deliberately** (2026-08-18) — the severity colours lifted in the same pass are settled and shouldn't be reopened with it.
 - **A warm light theme is specified but not built** (2026-08-18). The photophobia research is genuinely mixed on dark mode: user preference skews dark (~63% in one analysis), controlled studies find no reliable difference, and a badly-built dark theme — vibrant accents on pure black, max contrast — can make symptoms worse. The recommendation was to ship *both* a warm light and a true dark theme plus a dedicated attack mode, with the attack mode rated more valuable than the light/dark toggle itself. Attack mode and the retuned warm dark theme shipped; the light theme is parked because the app currently has one user and no wider audience to serve, and because a light theme needs a second variant for all ~44 hand-mirrored colours in the head diagram and charts. Revisit if the app is ever built for a wider group.
-- **Attack mode restyles but doesn't simplify.** The spec asks for "minimal UI, fewer elements per screen" in attack mode. What shipped is the theme, the 20px text floor, the dim floor and the loss of animation — not a reduced set of controls, which would mean redesigning each screen's content rather than its appearance.
+- **Attack mode simplifies Today, and only Today** (updated 2026-08-18). It was the theme, the 20px floor, the dim floor and the loss of animation, with no content reduction at all. `TodaySummary` now drops the two month tiles — figures you read and think about, and the largest, brightest text on the page — and the overuse warning's explanatory paragraph, keeping the warning's own line and the last-dose row: the two things bearing on a decision in the next hour. **The other three tabs are untouched.** Insights is entirely "figures to read", so reducing it means deciding what someone mid-attack would still open it for, and that hasn't been settled. The impact prompt deliberately *does* render in attack mode, against that rule: an attack usually ends while attack mode is still on, so hiding it would mean the 24h window nearly always elapses unseen, and one question with four large targets is what the mode asks for anyway.
 
 - ~~Notification action buttons have not been round-tripped on a device~~ — **verified on device**: "Something changed" opens the wizard; "No change" with the app force-quit leaves the app closed and lands a reading stamped at the tap time, not the drain time; the follow-up reminder fires with the app still closed; snooze returns on schedule; reminders are audible and tap a paired Apple Watch. Note for future debugging: **synthetic taps on Simulator notifications still don't activate action buttons**, so a tap that produces no log line there proves nothing — this had to be done by hand on a phone.
 - ~~The app icon is a placeholder~~ — **done**: the app is called **Lidd** (dill, reversed) and the icon is the dill mark on the app background. Sources live in `assets/` (`icon.png` 1024², `splash.png`/`splash-dark.png` 2732²); regenerate with `npx @capacitor/assets generate --ios` after changing them. **The icon must have no alpha channel** — the supplied artwork was RGBA with a fully-opaque background, which iOS tooling can still reject, so it's flattened to RGB on the way into `assets/`. The splashes are the same mark centred on the same `#0d0f14`.
