@@ -163,9 +163,11 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
   // Saving a blank form would record a reading with no pain areas at all,
   // which the breakdown then has to show as "not recorded" for every area —
   // that isn't "nothing changed", it's "nothing was said". A no-change
-  // reading carries the previous state forward, at the time on the picker,
-  // and is marked `no_change` so the plateau stats count it as severity
-  // holding rather than as a gap.
+  // reading carries the previous *severities* forward, at the time on the
+  // picker, and is marked `no_change` so the plateau stats count it as
+  // severity holding rather than as a gap. Symptoms and reliefs are not
+  // copied: "nothing changed" is a statement about the pain, and carrying
+  // them over made the timeline list things nobody had re-reported.
   function submitNoChange() {
     let time = localInputToIso(form.time);
     if (time < minTime) time = minTime;
@@ -173,8 +175,8 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, textSca
     onSave({
       time,
       areas: { ...prev.areas },
-      symptoms: [...prev.symptoms],
-      reliefs: [...(prev.reliefs ?? [])],
+      symptoms: [],
+      reliefs: [],
       medication: null,
       note: null,
     }, 'notification_no_change');

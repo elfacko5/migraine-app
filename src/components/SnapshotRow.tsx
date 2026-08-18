@@ -37,11 +37,15 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
   // A notification-sourced reading still says so — that one isn't derivable
   // from anything on screen, and `no_change` in particular means severity
   // held rather than nobody having looked.
-  const sourceLabel =
-    snap.source === 'notification_no_change' ? 'No change' :
-    snap.source === 'notification_yes' ? 'Via reminder' : null;
+  const sourceLabel = snap.source === 'notification_yes' ? 'Via reminder' : null;
 
   const areas = Object.entries(snap.areas);
+
+  // A no-change reading is one statement, so the card makes one statement.
+  // Its severities are carried forward in the data — the breakdown and the
+  // plateau stats need them — but repeating them here would fill the card
+  // with figures identical to the row below it.
+  const noChange = snap.source === 'notification_no_change';
 
   return (
     <div className="flex gap-2">
@@ -65,11 +69,16 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
         </span>
       </div>
 
+      {/* Cards have no outline — they're told apart from the page by being a
+          step lighter than it (bg-raised on bg-surface), which is quieter
+          than a border on every entry down a long timeline. The section
+          hairlines inside stay: those separate things *within* one reading. */}
       <div className="min-w-0 flex-1 pb-4">
-        {/* No outline — the card is told apart from the page by being a step
-            lighter than it (bg-raised on bg-surface), which is quieter than a
-            border on every entry down a long timeline. The section hairlines
-            inside stay: those separate things *within* one reading. */}
+        {noChange ? (
+          <div className="rounded-xl bg-bg-raised px-4 py-3">
+            <p className="text-sm text-text-secondary">No change</p>
+          </div>
+        ) : (
         <div className="rounded-xl bg-bg-raised px-4 py-3">
           {/* Pain areas: one wrapping line, each zone coloured by its own
               severity. This is the line the timeline exists to be scanned
@@ -114,6 +123,7 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
             {snap.note && <Section label="Note">{snap.note}</Section>}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

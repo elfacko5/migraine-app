@@ -243,10 +243,13 @@ export default function App() {
         entries.push({
           attackId: answer.attackId,
           snapshot: {
+            // Only the severities carry forward — that's what "no change"
+            // asserts. Copying the previous symptoms and reliefs across made
+            // the timeline show things the user never re-reported.
             time: answer.time,
             areas: { ...prev.areas },
-            symptoms: [...prev.symptoms],
-            reliefs: [...(prev.reliefs ?? [])],
+            symptoms: [],
+            reliefs: [],
             medication: null,
             note: null,
           },
