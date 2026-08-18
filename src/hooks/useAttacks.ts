@@ -89,6 +89,11 @@ export function useAttacks(userId: string | null) {
   // only way it picks up changes made on other devices meanwhile.
   useEffect(() => {
     if (!userId) return;
+    // this is the sync-on-mount pattern the three data hooks share: `sync()`
+    // is a subscription to an external system (Supabase), not derived state,
+    // and it has to run on mount *and* on every foreground because iOS keeps
+    // a backgrounded PWA's page alive rather than reloading it.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     sync(userId);
     const onVisible = () => { if (document.visibilityState === 'visible') sync(userId); };
     document.addEventListener('visibilitychange', onVisible);

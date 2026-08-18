@@ -98,6 +98,9 @@ export function StatsView({ attacks, medications = [] }: Props) {
 
   const filtered = useMemo(() => {
     if (period === 'all') return attacks;
+    // the period filter is relative to now by definition; see the same call
+    // in HistoryView.
+    // eslint-disable-next-line react-hooks/purity
     const cutoff = Date.now() - PERIOD_MS[period];
     return attacks.filter((a) => new Date(a.snapshots[0].time).getTime() >= cutoff);
   }, [attacks, period]);

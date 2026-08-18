@@ -171,6 +171,11 @@ export default function App() {
   // lingering a little past 24h on an app left open and untouched, which
   // costs nothing: answering it is still optional, and the next interaction
   // clears it.
+  // deliberate: see the note above. The boundary being read is 24 hours
+  // away, so a value that is only as fresh as the last render is exactly
+  // fresh enough, and useNowTick here would re-render the whole tree every
+  // minute to watch it.
+  // eslint-disable-next-line react-hooks/purity
   const impactPending = attackAwaitingImpact(attacks, Date.now());
 
   // Order the pickers' options by how often they've been selected historically,
@@ -216,6 +221,11 @@ export default function App() {
     const voiceText = params.get('voice');
     if (voiceText) {
       window.history.replaceState({}, '', window.location.pathname);
+      // the voice transcript arrives from outside React (a URL param, or the
+      // Siri intent's handoff), so opening the sheet from it is synchronising
+      // with an external system. There is no render-time value to derive it
+      // from.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       applyVoiceText(voiceText);
       return;
     }

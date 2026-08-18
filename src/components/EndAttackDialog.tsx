@@ -27,8 +27,13 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
   const confirmRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Reset every time the dialog opens, so a previous session's "Earlier" and
+  // its half-picked time never greet the next one. Deliberately keyed on
+  // `open` rather than remounting the component, which would cost the
+  // transition — and the time it seeds is the clock, not derivable state.
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see above.
       setMode('now');
       setManualTime(isoToLocalInput());
     }

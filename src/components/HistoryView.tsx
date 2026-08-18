@@ -47,11 +47,19 @@ export function HistoryView({
   // someone looking in a sheet they never opened.
   const inPeriod = useMemo(() => {
     if (period === 'all') return attacks;
+    // the period filter is relative to now by definition, and it is
+    // re-derived on every render that changes `attacks` or `period`.
+    // Freezing "now" at mount would silently stop the window moving on an
+    // app left open overnight.
+    // eslint-disable-next-line react-hooks/purity
     const cutoff = Date.now() - PERIOD_MS[period];
     return attacks.filter((a) => new Date(a.snapshots[0].time).getTime() >= cutoff);
   }, [attacks, period]);
 
   const visible = useMemo(
+    // same as above: the duration sorts measure against now, and there is
+    // nothing to freeze.
+    // eslint-disable-next-line react-hooks/purity
     () => sortAttacks(applyFilters(inPeriod, filters), sort, Date.now()),
     [inPeriod, filters, sort]
   );

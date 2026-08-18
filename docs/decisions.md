@@ -184,8 +184,8 @@ three things worth knowing that only came out in the building:
 - **`Date.now()` is read inside `medGuardrails`, not by the components.**
   `unitsInWindow`, `lastDoseAt` and `checkDose` all default their timestamp,
   which keeps the rolling figure honest *and* keeps the impure call out of a
-  component's render — the lint baseline is 9 and a new entry in it would hide
-  the next real one. `TodaySummary` pairs that with `useNowTick`, because a
+  component's render — at the time, the lint baseline was 9 and a new entry in
+  it would have hidden the next real one. (The baseline is now 0; see below.) `TodaySummary` pairs that with `useNowTick`, because a
   rolling 24-hour count goes stale on its own as doses age out of the window,
   exactly like the durations that hook already exists for.
 - **The quick-pick sets `amount` and leaves a strength alone.** Tapping "3
@@ -245,6 +245,27 @@ mid-attack, so it's worth a look on the next build.
   the two areas you cannot touch drew the eye first. Dark reads as inert but
   inverts the usual "disabled is greyed out". Parked pending a possible redraw
   of the head.
+
+## Code health (2026-08-18)
+
+- **The lint baseline of 9 is gone; `npm run lint` reports zero.** A standing
+  count is worse than it looks: a real new error arrives as "10 instead of 9"
+  and reads as the usual noise, so the only way to notice one was to `git
+  stash` and compare — which nobody does on the run where it would matter. The
+  nine were all the deliberate patterns this file already defends (sync on
+  mount and on every foreground; a period filter that is relative to now by
+  definition), so they became **per-site `eslint-disable-next-line` carrying
+  the reason**, not a rule switched off in the config. The rule still fires
+  everywhere else, and the next instance of either pattern has to write down
+  why rather than disappearing into a total.
+- **A disable directive has to be the line immediately above the code.** Cost
+  a round to find: with the reason continued across several `//` lines after
+  the `--`, "next line" is the next *comment*, so all eight directives landed
+  on nothing while looking correct. Explanation above, directive last.
+- **Still open: the bundle is ~920KB**, past Vite's 500KB warning, and Recharts
+  is most of it. Not touched here — lazy-loading the charts adds a loading
+  state to Insights and to the Logs sparklines, which is a visible change to
+  screens read mid-attack and wants a decision, not a refactor done quietly.
 
 ## Working practice (2026-08-18)
 
