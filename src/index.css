@@ -197,6 +197,15 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.01em;
 }
 
+/* Focus ring. Without this the UA's own is used, which is a saturated orange
+   (rgb(229,151,0) in WebKit) — the one hue family this palette works hardest
+   to avoid, appearing on every tap since a tap focuses the control. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* Labels: uppercase tracking elements */
 .label-caps {
   letter-spacing: 0.02em;

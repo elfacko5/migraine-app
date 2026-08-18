@@ -35,9 +35,13 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
             type="button"
             aria-pressed={active}
             onClick={() => toggle(opt)}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            // Selected is a tint plus a ring rather than a solid accent fill:
+            // a screen of solid sage pills is a lot of weight for what is an
+            // optional step, and this matches the medication chips, which
+            // already worked this way.
+            className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
               active
-                ? 'bg-accent text-bg-base'
+                ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/50'
                 : 'bg-bg-raised text-text-primary ring-1 ring-inset ring-bg-border hover:bg-bg-border'
             }`}
           >
@@ -64,7 +68,7 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="btn-tertiary rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-dashed ring-button-secondary-border transition-colors"
+            className="btn-tertiary rounded-full px-3 py-1.5 text-sm ring-1 ring-dashed ring-button-secondary-border transition-colors"
           >
             {placeholder}
           </button>
