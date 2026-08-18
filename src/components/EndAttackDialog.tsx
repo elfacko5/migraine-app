@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatDatetime, isoToLocalInput, localInputToIso } from '../utils/format';
 import { openPicker } from '../utils/openPicker';
+import type { Attack } from '../types';
+
+// Asked when the attack ends rather than when it starts, because it's a
+// judgement about the whole episode and nobody knows the answer in the first
+// ten minutes. It's also the one place it costs no extra step: the logging
+// wizard is already eight screens.
+//
+// Four levels, deliberately coarse. This is the disability measure clinical
+// scales (MIDAS, HIT-6) are built on, and what a headache history is judged
+// on — but those are retrospective questionnaires, and a per-attack answer
+// that's honest beats a 5-item survey nobody fills in.
+const IMPACT_OPTIONS: { value: NonNullable<Attack['impact']>; label: string }[] = [
+  { value: 0, label: 'Not at all' },
+  { value: 1, label: 'A little' },
+  { value: 2, label: 'A lot' },
+  { value: 3, label: "Couldn't function" },
+];
 
 interface Props {
   open: boolean;
@@ -8,7 +25,7 @@ interface Props {
   // most recent update.
   minTime: string;
   onCancel: () => void;
-  onConfirm: (endTime: string) => void;
+  onConfirm: (endTime: string, impact?: Attack['impact']) => void;
 }
 
 type Mode = 'now' | 'manual';
@@ -21,6 +38,7 @@ type Mode = 'now' | 'manual';
 export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
   const [mode, setMode] = useState<Mode>('now');
   const [manualTime, setManualTime] = useState(isoToLocalInput());
+  const [impact, setImpact] = useState<Attack['impact']>(undefined);
   const confirmRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -28,6 +46,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
     if (open) {
       setMode('now');
       setManualTime(isoToLocalInput());
+      setImpact(undefined);
     }
   }, [open]);
 
@@ -48,7 +67,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
     // The datetime-local input is minute-precision, so picking the exact
     // minimum can round to just before the last snapshot's true (sub-minute)
     // timestamp — clamp so the attack never ends before its last update.
-    onConfirm(end < minTime ? minTime : end);
+    onConfirm(end < minTime ? minTime : end, impact);
   }
 
   const minLocal = isoToLocalInput(minTime);
@@ -114,6 +133,32 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
               Must be after {formatDatetime(minTime)}
             </p>
           )}
+        </div>
+
+        {/* Optional: skipping leaves it undefined rather than 0, because
+            "not answered" and "no impact" are different facts and only one
+            of them belongs in a disability count. */}
+        <div className="mt-4 space-y-1.5">
+          <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">
+            How much did it stop you doing things?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {IMPACT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                aria-pressed={impact === opt.value}
+                onClick={() => setImpact(impact === opt.value ? undefined : opt.value)}
+                className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                  impact === opt.value
+                    ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/50'
+                    : 'bg-bg-raised text-text-primary ring-1 ring-inset ring-bg-border hover:bg-bg-border'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mt-5 flex gap-3">

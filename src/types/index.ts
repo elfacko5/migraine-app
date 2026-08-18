@@ -22,6 +22,10 @@ export interface Attack {
   notificationConfig: NotificationConfig;
   updatedAt?: string;    // ISO timestamp of the last local write; used to resolve sync conflicts
   wokeWithMigraine?: boolean; // set at logging time — the attack was already present on waking, not noticed while awake
+  // How much the attack stopped you doing things, asked once when it ends.
+  // 0 none · 1 some · 2 a lot · 3 couldn't function. Undefined means it was
+  // never answered — never assume 0, which would read as "no impact".
+  impact?: 0 | 1 | 2 | 3;
 }
 
 // The user's own medication library (Profile → My medications). Acute meds

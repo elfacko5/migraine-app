@@ -7,6 +7,15 @@ import { SnapshotRow } from './SnapshotRow';
 import { ConfirmDialog } from './ConfirmDialog';
 import { BinIcon } from './icons';
 
+// Reads back as a sentence rather than a score: "2" means nothing on its own,
+// and this line sits beside the date and duration.
+const IMPACT_LABELS: Record<0 | 1 | 2 | 3, string> = {
+  0: "Didn't stop you doing things",
+  1: 'Stopped you doing some things',
+  2: 'Stopped you doing a lot',
+  3: "Couldn't function",
+};
+
 interface Props {
   attack: Attack;
   onDelete: () => void;
@@ -88,6 +97,9 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         </p>
         {attack.triggers.length > 0 && (
           <p className="text-xs text-text-secondary mt-1">{attack.triggers.join(', ')}</p>
+        )}
+        {attack.impact !== undefined && (
+          <p className="text-xs text-text-secondary mt-1">{IMPACT_LABELS[attack.impact]}</p>
         )}
         {attack.wokeWithMigraine && (
           <p className="text-xs text-accent-light mt-1">🌙 Woke up with this migraine</p>

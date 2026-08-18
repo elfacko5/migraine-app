@@ -565,8 +565,8 @@ export default function App() {
           open={endConfirmOpen}
           minTime={ongoingAttack.snapshots[ongoingAttack.snapshots.length - 1].time}
           onCancel={() => setEndConfirmOpen(false)}
-          onConfirm={(endTime) => {
-            endAttack(ongoingAttack.id, endTime);
+          onConfirm={(endTime, impact) => {
+            endAttack(ongoingAttack.id, endTime, impact);
             setEndConfirmOpen(false);
             // Ending can be reached from inside the update sheet, which is
             // showing an attack that no longer has anything to update.

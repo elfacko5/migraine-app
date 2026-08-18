@@ -182,12 +182,14 @@ export function useAttacks(userId: string | null) {
     return updated;
   }, [addSnapshots]);
 
-  const endAttack = useCallback((attackId: number, time?: string) => {
+  const endAttack = useCallback((attackId: number, time?: string, impact?: Attack['impact']) => {
     const end = time ?? new Date().toISOString();
     let updated: Attack | undefined;
     commit(attacks.map((a) => {
       if (a.id !== attackId) return a;
-      updated = { ...a, end, updatedAt: new Date().toISOString() };
+      // Only written when answered — an unanswered question must not land in
+      // the record as "no impact".
+      updated = { ...a, end, ...(impact !== undefined ? { impact } : {}), updatedAt: new Date().toISOString() };
       return updated;
     }));
     cancelNotification(attackId);

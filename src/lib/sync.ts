@@ -9,6 +9,7 @@ interface AttackRow {
   notification_config: NotificationConfig;
   updated_at: string;
   woke_with_migraine: boolean | null;
+  impact: number | null;
 }
 
 function rowToAttack(row: AttackRow): Attack {
@@ -20,6 +21,8 @@ function rowToAttack(row: AttackRow): Attack {
     notificationConfig: row.notification_config,
     updatedAt: row.updated_at,
     wokeWithMigraine: row.woke_with_migraine ?? false,
+    // null means unanswered, which is not the same as 0 — see Attack.impact.
+    ...(row.impact === null || row.impact === undefined ? {} : { impact: row.impact as Attack['impact'] }),
   };
 }
 
@@ -33,6 +36,7 @@ function attackToRow(attack: Attack, userId: string) {
     notification_config: attack.notificationConfig,
     updated_at: attack.updatedAt ?? new Date().toISOString(),
     woke_with_migraine: attack.wokeWithMigraine ?? false,
+    impact: attack.impact ?? null,
   };
 }
 
