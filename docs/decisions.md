@@ -164,6 +164,54 @@ decoratively.
   attacks. "What happened recently" and "what does my month look like" are
   different questions.
 
+## Medication guardrails (2026-08-18)
+
+Built as specced below in "Planned, agreed, not built", which stays as the
+record of what was decided before any of it existed. What shipped, and the
+three things worth knowing that only came out in the building:
+
+- **`checkDose` answers "where would this dose sit", and nothing else.** It
+  returns findings, never permission. Every call site states the number and
+  saves anyway: if four tablets were taken, the diary has to be able to say
+  four, and a tracker that refuses the truth stops being a record. The wording
+  is the user's own figure restated — "you entered a 2-hour gap between doses
+  — the next one falls at 23:32" — never an instruction.
+- **The last-entry caption computes its gap directly, not through
+  `checkDose`.** They look like the same question and aren't: `checkDose` asks
+  where a dose being logged *now* sits, so it looks for the most recent dose
+  before that moment, which is a different reading from the one the caption is
+  about. Written the obvious way first, it silently produced no gap at all.
+- **`Date.now()` is read inside `medGuardrails`, not by the components.**
+  `unitsInWindow`, `lastDoseAt` and `checkDose` all default their timestamp,
+  which keeps the rolling figure honest *and* keeps the impure call out of a
+  component's render — the lint baseline is 9 and a new entry in it would hide
+  the next real one. `TodaySummary` pairs that with `useNowTick`, because a
+  rolling 24-hour count goes stale on its own as doses age out of the window,
+  exactly like the durations that hook already exists for.
+- **The quick-pick sets `amount` and leaves a strength alone.** Tapping "3
+  tablets" on a drug whose dose reads "50mg" records `amount: 3` and keeps the
+  text, because restating it as "3 tablets" would throw away the one fact the
+  field was holding. It only rewrites `dose` when the text is empty or is
+  itself a unit count.
+- **`VoiceDose` now carries `amount` as a number.** The quantity was always
+  parsed out of the transcript and then flattened into `dose`; keeping it means
+  "two tablets of Treo" counts as two units against the limits rather than one.
+- **`startedOn` shipped with it**, as agreed. The field only — nothing reads it
+  yet. The ≥50%-reduction comparison it exists for is a separate piece of work,
+  and putting the field in first means the date is being recorded from now
+  rather than reconstructed later.
+
+Verified on a throwaway profile per the working-practice rule below (a second
+dev server on port 5174 — the `migraine-app-scratch` entry in
+`.claude/launch.json` exists for exactly this, `--strictPort` so it can never
+silently land on the live origin): the rolling window drops a dose that has
+aged past 24h across a local midnight; "50mg" counts as one unit; all three
+breach notes fire and none blocks the save; a medication with no limits set
+renders as it always did; both editor panels round-trip through
+`localStorage`. **Not verified on device** — nothing here touches the native
+shell, but the wizard's medication step is one of the screens most often read
+mid-attack, so it's worth a look on the next build.
+
 ## Head diagram (2026-08-18)
 
 - **Both views share one viewBox, aligned on the crown.** Three attempts. Cropped
@@ -248,7 +296,9 @@ Both were plausible, neither had a measurable effect; they're recorded so they a
 
 Ordered as agreed on 2026-08-18. The first two of the four are done; these are the rest, with the constraints already worked out so the next session doesn't re-derive them.
 
-- **Medication guardrails.** *Design settled 2026-08-18, not yet built — see the plan file.* Optional fields captured once in `MedicationEditor`: minimum hours between doses, max doses per day, max days per month. The wizard's existing "Took Sumatriptan 1 tablet at 20:36" note becomes "· next dose from 00:36", and a dose taken early gets a **warning, never a block**. The max-days field is the ICHD number — suggest 10 for a triptan and 15 for a simple analgesic when the user picks a type, never assume it.
+**Built 2026-08-18: medication guardrails and `startedOn`.** Both entries below are kept as written, because they are the record of what was decided before the code existed and every constraint in them is still binding on anything that touches this. What actually shipped, and the three things that only came out in the building, are in "Medication guardrails" above. **The remaining item in this section is the check-in notification**, which is unbuilt and deliberately so: it touches the Swift handler and the pending-action queue, and notification behaviour has failed silently on device twice — it can't be confirmed anywhere but real hardware.
+
+- **Medication guardrails.** *Design settled 2026-08-18; **built** the same day — see "Medication guardrails" above.* Optional fields captured once in `MedicationEditor`: minimum hours between doses, max doses per day, max days per month. The wizard's existing "Took Sumatriptan 1 tablet at 20:36" note becomes "· next dose from 00:36", and a dose taken early gets a **warning, never a block**. The max-days field is the ICHD number — suggest 10 for a triptan and 15 for a simple analgesic when the user picks a type, never assume it.
 
   Settled in design: limits count **units** (tablets/sprays), not milligrams —
   "max dose per intake" *is* a quantity, and counting doses can't express it.
@@ -271,7 +321,7 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
   `snapshots` are both `jsonb` passed through wholesale, unlike `impact`.
 
  **The rule this must obey:** the app repeats back what the user entered from the label. It never infers a limit, never blocks a dose, and never phrases a warning as an instruction — "you entered a 4-hour minimum; the last dose was 2 hours ago", not "do not take this yet". An app that looks like it is dosing someone is a different and much heavier thing than an app that counts.
-- **`startedOn` for preventives**, in the same pass. It's what makes the ≥50%-reduction metric possible: monthly migraine days before the start date against after. Full adherence tracking is *not* required for that — adherence is what distinguishes "the drug didn't work" from "I didn't take it", which is a later question.
+- **`startedOn` for preventives**, in the same pass. ***Built*** — the field and its editor row; nothing reads it yet. It's what makes the ≥50%-reduction metric possible: monthly migraine days before the start date against after. Full adherence tracking is *not* required for that — adherence is what distinguishes "the drug didn't work" from "I didn't take it", which is a later question.
 - **The 2-hour check-in notification.** Scheduled at dose + 2h, asking for a severity reading rather than a yes/no: relief is already computed from the trajectory, and a binary would be softer data that could contradict the numbers. Two constraints to solve in the design rather than discover on device: the attack reminder runs +1h/+2h from each reading, so a dose check-in landing within ~30 minutes of one should suppress it; and `notifId()` is `attackId % 2_000_000_000`, which uses the whole id space — a second notification per attack needs its own namespace (attacks into `[0, 1e9)`, check-ins into `[1e9, 2e9)`) or scheduling one silently replaces the other.
 
 ## Separate conversations, not scheduled
