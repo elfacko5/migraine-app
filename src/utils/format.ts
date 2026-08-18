@@ -1,5 +1,8 @@
 const timeFmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
 const dateFmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+// Same date without the weekday, for places where several sit in a row and
+// the weekday is three characters of noise per label — chart axes, mainly.
+const dateShortFmt = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
 const datetimeFmt = new Intl.DateTimeFormat(undefined, {
   weekday: 'short', month: 'short', day: 'numeric',
   hour: 'numeric', minute: '2-digit',
@@ -7,6 +10,7 @@ const datetimeFmt = new Intl.DateTimeFormat(undefined, {
 
 export const formatTime = (iso: string) => timeFmt.format(new Date(iso));
 export const formatDate = (iso: string) => dateFmt.format(new Date(iso));
+export const formatDateShort = (iso: string) => dateShortFmt.format(new Date(iso));
 export const formatDatetime = (iso: string) => datetimeFmt.format(new Date(iso));
 
 export function formatDuration(startIso: string, endIso: string | null): string {

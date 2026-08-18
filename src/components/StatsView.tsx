@@ -4,7 +4,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { Attack } from '../types';
-import { formatDate } from '../utils/format';
+import { formatDateShort } from '../utils/format';
 import {
   attackMaxSeverity, currentAttackStreak, currentPainFreeStreak,
   areaFrequency, avgTimeToPeak, minutesAboveSeverity,
@@ -104,7 +104,9 @@ export function StatsView({ attacks }: Props) {
     const timeToPeak = avgTimeToPeak(filtered);
 
     const severityTrend = [...filtered].reverse().slice(0, 12).map((a) => ({
-      date: formatDate(a.snapshots[0].time),
+      // No weekday: a dozen of these sit along one axis and "Fri " on each
+      // is three characters of noise per label.
+      date: formatDateShort(a.snapshots[0].time),
       severity: attackMaxSeverity(a),
     }));
 
