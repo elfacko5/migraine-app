@@ -39,13 +39,18 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
   const areas = Object.entries(snap.areas);
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-2">
       {/* Stem — one continuous rail with the times sitting *on* it: each
           timestamp carries the page background and a little vertical padding,
           so it knocks a clean gap in the line rather than being crossed by
           it. The rail is centred in a fixed-width column, so every gap lines
-          up whether the time is 4 or 5 characters ("9:09" vs "11:03"). */}
-      <div className="relative flex w-16 shrink-0 flex-col items-center">
+          up whether the time is 4 or 5 characters ("9:09" vs "11:03").
+
+          The column is only as wide as the widest timestamp needs — in `rem`,
+          so it grows with the text scale rather than clipping — and the gap to
+          the card is 8px. It was 64px + 12px, which left a band of dead space
+          down the left of every entry. */}
+      <div className="relative flex w-12 shrink-0 flex-col items-center">
         <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-bg-border" />
         {dateLabel && (
           <span className="relative bg-bg-surface px-1.5 py-1 text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{dateLabel}</span>

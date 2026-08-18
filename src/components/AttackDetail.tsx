@@ -103,8 +103,8 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
       <div>
         <p className="text-xs uppercase tracking-wider font-medium text-text-secondary mb-3">Timeline</p>
         {attack.end && (
-          <div className="flex gap-3">
-            <div className="relative flex w-16 shrink-0 flex-col items-center">
+          <div className="flex gap-2">
+            <div className="relative flex w-12 shrink-0 flex-col items-center">
               <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-bg-border" />
               {spansMultipleDays && (
                 <span className="relative bg-bg-surface px-1.5 py-1 text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{formatDate(attack.end)}</span>
