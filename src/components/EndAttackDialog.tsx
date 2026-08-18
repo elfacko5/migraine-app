@@ -1,31 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatDatetime, isoToLocalInput, localInputToIso } from '../utils/format';
 import { openPicker } from '../utils/openPicker';
-import type { Attack } from '../types';
 
-// Asked when the attack ends rather than when it starts, because it's a
-// judgement about the whole episode and nobody knows the answer in the first
-// ten minutes. It's also the one place it costs no extra step: the logging
-// wizard is already eight screens.
-//
-// Four levels, deliberately coarse. This is the disability measure clinical
-// scales (MIDAS, HIT-6) are built on, and what a headache history is judged
-// on — but those are retrospective questionnaires, and a per-attack answer
-// that's honest beats a 5-item survey nobody fills in.
-const IMPACT_OPTIONS: { value: NonNullable<Attack['impact']>; label: string }[] = [
-  { value: 0, label: 'Not at all' },
-  { value: 1, label: 'A little' },
-  { value: 2, label: 'A lot' },
-  { value: 3, label: "Couldn't function" },
-];
-
+// One question: when did it end. This dialog used to also ask for `impact`,
+// and carrying both made it a form in an alert's shell — see the note further
+// down, and `ImpactPrompt` for where that question went.
 interface Props {
   open: boolean;
   // The last snapshot's time — an attack can't be marked as ending before its
   // most recent update.
   minTime: string;
   onCancel: () => void;
-  onConfirm: (endTime: string, impact?: Attack['impact']) => void;
+  onConfirm: (endTime: string) => void;
 }
 
 type Mode = 'now' | 'manual';
@@ -38,7 +24,6 @@ type Mode = 'now' | 'manual';
 export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
   const [mode, setMode] = useState<Mode>('now');
   const [manualTime, setManualTime] = useState(isoToLocalInput());
-  const [impact, setImpact] = useState<Attack['impact']>(undefined);
   const confirmRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,7 +31,6 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
     if (open) {
       setMode('now');
       setManualTime(isoToLocalInput());
-      setImpact(undefined);
     }
   }, [open]);
 
@@ -67,7 +51,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
     // The datetime-local input is minute-precision, so picking the exact
     // minimum can round to just before the last snapshot's true (sub-minute)
     // timestamp — clamp so the attack never ends before its last update.
-    onConfirm(end < minTime ? minTime : end, impact);
+    onConfirm(end < minTime ? minTime : end);
   }
 
   const minLocal = isoToLocalInput(minTime);
@@ -99,12 +83,17 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
 
         <div className="mt-4 space-y-1.5">
           <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">End time</p>
+          {/* Selected = tint and ring, matching the impact pills elsewhere and the
+              chips everywhere else. These two were solid accent, so this one
+              dialog showed two different treatments for the same idea — and
+              the solid pair was the heaviest thing on it, outweighing the
+              End-attack button that actually does something. */}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setMode('now')}
               aria-pressed={mode === 'now'}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${mode === 'now' ? 'btn-primary' : 'btn-secondary'}`}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === 'now' ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-bg-border hover:bg-bg-border'}`}
             >
               Just now
             </button>
@@ -112,7 +101,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
               type="button"
               onClick={() => setMode('manual')}
               aria-pressed={mode === 'manual'}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${mode === 'manual' ? 'btn-primary' : 'btn-secondary'}`}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === 'manual' ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-bg-border hover:bg-bg-border'}`}
             >
               Earlier
             </button>
@@ -135,31 +124,13 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
           )}
         </div>
 
-        {/* Optional: skipping leaves it undefined rather than 0, because
-            "not answered" and "no impact" are different facts and only one
-            of them belongs in a disability count. */}
-        <div className="mt-4 space-y-1.5">
-          <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">
-            How much did it stop you doing things?
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {IMPACT_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                aria-pressed={impact === opt.value}
-                onClick={() => setImpact(impact === opt.value ? undefined : opt.value)}
-                className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-                  impact === opt.value
-                    ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/50'
-                    : 'bg-bg-raised text-text-primary ring-1 ring-inset ring-bg-border hover:bg-bg-border'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* **The impact question is deliberately not here any more.** It made
+            this dialog a form wearing an alert's clothes — two questions and
+            six controls, which is what neither HIG nor Material wants in a
+            modal — and it forced a judgement about the whole episode into the
+            same breath as closing it down. It's now asked by `ImpactPrompt` on
+            Today, for 24h after the end, and answerable any time from
+            AttackDetail. Skipping still leaves it undefined rather than 0. */}
 
         <div className="mt-5 flex gap-3">
           <button

@@ -1,6 +1,12 @@
-// One card per topic on the Insights page: heading, content, and the note
-// that explains it all sit inside the same surface, so a caption clearly
-// belongs to the chart above it rather than floating between two blocks.
+// One card per topic on the Insights page: heading, the note that explains
+// it, and the content all sit inside the same surface, so a caption clearly
+// belongs to the chart it describes rather than floating between two blocks.
+//
+// **The note comes before the content, not after.** It says what the figure
+// counts — "days with a logged attack, an attack past midnight counts as
+// two" — and that has to be known to read the chart at all. Underneath, it
+// was a footnote you reached only after guessing; above, it's the sentence
+// the numbers answer. Same reason the heading is on top.
 //
 // **The inner surface only exists when there's a note.** Its job is to
 // separate the content from the sentence explaining it; with no note there's
@@ -30,8 +36,8 @@ export function InsightSection({ title, children, note }: Props) {
       <div className="space-y-2 rounded-2xl bg-bg-surface p-3">
         {note ? (
           <>
-            <div className="rounded-xl bg-bg-elevated p-3">{children}</div>
             <p className="text-xs text-text-secondary">{note}</p>
+            <div className="rounded-xl bg-bg-elevated p-3">{children}</div>
           </>
         ) : (
           children

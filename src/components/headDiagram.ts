@@ -31,7 +31,11 @@ export interface DiagramView {
 export const HEAD_FILL = '#2b2823';
 export const LINE_COLOR = 'rgba(208,216,230,0.55)';
 export const DIVIDER_COLOR = 'rgba(208,216,230,0.45)';
-export const DISABLED_FILL = '#a39d92';
+// Non-selectable regions (front jaw + neck). Deliberately *darker* than the
+// head, not lighter: at the old #a39d92 they were the lightest thing in the
+// diagram, so the two areas you cannot touch drew the eye first. Sitting a
+// step above the page instead makes them read as inert surface.
+export const DISABLED_FILL = '#26241f';
 export const SELECTED_FILL = '#8fb096';
 export const HOVER_FILL = 'rgba(208,216,230,0.14)';
 
@@ -47,6 +51,24 @@ export function sevFill(s: number): string {
   return SEVERITY_HIGH;
 }
 
+// A darker shade of each severity colour, for the outline on the zone the
+// slider is currently controlling.
+//
+// That outline used to be accent green, which meant a focused zone showed two
+// unrelated colours at once — its severity as fill, and "this one is focused"
+// as a bright ring — and the ring was the louder of the two on a screen the
+// palette works to keep quiet. Same hue, darker, reads as an edge of the shape
+// rather than a second signal competing with it.
+const SEVERITY_LOW_EDGE = '#5c7a63';
+const SEVERITY_MID_EDGE = '#7d5c35';
+const SEVERITY_HIGH_EDGE = '#7d554f';
+
+export function sevStroke(s: number): string {
+  if (s <= 3) return SEVERITY_LOW_EDGE;
+  if (s <= 7) return SEVERITY_MID_EDGE;
+  return SEVERITY_HIGH_EDGE;
+}
+
 // ── FRONT ────────────────────────────────────────────────────────────────
 const FRONT_FACE =
   'M133.546 433.545C142.613 401.487 115.101 245.405 276.566 245.769C438.031 246.134 423.401 368.037 426.675 423.96C427.58 439.413 435.877 435.761 439.1 440.892C446.043 451.945 442.165 510.846 423.752 525.514C405.34 540.182 415.533 562.942 398.08 588.046C380.628 613.15 332.203 689.803 281.791 691.584C231.379 693.365 177.951 615.048 164.621 591.117C151.291 567.185 154.805 568.96 148.086 539.988C144.104 522.818 134.99 548.809 124.737 488.225C114.483 427.64 129.668 447.256 133.546 433.545Z';
@@ -56,7 +78,9 @@ const FRONT_NECK =
 export const FRONT: DiagramView = {
   id: 'front',
   label: 'Front',
-  viewBox: '112 235 336 525',
+  // Crown at y+10, skull centred on x. See the note on BACK's viewBox.
+  // Measured: skull box (121.2, 245.8, 321.1 × 445.8), silhouette bottom 746.6.
+  viewBox: '111.75 235.8 340 524',
   base: [FRONT_FACE, FRONT_NECK],
   outline: [FRONT_FACE, FRONT_NECK],
   dividers: [
@@ -107,7 +131,28 @@ const BACK_NECK =
 export const BACK: DiagramView = {
   id: 'back',
   label: 'Back',
-  viewBox: '165 200 350 540',
+  // **Both views share one viewBox size (340×524), aligned on the crown.**
+  //
+  // Two goes at this. They were first cropped independently (front
+  // `112 235 336 525`, back `165 200 350 540`); since the `<svg>` is sized by
+  // width alone, different boxes meant different scale *and* centre — the back
+  // head measured 211.7px wide against the front's 219.8px, sitting 1.9px to
+  // one side.
+  //
+  // Matching the boxes and centring each *silhouette* fixed the scale but not
+  // the movement, because the two silhouettes aren't the same object: the
+  // front carries a long neck, the back a wide nape, so centring the whole
+  // outline puts the skull in a different place. Centring the skull's own
+  // bounding box fails for the same reason one level down — the front's face
+  // path runs to the chin (445.8 tall) while the back's stops above the nape
+  // (373.1).
+  //
+  // The crown is the one landmark that means the same thing in both, and the
+  // skulls are the same width (321.1) in the artwork. So: skull centred on x,
+  // crown pinned 10 units below the top edge, and a box tall enough for the
+  // longer of the two silhouettes below it (back, 506.2). Re-measure the skull
+  // box and the silhouette bottom for both views if the art is re-exported.
+  viewBox: '168.35 207.2 340 524',
   base: [BACK_HEAD, BACK_NECK],
   outline: [BACK_HEAD, BACK_NECK],
   dividers: [

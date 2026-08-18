@@ -119,7 +119,7 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
               aria-pressed={textScale === s}
               className={`flex-1 flex flex-col items-center justify-center py-3 gap-1.5 transition-colors ${
                 textScale === s
-                  ? 'bg-accent text-bg-base'
+                  ? 'bg-accent/20 text-accent-light'
                   : 'bg-bg-raised text-text-secondary hover:bg-bg-border'
               } ${i > 0 ? 'border-l border-bg-border' : ''}`}
             >
@@ -140,11 +140,19 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
                 <span className="text-sm font-medium text-text-primary">Mon, Jun 24</span>
                 <span className="text-xs text-text-secondary">9:15 AM</span>
               </div>
-              <p className="text-xs text-text-secondary">2h 30m · 3 snapshots</p>
+              <p className="text-xs text-text-secondary">2h 30m · 3 readings</p>
               <p className="text-xs text-text-secondary">Right temple, Forehead</p>
+              {/* Mirrors AttackCard by hand, so it has to track it: the chips
+                  are symptoms, not triggers, and the line above says
+                  "readings". A preview that shows a card the app no longer
+                  renders is worse than no preview — it's the one place a user
+                  is invited to study the layout closely. */}
+              <p className="text-xs text-text-secondary">
+                Impact: <span className="text-text-primary">a lot</span>
+              </p>
               <div className="flex flex-wrap gap-1 pt-0.5">
-                <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Stress</span>
-                <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Poor sleep</span>
+                <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Nausea</span>
+                <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Light sensitivity</span>
               </div>
             </div>
             <div className="shrink-0">

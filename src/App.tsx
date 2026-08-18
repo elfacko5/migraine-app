@@ -7,7 +7,9 @@ import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
 import { useAuth } from './hooks/useAuth';
 import { useViewportHeight } from './hooks/useViewportHeight';
+import { useScrollCollapse } from './hooks/useScrollCollapse';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
+import { isRetired } from './utils/retired';
 import { parseVoiceEntry, type VoiceDraft } from './utils/voiceParse';
 import { onNotificationAction, cancelNotification } from './utils/notifications';
 import { awaitPendingVoiceEntry } from './utils/pendingVoice';
@@ -30,10 +32,14 @@ import { LogForm } from './components/LogForm';
 import { QuickUpdateForm } from './components/QuickUpdateForm';
 import { OngoingAttackBanner } from './components/OngoingAttackBanner';
 import { AttackFreeCard } from './components/AttackFreeCard';
+import { ImpactPrompt } from './components/ImpactPrompt';
+import { attackAwaitingImpact } from './utils/impact';
 import { TodaySummary } from './components/TodaySummary';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
-import { HistoryView } from './components/HistoryView';
+import { HistoryView, type Period } from './components/HistoryView';
+import { LogsFilterPanel, LogsFilterReset } from './components/LogsFilterPanel';
+import { DEFAULT_FILTERS, type LogFilters, type SortOrder } from './utils/logFilters';
 import { ProfileView, AccessibilityPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
 import { MedicationEditor } from './components/MedicationEditor';
@@ -52,6 +58,21 @@ export default function App() {
   const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [profileSheet, setProfileSheet] = useState<ProfileSection | null>(null);
+
+  // Logs list state lives up here, not in HistoryView, because its filter
+  // Sheet has to be rendered from this component — a Sheet inside the tab's
+  // scroll container anchors to the wrong ancestor (see the viewport rules).
+  // It also means the choices survive leaving the tab and coming back, which
+  // is the behaviour you want from a filter you deliberately set.
+  const [logsPeriod, setLogsPeriod] = useState<Period>('7d');
+  const [logsFilters, setLogsFilters] = useState<LogFilters>(DEFAULT_FILTERS);
+  const [logsSort, setLogsSort] = useState<SortOrder>('newest');
+  const [logsFilterOpen, setLogsFilterOpen] = useState(false);
+
+  // Which attack the impact prompt has been waved away for. Session-only on
+  // purpose: the 24h window closes by itself, so there's nothing to persist —
+  // no new localStorage key, no Attack field, no Supabase column.
+  const [impactDismissed, setImpactDismissed] = useState<number | null>(null);
   // Which medication the editor sheet is open on: an existing one, or a new
   // one of a given kind. Kept here rather than inside MedicationsView because
   // Sheet anchors to the app root — see the Profile tab notes in CLAUDE.md.
@@ -64,7 +85,7 @@ export default function App() {
   const auth = useAuth();
   const userId = auth.user?.id ?? null;
   const {
-    attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, deleteAttack,
+    attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, setImpact, deleteAttack,
     syncStatus: attacksSyncStatus, lastSyncedAt: attacksLastSyncedAt,
   } = useAttacks(userId);
   const {
@@ -77,6 +98,12 @@ export default function App() {
   } = useMedications(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
   const { textScale, setTextScale, brightness, setBrightness, attackMode, setAttackMode } = useSettings();
+
+  // The shell's nested scroll container, watched so AttackModePill can shed
+  // its label while the user is reading downward and get it back on the way
+  // up. Nothing else may scroll at page level for this to be the whole story.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const pillCollapsed = useScrollCollapse(scrollRef);
 
   // Combine the independent sync hooks into one status for Profile: an error
   // in any takes priority, then in-flight, then the most recent successful
@@ -114,8 +141,11 @@ export default function App() {
     }
     for (const attack of attacks) {
       for (const snap of [...attack.snapshots].reverse()) {
+        // The history half is also where a retired entry would come back:
+        // it isn't in the library, so nothing else filters it, and it would
+        // be offered as a chip on every log from now on.
         const name = snap.medication?.name?.trim();
-        if (name && !seen.has(name)) {
+        if (name && !isRetired(name) && !seen.has(name)) {
           seen.set(name, snap.medication!.dose);
         }
       }
@@ -129,6 +159,19 @@ export default function App() {
     const ends = attacks.map((a) => a.end).filter((e): e is string => !!e);
     return ends.length ? ends.reduce((max, e) => (e > max ? e : max)) : null;
   }, [attacks]);
+
+  // The attack whose impact Today should ask about, if any.
+  //
+  // Read during render rather than on a tick, and deliberately not wrapped in
+  // useNowTick: that hook forces a re-render, and at this level it would
+  // re-render the entire tree every 60 seconds to watch a boundary 24 hours
+  // away. The states that matter already trigger a render of their own —
+  // ending an attack, answering the prompt, and returning to the foreground
+  // (the sync hooks fire on visibilitychange). The worst case is a prompt
+  // lingering a little past 24h on an app left open and untouched, which
+  // costs nothing: answering it is still optional, and the next interaction
+  // clears it.
+  const impactPending = attackAwaitingImpact(attacks, Date.now());
 
   // Order the pickers' options by how often they've been selected historically,
   // so the most-used surface at the top.
@@ -353,7 +396,10 @@ export default function App() {
     >
       <BrightnessOverlay brightness={brightness} attackMode={attackMode} onOpenProfile={() => setTab('profile')} />
 
-      <div className="h-full overflow-y-auto">
+      {/* The app's only scroll region (the document itself never scrolls —
+          see docs/viewport-architecture.md), so it's also the only place a
+          floating control can learn which way the user is going. */}
+      <div ref={scrollRef} className="h-full overflow-y-auto">
         <TopBar title={TAB_TITLES[tab]} />
         <div
           className="mx-auto max-w-2xl px-4 pt-5 sm:px-6"
@@ -387,10 +433,27 @@ export default function App() {
               <AttackFreeCard lastEnd={lastAttackEnd} onStart={() => setLogSheetOpen(true)} />
             )}
 
+            {/* Asked here rather than in the end-attack dialog, so closing an
+                attack down and judging what it cost you aren't the same tap.
+                Shown for 24h after the end, and displaced automatically by a
+                newer attack — see `attackAwaitingImpact`.
+
+                It renders in attack mode too. The rule is that Today keeps only
+                what changes your next hour, which this doesn't — but an attack
+                usually ends while attack mode is still on, so hiding it there
+                would mean the window nearly always elapses unseen, and one
+                question with four large targets is what that mode asks for. */}
+            {impactPending && impactDismissed !== impactPending.id && (
+              <ImpactPrompt
+                onAnswer={(impact) => setImpact(impactPending.id, impact)}
+                onDismiss={() => setImpactDismissed(impactPending.id)}
+              />
+            )}
+
             {/* Below the hero card: the month's two figures, and — only when
                 they apply — an overuse warning and the last dose taken. */}
             {(ongoingAttack || lastAttackEnd) && (
-              <TodaySummary attacks={attacks} ongoing={ongoingAttack} />
+              <TodaySummary attacks={attacks} ongoing={ongoingAttack} attackMode={attackMode} />
             )}
 
             {!ongoingAttack && !lastAttackEnd && (
@@ -411,7 +474,17 @@ export default function App() {
         {/* ── Logs tab ─────────────────────────────── */}
         {tab === 'history' && (
           <section className="space-y-4">
-            <HistoryView attacks={attacks} onAttackClick={(a) => setDetailAttack(a)} />
+            <HistoryView
+              attacks={attacks}
+              period={logsPeriod}
+              onPeriod={setLogsPeriod}
+              filters={logsFilters}
+              onFilters={setLogsFilters}
+              sort={logsSort}
+              onSort={setLogsSort}
+              onOpenFilters={() => setLogsFilterOpen(true)}
+              onAttackClick={(a) => setDetailAttack(a)}
+            />
           </section>
         )}
 
@@ -431,7 +504,7 @@ export default function App() {
         </div>
       </div>
 
-      <AttackModePill active={attackMode} onToggle={setAttackMode} />
+      <AttackModePill active={attackMode} onToggle={setAttackMode} collapsed={pillCollapsed} />
       {/* FAB opens Add-update when an attack is already ongoing — you can't
           start a second one until the current attack ends. */}
       <BottomNav
@@ -529,6 +602,27 @@ export default function App() {
         )}
       </Sheet>
 
+      {/* Logs filter & sort. Sheet's default bottom entry with its own close
+          X, not the Profile sub-pages' right-entry + back chevron: this
+          interrupts the list you're reading to adjust it, rather than being a
+          level you navigate into. */}
+      <Sheet
+        open={logsFilterOpen}
+        onClose={() => setLogsFilterOpen(false)}
+        title="Filter & sort"
+        flush
+        headerRight={<LogsFilterReset filters={logsFilters} onChange={setLogsFilters} />}
+      >
+        <LogsFilterPanel
+          attacks={attacks}
+          filters={logsFilters}
+          sort={logsSort}
+          onChange={setLogsFilters}
+          onSort={setLogsSort}
+          onClose={() => setLogsFilterOpen(false)}
+        />
+      </Sheet>
+
       {/* Medication editor — a bottom-entering modal on top of the Profile
           drill-down, with Sheet's own header and close X: it interrupts the
           list rather than being another level of it. */}
@@ -577,8 +671,10 @@ export default function App() {
           open={endConfirmOpen}
           minTime={ongoingAttack.snapshots[ongoingAttack.snapshots.length - 1].time}
           onCancel={() => setEndConfirmOpen(false)}
-          onConfirm={(endTime, impact) => {
-            endAttack(ongoingAttack.id, endTime, impact);
+          onConfirm={(endTime) => {
+            // No impact here any more — it's asked by ImpactPrompt on Today
+            // for 24h after the end, and stays answerable in AttackDetail.
+            endAttack(ongoingAttack.id, endTime);
             setEndConfirmOpen(false);
             // Ending can be reached from inside the update sheet, which is
             // showing an attack that no longer has anything to update.

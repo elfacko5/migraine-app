@@ -47,7 +47,7 @@ export function NotificationSettings({ value, onChange }: Props) {
                   onClick={() => onChange({ ...value, mode })}
                   className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
                     value.mode === mode
-                      ? 'bg-accent text-bg-base'
+                      ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/50'
                       : 'bg-bg-border text-text-primary hover:bg-bg-raised'
                   }`}
                 >
@@ -72,7 +72,7 @@ export function NotificationSettings({ value, onChange }: Props) {
                     onClick={() => onChange({ ...value, fixedIntervalMinutes: min })}
                     className={`flex-1 rounded-lg py-2 text-xs font-medium transition-colors ${
                       value.fixedIntervalMinutes === min
-                        ? 'bg-accent text-bg-base'
+                        ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/50'
                         : 'bg-bg-border text-text-primary hover:bg-bg-raised'
                     }`}
                   >

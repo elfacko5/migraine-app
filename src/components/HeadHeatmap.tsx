@@ -96,15 +96,11 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
 
         {/* Disabled regions */}
         {view.disabled.map((d, i) => (
-          <path key={`d-${i}`} d={d} fill={DISABLED_FILL} fillOpacity={0.5} pointerEvents="none"/>
+          <path key={`d-${i}`} d={d} fill={DISABLED_FILL} pointerEvents="none"/>
         ))}
 
-        {/* Feature details (lips) */}
-        {view.details.map((d, i) => (
-          <path key={`det-${i}`} d={d} clipPath={`url(#${clip})`}
-            fill="none" stroke="rgba(20,24,34,0.7)" strokeWidth={2.5}
-            strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
-        ))}
+        {/* The mouth isn't drawn here either — the two diagrams share geometry
+            and have to look like the same head. See AreaSeverityPicker. */}
 
         {/* Dividers */}
         {view.dividers.map((d, i) => (

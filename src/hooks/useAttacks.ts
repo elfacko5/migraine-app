@@ -196,6 +196,36 @@ export function useAttacks(userId: string | null) {
     if (updated && userId) trackPush(pushAttacks([updated], userId));
   }, [attacks, commit, userId, trackPush]);
 
+  // Sets impact on an attack that has already ended. `endAttack` can only take
+  // it at the moment of ending, which made the answer all-or-nothing: miss it
+  // in the end dialog and it was unanswerable forever.
+  //
+  // **This does not break the immutability rule.** What is never rewritten is
+  // `snapshots` — the record of what was logged at each moment. `impact` is
+  // attack-level metadata *about* the finished episode, and it was already
+  // being written after every snapshot existed. So this is not the parked
+  // "Edit details" feature; it touches nothing a reading holds.
+  //
+  // Serves the Today prompt, a late answer from AttackDetail, and — if an
+  // "It's over" notification action is ever added — an end that necessarily
+  // leaves impact for later.
+  const setImpact = useCallback((attackId: number, impact: Attack['impact']) => {
+    let updated: Attack | undefined;
+    commit(attacks.map((a) => {
+      if (a.id !== attackId) return a;
+      // Clearing back to unanswered has to *remove* the key, not write 0 — the
+      // same rule endAttack follows, and what sync.ts maps null back to. Done
+      // with a delete rather than rest-destructuring because the lint config
+      // doesn't accept an unused `_`-prefixed binding.
+      const next: Attack = { ...a, updatedAt: new Date().toISOString() };
+      if (impact === undefined) delete next.impact;
+      else next.impact = impact;
+      updated = next;
+      return updated;
+    }));
+    if (updated && userId) trackPush(pushAttacks([updated], userId));
+  }, [attacks, commit, userId, trackPush]);
+
   const deleteAttack = useCallback((attackId: number) => {
     cancelNotification(attackId);
     commit(attacks.filter((a) => a.id !== attackId));
@@ -204,5 +234,5 @@ export function useAttacks(userId: string | null) {
 
   const ongoingAttack = attacks.find((a) => a.end === null) ?? null;
 
-  return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, deleteAttack, syncStatus, lastSyncedAt };
+  return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, setImpact, deleteAttack, syncStatus, lastSyncedAt };
 }

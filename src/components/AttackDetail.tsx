@@ -5,16 +5,10 @@ import { attackMaxSeverity } from '../utils/stats';
 import { SeverityBreakdown } from './SeverityBreakdown';
 import { SnapshotRow } from './SnapshotRow';
 import { ConfirmDialog } from './ConfirmDialog';
-import { BinIcon } from './icons';
-
-// Reads back as a sentence rather than a score: "2" means nothing on its own,
-// and this line sits beside the date and duration.
-const IMPACT_LABELS: Record<0 | 1 | 2 | 3, string> = {
-  0: "Didn't stop you doing things",
-  1: 'Stopped you doing some things',
-  2: 'Stopped you doing a lot',
-  3: "Couldn't function",
-};
+import { BinIcon, SunriseIcon } from './icons';
+import { IMPACT_SHORT } from '../utils/impact';
+import { medIcon, attackFirstDoses } from '../utils/medDisplay';
+import { isRetired } from '../utils/retired';
 
 interface Props {
   attack: Attack;
@@ -37,6 +31,7 @@ interface Props {
 export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAttack }: Props) {
   const maxSev = attackMaxSeverity(attack);
   const start = attack.snapshots[0];
+  const firstDoses = attackFirstDoses(attack, isRetired, formatDuration);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // A per-row date is only worth showing once the attack actually touches
@@ -98,11 +93,43 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         {attack.triggers.length > 0 && (
           <p className="text-xs text-text-secondary mt-1">{attack.triggers.join(', ')}</p>
         )}
+        {/* **Read-only, and absent entirely when unanswered.** Impact is a
+            judgement about the episode made while it's fresh — the Today
+            prompt asks for 24h after the attack ends and then stops. Offering
+            it again here would invite an answer reconstructed days later,
+            which is the recall bias a prospective diary exists to avoid, and
+            a badly remembered level counts in the disability figures where an
+            absent one doesn't. So this states what was answered and offers no
+            way to change it; "not answered" shows nothing rather than an empty
+            control implying something is missing.
+            Labelled the way AttackCard labels it, since a bare degree ("a
+            lot") means nothing read cold. */}
         {attack.impact !== undefined && (
-          <p className="text-xs text-text-secondary mt-1">{IMPACT_LABELS[attack.impact]}</p>
+          <p className="text-xs text-text-secondary mt-1">
+            Impact: <span className="text-text-primary">{IMPACT_SHORT[attack.impact]}</span>
+          </p>
+        )}
+        {/* Time from onset to each drug's first dose — the half of the
+            medication record that the Logs card deliberately leaves out. The
+            timeline below says *when* each dose was taken in clock time; this
+            says how long into the attack that was, which is the figure §5 of
+            the dossier actually asks for and the one a clinician reads. */}
+        {firstDoses.length > 0 && (
+          <p className="text-xs text-text-secondary mt-1">
+            {firstDoses.map((m, i) => (
+              <span key={m.name}>
+                {i > 0 && ' · '}
+                <span aria-hidden="true">{medIcon(m.name, m.dose)}</span>{' '}
+                <span className="text-text-primary">{m.name}</span> {m.timing}
+              </span>
+            ))}
+          </p>
         )}
         {attack.wokeWithMigraine && (
-          <p className="text-xs text-accent-light mt-1">🌙 Woke up with this migraine</p>
+          <p className="text-xs text-accent-light mt-1 flex items-center gap-1.5">
+            <SunriseIcon className="h-4 w-4" />
+            Woke up with this migraine
+          </p>
         )}
       </div>
 
@@ -185,7 +212,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         open={confirmDelete}
         danger
         title="Delete this attack?"
-        message="This permanently removes the attack and all of its snapshots. This can't be undone."
+        message="This permanently removes the attack and all of its readings. This can't be undone."
         confirmLabel="Delete"
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => { onDelete(); onClose(); }}

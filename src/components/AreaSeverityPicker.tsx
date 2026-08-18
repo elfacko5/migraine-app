@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   VIEWS, type DiagramView,
   HEAD_FILL, LINE_COLOR, DIVIDER_COLOR, DISABLED_FILL, HOVER_FILL,
-  sevText, sevFill,
+  sevText, sevFill, sevStroke,
 } from './headDiagram';
 
 interface Props {
@@ -71,15 +71,24 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
                 type="button"
                 onClick={() => setActiveViewId(v.id)}
                 aria-pressed={isActive}
+                // Tint, not the solid accent fill — the app's rule is that
+                // solid means "press this to act" and this is a switch between
+                // two views of one step. No ring: the segment sits inside a
+                // bordered track that already draws the boundary, and a ring
+                // on top of it reads as a box in a box.
                 className={`flex h-7 items-center gap-1.5 rounded-md px-4 text-xs font-medium transition-colors ${
-                  isActive ? 'bg-accent text-bg-base' : 'text-text-secondary hover:text-text-primary'
+                  isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {v.label}
                 {n > 0 && (
+                  // The badge inverted against a solid segment before. On a
+                  // tint it has to carry its own contrast instead, so the
+                  // active one is a stronger tint of the same hue rather than
+                  // page-colour text on accent.
                   <span
                     className={`inline-flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full px-1 text-[0.6rem] font-bold tabular-nums ${
-                      isActive ? 'bg-bg-base/25 text-bg-base' : 'bg-accent text-bg-base'
+                      isActive ? 'bg-accent/30 text-accent-light' : 'bg-bg-border text-text-secondary'
                     }`}
                   >
                     {n}
@@ -175,42 +184,60 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           )
         )}
 
-        {/* Selected zone fills — tinted by each zone's own severity */}
-        {view.zones.map((z) =>
-          !(z.name in value) ? null : (
-            <path key={`f-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-              fill={sevFill(value[z.name])} pointerEvents="none"/>
-          )
-        )}
-
-        {/* Focused-area outline (the one the slider controls) */}
-        {view.zones.map((z) =>
-          z.name === active ? (
-            <path key={`a-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-              fill="none" stroke="#9bb9a1" strokeWidth={4} strokeLinejoin="round"
-              pointerEvents="none"/>
-          ) : null
-        )}
-
-        {/* Disabled regions (non-interactive) */}
+        {/* Disabled regions (non-interactive). Painted before the dividers:
+            filled after them it covered the dashed lines crossing the jaw, so
+            the front view lost the boundaries that say where the disabled
+            region actually starts. */}
         {view.disabled.map((d, i) => (
-          <path key={`d-${i}`} d={d} fill={DISABLED_FILL} fillOpacity={0.62}
-            pointerEvents="none"/>
+          <path key={`d-${i}`} d={d} fill={DISABLED_FILL} pointerEvents="none"/>
         ))}
 
-        {/* Feature details (lips) */}
-        {view.details.map((d, i) => (
-          <path key={`det-${i}`} d={d} clipPath={`url(#${clip})`}
-            fill="none" stroke="rgba(20,24,34,0.7)" strokeWidth={2.5}
-            strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
-        ))}
-
-        {/* Dashed section dividers */}
+        {/* Dividers sit **above the disabled fill and below the selected
+            fills**. Above, so the jaw's boundaries stay visible; below, so a
+            selected zone covers the dashes along its own edge and reads as
+            solid rather than as a translucent overlay on a grid. */}
         {view.dividers.map((d, i) => (
           <path key={`v-${i}`} d={d} clipPath={`url(#${clip})`}
             fill="none" stroke={DIVIDER_COLOR} strokeWidth={2.4}
             strokeDasharray="1 9" strokeLinecap="round" pointerEvents="none"/>
         ))}
+
+        {/* Selected zone fills — tinted by each zone's own severity.
+            **Each fill is also stroked in its own colour.** Adjacent zone
+            paths in the exported artwork don't meet exactly: there's a
+            sub-pixel gap along every shared edge. It was invisible while the
+            dashed dividers painted on top of the fills, and became a ragged
+            dotted seam between two selected zones the moment they moved
+            underneath — the divider showing through the crack. A 1px stroke of
+            the fill colour closes it, and costs nothing where there's no
+            neighbour, since the head clip trims the outer edge anyway. */}
+        {view.zones.map((z) =>
+          !(z.name in value) ? null : (
+            <path key={`f-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
+              fill={sevFill(value[z.name])} stroke={sevFill(value[z.name])}
+              strokeWidth={1} pointerEvents="none"/>
+          )
+        )}
+
+        {/* Outline on the zone the slider controls. Its colour is a darker
+            shade of that zone's *own* severity (sevStroke), not the accent —
+            a green ring on an amber fill made the focused zone carry two
+            unrelated colour signals, and the ring won. */}
+        {view.zones.map((z) =>
+          z.name === active && z.name in value ? (
+            <path key={`a-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
+              fill="none" stroke={sevStroke(value[z.name])} strokeWidth={4}
+              strokeLinejoin="round" pointerEvents="none"/>
+          ) : null
+        )}
+
+
+        {/* The mouth is no longer drawn. It was the only facial feature in a
+            diagram that is otherwise a set of selectable regions, so it read
+            as decoration on a control — and it sat inside the disabled jaw,
+            drawing attention to the one part of the head you can't tap. The
+            path data stays in `details` for the heatmap and in case it's ever
+            wanted back. */}
 
         {/* Silhouette outline */}
         {view.outline.map((d, i) => (
@@ -250,8 +277,8 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           return (
             <g key={`b-${z.name}`} pointerEvents="none">
               <circle cx={cx} cy={cy} r={isActive ? 18 : 16}
-                fill="#1b1a18" stroke={isActive ? '#9bb9a1' : sevFill(s)}
-                strokeWidth={isActive ? 3 : 2.5}/>
+                fill="#1b1a18" stroke={sevFill(s)}
+                strokeWidth={isActive ? 3.5 : 2.5}/>
               <text x={cx} y={cy + 6} textAnchor="middle"
                 fontSize={18} fontFamily="Lexend, system-ui, sans-serif" fontWeight="700"
                 fill="#e4dfd6">{s}</text>

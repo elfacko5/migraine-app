@@ -9,6 +9,7 @@ import { MedicationInput } from './MedicationInput';
 import { ChipSelector } from './ChipSelector';
 import { NotificationSettings } from './NotificationSettings';
 import { TextScaleControl } from './TextScaleControl';
+import { SunriseIcon } from './icons';
 
 interface Props {
   triggers: string[];
@@ -84,8 +85,27 @@ const END_OPTIONS: { value: EndMode; label: string }[] = [
   { value: 'manual',   label: 'Other' },
 ];
 
+// A *selected* preset, not an action — so it takes the tint-and-ring treatment
+// `ChipSelector`, `MedicationInput` and `EndAttackDialog`'s impact pills all
+// use, never `btn-primary`. Solid accent is the app's "this is the thing to
+// press to move forward" signal; on a chosen option it says the same thing
+// about a state, which is why a screen of these read as a wall of buttons
+// competing with the actual Next. It also made the *same* dialog show two
+// styles for one idea: End-attack's time presets were solid while its impact
+// pills were tinted.
+// **Both states are ring-based, and must stay that way.** `ring` is a
+// box-shadow and takes no layout space; `btn-secondary`'s 1px `border` does.
+// Mixing them made an unselected preset 2px taller than a selected one, which
+// is invisible in a flex row (siblings stretch to the tallest) and obvious on
+// a preset that sits alone on its own line — "Woke up with this migraine"
+// grew and shrank as you toggled it. Any new state added here needs a ring,
+// not a border.
 const presetCls = (active: boolean) =>
-  `rounded-lg px-4 py-2 text-sm font-medium transition-colors ${active ? 'btn-primary' : 'btn-secondary'}`;
+  `rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${
+    active
+      ? 'bg-accent/20 text-accent-light ring-accent/50'
+      : 'bg-bg-raised text-text-primary ring-bg-border hover:bg-bg-border'
+  }`;
 
 const STEP_LABELS = [
   'When',
@@ -489,7 +509,13 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                   aria-pressed={form.wokeWithMigraine}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${presetCls(form.wokeWithMigraine)}`}
                 >
-                  🌙 Woke up with this migraine
+                  {/* Drawn icon in currentColor, not 🌙 or 🌅 — see
+                      SunriseIcon. It matters more here than on the card: this
+                      is a toggle, so the glyph inherits the pressed state's
+                      text colour and an emoji would have stayed the same
+                      colour in both states. */}
+                  <SunriseIcon className="h-4 w-4" />
+                  Woke up with this migraine
                 </button>
               </div>
 

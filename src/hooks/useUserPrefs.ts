@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { NotificationConfig, SyncStatus } from '../types';
 import { DEFAULT_NOTIFICATION_CONFIG } from '../utils/notifications';
 import { pullUserPrefs, pushUserPrefs } from '../lib/sync';
+import { pruneRetired } from '../utils/retired';
 
 export const DEFAULT_TRIGGERS = [
   'Stress', 'Poor sleep', 'Alcohol', 'Caffeine', 'Bright light',
@@ -48,11 +49,11 @@ export const PAIN_AREAS = [
  * Matched case-insensitively on the trimmed string. Add to this list rather
  * than editing stored data by hand; it is the only mechanism there is.
  */
-const RETIRED_ENTRIES = ['a beer and dry', 'hjgkfdgkdfjgkdfg'];
-
-function prune(list: string[]): string[] {
-  return list.filter((item) => !RETIRED_ENTRIES.includes(item.trim().toLowerCase()));
-}
+// The retired-entry list moved to utils/retired.ts, because the same names
+// have to be kept out of the Insights tallies — which are built from attack
+// history, not from these lists — and a util can be imported by stats.ts
+// without a hook coming with it.
+const prune = pruneRetired;
 
 function loadList(key: string, defaults: string[]): string[] {
   try {

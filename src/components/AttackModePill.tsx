@@ -1,23 +1,31 @@
+import { FlareUpIcon } from './icons';
+
 interface Props {
   active: boolean;
   onToggle: (on: boolean) => void;
+  /** Scrolling down — shed the label and leave just the icon. */
+  collapsed?: boolean;
 }
 
-// Not the crescent moon — that glyph already means "woke up with this
-// migraine" on the attack header, and one symbol can't carry two unrelated
-// meanings in the same app. A half-filled circle is the conventional
-// contrast/dim mark, and drawn as a stroke SVG in currentColor it also stops
-// the control being the brightest thing on a screen meant to be easy on the
-// eyes — which a full-colour emoji was.
-function DimIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
+// The glyph is the supplied flare-up mark (concentric rings radiating from a
+// centre), inlined in icons.tsx like every other icon here rather than drawn
+// in this file. It replaces a half-filled circle, the conventional dim/
+// contrast mark.
+//
+// **The old reason to avoid a crescent moon here has expired**, and is
+// recorded only so nobody reinstates the rule from memory: the moon used to
+// mean "woke up with this migraine", so it couldn't also mean attack mode.
+// That flag is now a drawn sunrise (SunriseIcon), which is the better
+// metaphor for waking anyway, so the moon is unused. The live constraint is
+// just the general one — one symbol, one meaning — and this mark is used
+// nowhere else.
+//
+// The part of the old reasoning that survives is the colour. It's drawn in
+// `currentColor` and inherits the pill's `text-text-secondary`, so the
+// control isn't the brightest thing on a screen designed to be easy on the
+// eyes — which a full-colour emoji was, and which a filled icon could easily
+// become if it were ever given a literal fill.
+//
 // Sits at z-45, above the dim scrim (z-35) rather than under it — this is the
 // control that turns attack mode *off*, so dimming it along with the content
 // would be the one thing the scrim must not do.
@@ -27,7 +35,13 @@ function DimIcon() {
 // the thing you reach for *while* an attack is happening, which is exactly
 // when hunting through a settings page is hardest. One tap, always in the
 // same place, reversible by tapping again.
-export function AttackModePill({ active, onToggle }: Props) {
+export function AttackModePill({ active, onToggle, collapsed = false }: Props) {
+  // Never collapses while attack mode is *on*. This is then the control that
+  // turns it off, reached mid-attack by someone who is not reading carefully,
+  // and a bare half-circle glyph doesn't say what it does. It's the same
+  // reason the pill sits above the dim scrim instead of under it.
+  const compact = collapsed && !active;
+
   return (
     <button
       type="button"
@@ -42,14 +56,37 @@ export function AttackModePill({ active, onToggle }: Props) {
         fontSize: 'min(1rem, 17px)',
         minHeight: 'min(3rem, 52px)',
       }}
-      className={`absolute right-4 z-[45] flex items-center gap-2 rounded-full px-3.5 font-medium ring-1 transition-colors ${
+      className={`absolute right-4 z-[45] flex items-center rounded-full px-3.5 font-medium ring-1 transition-[color,background-color,box-shadow] ${
         active
           ? 'bg-accent/20 text-accent-light ring-accent/40'
           : 'bg-bg-raised text-text-secondary ring-bg-border hover:text-text-primary'
       }`}
     >
-      <DimIcon />
-      {active ? 'Attack mode on' : 'Attack mode'}
+      <FlareUpIcon />
+      {/* The label collapses by width rather than unmounting, so the pill
+          shrinks toward its icon instead of the text vanishing and leaving a
+          wide empty pill behind. The gap before it is the span's own padding
+          rather than a flex `gap`, which would survive the collapse as 8px of
+          dead space beside the icon.
+
+          **The padding has to be dropped explicitly, not left to `max-w-0`.**
+          A used border-box width is floored at its own padding + border, so
+          `max-width: 0` on a `ps-2` span still measures 8px — which is what
+          left the collapsed pill 56×48 with 22px of air on the right of the
+          icon against 14px on its left. It's animated with the width so the
+          two ease together instead of the padding snapping shut first.
+
+          Both attack mode and prefers-reduced-motion already zero every
+          transition-duration in index.css, so where movement is unwelcome
+          this is an instant swap and needs no opt-out of its own. */}
+      <span
+        aria-hidden={compact}
+        className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity,padding] duration-200 ${
+          compact ? 'max-w-0 ps-0 opacity-0' : 'max-w-[12rem] ps-2 opacity-100'
+        }`}
+      >
+        {active ? 'Attack mode on' : 'Attack mode'}
+      </span>
     </button>
   );
 }

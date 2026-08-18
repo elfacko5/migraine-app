@@ -1,12 +1,9 @@
 import type { Snapshot } from '../types';
 import { formatTime } from '../utils/format';
 import { medIcon } from '../utils/medDisplay';
-
-function sevColor(s: number): string {
-  if (s <= 3) return 'text-severity-low';
-  if (s <= 8) return 'text-severity-mid';
-  return 'text-severity-high';
-}
+// Was a local copy of the ramp with `<= 8` as the middle bound, which put a
+// severity 8 in amber here and terracotta everywhere else. Shared now.
+import { sevTextClass as sevColor } from '../utils/severity';
 
 // A labelled block inside a reading. Everything after the areas line is
 // "what else was true at this moment", and each kind of thing is named

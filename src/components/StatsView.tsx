@@ -14,6 +14,7 @@ import { HeadHeatmap } from './HeadHeatmap';
 import { MigraineDaysChart } from './MigraineDaysChart';
 import { MedicationInsights } from './MedicationInsights';
 import { InsightSection } from './InsightSection';
+import { chipClass } from '../utils/chipStyles';
 
 type Period = 'all' | '7d' | '30d' | '3m';
 
@@ -83,7 +84,12 @@ function FreqSection({ title, sub, data, color, note }: { title: string; sub: st
 }
 
 export function StatsView({ attacks }: Props) {
-  const [period, setPeriod] = useState<Period>('7d');
+  // 30 days, not 7. Every clinical figure on this page is monthly — the
+  // overuse thresholds, the 15-day episodic/chronic line — and a 7-day window
+  // in a quiet week shows an empty page to someone with a perfectly normal
+  // number of attacks. The Logs list still opens on 7 days: "what happened
+  // recently" is a different question from "what does my month look like".
+  const [period, setPeriod] = useState<Period>('30d');
 
   const filtered = useMemo(() => {
     if (period === 'all') return attacks;
@@ -145,9 +151,7 @@ export function StatsView({ attacks }: Props) {
             type="button"
             onClick={() => setPeriod(value)}
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-              period === value
-                ? 'bg-accent text-bg-base'
-                : 'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-border hover:text-text-primary'
+              chipClass(period === value)
             }`}
           >
             {label}

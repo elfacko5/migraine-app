@@ -72,9 +72,21 @@ export function ConfirmDialog({
             ref={confirmRef}
             type="button"
             onClick={onConfirm}
+            // The destructive fill takes **dark** text, not `text-primary`.
+            // Both `--color-severity-high` (#c68880) and `--color-text-primary`
+            // (#cdc7bb) are light values — the palette pulls both ends of its
+            // range inward on purpose — so putting one on the other measured
+            // **1.7:1**, far under the 4.5:1 floor, on the label of the one
+            // button in the app that does something irreversible. `bg-base`
+            // on the same fill measures 6.0:1.
+            //
+            // It also matches `btn-primary`, which is `--color-accent` with
+            // `--color-bg-base` text: a saturated-enough fill in this palette
+            // always carries dark text. A light-on-light pairing here was the
+            // odd one out, not the house style.
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
               danger
-                ? 'bg-severity-high text-text-primary hover:opacity-90'
+                ? 'bg-severity-high text-bg-base hover:opacity-90'
                 : 'btn-primary'
             }`}
           >

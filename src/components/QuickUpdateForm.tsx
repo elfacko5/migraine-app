@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Attack, Snapshot } from '../types';
 import type { TextScale } from '../hooks/useSettings';
 import type { VoiceDraft } from '../utils/voiceParse';
-import { isoToLocalInput, localInputToIso, formatTime } from '../utils/format';
+import { isoToLocalInput, localInputToIso, formatTime, formatDatetime } from '../utils/format';
 import { maxSeverity } from '../utils/stats';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { ChipSelector } from './ChipSelector';
@@ -67,6 +67,16 @@ const STEP_SUBHEADS = [
 // what was logged before.
 function lastEntryCaption(step: number, prev: Snapshot): string | null {
   const at = formatTime(prev.time);
+  if (step === 1) {
+    // **The one caption that carries its date when the day differs.** Every
+    // other step shows a clock time as a secondary detail attached to some
+    // other fact; here the time *is* the fact, and it's the floor the picker
+    // enforces. "Last reading was at 20:51" on an attack that ran overnight
+    // would be read as this evening and quietly invite an impossible choice
+    // the picker then refuses without saying why.
+    const sameDay = new Date(prev.time).toDateString() === new Date().toDateString();
+    return `Last reading was at ${sameDay ? at : formatDatetime(prev.time)} — an update can't be earlier than that`;
+  }
   if (step === 2) {
     const areaCount = Object.keys(prev.areas).length;
     if (areaCount === 0) return null;

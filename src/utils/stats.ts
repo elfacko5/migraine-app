@@ -1,4 +1,5 @@
 import type { Attack, Snapshot } from '../types';
+import { isRetired } from './retired';
 
 export function maxSeverity(snapshot: Snapshot): number {
   const vals = Object.values(snapshot.areas);
@@ -125,6 +126,11 @@ export function areaFrequency(attacks: Attack[]): { area: string; count: number 
 
 export interface Freq { name: string; count: number }
 
+// Retired entries are skipped in every tally below, and in the two medication
+// figures further down. These are aggregates — statements about a pattern —
+// and a retired entry is by definition not part of one. The snapshots keep
+// it, so AttackDetail's timeline still shows what was logged.
+
 function tallyToFreq(tally: Record<string, number>): Freq[] {
   return Object.entries(tally)
     .map(([name, count]) => ({ name, count }))
@@ -133,7 +139,10 @@ function tallyToFreq(tally: Record<string, number>): Freq[] {
 
 export function triggerFrequency(attacks: Attack[]): Freq[] {
   const tally: Record<string, number> = {};
-  for (const a of attacks) for (const t of new Set(a.triggers)) tally[t] = (tally[t] ?? 0) + 1;
+  for (const a of attacks) for (const t of new Set(a.triggers)) {
+    if (isRetired(t)) continue;
+    tally[t] = (tally[t] ?? 0) + 1;
+  }
   return tallyToFreq(tally);
 }
 
@@ -141,7 +150,7 @@ export function symptomFrequency(attacks: Attack[]): Freq[] {
   const tally: Record<string, number> = {};
   for (const a of attacks) {
     const seen = new Set<string>();
-    for (const s of a.snapshots) for (const x of s.symptoms) seen.add(x);
+    for (const s of a.snapshots) for (const x of s.symptoms) if (!isRetired(x)) seen.add(x);
     for (const x of seen) tally[x] = (tally[x] ?? 0) + 1;
   }
   return tallyToFreq(tally);
@@ -151,7 +160,7 @@ export function reliefFrequency(attacks: Attack[]): Freq[] {
   const tally: Record<string, number> = {};
   for (const a of attacks) {
     const seen = new Set<string>();
-    for (const s of a.snapshots) for (const x of s.reliefs ?? []) seen.add(x);
+    for (const s of a.snapshots) for (const x of s.reliefs ?? []) if (!isRetired(x)) seen.add(x);
     for (const x of seen) tally[x] = (tally[x] ?? 0) + 1;
   }
   return tallyToFreq(tally);
@@ -161,7 +170,10 @@ export function medicationFrequency(attacks: Attack[]): Freq[] {
   const tally: Record<string, number> = {};
   for (const a of attacks) {
     const seen = new Set<string>();
-    for (const s of a.snapshots) if (s.medication?.name.trim()) seen.add(s.medication.name.trim());
+    for (const s of a.snapshots) {
+      const name = s.medication?.name.trim();
+      if (name && !isRetired(name)) seen.add(name);
+    }
     for (const x of seen) tally[x] = (tally[x] ?? 0) + 1;
   }
   return tallyToFreq(tally);
@@ -313,7 +325,7 @@ export function medicationDaysByMonth(attacks: Attack[], now: number = Date.now(
   for (const a of attacks) {
     for (const snap of a.snapshots) {
       const name = snap.medication?.name?.trim();
-      if (!name) continue;
+      if (!name || isRetired(name)) continue;
       const d = new Date(snap.time);
       const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const month = day.slice(0, 7);
@@ -366,7 +378,7 @@ export function medicationResponse(attacks: Attack[]): MedResponse[] {
     const snaps = a.snapshots;
     for (let i = 0; i < snaps.length; i++) {
       const name = snaps[i].medication?.name?.trim();
-      if (!name) continue;
+      if (!name || isRetired(name)) continue;
       if (!acc.has(name)) acc.set(name, { changes: [], unmeasured: 0, helped: 0 });
       const entry = acc.get(name)!;
 

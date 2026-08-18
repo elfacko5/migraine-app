@@ -63,12 +63,24 @@ export function HomeCard({ image, imageAnchor, label, headline, detail, onOpenDe
           running it over the artwork costs nothing, since the buttons already
           do the same. It overflows the width-limited block deliberately. */}
       <p className="mt-1 whitespace-nowrap text-2xl font-bold leading-tight text-text-primary">{headline}</p>
-      <p className="mt-4 text-base text-text-secondary">{detail}</p>
+      {/* Also never wrapped, for the same reason as the headline and measured
+          the same way: "Since Tue 18 Aug, 20:18" needs more than the 188.8px
+          the 64% block allows, so it broke after the comma and made a date and
+          a time read as two facts stacked on top of each other. It's a single
+          value and belongs on a single line. Like the headline it overflows
+          the width-limited block onto the artwork, which the gradient is
+          already built to carry. */}
+      <p className="mt-4 whitespace-nowrap text-base text-text-secondary">{detail}</p>
     </>
   );
 
+  // No border. Nothing else on Today has one — the summary tiles, the impact
+  // prompt and the overuse warning all separate from the page by sitting a
+  // tone lighter than it — so an outline here made the hero read as a
+  // different kind of object from the cards under it. Same reasoning that took
+  // the border off SnapshotRow.
   return (
-    <div className="relative isolate overflow-hidden rounded-2xl border border-bg-border bg-bg-surface">
+    <div className="relative isolate overflow-hidden rounded-2xl bg-bg-surface">
       <img
         src={image}
         alt=""
