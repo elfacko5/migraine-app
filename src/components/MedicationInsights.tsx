@@ -4,6 +4,7 @@ import {
   MOH_DAYS_TRIPTAN, MOH_DAYS_SIMPLE,
 } from '../utils/stats';
 import { medIcon } from '../utils/medDisplay';
+import { InsightSection } from './InsightSection';
 
 // Two questions a clinician asks about medication, and neither of them is
 // "how many doses". How many *days a month* is it being taken — the unit
@@ -18,9 +19,20 @@ export function MedicationInsights({ attacks }: Props) {
   const byName = new Map(response.map((r) => [r.name, r]));
 
   return (
-    <section className="space-y-2">
-      <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">Medication this month</h3>
-
+    <InsightSection
+      title="Medication this month"
+      // Reference points, not a verdict. The app counts days and says what the
+      // guideline numbers are; deciding what they mean is a conversation with
+      // a doctor, and the wording must not pre-empt it.
+      note={
+        <>
+          Days you logged taking each medication this month. Guidelines put medication-overuse headache at
+          around {MOH_DAYS_TRIPTAN} days a month for triptans and {MOH_DAYS_SIMPLE} for simple painkillers,
+          sustained over three months — worth raising with your doctor rather than acting on alone.
+          Doses taken without logging an attack aren't counted.
+        </>
+      }
+    >
       <div className="space-y-3 rounded-xl bg-bg-raised px-3 py-3">
         {days.map((med) => {
           const r = byName.get(med.name);
@@ -53,15 +65,6 @@ export function MedicationInsights({ attacks }: Props) {
         })}
       </div>
 
-      {/* Reference points, not a verdict. The app counts days and says what
-          the guideline numbers are; deciding what they mean is a
-          conversation with a doctor, and the wording must not pre-empt it. */}
-      <p className="text-xs text-text-secondary">
-        Days you logged taking each medication this month. Guidelines put medication-overuse headache at
-        around {MOH_DAYS_TRIPTAN} days a month for triptans and {MOH_DAYS_SIMPLE} for simple painkillers,
-        sustained over three months — worth raising with your doctor rather than acting on alone.
-        Doses taken without logging an attack aren't counted.
-      </p>
-    </section>
+    </InsightSection>
   );
 }

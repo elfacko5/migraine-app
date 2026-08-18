@@ -1,5 +1,6 @@
 import type { Attack } from '../types';
 import { migraineDaysByMonth, CHRONIC_DAYS_THRESHOLD } from '../utils/stats';
+import { InsightSection } from './InsightSection';
 
 // Days per month, not attacks per month. Every clinical threshold, trial
 // endpoint and treatment decision is stated in days — an attack running past
@@ -18,9 +19,16 @@ export function MigraineDaysChart({ attacks }: Props) {
   if (!anyData) return null;
 
   return (
-    <section className="space-y-2">
-      <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">Migraine days per month</h3>
-
+    <InsightSection
+      title="Migraine days per month"
+      note={
+        <>
+          Days with a logged attack — an attack running past midnight counts as two. The line marks 15 days,
+          where guidelines separate episodic from chronic migraine. This counts migraine days only; headaches
+          you didn't log aren't included. The current month is still counting.
+        </>
+      }
+    >
       <div className="space-y-1.5 rounded-xl bg-bg-raised px-3 py-3">
         {months.map((m) => {
           const pct = Math.min(100, (m.days / BAR_MAX) * 100);
@@ -50,12 +58,6 @@ export function MigraineDaysChart({ attacks }: Props) {
         })}
       </div>
 
-      {/* Named for what it counts, and what it doesn't. */}
-      <p className="text-xs text-text-secondary">
-        Days with a logged attack — an attack running past midnight counts as two. The line marks 15 days,
-        where guidelines separate episodic from chronic migraine. This counts migraine days only; headaches
-        you didn't log aren't included. The current month is still counting.
-      </p>
-    </section>
+    </InsightSection>
   );
 }

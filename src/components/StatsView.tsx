@@ -13,6 +13,7 @@ import {
 import { HeadHeatmap } from './HeadHeatmap';
 import { MigraineDaysChart } from './MigraineDaysChart';
 import { MedicationInsights } from './MedicationInsights';
+import { InsightSection } from './InsightSection';
 
 type Period = 'all' | '7d' | '30d' | '3m';
 
@@ -56,7 +57,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 function FreqBars({ data, color }: { data: Freq[]; color: string }) {
   const max = data[0]?.count ?? 1;
   return (
-    <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 p-4 space-y-2.5">
+    <div className="rounded-xl bg-bg-raised p-4 space-y-2.5">
       {data.slice(0, 8).map((f) => (
         <div key={f.name} className="space-y-1">
           <div className="flex items-center justify-between text-xs">
@@ -75,11 +76,9 @@ function FreqBars({ data, color }: { data: Freq[]; color: string }) {
 function FreqSection({ title, sub, data, color, note }: { title: string; sub: string; data: Freq[]; color: string; note?: string }) {
   if (data.length === 0) return null;
   return (
-    <section className="space-y-2">
-      <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{title} · {sub}</h3>
+    <InsightSection title={`${title} · ${sub}`} note={note}>
       <FreqBars data={data} color={color} />
-      {note && <p className="text-xs text-text-secondary">{note}</p>}
-    </section>
+    </InsightSection>
   );
 }
 
@@ -181,11 +180,8 @@ export function StatsView({ attacks }: Props) {
 
           {/* Severity trend */}
           {stats.severityTrend.length >= 2 && (
-            <section className="space-y-2">
-              <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">
-                Severity trend · {PERIOD_SUB[period]}
-              </h3>
-              <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 p-3">
+            <InsightSection title={`Severity trend · ${PERIOD_SUB[period]}`}>
+              <div className="rounded-xl bg-bg-raised p-3">
                 <ResponsiveContainer width="100%" height={140}>
                   <LineChart data={stats.severityTrend} margin={{ top: 4, right: 8, bottom: 4, left: -20 }}>
                     <XAxis dataKey="date" tick={{ fill: '#a39d92', fontSize: '0.625rem' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
@@ -199,7 +195,7 @@ export function StatsView({ attacks }: Props) {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </section>
+            </InsightSection>
           )}
 
           {/* Days per month sits outside the period filter above: "days per
@@ -212,12 +208,11 @@ export function StatsView({ attacks }: Props) {
 
           {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
-            <section className="space-y-2">
-              <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">Pain area frequency</h3>
-              <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 p-4">
+            <InsightSection title="Pain area frequency">
+              <div className="rounded-xl bg-bg-raised p-4">
                 <HeadHeatmap data={stats.areas.map((a) => ({ area: a.area, value: a.count }))} label="attacks" />
               </div>
-            </section>
+            </InsightSection>
           )}
 
           {/* Trigger / symptom / relief / medication frequency */}
