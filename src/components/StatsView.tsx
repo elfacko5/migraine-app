@@ -41,9 +41,13 @@ interface Props { attacks: Attack[] }
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 p-4">
-      <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">{label}</p>
+      {/* 12px, below the 14px caption floor the rest of the app keeps. These
+          are labels on a number that is itself 28px — the figure carries the
+          card, the label only has to name it — and at 14px a two-word label
+          wrapped to two lines and made every tile taller. */}
+      <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">{label}</p>
       <p className="mt-1 text-2xl font-bold text-text-primary leading-none">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-text-secondary">{sub}</p>}
+      {sub && <p className="mt-0.5 text-[0.75rem] text-text-secondary">{sub}</p>}
     </div>
   );
 }
@@ -158,8 +162,11 @@ export function StatsView({ attacks }: Props) {
         <>
           {/* Summary cards */}
           <div className="grid grid-cols-2 gap-3">
-            <StatCard label="Attacks" value={stats.count} sub={PERIOD_SUB[period]} />
-            <StatCard label="Avg max severity" value={stats.avgSeverity} sub={PERIOD_SUB[period]} />
+            {/* No period sub-label: the selected pill above already says it,
+                and repeating it on every card cost a line each. The cards
+                below keep theirs, which say what the number *is*. */}
+            <StatCard label="Attacks" value={stats.count} />
+            <StatCard label="Avg max severity" value={stats.avgSeverity} />
             <StatCard label="Attack streak" value={`${stats.attackStreak}d`} sub="consecutive days" />
             <StatCard label="Pain-free streak" value={`${stats.painFreeStreak}d`} sub="consecutive days" />
             {stats.timeToPeak !== null && (
