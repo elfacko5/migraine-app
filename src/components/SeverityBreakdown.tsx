@@ -70,7 +70,7 @@ export function SeverityBreakdown({ attack }: Props) {
     // px-4, because the name column is the one that pays for the padding.
     <div className="space-y-2 rounded-xl bg-bg-raised px-3 py-3">
       <div className="grid grid-cols-[1fr_96px_2rem_2rem] items-center gap-2">
-        <span />
+        <span className="text-[0.6875rem] text-text-secondary">Pain areas</span>
         <span />
         <span className="text-center text-[0.6875rem] text-text-secondary">peak</span>
         <span className="text-center text-[0.6875rem] text-text-secondary">now</span>
@@ -140,9 +140,23 @@ function Sparkline({ row, snapshotCount }: { row: Row; snapshotCount: number }) 
           strokeLinecap="round"
         />
       ))}
-      {row.points.map((p) => (
-        <circle key={p.i} cx={p.x} cy={p.y} r={p.i === last.i ? 2.5 : 1.6} fill={sevFill(p.v)} />
-      ))}
+      {/* One reading and nothing to join it to: a lone dot floating between
+          two dashed runs reads as a smudge on the screen, so it's drawn as a
+          short rule at its own level instead — the shape says "measured once,
+          here" rather than "something went wrong". */}
+      {row.points.length === 1 ? (
+        <path
+          d={`M${row.points[0].x - 5},${row.points[0].y} L${row.points[0].x + 5},${row.points[0].y}`}
+          stroke={sevFill(row.points[0].v)}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          fill="none"
+        />
+      ) : (
+        // Every reading is one reading: the last one is not a bigger event
+        // than the rest, so it doesn't get a bigger dot.
+        row.points.map((p) => <circle key={p.i} cx={p.x} cy={p.y} r={2} fill={sevFill(p.v)} />)
+      )}
     </svg>
   );
 }
