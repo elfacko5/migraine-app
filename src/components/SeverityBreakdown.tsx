@@ -1,5 +1,4 @@
 import type { Attack } from '../types';
-import { formatTime } from '../utils/format';
 import { sevFill } from './headDiagram';
 
 // One row per pain area: a sparkline for shape, then peak and now for
@@ -31,8 +30,6 @@ interface Row {
   peak: number;
   /** Value at the most recent reading, or null if it wasn't recorded there. */
   now: number | null;
-  /** Time of the last reading that did record it — shown when `now` is null. */
-  lastSeen: string;
   points: { x: number; y: number; i: number; v: number }[];
 }
 
@@ -61,7 +58,6 @@ export function SeverityBreakdown({ attack }: Props) {
       // "it stopped" or "I only logged the worst one". Rendering it as 0
       // would assert something nobody said.
       now: last.i === snaps.length - 1 ? last.v : null,
-      lastSeen: snaps[last.i].time,
       points,
     };
   });
@@ -70,36 +66,34 @@ export function SeverityBreakdown({ attack }: Props) {
   rows.sort((a, b) => b.peak - a.peak || (b.now ?? -1) - (a.now ?? -1) || a.area.localeCompare(b.area));
 
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-[1fr_96px_2.25rem_2.25rem] items-center gap-2">
+    // Sits on its own surface rather than floating on the sheet — px-3 not
+    // px-4, because the name column is the one that pays for the padding.
+    <div className="space-y-2 rounded-xl bg-bg-raised px-3 py-3">
+      <div className="grid grid-cols-[1fr_96px_2rem_2rem] items-center gap-2">
         <span />
         <span />
-        <span className="text-center text-xs text-text-secondary">peak</span>
-        <span className="text-center text-xs text-text-secondary">now</span>
+        <span className="text-center text-[0.6875rem] text-text-secondary">peak</span>
+        <span className="text-center text-[0.6875rem] text-text-secondary">now</span>
       </div>
 
       {rows.map((row) => {
         const peak = sevClasses(row.peak);
         const now = row.now === null ? null : sevClasses(row.now);
         return (
-          <div key={row.area} className="grid grid-cols-[1fr_96px_2.25rem_2.25rem] items-center gap-2">
-            {/* Two lines rather than one: at 375px "Nape right · last 11:28"
-                truncated the clock time away, which is the one thing the note
-                is there to say. */}
-            <span className="min-w-0">
-              <span className="block truncate text-sm text-text-primary">{row.area}</span>
-              {row.now === null && (
-                <span className="block truncate text-xs text-text-secondary">last {formatTime(row.lastSeen)}</span>
-              )}
-            </span>
+          <div key={row.area} className="grid grid-cols-[1fr_96px_2rem_2rem] items-center gap-2">
+            {/* Just the name. A "last seen 6:28" note was here and earned
+                neither the width nor the attention: the dashed tail and the
+                empty now cell already say it isn't current, and the timeline
+                below gives the exact time. */}
+            <span className="min-w-0 truncate text-xs text-text-primary">{row.area}</span>
 
             <Sparkline row={row} snapshotCount={snaps.length} />
 
-            <span className={`rounded-md py-1 text-center text-sm ${peak.bg} ${peak.text}`}>{row.peak}</span>
+            <span className={`rounded-md py-1 text-center text-xs ${peak.bg} ${peak.text}`}>{row.peak}</span>
             {now ? (
-              <span className={`rounded-md py-1 text-center text-sm ${now.bg} ${now.text}`}>{row.now}</span>
+              <span className={`rounded-md py-1 text-center text-xs ${now.bg} ${now.text}`}>{row.now}</span>
             ) : (
-              <span className="text-center text-sm text-text-secondary" title="Not recorded in the latest update">·</span>
+              <span className="text-center text-xs text-text-secondary" title="Not recorded in the latest update">·</span>
             )}
           </div>
         );
@@ -114,7 +108,7 @@ export function SeverityBreakdown({ attack }: Props) {
 // the old chart drew (`connectNulls`), and it read as a flat severity that
 // nobody had actually reported.
 function Sparkline({ row, snapshotCount }: { row: Row; snapshotCount: number }) {
-  const segments: { d: string; gap: boolean }[] = [];
+  const segments: { d: string; gap: boolean; color?: string }[] = [];
   const first = row.points[0];
   const last = row.points[row.points.length - 1];
 
@@ -122,7 +116,11 @@ function Sparkline({ row, snapshotCount }: { row: Row; snapshotCount: number }) 
   for (let k = 0; k < row.points.length - 1; k++) {
     const a = row.points[k];
     const b = row.points[k + 1];
-    segments.push({ d: `M${a.x},${a.y} L${b.x},${b.y}`, gap: b.i !== a.i + 1 });
+    // A drawn segment takes the colour of the reading it arrives at, so it
+    // runs into its dot in the same colour. Dashed spans stay neutral —
+    // they represent no reading, and colouring them would imply a severity.
+    const gap = b.i !== a.i + 1;
+    segments.push({ d: `M${a.x},${a.y} L${b.x},${b.y}`, gap, color: gap ? undefined : sevFill(b.v) });
   }
   if (last.i < snapshotCount - 1) segments.push({ d: `M${last.x},${last.y} L${W - PAD},${last.y}`, gap: true });
 
@@ -135,7 +133,7 @@ function Sparkline({ row, snapshotCount }: { row: Row; snapshotCount: number }) 
           key={i}
           d={seg.d}
           fill="none"
-          stroke="currentColor"
+          stroke={seg.color ?? 'currentColor'}
           strokeWidth={seg.gap ? 1 : 2}
           strokeOpacity={seg.gap ? 0.45 : 0.9}
           strokeDasharray={seg.gap ? '2 3' : undefined}
