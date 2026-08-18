@@ -203,3 +203,72 @@ function prevDay(day: string): string {
   d.setDate(d.getDate() - 1);
   return calendarDay(d.toISOString());
 }
+
+/**
+ * Every calendar day an attack touched, as local YYYY-MM-DD keys. An attack
+ * that runs past midnight counts as two days — which is the whole point:
+ * clinical thresholds are stated in days per month, not attacks per month,
+ * and a single 30-hour attack is two of them.
+ *
+ * An attack still running counts up to today, not to its last reading.
+ */
+export function attackDayKeys(attack: Attack, now: number = Date.now()): string[] {
+  const start = new Date(attack.snapshots[0].time);
+  const end = new Date(attack.end ?? new Date(now).toISOString());
+  const keys: string[] = [];
+  const d = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  // Guard against a clock change or a bad end time producing a runaway loop.
+  for (let i = 0; d <= last && i < 400; i++) {
+    keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    d.setDate(d.getDate() + 1);
+  }
+  return keys;
+}
+
+export interface MonthDays {
+  /** YYYY-MM */
+  month: string;
+  label: string;
+  days: number;
+  /** False for the month in progress, where the count is still climbing. */
+  complete: boolean;
+}
+
+/**
+ * Migraine days per calendar month, most recent last.
+ *
+ * Deliberately *migraine* days, not "headache days": the app only records
+ * migraine attacks, and ICHD-3's chronic-migraine line is headache on >=15
+ * days/month of which >=8 are migrainous. Calling this "headache days" would
+ * silently under-report the count it's named after, so the UI says migraine
+ * days and shows the 15-day line for context rather than as a diagnosis.
+ */
+export function migraineDaysByMonth(attacks: Attack[], months = 6, now: number = Date.now()): MonthDays[] {
+  const byMonth = new Map<string, Set<string>>();
+  for (const a of attacks) {
+    if (a.snapshots.length === 0) continue;
+    for (const day of attackDayKeys(a, now)) {
+      const month = day.slice(0, 7);
+      if (!byMonth.has(month)) byMonth.set(month, new Set());
+      byMonth.get(month)!.add(day);
+    }
+  }
+
+  const out: MonthDays[] = [];
+  const cur = new Date(now);
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(cur.getFullYear(), cur.getMonth() - i, 1);
+    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    out.push({
+      month,
+      label: d.toLocaleDateString(undefined, { month: 'short' }),
+      days: byMonth.get(month)?.size ?? 0,
+      complete: i > 0,
+    });
+  }
+  return out;
+}
+
+/** The 15-days-a-month line ICHD-3 draws between episodic and chronic migraine. */
+export const CHRONIC_DAYS_THRESHOLD = 15;

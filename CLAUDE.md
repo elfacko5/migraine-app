@@ -270,6 +270,14 @@ Every rule below exists because a real transcript broke without it. The worked e
 - A number word between the form and the drug name is skipped.
 - Medications match `recentMeds` first (which brings the usual dose), then phrasing; a dose said out loud beats the remembered one. `NOT_A_MED` holds number and time words. Names are only ever corrected against the user's own history.
 
+## Insights — clinical metrics
+
+The page's job is the numbers a clinician asks for, not a summary of what was typed in. See the [research dossier](research/migraine-app-research-dossier.md) for why each one matters.
+
+- **`MigraineDaysChart` counts days, not attacks.** Every threshold, trial endpoint and treatment decision is stated in days per month; an attack running past midnight is two of them (`attackDayKeys` walks local calendar days, so the split is by *local* midnight, and days are de-duplicated across overlapping attacks). The 15-day line ICHD-3 draws between episodic and chronic migraine is drawn on every bar.
+- **It says "migraine days", never "headache days", and the caption says why.** The chronic-migraine criterion is headache on ≥15 days/month *of which ≥8 are migrainous* — two counts. The app only records migraine attacks and has no way to log a plain headache day, so it can report the second and not the first. Calling it "headache days" would under-report the number it's named after.
+- **It sits outside the period filter.** "Days per month" only means anything per calendar month; a rolling 7-day window can't express it. The month in progress is marked with a `+` rather than being compared against complete months.
+
 ## Profile tab
 
 Four rows, each opening a full-screen sub-page: **My medications** · **Accessibility** (text size + brightness) · **Account & sync** (hidden unless `supabase` is non-null) · **Data** (export/import). `ProfileView.tsx` holds the menu and exports `AccessibilityPanel` / `AccountPanel` / `DataPanel`; `MedicationsView.tsx` is the fourth. Every panel wraps itself in **`ProfileSubPage`**, which owns the top bar and the scroll region — so a new sub-page never re-derives the safe-area padding or the back button.

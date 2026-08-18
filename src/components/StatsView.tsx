@@ -11,6 +11,7 @@ import {
   triggerFrequency, symptomFrequency, reliefFrequency, medicationFrequency, type Freq,
 } from '../utils/stats';
 import { HeadHeatmap } from './HeadHeatmap';
+import { MigraineDaysChart } from './MigraineDaysChart';
 
 type Period = 'all' | '7d' | '30d' | '3m';
 
@@ -191,6 +192,11 @@ export function StatsView({ attacks }: Props) {
               </div>
             </section>
           )}
+
+          {/* Days per month sits outside the period filter above: "days per
+              month" only means anything per calendar month, and a rolling
+              7-day window can't express it. */}
+          <MigraineDaysChart attacks={attacks} />
 
           {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
