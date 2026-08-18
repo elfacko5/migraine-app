@@ -54,7 +54,11 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
       </div>
 
       <div className="min-w-0 flex-1 pb-4">
-        <div className="rounded-xl border border-bg-border bg-bg-surface px-4 py-3">
+        {/* No outline — the card is told apart from the page by being a step
+            lighter than it (bg-raised on bg-surface), which is quieter than a
+            border on every entry down a long timeline. The section hairlines
+            inside stay: those separate things *within* one reading. */}
+        <div className="rounded-xl bg-bg-raised px-4 py-3">
           {/* Pain areas: one wrapping line, each zone coloured by its own
               severity. This is the line the timeline exists to be scanned
               for, so nothing sits above it. */}

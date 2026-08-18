@@ -114,7 +114,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
               </span>
             </div>
             <div className="min-w-0 flex-1 pb-4">
-              <div className="rounded-xl border border-bg-border bg-bg-surface px-4 py-3">
+              <div className="rounded-xl bg-bg-raised px-4 py-3">
                 <p className="text-sm text-text-secondary">Attack ended</p>
               </div>
             </div>
