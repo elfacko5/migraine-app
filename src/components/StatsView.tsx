@@ -66,12 +66,13 @@ function FreqBars({ data, color }: { data: Freq[]; color: string }) {
   );
 }
 
-function FreqSection({ title, sub, data, color }: { title: string; sub: string; data: Freq[]; color: string }) {
+function FreqSection({ title, sub, data, color, note }: { title: string; sub: string; data: Freq[]; color: string; note?: string }) {
   if (data.length === 0) return null;
   return (
     <section className="space-y-2">
       <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{title} · {sub}</h3>
       <FreqBars data={data} color={color} />
+      {note && <p className="text-xs text-text-secondary">{note}</p>}
     </section>
   );
 }
@@ -202,7 +203,18 @@ export function StatsView({ attacks }: Props) {
           )}
 
           {/* Trigger / symptom / relief / medication frequency */}
-          <FreqSection title="Top triggers"       sub={PERIOD_SUB[period]} data={stats.triggers}    color="#b07a3c" />
+          {/* Named for what it is. Triggers are only ever recorded on attack
+              days, so there's no count of days when the same thing happened
+              and *no* attack followed — without that denominator the bars
+              can't show association, only what was suspected, and a heading
+              reading "Top triggers" invites the stronger claim. */}
+          <FreqSection
+            title="Triggers you noted"
+            sub={PERIOD_SUB[period]}
+            data={stats.triggers}
+            color="#c39257"
+            note="Recorded on attack days only — this is what you suspected at the time, not what's been shown to bring one on."
+          />
           <FreqSection title="Top symptoms"       sub={PERIOD_SUB[period]} data={stats.symptoms}    color="#a65a52" />
           <FreqSection title="Top reliefs"        sub={PERIOD_SUB[period]} data={stats.reliefs}     color="#7fa187" />
           <FreqSection title="Medication intake"  sub={PERIOD_SUB[period]} data={stats.medications} color="#9bb9a1" />
