@@ -21,13 +21,3 @@ export function medIcon(name: string, dose: string): string {
   const text = `${name} ${dose}`;
   return MED_ICON_RULES.find((r) => r.pattern.test(text))?.icon ?? '💊';
 }
-
-// Deterministic per-name color so different medications stay visually
-// distinct across a timeline without needing a maintained name→color map.
-const MED_COLOR_PALETTE = ['#9bb9a1', '#b07a3c', '#a65a52', '#a9bfad', '#c4b07f', '#87a98f', '#9a9384', '#c99a5e'];
-
-export function medColor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return MED_COLOR_PALETTE[hash % MED_COLOR_PALETTE.length];
-}

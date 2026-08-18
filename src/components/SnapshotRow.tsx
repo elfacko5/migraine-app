@@ -1,6 +1,6 @@
 import type { Snapshot } from '../types';
 import { formatTime } from '../utils/format';
-import { medIcon, medColor } from '../utils/medDisplay';
+import { medIcon } from '../utils/medDisplay';
 
 function sevColor(s: number): string {
   if (s <= 3) return 'text-severity-low';
@@ -88,11 +88,7 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
             {snap.medication && (
               <Section label="Medication">
                 <span className="flex items-center gap-2">
-                  <span
-                    aria-hidden="true"
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs"
-                    style={{ backgroundColor: `${medColor(snap.medication.name)}26` }}
-                  >
+                  <span aria-hidden="true" className="shrink-0">
                     {medIcon(snap.medication.name, snap.medication.dose)}
                   </span>
                   <span className="min-w-0">
