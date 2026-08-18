@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Medication } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
+import { BinIcon } from './icons';
 
 const QTY_OPTIONS = ['1 tablet', '2 tablets', '3 tablets'];
 
@@ -60,10 +61,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
             aria-label="Delete medication"
             className="ml-auto rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-severity-high/15 hover:text-severity-high transition-colors"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-              <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-              <path d="M10 11v6M14 11v6" />
-            </svg>
+            <BinIcon />
           </button>
         ) : (
           /* Keeps the title optically centred when adding, where there's

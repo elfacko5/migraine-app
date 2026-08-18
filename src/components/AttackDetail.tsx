@@ -5,6 +5,7 @@ import { attackMaxSeverity } from '../utils/stats';
 import { SeverityBreakdown } from './SeverityBreakdown';
 import { SnapshotRow } from './SnapshotRow';
 import { ConfirmDialog } from './ConfirmDialog';
+import { BinIcon } from './icons';
 
 interface Props {
   attack: Attack;
@@ -70,10 +71,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           aria-label="Delete attack"
           className="ml-auto rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-severity-high/15 hover:text-severity-high transition-colors"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-            <path d="M10 11v6M14 11v6" />
-          </svg>
+          <BinIcon />
         </button>
       </div>
 
