@@ -40,15 +40,18 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
 
   return (
     <div className="flex gap-3">
-      {/* Stem — the time is plain text at a fixed column width, with the
-          connecting line on the column's right edge so it stays put whether
-          the time is 4 or 5 characters ("9:09" vs "11:03"). */}
-      <div className="relative w-14 shrink-0 pr-3 text-right">
-        <div className="absolute inset-y-0 right-0 w-px bg-bg-border" />
+      {/* Stem — one rail down the left edge, with the times sitting beside it
+          rather than across it. The line used to run along the column's right
+          edge, which put it behind the timestamps as soon as the text scale
+          grew enough for them to fill the column. A fixed column width still
+          keeps every time and the rail aligned regardless of whether the time
+          is 4 or 5 characters ("9:09" vs "11:03"). */}
+      <div className="relative w-16 shrink-0 pl-3">
+        <div className="absolute inset-y-0 left-0 w-px bg-bg-border" />
         {dateLabel && (
           <span className="relative block text-[0.65rem] font-medium text-text-secondary whitespace-nowrap">{dateLabel}</span>
         )}
-        <span className="relative block pt-3 text-sm tabular-nums text-text-secondary whitespace-nowrap">
+        <span className="relative block pt-3.5 text-xs tabular-nums text-text-secondary whitespace-nowrap">
           {formatTime(snap.time)}
         </span>
       </div>
