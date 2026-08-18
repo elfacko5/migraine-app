@@ -289,6 +289,12 @@ export interface MedMonth {
   byMonth: Map<string, number>;
   /** Days in the current calendar month so far. */
   thisMonth: number;
+  /**
+   * Doses in the current calendar month. Days is the number the overuse
+   * thresholds are stated in, but two doses in a day is a different exposure
+   * from one and the day count can't show it — so both are kept.
+   */
+  dosesThisMonth: number;
 }
 
 /**
@@ -303,6 +309,7 @@ export interface MedMonth {
  */
 export function medicationDaysByMonth(attacks: Attack[], now: number = Date.now()): MedMonth[] {
   const seen = new Map<string, Map<string, Set<string>>>();
+  const doses = new Map<string, Map<string, number>>();
   for (const a of attacks) {
     for (const snap of a.snapshots) {
       const name = snap.medication?.name?.trim();
@@ -314,6 +321,9 @@ export function medicationDaysByMonth(attacks: Attack[], now: number = Date.now(
       const months = seen.get(name)!;
       if (!months.has(month)) months.set(month, new Set());
       months.get(month)!.add(day);
+      if (!doses.has(name)) doses.set(name, new Map());
+      const dm = doses.get(name)!;
+      dm.set(month, (dm.get(month) ?? 0) + 1);
     }
   }
 
@@ -324,6 +334,7 @@ export function medicationDaysByMonth(attacks: Attack[], now: number = Date.now(
       name,
       byMonth: new Map([...months.entries()].map(([m, days]) => [m, days.size])),
       thisMonth: months.get(thisMonthKey)?.size ?? 0,
+      dosesThisMonth: doses.get(name)?.get(thisMonthKey) ?? 0,
     }))
     .sort((a, b) => b.thisMonth - a.thisMonth || a.name.localeCompare(b.name));
 }

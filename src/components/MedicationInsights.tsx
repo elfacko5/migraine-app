@@ -43,7 +43,15 @@ export function MedicationInsights({ attacks }: Props) {
             <div key={med.name} className="space-y-1">
               <div className="flex items-baseline gap-2">
                 <span aria-hidden="true">{medIcon(med.name, '')}</span>
-                <span className="min-w-0 flex-1 truncate text-sm text-text-primary">{med.name}</span>
+                <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
+                  {med.name}
+                  {/* Only when they differ — with one dose a day, "11 days ·
+                      11 doses" is noise. Two a day is a different exposure
+                      from one and the day count alone can't show it. */}
+                  {med.dosesThisMonth > med.thisMonth && (
+                    <span className="text-xs text-text-secondary"> · {med.dosesThisMonth} doses</span>
+                  )}
+                </span>
                 <span className={`text-sm tabular-nums ${nearing ? 'text-severity-high' : 'text-text-primary'}`}>
                   {med.thisMonth}
                 </span>
@@ -56,8 +64,11 @@ export function MedicationInsights({ attacks }: Props) {
                 <p className="text-xs text-text-secondary">
                   {r.measured === 0
                     ? `No follow-up reading within 4 hours of ${r.unmeasured === 1 ? 'the dose' : 'any dose'} yet`
-                    : `Helped ${r.helped} of ${r.measured} ${r.measured === 1 ? 'time' : 'times'} · median change at 2h ${r.medianChange !== null && r.medianChange > 0 ? '+' : ''}${r.medianChange}`}
-                  {r.measured > 0 && r.unmeasured > 0 && ` · ${r.unmeasured} without a follow-up reading`}
+                    // "doses", never "times": the number above counts days,
+                    // and two figures on one row that mean different things
+                    // have to say which is which.
+                    : `Helped ${r.helped} of ${r.measured} ${r.measured === 1 ? 'dose' : 'doses'} · median change at 2h ${r.medianChange !== null && r.medianChange > 0 ? '+' : ''}${r.medianChange}`}
+                  {r.measured > 0 && r.unmeasured > 0 && ` · ${r.unmeasured} more without a follow-up reading`}
                 </p>
               )}
             </div>

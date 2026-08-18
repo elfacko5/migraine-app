@@ -155,6 +155,15 @@ export function StatsView({ attacks }: Props) {
         ))}
       </div>
 
+      {/* These two ignore the period filter — "days per month" and the
+          overuse thresholds are monthly figures, and a rolling 7-day window
+          can't express either. That also means they must sit *outside* the
+          empty-period branch below: picking "7 days" in a quiet week used to
+          hide the month's medication count, which is exactly the number
+          someone would be checking. */}
+      <MigraineDaysChart attacks={attacks} />
+      <MedicationInsights attacks={attacks} />
+
       {filtered.length === 0 ? (
         <div className="py-12 text-center text-text-secondary text-sm">
           No attacks in this period.
@@ -197,14 +206,6 @@ export function StatsView({ attacks }: Props) {
               </div>
             </InsightSection>
           )}
-
-          {/* Days per month sits outside the period filter above: "days per
-              month" only means anything per calendar month, and a rolling
-              7-day window can't express it. */}
-          <MigraineDaysChart attacks={attacks} />
-
-          {/* Also outside the period filter: overuse thresholds are monthly. */}
-          <MedicationInsights attacks={attacks} />
 
           {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
