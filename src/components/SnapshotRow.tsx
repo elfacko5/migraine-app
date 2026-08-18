@@ -16,7 +16,12 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   return (
     <div className="border-t border-bg-border pt-2.5">
       <p className="text-xs uppercase tracking-wider text-text-secondary label-caps">{label}:</p>
-      <div className="mt-1 text-sm text-text-primary">{children}</div>
+      {/* 14px, a step below the pain-area line above it. The values ended up
+          the same size as the headline and, being longer runs of much higher
+          contrast text, dominated the card. Same size as the label now — the
+          two are told apart by case and colour, since taking the label to
+          12px would break the spec's 14px caption floor. */}
+      <div className="mt-1 text-xs text-text-primary">{children}</div>
     </div>
   );
 }
