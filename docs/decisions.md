@@ -212,6 +212,113 @@ renders as it always did; both editor panels round-trip through
 shell, but the wizard's medication step is one of the screens most often read
 mid-attack, so it's worth a look on the next build.
 
+## Cards, icons and the Logs list (2026-08-19)
+
+- **The Logs row is ranked by how long and how bad**, then when, then
+  medication, then symptoms, then the quiet line. Duration leads because it is
+  diagnostic, not context: ICHD-3 1.1 defines migraine as attacks of 4–72 hours
+  untreated.
+- **Average severity is time-weighted, and a plain mean was rejected on
+  purpose.** Severity is sampled whenever a reminder happens to be answered, so
+  a mean would measure the diary as much as the attack — the same episode
+  logged eight times while it faded averages lower than one logged twice at its
+  worst. Each reading counts for as long as it held until the next, which is
+  the rule the snapshot model already states. Peak stays beside it, labelled:
+  it is what ICHD's "moderate or severe intensity" speaks to.
+- **Two labelled numbers, so no badge.** An unlabelled badge works while there
+  is exactly one figure; with two it can't say which is which, and once both
+  are labelled they read better as text. Colour still carries magnitude.
+- **Location is a side, and a *count* of areas was rejected.** The suggestion
+  was "4 areas"; the problem is that a count cannot distinguish one-sided from
+  both-sided, which is precisely what ICHD-3 criterion B turns on (≥2 of four
+  pain features, one being *unilateral*). "Left side" is half a criterion in
+  one word. `attackSide` reads across the whole attack — one that starts left
+  and spreads is bilateral — and returns `null` when nothing says, because
+  `Nose` is the only sideless zone and an attack recorded solely there has no
+  laterality to invent.
+- **The side is drawn, not written**, and the glyph is **mirrored like the
+  picker**: the front view faces you, so the subject's left is screen-right.
+  Flipping it would put the shading opposite the side the same person just
+  tapped. The artwork is interim pending Sunny's illustration; swapping it is
+  two paths in `SideGlyph`.
+- **The reading count came off the card.** The sparkline already shows there
+  was more than one reading and roughly how many.
+- **Nothing on a card row may be an emoji.** An emoji is full-colour and can't
+  inherit `currentColor`, so it makes the least important mark on a row the
+  brightest thing on a screen the palette works to keep quiet — the rule the
+  attack-mode pill gave up its emoji for. Medication forms, the Profile menu,
+  symptoms and reliefs are all drawn marks in `drawnIcons.tsx` now. `medIcon`
+  became `medForm` (a plain function returning a key) plus `MedIcon`, so the
+  matching stays importable from non-JSX code.
+- **Medication chips lost their accent tint.** It was how the two chip sets
+  were told apart before either had an icon; the icons do that now, and accent
+  means *action or selection* everywhere else.
+- **Logs opens on all time, and the period moved into the filter sheet.** It
+  had a permanent pill row on the argument that it is adjusted constantly while
+  other filters are set once — but defaulting to 7 days meant the page opened
+  hiding most of what it exists to show, and a quiet week read as an empty
+  diary. Insights keeps its own pills: there the period *is* the question.
+- **Both Today tiles label their subject, not their period.** They had been
+  built the opposite way round from each other (one "This month / 9 migraine
+  days", the other "Medication / 5 days this month"), so neither could be read
+  against the other.
+- **`MedicationEditor` is two sections and the split is a contract.** Name,
+  strength, quantity and unit are required — they are what every other screen
+  renders, and a medication that can't say what one dose of it is can't be
+  counted against anything. Everything below is optional and each field carries
+  its own **More info**, because the fields are transcribed off a leaflet and a
+  leaflet doesn't explain itself. `dose` became derived rather than typed, so
+  it can't disagree with the structured fields.
+
+## Working practice — the scratch origin is not a safe sandbox (2026-08-19)
+
+Recorded at length because it went wrong twice in one day, and the second
+failure was a wrong *conclusion*, not a wrong action.
+
+- **A second dev server on another port is a different origin, but that does
+  not make it isolated.** The app is sync-aware: if that origin holds a
+  Supabase session it pulls the real account down and pushes local writes back.
+  Seeding test attacks there put three fabricated records into a real medical
+  diary, which then synced to the live app. **Check `signedIn` *before*
+  seeding, not after** — one line, and it is the whole safeguard.
+- **One clean read is not proof.** After cleaning up, a check of the live
+  origin showed the fakes absent and that was reported as "your account is
+  clean". It wasn't: the read landed in the window between a pull and the push
+  arriving, and the records reappeared later. A sync round-trip has to be
+  observed settling, and the authoritative store — not a local cache — is what
+  answers the question.
+- **Tab ids are recycled across origins in the Browser pane.** The id `seed`
+  was port 5174 early in a session and port 5173 later. Anything destructive
+  must confirm `location.origin` in the *same* call, never trust the id.
+- **`autoPort` on the live dev server was a latent version of the same bug.**
+  A busy 5173 meant Vite silently took the next port; a different port is a
+  different `localStorage`, so the app came up empty and signed out, looking
+  exactly like data loss. Both configs are now `--strictPort`: failing to start
+  is visible, silently moving is not.
+- **Supabase sessions lapse in this pane.** Every page in it reports
+  `visibilityState: "hidden"`, which is the state browsers throttle timers in,
+  so the token refresh often doesn't fire and the hour-long session expires.
+  That explains repeated sign-ins; it does **not** explain missing data, since
+  `localStorage` is the source of truth and survives sign-out.
+
+## The Browser pane, when it stops responding (2026-08-19)
+
+Two failures that look like app bugs and are not. Both were diagnosed by
+reading the page rather than looking at it, which is the same rule the iOS
+layout work already records.
+
+- **A 0×0 viewport.** The pane can hand a tab no dimensions at all, so the page
+  keeps painting its last frame and has nowhere to route taps. The tell is a
+  screen showing something that shouldn't be there — old data, the previous
+  URL's page — while `innerWidth`/`innerHeight` read 0. Forcing a resize fixes
+  it.
+- **`visibilityState: "hidden"` while plainly on screen.** Un-maximised, the
+  pane can report the page hidden; a hidden page doesn't repaint or take input.
+  Maximising is what marks it visible again.
+- Neither is fixable in app code, and both were confirmed by checking that
+  layout was correct — pointer events, the app-height variables, no overlay —
+  while input still didn't arrive.
+
 ## Head diagram (2026-08-18)
 
 - **Both views share one viewBox, aligned on the crown.** Three attempts. Cropped
@@ -268,6 +375,10 @@ mid-attack, so it's worth a look on the next build.
   screens read mid-attack and wants a decision, not a refactor done quietly.
 
 ## Working practice (2026-08-18)
+
+*Superseded in part by "the scratch origin is not a safe sandbox" (2026-08-19)
+above — the throwaway profile prescribed here is only safe when it is signed
+out, which is not automatic.*
 
 - **Never drive the live app by selector.** Verifying UI changes by calling
   `element.click()` on selectors, in a DOM being hot-reloaded underneath,
@@ -375,6 +486,21 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
 - **SNOOP red flags.** The dossier asks for a "see a clinician" nudge on thunderclap onset, new headache after 50, neurological deficit, fever, marked pattern change — and says it must never reassure. It's a safety feature and the wording carries real weight, so it needs its own discussion rather than being folded into a UI pass.
 - **Phase tracking** — premonitory, aura, postdrome. The app models only the pain phase. The dossier argues premonitory/postdrome capture is where a prospective diary beats recall, which makes this the largest single scope item on the list: it changes the data model, not just the flow.
 - **Periodic MIDAS / HIT-6 check-ins.** `Attack.impact` is a pragmatic per-attack proxy; the dossier wants both diary counts *and* the validated questionnaires, because the 2026 REFORM study found they disagree on treatment response.
+
+## Open, needs Sunny
+
+- **Three fabricated attacks are in the live account** (ids `1787022926677`,
+  `1786871726677`, `1786698926677` — one carries the invented symptom "Wobbly
+  legs"). They were seeded on the scratch origin while it held a Supabase
+  session, reached the account, and synced back. **They must be deleted from
+  Supabase, not just locally**, or the next sync restores them. Awaiting a
+  go-ahead, since deleting from a real medical record is irreversible; the
+  app's own Delete on each attack does the same job.
+- **Two drawn marks are weak at chip size**: Stretching and Exercise resolve to
+  a similar horizontal bar, and the tablet is a generic capsule. Redrawing is
+  cheap — the shapes are in `drawnIcons.tsx` with nothing else depending on
+  them.
+- **`SideGlyph` is interim artwork**, pending Sunny's illustration.
 
 ## Known gaps
 
