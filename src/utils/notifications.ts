@@ -193,8 +193,48 @@ function delayForSnapshotCount(cfg: Attack['notificationConfig'], count: number)
   return count === 1 ? 60 * 60 * 1000 : 2 * 60 * 60 * 1000;
 }
 
+/**
+ * Two hours after a dose is the standard trial endpoint for acute migraine
+ * treatment — pain freedom, or relief of the most bothersome symptom (dossier
+ * §5). It is not specific to any one drug: Sumatriptan's own "2 hours" is a
+ * *minimum gap between doses* off its leaflet, which is a different figure
+ * that happens to share a number.
+ *
+ * `medicationResponse` already hunts for the reading nearest dose + 2h, so
+ * this is the app asking for the reading its own metric wants.
+ */
+export const MED_CHECK_IN_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * Brings the attack's next reminder forward to two hours after the most recent
+ * dose, when that lands sooner than the reminder already due.
+ *
+ * **Deliberately not a second notification.** The design that was specced
+ * added a separate dose check-in and then had to suppress it whenever it fell
+ * within ~30 minutes of an attack reminder — but the adaptive schedule is
+ * already +2h from each reading, so a dose check-in at +2h would collide
+ * nearly every time and the suppression would be the common case rather than
+ * the edge one. Re-timing the reminder we already have gets the same reading
+ * with one notification, and avoids carving `notifId()`'s 32-bit space into
+ * two namespaces to stop the two colliding.
+ *
+ * Only ever moves a reminder *earlier*. A dose backdated more than two hours
+ * leaves the schedule alone rather than firing something immediately: the
+ * response window runs to four hours, so a late reading still counts, and a
+ * notification that arrives the instant you finish logging is noise.
+ */
+export function medCheckInDelay(attack: Attack, baseDelay: number, now: number = Date.now()): number {
+  const lastDose = [...attack.snapshots].reverse().find((s) => s.medication?.name);
+  if (!lastDose) return baseDelay;
+  const due = new Date(lastDose.time).getTime() + MED_CHECK_IN_MS - now;
+  return due > 0 && due < baseDelay ? due : baseDelay;
+}
+
 export function nextDelay(attack: Attack): number {
-  return delayForSnapshotCount(attack.notificationConfig, attack.snapshots.length);
+  return medCheckInDelay(
+    attack,
+    delayForSnapshotCount(attack.notificationConfig, attack.snapshots.length),
+  );
 }
 
 // The interval that will apply once a "no change" reading lands — one more

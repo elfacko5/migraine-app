@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Attack, Snapshot, NotificationConfig, SyncStatus } from '../types';
-import { scheduleNotification, cancelNotification, nextDelay } from '../utils/notifications';
+import { scheduleNotification, cancelNotification, nextDelay, medCheckInDelay } from '../utils/notifications';
 import { pullAttacks, pushAttacks, deleteAttackRemote } from '../lib/sync';
 
 const KEY = 'hd_attacks';
@@ -130,10 +130,13 @@ export function useAttacks(userId: string | null) {
     };
     commit([attack, ...attacks]);
     if (notificationConfig.enabled && !end) {
-      const delay = notificationConfig.mode === 'adaptive'
+      const base = notificationConfig.mode === 'adaptive'
         ? 60 * 60 * 1000
         : notificationConfig.fixedIntervalMinutes * 60 * 1000;
-      scheduleNotification(attack, delay);
+      // A first log can already carry a dose — typed on the medication step,
+      // or spoken ("took two tablets an hour ago"), which arrives as its own
+      // backdated reading. Either way the check-in is measured from the dose.
+      scheduleNotification(attack, medCheckInDelay(attack, base));
     }
     if (userId) trackPush(pushAttacks([attack], userId));
     return attack;

@@ -438,10 +438,12 @@ the code.
   a round to find: with the reason continued across several `//` lines after
   the `--`, "next line" is the next *comment*, so all eight directives landed
   on nothing while looking correct. Explanation above, directive last.
-- **Still open: the bundle is ~920KB**, past Vite's 500KB warning, and Recharts
-  is most of it. Not touched here — lazy-loading the charts adds a loading
-  state to Insights and to the Logs sparklines, which is a visible change to
-  screens read mid-attack and wants a decision, not a refactor done quietly.
+- ~~Still open: the bundle is ~920KB~~ — **considered and declined
+  (2026-08-19).** 921KB raw is 264KB gzipped, it is fetched once and then
+  served from the service-worker cache or the native bundle, and the cost of
+  splitting lands on two of the four tabs — including a list scrolled
+  mid-attack. Vite's 500KB warning is a default threshold, not a verdict.
+  Revisit only if first web load becomes something anyone measures.
 
 ## Working practice (2026-08-18)
 
@@ -548,7 +550,39 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
 
  **The rule this must obey:** the app repeats back what the user entered from the label. It never infers a limit, never blocks a dose, and never phrases a warning as an instruction — "you entered a 4-hour minimum; the last dose was 2 hours ago", not "do not take this yet". An app that looks like it is dosing someone is a different and much heavier thing than an app that counts.
 - **`startedOn` for preventives**, in the same pass. ***Built*** — the field and its editor row; nothing reads it yet. It's what makes the ≥50%-reduction metric possible: monthly migraine days before the start date against after. Full adherence tracking is *not* required for that — adherence is what distinguishes "the drug didn't work" from "I didn't take it", which is a later question.
-- **The 2-hour check-in notification.** Scheduled at dose + 2h, asking for a severity reading rather than a yes/no: relief is already computed from the trajectory, and a binary would be softer data that could contradict the numbers. Two constraints to solve in the design rather than discover on device: the attack reminder runs +1h/+2h from each reading, so a dose check-in landing within ~30 minutes of one should suppress it; and `notifId()` is `attackId % 2_000_000_000`, which uses the whole id space — a second notification per attack needs its own namespace (attacks into `[0, 1e9)`, check-ins into `[1e9, 2e9)`) or scheduling one silently replaces the other.
+- ~~**The 2-hour check-in notification.**~~ — **built 2026-08-19, and not as
+  designed.** The spec added a *second* notification at dose + 2h, which
+  brought two problems with it: it had to be suppressed whenever it fell
+  within ~30 minutes of an attack reminder, and `notifId()` is
+  `attackId % 2_000_000_000`, so a second notification per attack needed the
+  id space split in two.
+
+  Sunny's question is what unpicked it — *isn't 2h also the reminder
+  interval?* It is. The adaptive schedule is +2h from every reading after the
+  first, so a dose check-in at +2h would have collided nearly every time and
+  the suppression rule would have been the common case, not the edge one.
+
+  So the check-in **re-times the reminder that already exists** rather than
+  adding one: `medCheckInDelay` brings the next reminder forward to dose + 2h
+  when that is sooner than what is already due. Same reading, one
+  notification, and both original blockers disappear — nothing to suppress and
+  no second id namespace. It is also a smaller change than the one specced.
+
+  It only ever moves a reminder *earlier*. A dose backdated more than two
+  hours leaves the schedule alone: the response window runs to four hours so a
+  late reading still counts, and a notification arriving the moment you finish
+  logging is noise.
+
+  **Worth separating the three two-hours in this app**, because they are
+  unrelated and share a number: the trial endpoint above; Sumatriptan's
+  minimum gap between doses, off its leaflet; and the adaptive reminder
+  cadence.
+
+  Verified against the real module with fixed fixtures — no dose leaves the
+  delay alone, a dose now against a 1h base keeps 1h, a dose 90 minutes ago
+  brings a 2h reminder to 30 minutes, a dose three hours ago changes nothing,
+  and the most recent dose wins. **Not verified on device**, which is the part
+  that still needs doing before it can be trusted.
 
 ## Separate conversations, not scheduled
 

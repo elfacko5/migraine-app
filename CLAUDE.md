@@ -222,6 +222,10 @@ Things that will bite when touching this:
 
 Adaptive schedule: +1h after first snapshot, +2h after any subsequent snapshot. Notifications are not scheduled if `attack.end` is already set (retrospective logs).
 
+**A logged dose brings the next reminder forward to dose + 2h** (`medCheckInDelay`), which is the standard trial endpoint for acute treatment — and the reading `medicationResponse` already looks for. Note the app has three different two-hours and they are unrelated: this endpoint, Sumatriptan's *minimum gap between doses* off its own leaflet, and the adaptive reminder's own +2h cadence.
+
+**It re-times the existing reminder rather than adding a second notification, and that is the whole design.** A separate dose check-in was specced, and it needed two things this doesn't: suppression whenever it landed within ~30 minutes of an attack reminder — which, against a +2h cadence, would have been the common case rather than the edge one — and its own half of `notifId()`'s 32-bit space so the two couldn't overwrite each other. One reminder, moved, needs neither. **It only ever moves a reminder earlier**: a dose backdated more than two hours leaves the schedule alone, because the response window runs to four hours and a notification firing the instant you finish logging is noise.
+
 ### Answering a reminder
 
 `ios/App/App/NotificationActionHandler.swift` receives every reminder response in Swift. iOS launches the app in the *background* to deliver a non-foreground action, so this runs whether or not a WebView exists.
