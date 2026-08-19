@@ -2,6 +2,7 @@ import type { Attack } from '../types';
 import { formatDate, formatTime, formatDuration } from '../utils/format';
 import { attackAvgSeverity, attackMaxSeverity } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
+import { SymptomIcon, SideGlyph } from './symptomIcons';
 import { isRetired } from '../utils/retired';
 import { medIcon, attackFirstDoses } from '../utils/medDisplay';
 import { IMPACT_SHORT } from '../utils/impact';
@@ -90,8 +91,10 @@ export function AttackCard({ attack, onClick, isOngoing }: Props) {
   // The quiet last line, joined rather than concatenated so a missing part
   // never leaves a stray separator. "snapshots" is the data model's word for
   // these; in the UI they are readings.
+  // Side has left this line — the glyph on the right says it now, which is
+  // the point of the glyph: the row carried a lot of text and this was the
+  // part that could become a picture without losing anything.
   const tail = [
-    side ? SIDE_LABELS[side] : null,
     attack.snapshots.length > 1 ? `${attack.snapshots.length} readings` : null,
   ].filter(Boolean);
 
@@ -155,8 +158,15 @@ export function AttackCard({ attack, onClick, isOngoing }: Props) {
                   <span aria-hidden="true">{medIcon(m.name, m.dose)}</span> {m.name}
                 </span>
               ))}
+              {/* Each symptom leads with its own drawn mark, so the chips
+                  scan the way the medication ones do. `currentColor`, never an
+                  emoji: a full-colour glyph would make the least important
+                  thing on the row the brightest. */}
               {symptoms.slice(0, MAX_SYMPTOM_CHIPS).map((s) => (
-                <span key={s} className="text-xs bg-bg-border/40 text-text-secondary rounded-full px-2 py-0.5">{s}</span>
+                <span key={s} className="inline-flex items-center gap-1 text-xs bg-bg-border/40 text-text-secondary rounded-full px-2 py-0.5">
+                  <SymptomIcon name={s} />
+                  {s}
+                </span>
               ))}
               {symptoms.length > MAX_SYMPTOM_CHIPS && (
                 <span className="text-xs text-text-secondary px-1 py-0.5">
@@ -192,8 +202,18 @@ export function AttackCard({ attack, onClick, isOngoing }: Props) {
             area can change between them. Per-area trends are what
             SeverityBreakdown draws on the detail sheet, where 17 zones have
             the room to be told apart. */}
-        <div className="shrink-0">
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
           <SeveritySparkline attack={attack} />
+          {/* The side, as a picture. It carries the accessible name the text
+              line used to, so nothing is lost to a screen reader — and it is
+              omitted entirely when no laterality was recorded, rather than
+              drawing an empty head that would read as "neither side". */}
+          {side && (
+            <span className="inline-flex items-center text-text-secondary" title={SIDE_LABELS[side]}>
+              <SideGlyph side={side} />
+              <span className="sr-only">{SIDE_LABELS[side]}</span>
+            </span>
+          )}
         </div>
       </div>
     </button>

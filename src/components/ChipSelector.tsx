@@ -6,9 +6,14 @@ interface Props {
   onChange: (next: string[]) => void;
   onAddCustom?: (label: string) => void;
   placeholder?: string;
+  /** Optional leading mark per option. Passed only by the symptom steps —
+   *  triggers and reliefs have no icon set, and half-iconed rows read worse
+   *  than none. A render prop rather than a flag so this component keeps
+   *  knowing nothing about what it is listing. */
+  renderIcon?: (option: string) => React.ReactNode;
 }
 
-export function ChipSelector({ options, selected, onChange, onAddCustom, placeholder = 'Add custom…' }: Props) {
+export function ChipSelector({ options, selected, onChange, onAddCustom, placeholder = 'Add custom…', renderIcon }: Props) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
 
@@ -39,12 +44,13 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
             // a screen of solid sage pills is a lot of weight for what is an
             // optional step, and this matches the medication chips, which
             // already worked this way.
-            className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${
               active
                 ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/50'
                 : 'bg-bg-raised text-text-primary ring-1 ring-inset ring-bg-border hover:bg-bg-border'
             }`}
           >
+            {renderIcon?.(opt)}
             {opt}
           </button>
         );

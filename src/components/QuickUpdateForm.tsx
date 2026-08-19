@@ -7,6 +7,7 @@ import { maxSeverity } from '../utils/stats';
 import { findMedication } from '../utils/medGuardrails';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { ChipSelector } from './ChipSelector';
+import { SymptomIcon } from './symptomIcons';
 import { MedicationInput } from './MedicationInput';
 import { TextScaleControl } from './TextScaleControl';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -339,7 +340,8 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
             {/* ── Step 5: Symptoms ── */}
             {step === 5 && (
               <ChipSelector options={symptoms} selected={form.symptoms}
-                onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom} />
+                onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
+                renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
             )}
 
             {/* ── Step 6: Note — grows to fill the remaining space ── */}

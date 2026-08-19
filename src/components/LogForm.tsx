@@ -7,6 +7,7 @@ import { openPicker } from '../utils/openPicker';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationInput } from './MedicationInput';
 import { ChipSelector } from './ChipSelector';
+import { SymptomIcon } from './symptomIcons';
 import { NotificationSettings } from './NotificationSettings';
 import { TextScaleControl } from './TextScaleControl';
 import { SunriseIcon } from './icons';
@@ -585,7 +586,8 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         {/* ── Step 5: Symptoms ── */}
         {step === 5 && (
           <ChipSelector options={symptoms} selected={form.symptoms}
-            onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom} />
+            onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
+            renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
         )}
 
         {/* ── Step 6: Triggers ── */}
