@@ -28,6 +28,12 @@ const RETIRED_ENTRIES = [
   // and a dose in Insights, and offered as a filter option.
   'dry',
   'hjgkfdgkdfjgkdfg',
+  // Dropped from DEFAULT_RELIEFS (2026-08-19): near-duplicate of "Exercise"
+  // and rarely used. Retiring is the half that actually removes it — a
+  // default taken out of the array is still in every stored list, and the
+  // union merge would hand it straight back on the next sync. Never logged
+  // here, so nothing leaves the Insights tallies with it.
+  'stretching',
 ];
 
 export function isRetired(name: string | null | undefined): boolean {

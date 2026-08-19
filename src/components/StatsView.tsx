@@ -6,7 +6,7 @@ import {
 import type { Attack, Medication } from '../types';
 import { formatDateShort } from '../utils/format';
 import {
-  attackMaxSeverity, currentAttackStreak, currentPainFreeStreak,
+  attackMaxSeverity, consecutiveMigraineDays, daysSinceLastMigraine,
   areaFrequency, avgTimeToPeak, minutesAboveSeverity,
   triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
 } from '../utils/stats';
@@ -128,8 +128,8 @@ export function StatsView({ attacks, medications = [] }: Props) {
     return {
       count: filtered.length,
       avgSeverity,
-      attackStreak: currentAttackStreak(attacks),
-      painFreeStreak: currentPainFreeStreak(attacks),
+      inARow: consecutiveMigraineDays(attacks),
+      daysSince: daysSinceLastMigraine(attacks),
       avgAbove5,
       timeToPeak,
       severityTrend,
@@ -180,8 +180,12 @@ export function StatsView({ attacks, medications = [] }: Props) {
                 below keep theirs, which say what the number *is*. */}
             <StatCard label="Attacks" value={stats.count} />
             <StatCard label="Avg max severity" value={stats.avgSeverity} />
-            <StatCard label="Attack streak" value={`${stats.attackStreak}d`} sub="consecutive days" />
-            <StatCard label="Pain-free streak" value={`${stats.painFreeStreak}d`} sub="consecutive days" />
+            {/* Plain observations, not streaks — see the note on
+                `consecutiveMigraineDays`. Neither is a run to protect or
+                break; one says what is happening now, the other when it last
+                happened. */}
+            <StatCard label="Days in a row" value={stats.inARow} sub="with a migraine" />
+            <StatCard label="Days since" value={stats.daysSince} sub="your last attack" />
             {stats.timeToPeak !== null && (
               <StatCard label="Avg time to peak" value={`${stats.timeToPeak}h`} sub="from start" />
             )}

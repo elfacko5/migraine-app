@@ -25,7 +25,7 @@ export function MigraineDaysChart({ attacks }: Props) {
         <>
           Days with a logged attack — an attack running past midnight counts as two. The line marks 15 days,
           where guidelines separate episodic from chronic migraine. This counts migraine days only; headaches
-          you didn't log aren't included. The current month is still counting.
+          that weren't logged aren't included. The current month is still counting.
         </>
       }
     >

@@ -45,7 +45,7 @@ export function HistoryView({
   if (total === 0) {
     return (
       <div className="py-20 text-center text-text-secondary text-sm">
-        No attacks logged yet.
+        Nothing logged yet. Your attacks will appear here.
       </div>
     );
   }

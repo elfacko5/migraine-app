@@ -11,7 +11,7 @@ This file holds the **rules** — what a change has to respect. The **reasoning*
 | [`docs/viewport-architecture.md`](docs/viewport-architecture.md) | touching the app shell's height, offset, or overlay positioning |
 | [`docs/notifications.md`](docs/notifications.md) | changing how a reminder is scheduled, sounded, or answered |
 | [`docs/today-cards.md`](docs/today-cards.md) | restyling `HomeCard` or swapping its artwork |
-| [`research/migraine-app-research-dossier.md`](research/migraine-app-research-dossier.md) | changing anything clinical, or the palette/type/attack-mode rules — it's the evidence the app is built on (ICHD-3 fields, MOH thresholds, MIDAS/HIT-6, the photophobia colour science, the accessibility targets) |
+| [`research/migraine-app-research-dossier.md`](research/migraine-app-research-dossier.md) | changing anything clinical, **any user-facing wording** (§9 is the tone and copy spec), or the palette/type/attack-mode rules — it's the evidence the app is built on (ICHD-3 fields, MOH thresholds, MIDAS/HIT-6, the photophobia colour science, the accessibility targets) |
 
 Nearly every rule in both places was paid for with a round of device testing. A rule with no visible justification has one — it's in `docs/`.
 
@@ -88,6 +88,16 @@ xcrun devicectl device install app --device <device-udid> <path-to-App.app>
 First launch on a device is refused until the certificate is trusted under **Settings → General → VPN & Device Management** — that's expected, not a signing fault. Signing will also raise a macOS keychain prompt asking for the **login (Mac account) password**, not the Apple ID password.
 
 **Simulator caveat:** trackpad scrolling doesn't scroll the app. The document never scrolls (see the viewport section) — only nested containers do — and the Simulator delivers trackpad input to the WebView's own scroll view, which has nothing to scroll. Touch drags work, and a real device only ever produces touch, so this is a Simulator artefact and not worth "fixing".
+
+## Tone and copy
+
+The wording spec is **§9 of the research dossier** — read it before writing any user-facing string. It rests on trauma-informed content design and the chronic-illness "toxic positivity" literature, and the register it asks for is *calm, plain, matter-of-fact, validating*: it witnesses the experience without performing emotion about it.
+
+- **No streaks, badges or congratulation.** §9.2 is the sharpest rule in the dossier and the one this app broke: Insights had "Attack streak" and "Pain-free streak" tiles, so a migraine broke a run and pain-free days were a score. **Reward the logging habit, never the health outcome** — nobody may feel they failed by having more migraines. The figures survive as plain observations ("Days in a row · with a migraine", "Days since · your last attack"); the game does not, and the word is gone from `stats.ts` too, because a function called `currentPainFreeStreak` invites the label straight back.
+- **Never imply fault.** No "you forgot", "you missed", "you haven't logged". `MigraineDaysChart` said "headaches you didn't log"; it says "that weren't logged".
+- **Never alarmist.** An auto-retrying sync failure is not an emergency — it's amber, not the alarm colour, and says the writes are safe on the device.
+- **Plainer the deeper into an attack** (§9.5). Today's overuse warning says what frequent use can do in everyday words; the Insights caption keeps "medication-overuse headache", the term a clinician uses, because that page is read carefully and Today is glanced at mid-attack. The tone system and attack mode are the same idea.
+- **Supportive, not diagnostic**, which the existing rules already enforce: state the count and the guideline, conclude nothing, and never read as dosing advice.
 
 ## Dark-first design, photophobia-aware
 

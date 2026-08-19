@@ -124,11 +124,18 @@ export function TodaySummary({ attacks, ongoing, medications = [], attackMode = 
           /* States the number and the guideline, and stops. Deciding what it
              means is a conversation with a doctor — and when the user entered
              a limit of their own, that is the number quoted back, not a
-             guideline they didn't ask about. */
+             guideline they didn't ask about.
+
+             **Plainer than the Insights caption, deliberately.** Today is
+             read at a glance and mid-attack, so it says what frequent use can
+             do in everyday words; Insights keeps the clinical term
+             "medication-overuse headache", which is what a doctor will call
+             it and that page is the one you read carefully. §9.5 — the deeper
+             into an attack, the simpler the copy. */
           detail={!attackMode
             ? `${findMedication(medications, m.name)?.maxDaysPerMonth
                 ? `You entered a limit of ${m.threshold} days a month for this one.`
-                : `Guidelines put medication-overuse headache at around ${m.threshold} days a month for this type of medication, sustained over three months.`
+                : `Taking acute medication often can itself lead to more headaches — guidelines put that at around ${m.threshold} days a month for this type, sustained over three months.`
               } Worth raising at your next appointment.`
             : null}
         />

@@ -321,9 +321,13 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
 function SyncIndicator({ status, lastSyncedAt }: { status: SyncStatus; lastSyncedAt: string | null }) {
   if (status === 'error') {
     return (
-      <p className="flex items-center gap-1.5 text-xs text-severity-high">
-        <span className="h-1.5 w-1.5 rounded-full bg-severity-high shrink-0" />
-        Sync failed — will retry automatically
+      // Amber, not the alarm colour, and it says what is actually true: the
+      // writes are already safe on this device and syncing retries itself.
+      // §9.3 — calm and never alarmist — and §9.4's error guidance, which is
+      // to say what happened and what happens next without blame.
+      <p className="flex items-center gap-1.5 text-xs text-severity-mid">
+        <span className="h-1.5 w-1.5 rounded-full bg-severity-mid shrink-0" />
+        Couldn't sync just now — saved on this device, still trying
       </p>
     );
   }
