@@ -4,14 +4,26 @@
     {
       "name": "migraine-app",
       "runtimeExecutable": "/Users/sunny/.nvm/versions/node/v20.20.2/bin/node",
-      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--host"],
+      "runtimeArgs": [
+        "node_modules/vite/bin/vite.js",
+        "--host",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
       "port": 5173,
-      "autoPort": true
+      "autoPort": false
     },
     {
       "name": "migraine-app-scratch",
       "runtimeExecutable": "/Users/sunny/.nvm/versions/node/v20.20.2/bin/node",
-      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--host", "--port", "5174", "--strictPort"],
+      "runtimeArgs": [
+        "node_modules/vite/bin/vite.js",
+        "--host",
+        "--port",
+        "5174",
+        "--strictPort"
+      ],
       "port": 5174,
       "autoPort": false
     }
