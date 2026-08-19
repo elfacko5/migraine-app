@@ -658,6 +658,50 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
 - **Phase tracking** — premonitory, aura, postdrome. The app models only the pain phase. The dossier argues premonitory/postdrome capture is where a prospective diary beats recall, which makes this the largest single scope item on the list: it changes the data model, not just the flow.
 - **Periodic MIDAS / HIT-6 check-ins.** `Attack.impact` is a pragmatic per-attack proxy; the dossier wants both diary counts *and* the validated questionnaires, because the 2026 REFORM study found they disagree on treatment response.
 
+## Icon sourcing — Health Icons and Lucide, tested (2026-08-19)
+
+Asked whether to adopt a library rather than keep drawing marks by hand.
+Spiked both against the real constraint, which is **size**: domain marks in
+this app render at 14–16px, beside body text.
+
+**Health Icons** (healthicons.org) — **CC0**, ~1000 icons, `viewBox 0 0 48 48`,
+shapes are **filled paths already set to `fill="currentColor"`** (not stroked,
+so `strokeWidth` does not apply and weight is baked in at export). The
+vocabulary is genuinely the one this app needs and no general set has:
+`conditions/` alone covers headache, nausea, vomiting, pain, chills-fever,
+sweating, low-vision, dry-eyes; `body/` covers eye, ear, nose, head, spine,
+neurology; `devices/` has syringe, asthma-inhaler, medicine-bottle.
+
+**They were rejected, and the spike is why.** All eight symptom marks were
+converted and rendered at 14/16/18px beside the current ones, then at
+16/24/40px. At **40px they are excellent** — a hunched figure, a brain, an
+ear, a struck-through eye — and at 24px they still read. At **16px, the size
+this app actually uses, they are dense smudges**: they are full-figure
+illustrations with interior detail, and that detail becomes noise. This is
+precisely the constraint CLAUDE.md already states ("at that size a nauseated
+face is a grey smudge") — the spike confirmed it against real artwork rather
+than assuming it.
+
+So: **Health Icons are better icons that are wrong for this app's sizes.**
+Worth revisiting only if somewhere displays an icon at 24px+; nothing does
+today (the Profile menu rows are the largest at 20px).
+
+**Lucide** is the right library when one is needed: 24×24, `fill="none"`,
+`stroke="currentColor"`, round caps — *identical* to `drawnIcons.tsx`'s `svg()`
+helper, so a path drops in unchanged and inherits `MED_STROKE`-style tuning.
+ISC licensed. The existing chevron (`m9 18 6-6-6-6`) is already Lucide's.
+
+**The standing rule, and note it makes the original worry moot:**
+
+- **Generic UI affordances** (chevron, close, calendar, search) — inline the
+  path from Lucide into `icons.tsx`. Never a webfont or CDN: ruled out by the
+  offline bundle and the CSP, the same as the type decision.
+- **Domain marks** (symptoms, reliefs, medication forms, laterality) — stay
+  hand-drawn, because they must be schematic at 14–16px and no library draws
+  for that size. **These are already complete**, so "no time to draw icons" is
+  not actually blocking anything: all eight symptoms, twelve reliefs and six
+  medication forms exist.
+
 ## Working practice — the button-shape incident (2026-08-19)
 
 Two rounds of "these buttons don't match what we use everywhere else", on the

@@ -63,6 +63,18 @@ code) or `icons.tsx` (inlined from `/icons`). **Never an emoji**: it can't
 inherit colour, so it becomes the brightest thing on a screen built to be easy
 on the eyes.
 
+Need a new one?
+
+- **Generic UI affordance** (chevron, close, calendar, search) → inline the
+  path from **Lucide**. It is the same contract as the `svg()` helper — 24×24,
+  `fill="none"`, `stroke="currentColor"`, round caps — so it drops in
+  unchanged. Never a webfont or CDN.
+- **Domain mark** (symptom, relief, medication form) → draw it, schematic, no
+  interior detail. **Health Icons was tested and rejected for these**
+  (2026-08-19): great artwork, CC0, exactly the right vocabulary, but they are
+  48-grid filled illustrations that turn into smudges at the 14–16px these
+  render at. The existing domain sets are already complete.
+
 **Anything showing a live duration uses `useNowTick`**, never a bare
 `setInterval` — iOS suspends timers in a backgrounded webview.
 
