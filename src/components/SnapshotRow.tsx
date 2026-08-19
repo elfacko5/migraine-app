@@ -100,7 +100,7 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
               <Section label="Medication">
                 <span className="flex items-center gap-2">
                   <span aria-hidden="true" className="shrink-0">
-                    <MedIcon name={snap.medication.name} dose={snap.medication.dose} className="inline h-3.5 w-3.5 align-[-0.15em]" />
+                    <MedIcon name={snap.medication.name} dose={snap.medication.dose} className="inline h-4 w-4 align-[-0.2em]" />
                   </span>
                   <span className="min-w-0">
                     {snap.medication.name}{snap.medication.dose && ` ${snap.medication.dose}`}

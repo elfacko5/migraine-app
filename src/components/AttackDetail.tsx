@@ -142,7 +142,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
             {firstDoses.map((m, i) => (
               <span key={m.name}>
                 {i > 0 && ' · '}
-                <MedIcon name={m.name} dose={m.dose} className="inline h-3.5 w-3.5 align-[-0.15em]" />{' '}
+                <MedIcon name={m.name} dose={m.dose} className="inline h-4 w-4 align-[-0.2em]" />{' '}
                 <span className="text-text-primary">{m.name}</span> {m.timing}
               </span>
             ))}

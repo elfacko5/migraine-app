@@ -51,7 +51,7 @@ export function PreventiveInsights({ attacks, medications = [] }: Props) {
         {effects.map((e) => (
           <div key={e.name} className="space-y-1">
             <div className="flex items-baseline gap-2">
-              <MedIcon name={e.name} className="h-4 w-4 text-text-secondary" />
+              <MedIcon name={e.name} className="h-[1.125rem] w-[1.125rem] text-text-secondary" />
               <span className="min-w-0 flex-1 truncate text-sm text-text-primary">{e.name}</span>
               <span className="text-xs text-text-secondary">
                 started {formatStarted(e.startedOn)}

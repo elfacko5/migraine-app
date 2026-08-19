@@ -26,12 +26,15 @@ import { medForm, type MedForm } from '../utils/medDisplay';
 
 interface IconProps { className?: string }
 
-const svg = (className: string, children: React.ReactNode) => (
+// `strokeWidth` is a parameter rather than a constant for exactly one caller:
+// the six medication forms use 1.75. Everything else stays 1.5 and should —
+// this is not a knob to reach for. See the note above MedIcon.
+const svg = (className: string, children: React.ReactNode, strokeWidth = 1.5) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth={1.5}
+    strokeWidth={strokeWidth}
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
@@ -271,50 +274,63 @@ export function ReliefIcon({ name, className }: { name: string; className?: stri
 // form key, so the "what form is this" logic is testable and importable from
 // non-JSX code; this only maps the key to a mark.
 
-export function TabletIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+export function TabletIcon({ className = 'h-4 w-4' }: IconProps) {
   return svg(className, <>
-    <rect x="2.5" y="8.5" width="19" height="7" rx="3.5" />
-    <path d="M12 8.5v7" />
-  </>);
+    <rect x="2" y="6.5" width="20" height="11" rx="5.5" />
+    <path d="M12 6.5v11" />
+  </>, MED_STROKE);
 }
 
 /** A tablet dissolving. */
-export function SolubleIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+export function SolubleIcon({ className = 'h-4 w-4' }: IconProps) {
   return svg(className, <>
-    <path d="M4 13a8 8 0 0 0 16 0" />
-    <circle cx="9" cy="7.5" r="1.6" />
-    <circle cx="14.5" cy="5.5" r="1.1" />
-    <circle cx="12.5" cy="9.5" r="0.8" />
-  </>);
+    <path d="M3 12.5a9 9 0 0 0 18 0" />
+    <circle cx="8" cy="6.5" r="2.1" />
+    <circle cx="15.5" cy="4.5" r="1.5" />
+    <circle cx="13" cy="9" r="1.1" />
+  </>, MED_STROKE);
 }
 
-export function SprayIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+export function SprayIcon({ className = 'h-4 w-4' }: IconProps) {
   return svg(className, <>
-    <path d="M8 9h6v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z" />
-    <path d="M9.5 9V6h3" />
-    <path d="M17 4.5h2M17 7h2M17 9.5h2" />
-  </>);
+    <path d="M6.5 8.5h8v11.5a1.5 1.5 0 0 1-1.5 1.5H8a1.5 1.5 0 0 1-1.5-1.5z" />
+    <path d="M8.5 8.5V4.5h4" />
+    <path d="M17 3.5h3.5M17 6.5h3.5M17 9.5h3.5" />
+  </>, MED_STROKE);
 }
 
-export function InjectionIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+export function InjectionIcon({ className = 'h-4 w-4' }: IconProps) {
   return svg(className, <>
-    <path d="m14 4 6 6" />
-    <path d="m17.5 7.5-9 9-4.5 1.5L5.5 13.5l9-9z" />
-    <path d="m10 9 5 5" />
-  </>);
+    <path d="m14.5 3 6.5 6.5" />
+    <path d="m18.5 7-11 11L2.5 19.5 4 14.5l11-11z" />
+    <path d="m9.5 8.5 6 6" />
+  </>, MED_STROKE);
 }
 
-export function SuppositoryIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
-  return svg(className, <path d="M12 3c3 4 4.5 6.5 4.5 10a4.5 4.5 0 0 1-9 0C7.5 9.5 9 7 12 3z" />);
+export function SuppositoryIcon({ className = 'h-4 w-4' }: IconProps) {
+  return svg(className, <path d="M12 2.5c3.7 5 5.5 8 5.5 12.3a5.5 5.5 0 0 1-11 0C6.5 10.5 8.3 7.5 12 2.5z" />, MED_STROKE);
 }
 
-export function PatchIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+export function PatchIcon({ className = 'h-4 w-4' }: IconProps) {
   return svg(className, <>
-    <rect x="3" y="8.5" width="18" height="7" rx="3" transform="rotate(-20 12 12)" />
-    <path d="M10.5 10.5v3M13.5 10.5v3" />
-  </>);
+    <rect x="1.5" y="7" width="21" height="10" rx="3.5" transform="rotate(-25 12 12)" />
+    <path d="M10 10v4M14 10v4" />
+  </>, MED_STROKE);
 }
 
+/** The medication family alone runs heavier than the shared 1.5. */
+const MED_STROKE = 1.75;
+
+// The six medication marks are drawn deliberately *fuller* than the symptom
+// and relief ones, and default to `h-4` rather than `h-3.5`. The complaint
+// they fix (2026-08-19) was that they read "flat and small" — the tablet was
+// the clearest case: a 19x7 capsule inside a 24x24 box put its whole mass in
+// 29% of the height, so at 14px it rendered about 4px tall next to text more
+// than three times that. Being generic is fine; being a sliver is not. Each
+// now uses roughly the full box height, and the family keeps the shared
+// stroke weight bumped one notch to 1.75: at 16px a 1.5 stroke in a 24-unit
+// box renders as a single pixel, which is the other half of "flat". Everything
+// else here stays at 1.5.
 /** The mark for a medication, from its own name and dose text. */
 export function MedIcon({ name, dose = '', className }: { name: string; dose?: string; className?: string }) {
   const Icon = MED_FORM_ICONS[medForm(name, dose)];

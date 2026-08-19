@@ -773,11 +773,15 @@ device end to end.
    redraw is the intent. The drawing is Sunny's; the code side is re-inlining
    the path data into `headDiagram.ts` and re-measuring crown alignment, which
    the diagram section of CLAUDE.md spells out.
-10. **The medication icons read flat and small.** Restated 2026-08-19: the
-    old entry said "the tablet icon is a generic capsule", and generic is
-    **fine** — the actual complaint is the weight and size of the mark. That
-    makes it a drawing job across the `MedIcon` set rather than an argument
-    about needing a drug database, and a much cheaper one.
+10. ~~**The medication icons read flat and small.**~~ **Done 2026-08-19.**
+    All six redrawn to use roughly the full 24-unit box, plus a `MED_STROKE`
+    of 1.75 for that family alone — at 16px a 1.5 stroke is one pixel, which
+    was the other half of "flat". Call sites went up one step, still in `rem`.
+    Compared before/after side by side at 14/16/18px and in a real Logs row.
+    **One trade-off to look at on device**: the medication mark now carries
+    more weight than the symptom mark beside it on the same card. The lever is
+    `MED_STROKE`, in one place. (The old entry blamed the capsule for being
+    generic; generic was never the problem.)
 11. `--color-text-primary` (`#cdc7bb` vs `#d7d1c6`) — only settleable on a
     real screen mid-attack.
 

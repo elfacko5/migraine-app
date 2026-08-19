@@ -51,7 +51,7 @@ export function MedicationInsights({ attacks, medications = [] }: Props) {
           return (
             <div key={med.name} className="space-y-1">
               <div className="flex items-baseline gap-2">
-                <MedIcon name={med.name} className="h-4 w-4 text-text-secondary" />
+                <MedIcon name={med.name} className="h-[1.125rem] w-[1.125rem] text-text-secondary" />
                 <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
                   {med.name}
                   {/* Only when they differ — with one dose a day, "11 days ·
