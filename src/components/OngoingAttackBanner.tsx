@@ -42,10 +42,21 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }
       // the detail line keeps the same shape as the attack-free card's.
       // Peak is dropped when it equals now — on a single-reading attack the
       // two are the same number said twice.
+      // **The line always says where the attack sits, never just a number.**
+      // Collapsing to a bare "Severity 9" when now and peak agree looked
+      // identical to the old copy, so a card that had in fact changed read as
+      // one that hadn't — twice. "At its peak" is also the more useful
+      // sentence: it is as bad as it has been, which a repeated "9 · peak 9"
+      // states without saying.
+      //
+      // One reading is the exception: there is nothing to have peaked
+      // *against* yet, so the number stands alone.
       detail={
-        nowSev === peakSev
-          ? <>Severity {nowSev}</>
-          : <>Severity now {nowSev} · peak {peakSev}</>
+        nowSev !== peakSev
+          ? <>Severity now {nowSev} · peak {peakSev}</>
+          : attack.snapshots.length > 1
+            ? <>Severity {nowSev} · at its peak</>
+            : <>Severity {nowSev}</>
       }
       onOpenDetail={onOpenDetail}
     >
