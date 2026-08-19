@@ -26,7 +26,7 @@ export function AttackFreeCard({ lastEnd, onStart }: Props) {
       <button
         type="button"
         onClick={onStart}
-        className="btn-primary rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
+        className="btn-primary btn-compact"
       >
         Log an attack
       </button>

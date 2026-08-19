@@ -147,6 +147,20 @@
   .btn-tertiary { background-color: transparent; color: var(--color-accent-light); }
   .btn-tertiary:hover:not(:disabled) { color: var(--color-accent); }
 
+  /* **Two sizes, and the choice is explicit.** The default above is the
+     full-width size: a pinned footer action, or the one primary action at the
+     bottom of a panel. `.btn-compact` is the *in-card* size — the Today hero
+     card's "Add update"/"End attack" pair — where buttons hug their text and
+     sit in a `flex flex-wrap gap-2` row rather than stretching.
+
+     This exists because the two got mixed on 2026-08-19: the HIT-6 prompt
+     card sat directly beneath the hero card with footer-sized, `flex-1`
+     buttons, so two cards a few pixels apart had visibly different buttons.
+     Giving the sizes names makes "which one" a decision you make rather than
+     one you inherit — and it is the only definition of either, so the hero
+     card's own buttons now use this class instead of repeating the values. */
+  .btn-compact { padding: 0.625rem 1.25rem; }
+
   /* A disabled primary is a *muted* button, never a faded accent one — the
      treatment the logging wizard spells out by hand at each call site. Here
      it comes for free, so `disabled:opacity-40` is never the reach. */

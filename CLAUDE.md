@@ -101,6 +101,21 @@ The wording spec is **§9 of the research dossier** — read it before writing a
 - **Plainer the deeper into an attack** (§9.5). Today's overuse warning says what frequent use can do in everyday words; the Insights caption keeps "medication-overuse headache", the term a clinician uses, because that page is read carefully and Today is glanced at mid-attack. The tone system and attack mode are the same idea.
 - **Supportive, not diagnostic**, which the existing rules already enforce: state the count and the guideline, conclude nothing, and never read as dosing advice.
 
+## Buttons
+
+**`.btn-primary` / `.btn-secondary` / `.btn-tertiary` in `src/index.css` carry their own radius, padding, type and disabled treatment.** They used to set colour only, with a comment telling call sites to add "size, radius, font" — so a bare `btn-primary` was silently *half a button* and nothing failed. That is exactly how the HIT-6 screens shipped looking like nothing else in the app. Call sites can still override anything (these are `@layer components`; Tailwind utilities win), so the existing repetitions of `rounded-xl py-3 text-sm font-medium` are harmless duplicates of what they now inherit.
+
+**There are two sizes and the choice is explicit:**
+
+| | Use | How |
+|---|---|---|
+| **Default** | A pinned footer action, or the one primary action at the bottom of a panel. Full width. | `btn-primary w-full` |
+| **`.btn-compact`** | An action *inside a card* — hugs its text, sits in a `flex flex-wrap gap-2` row. | `btn-primary btn-compact` |
+
+The Today hero card (`OngoingAttackBanner`, `AttackFreeCard`) and the HIT-6 prompt both use `btn-compact`, and it is the **only** definition of that size — the hero cards used to spell out `px-5 py-2.5` by hand, which is how a card added later ended up with footer-sized `flex-1` buttons a few pixels below them. **A new card's actions take `btn-compact`; a new panel's footer takes the default.** Getting this wrong is not a style slip — two cards adjacent on the same screen with different button sizes read as two different apps.
+
+**A disabled `btn-primary`/`btn-secondary` is automatically the muted `bg-raised` treatment**, so `disabled:opacity-40` is never the reach.
+
 ## Dark-first design, photophobia-aware
 
 The app is always dark. `color-scheme: dark` is set globally. Never use `dark:` prefixes — dark styles are just the base styles.

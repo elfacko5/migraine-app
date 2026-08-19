@@ -41,11 +41,15 @@ export function Hit6Prompt({ onStart, onDismiss, first }: Props) {
           ? 'Six short questions about the last four weeks. Your diary counts the days; this asks what they cost you.'
           : 'Six short questions about the last four weeks — it\'s been a month since the last one.'}
       </p>
-      <div className="mt-3 flex gap-2">
-        <button type="button" onClick={onStart} className="btn-primary flex-1">
+      {/* The in-card size, hugging its text in a wrapping row — the same
+          shape as the hero card's pair directly above this one. A card action
+          is not a footer action: full-width `flex-1` buttons here made two
+          cards a few pixels apart look like different systems. */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={onStart} className="btn-primary btn-compact">
           Answer now
         </button>
-        <button type="button" onClick={onDismiss} className="btn-secondary flex-1">
+        <button type="button" onClick={onDismiss} className="btn-secondary btn-compact">
           Not now
         </button>
       </div>
