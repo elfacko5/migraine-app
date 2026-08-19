@@ -3,7 +3,7 @@ import {
   medicationDaysByMonth, medicationResponse,
   MOH_DAYS_TRIPTAN, MOH_DAYS_SIMPLE,
 } from '../utils/stats';
-import { medIcon } from '../utils/medDisplay';
+import { MedIcon } from './drawnIcons';
 import { mohDaysFor } from '../utils/medGuardrails';
 import { InsightSection } from './InsightSection';
 
@@ -51,7 +51,7 @@ export function MedicationInsights({ attacks, medications = [] }: Props) {
           return (
             <div key={med.name} className="space-y-1">
               <div className="flex items-baseline gap-2">
-                <span aria-hidden="true">{medIcon(med.name, '')}</span>
+                <MedIcon name={med.name} className="h-4 w-4 text-text-secondary" />
                 <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
                   {med.name}
                   {/* Only when they differ — with one dose a day, "11 days ·

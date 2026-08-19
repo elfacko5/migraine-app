@@ -7,7 +7,8 @@ import { SnapshotRow } from './SnapshotRow';
 import { ConfirmDialog } from './ConfirmDialog';
 import { BinIcon, SunriseIcon } from './icons';
 import { IMPACT_SHORT } from '../utils/impact';
-import { medIcon, attackFirstDoses } from '../utils/medDisplay';
+import { attackFirstDoses } from '../utils/medDisplay';
+import { MedIcon } from './drawnIcons';
 import { isRetired } from '../utils/retired';
 
 interface Props {
@@ -119,7 +120,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
             {firstDoses.map((m, i) => (
               <span key={m.name}>
                 {i > 0 && ' · '}
-                <span aria-hidden="true">{medIcon(m.name, m.dose)}</span>{' '}
+                <MedIcon name={m.name} dose={m.dose} className="inline h-3.5 w-3.5 align-[-0.15em]" />{' '}
                 <span className="text-text-primary">{m.name}</span> {m.timing}
               </span>
             ))}

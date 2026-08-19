@@ -43,11 +43,32 @@ import { attackSide, SIDE_SHORT, type Side } from './laterality';
 // Symptoms are deliberately absent: ~15 possible values needs its own picker
 // and earns less than any of the above.
 
+export type Period = 'all' | '7d' | '30d' | '3m';
+
+export const PERIOD_OPTIONS: { value: Period; label: string }[] = [
+  { value: 'all', label: 'All time' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+  { value: '3m', label: 'Last 3 months' },
+];
+
+export const PERIOD_MS: Record<Exclude<Period, 'all'>, number> = {
+  '7d': 7 * 24 * 60 * 60 * 1000,
+  '30d': 30 * 24 * 60 * 60 * 1000,
+  '3m': 90 * 24 * 60 * 60 * 1000,
+};
+
 export type SeverityBand = 'any' | 'low' | 'mid' | 'high';
 export type TreatedFilter = 'any' | 'treated' | 'untreated';
 export type SortOrder = 'newest' | 'oldest' | 'longest' | 'severity' | 'impact';
 
 export interface LogFilters {
+  /** **The list opens on all time.** The period used to be a permanent row of
+   *  pills above the list, defaulting to 7 days — which meant the page opened
+   *  hiding most of what it exists to show, and a quiet week looked like an
+   *  empty diary. It is a filter like any other, so it lives with the rest of
+   *  them and announces itself in the chip row when it is not "all". */
+  period: Period;
   treated: TreatedFilter;
   /** Impact levels to include. Empty means "any" — see the note below. */
   impact: number[];
@@ -58,6 +79,7 @@ export interface LogFilters {
 }
 
 export const DEFAULT_FILTERS: LogFilters = {
+  period: 'all',
   treated: 'any',
   impact: [],
   side: null,
@@ -116,8 +138,14 @@ export function sideOptions(attacks: Attack[]): { value: Side; label: string }[]
 
 // ── Applying ─────────────────────────────────────────────────────────────
 
-export function applyFilters(attacks: Attack[], f: LogFilters): Attack[] {
+export function applyFilters(attacks: Attack[], f: LogFilters, now: number = Date.now()): Attack[] {
+  // Relative to now by definition, and re-derived on every render that changes
+  // the inputs — freezing it would stop the window moving on an app left open
+  // overnight. The clock is read here rather than by the caller so it stays
+  // out of a component's render.
+  const cutoff = f.period === 'all' ? null : now - PERIOD_MS[f.period];
   return attacks.filter((a) => {
+    if (cutoff !== null && new Date(a.snapshots[0].time).getTime() < cutoff) return false;
     if (f.severity !== 'any' && !inBand(attackMaxSeverity(a), f.severity)) return false;
 
     // An unanswered impact is not 0 and must never be matched by a filter for
@@ -181,6 +209,10 @@ export interface FilterChip {
 
 export function activeFilterChips(f: LogFilters): FilterChip[] {
   const chips: FilterChip[] = [];
+
+  if (f.period !== 'all') {
+    chips.push({ key: 'period', label: PERIOD_OPTIONS.find((p) => p.value === f.period)!.label });
+  }
 
   if (f.severity !== 'any') {
     const band = { low: '1–3', mid: `${LOW_MAX + 1}–${MID_MAX}`, high: `${MID_MAX + 1}–10` }[f.severity];

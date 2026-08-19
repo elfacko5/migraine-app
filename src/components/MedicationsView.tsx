@@ -1,5 +1,5 @@
 import type { Medication } from '../types';
-import { medIcon } from '../utils/medDisplay';
+import { MedIcon } from './drawnIcons';
 import { ProfileSubPage } from './ProfileSubPage';
 
 interface Props {
@@ -62,7 +62,7 @@ export function MedicationsView({ medications, onEdit, onAddNew, onClose }: Prop
                   aria-label={`Edit ${med.name}`}
                   className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
                 >
-                  <span aria-hidden="true">{medIcon(med.name, med.dose)}</span>
+                  <MedIcon name={med.name} dose={med.dose} className="h-5 w-5 shrink-0 text-text-secondary" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-text-primary">{med.name}</span>
                     {med.dose && <span className="block truncate text-xs text-text-secondary">{med.dose}</span>}

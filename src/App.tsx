@@ -37,7 +37,7 @@ import { attackAwaitingImpact } from './utils/impact';
 import { TodaySummary } from './components/TodaySummary';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
-import { HistoryView, type Period } from './components/HistoryView';
+import { HistoryView } from './components/HistoryView';
 import { LogsFilterPanel, LogsFilterReset } from './components/LogsFilterPanel';
 import { DEFAULT_FILTERS, type LogFilters, type SortOrder } from './utils/logFilters';
 import { ProfileView, AccessibilityPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
@@ -64,7 +64,6 @@ export default function App() {
   // scroll container anchors to the wrong ancestor (see the viewport rules).
   // It also means the choices survive leaving the tab and coming back, which
   // is the behaviour you want from a filter you deliberately set.
-  const [logsPeriod, setLogsPeriod] = useState<Period>('7d');
   const [logsFilters, setLogsFilters] = useState<LogFilters>(DEFAULT_FILTERS);
   const [logsSort, setLogsSort] = useState<SortOrder>('newest');
   const [logsFilterOpen, setLogsFilterOpen] = useState(false);
@@ -486,8 +485,6 @@ export default function App() {
           <section className="space-y-4">
             <HistoryView
               attacks={attacks}
-              period={logsPeriod}
-              onPeriod={setLogsPeriod}
               filters={logsFilters}
               onFilters={setLogsFilters}
               sort={logsSort}

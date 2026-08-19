@@ -2,7 +2,7 @@ import type { Attack } from '../types';
 import { IMPACT_OPTIONS } from '../utils/impact';
 import {
   DEFAULT_FILTERS, SORT_LABELS,
-  sideOptions, filterCount,
+  sideOptions, filterCount, PERIOD_OPTIONS,
   type LogFilters, type SortOrder, type SeverityBand, type TreatedFilter,
 } from '../utils/logFilters';
 import { LOW_MAX, MID_MAX } from '../utils/severity';
@@ -101,6 +101,18 @@ export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onCl
     // sibling of the scroller rather than sticky inside it.
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4">
+      {/* Period leads, because it decides the pool every other filter then
+          narrows — and because it moved here from a permanent pill row above
+          the list, where defaulting to 7 days meant the page opened hiding
+          most of what it exists to show. */}
+      <Group label="Period">
+        {PERIOD_OPTIONS.map((p) => (
+          <Pill key={p.value} active={filters.period === p.value} onClick={() => set('period', p.value)}>
+            {p.label}
+          </Pill>
+        ))}
+      </Group>
+
       <Group label="Sort by">
         {SORTS.map((s) => (
           <Pill key={s} active={sort === s} onClick={() => onSort(s)}>

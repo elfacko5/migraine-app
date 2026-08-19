@@ -2,9 +2,9 @@ import type { Attack } from '../types';
 import { formatDate, formatTime, formatDuration } from '../utils/format';
 import { attackAvgSeverity, attackMaxSeverity } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
-import { SymptomIcon, SideGlyph } from './symptomIcons';
+import { SymptomIcon, SideGlyph, MedIcon } from './drawnIcons';
 import { isRetired } from '../utils/retired';
-import { medIcon, attackFirstDoses } from '../utils/medDisplay';
+import { attackFirstDoses } from '../utils/medDisplay';
 import { IMPACT_SHORT } from '../utils/impact';
 import { sevTextClass } from '../utils/severity';
 import { SeveritySparkline } from './SeverityChart';
@@ -91,12 +91,11 @@ export function AttackCard({ attack, onClick, isOngoing }: Props) {
   // The quiet last line, joined rather than concatenated so a missing part
   // never leaves a stray separator. "snapshots" is the data model's word for
   // these; in the UI they are readings.
-  // Side has left this line — the glyph on the right says it now, which is
-  // the point of the glyph: the row carried a lot of text and this was the
-  // part that could become a picture without losing anything.
-  const tail = [
-    attack.snapshots.length > 1 ? `${attack.snapshots.length} readings` : null,
-  ].filter(Boolean);
+  // **No reading count and no side in the text.** Both became pictures: the
+  // sparkline on the right already shows that there was more than one reading
+  // (and roughly how many), and the glyph beneath it says which side. The row
+  // was carrying a lot of text, and these were the two parts that could be
+  // shown instead of said without losing anything.
 
   return (
     <button
@@ -151,11 +150,16 @@ export function AttackCard({ attack, onClick, isOngoing }: Props) {
               rank in, and the two fills keep them apart at a glance. */}
           {(meds.length > 0 || symptoms.length > 0) && (
             <div className="flex flex-wrap gap-1 pt-0.5">
+              {/* **Not accent-tinted.** These were sage while the symptom
+                  chips were neutral, which was how the two were told apart
+                  before either had an icon. The icons do that job now, and
+                  accent means *action or selection* everywhere else in the
+                  app — on a row you only read, it was claiming a meaning it
+                  didn't have. Both sets are neutral; the marks differ. */}
               {meds.map((m) => (
-                <span key={m.name} className="text-xs bg-accent/10 text-accent-light rounded-full px-2 py-0.5">
-                  {/* medIcon, not a hardcoded 💊 — the same drug has to carry
-                      the same glyph here, on the timeline and in the library. */}
-                  <span aria-hidden="true">{medIcon(m.name, m.dose)}</span> {m.name}
+                <span key={m.name} className="inline-flex items-center gap-1 text-xs bg-bg-border/40 text-text-secondary rounded-full px-2 py-0.5">
+                  <MedIcon name={m.name} dose={m.dose} />
+                  {m.name}
                 </span>
               ))}
               {/* Each symptom leads with its own drawn mark, so the chips
@@ -179,19 +183,9 @@ export function AttackCard({ attack, onClick, isOngoing }: Props) {
           {/* 5. The quiet line. Impact renders only when answered — it is
               deliberately absent rather than 0 when skipped, and "not
               answered" must never read as "no impact". */}
-          {(tail.length > 0 || attack.impact !== undefined) && (
-            <p className="text-xs text-text-secondary">
-              {tail.join(' · ')}
-              {attack.impact !== undefined && (
-                <>
-                  {tail.length > 0 && ' · '}
-                  {/* Kept whole, so a narrow row breaks *before* "Impact:"
-                      rather than between the label and its value. */}
-                  <span className="whitespace-nowrap">
-                    Impact: <span className="text-text-primary">{IMPACT_SHORT[attack.impact]}</span>
-                  </span>
-                </>
-              )}
+          {attack.impact !== undefined && (
+            <p className="text-xs text-text-secondary whitespace-nowrap">
+              Impact: <span className="text-text-primary">{IMPACT_SHORT[attack.impact]}</span>
             </p>
           )}
         </div>

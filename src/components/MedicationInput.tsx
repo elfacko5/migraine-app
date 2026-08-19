@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Attack, Medication } from '../types';
 import { formatTime } from '../utils/format';
-import { medIcon } from '../utils/medDisplay';
+import { MedIcon } from './drawnIcons';
 import {
   checkDose, doseUnits, findMedication, DEFAULT_UNIT, unitsLabel,
 } from '../utils/medGuardrails';
@@ -94,7 +94,7 @@ export function MedicationInput({
                     : 'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-border hover:text-text-primary'
                 }`}
               >
-                <span aria-hidden="true">{medIcon(med.name, med.dose)}</span>
+                <MedIcon name={med.name} dose={med.dose} className="h-4 w-4" />
                 {med.name}{med.dose ? ` · ${med.dose}` : ''}
               </button>
             ))}

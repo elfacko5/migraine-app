@@ -2,7 +2,7 @@ import type { Attack, Medication } from '../types';
 import { useNowTick } from '../hooks/useNowTick';
 import { migraineDaysByMonth, medicationDaysByMonth } from '../utils/stats';
 import { formatTime } from '../utils/format';
-import { medIcon } from '../utils/medDisplay';
+import { MedIcon } from './drawnIcons';
 import {
   checkDose, doseUnits, findMedication, lastDoseSnapshot, mohDaysFor, unitsInWindow,
 } from '../utils/medGuardrails';
@@ -39,7 +39,7 @@ const warnAt = (threshold: number) => Math.ceil(threshold * 0.7);
 // on the headline, the detail underneath — is shared.
 function MedRow({ name, icon, figure, detail, warning = false }: {
   name: string;
-  icon: string;
+  icon: React.ReactNode;
   figure: string;
   detail?: string | null;
   warning?: boolean;
@@ -50,7 +50,7 @@ function MedRow({ name, icon, figure, detail, warning = false }: {
         warning ? 'border border-severity-mid/40 bg-severity-mid/10' : 'bg-bg-surface'
       }`}
     >
-      <span aria-hidden="true">{icon}</span>
+      <span className="mt-0.5 shrink-0 text-text-secondary">{icon}</span>
       <div className="min-w-0">
         <p className="text-sm text-text-primary">
           <span className="font-medium">{name}</span> {figure}
@@ -118,7 +118,7 @@ export function TodaySummary({ attacks, ongoing, medications = [], attackMode = 
         <MedRow
           key={m.name}
           name={m.name}
-          icon={medIcon(m.name, '')}
+          icon={<MedIcon name={m.name} className="h-4 w-4" />}
           figure={`on ${m.thisMonth} days this month`}
           warning
           /* States the number and the guideline, and stops. Deciding what it
@@ -137,7 +137,7 @@ export function TodaySummary({ attacks, ongoing, medications = [], attackMode = 
       {lastDose?.medication && (
         <MedRow
           name={lastDose.medication.name}
-          icon={medIcon(lastDose.medication.name, lastDose.medication.dose)}
+          icon={<MedIcon name={lastDose.medication.name} dose={lastDose.medication.dose} className="h-4 w-4" />}
           // "Treo at 20:51" reads as a label with a timestamp — it could as
           // easily mean a reminder due then, or when it was logged. The verb
           // is what makes it a statement about a dose that was taken, and it

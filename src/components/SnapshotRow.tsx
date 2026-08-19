@@ -1,6 +1,6 @@
 import type { Snapshot } from '../types';
 import { formatTime } from '../utils/format';
-import { medIcon } from '../utils/medDisplay';
+import { MedIcon } from './drawnIcons';
 // Was a local copy of the ramp with `<= 8` as the middle bound, which put a
 // severity 8 in amber here and terracotta everywhere else. Shared now.
 import { sevTextClass as sevColor } from '../utils/severity';
@@ -100,7 +100,7 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
               <Section label="Medication">
                 <span className="flex items-center gap-2">
                   <span aria-hidden="true" className="shrink-0">
-                    {medIcon(snap.medication.name, snap.medication.dose)}
+                    <MedIcon name={snap.medication.name} dose={snap.medication.dose} className="inline h-3.5 w-3.5 align-[-0.15em]" />
                   </span>
                   <span className="min-w-0">
                     {snap.medication.name}{snap.medication.dose && ` ${snap.medication.dose}`}

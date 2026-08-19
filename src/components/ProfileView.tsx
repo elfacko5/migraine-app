@@ -7,6 +7,7 @@ import { useNowTick } from '../hooks/useNowTick';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
+import { TabletIcon, EyeIcon, CloudIcon, DataIcon } from './drawnIcons';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
@@ -20,11 +21,15 @@ interface MenuProps {
   accountEnabled: boolean;
 }
 
-const MENU: { id: ProfileSection; icon: string; label: string; hint: string }[] = [
-  { id: 'medications',   icon: '💊', label: 'My medications', hint: 'Acute and preventive' },
-  { id: 'accessibility', icon: '👁', label: 'Accessibility',  hint: 'Text size and screen brightness' },
-  { id: 'account',       icon: '☁️', label: 'Account & sync', hint: 'Sign in to sync across devices' },
-  { id: 'data',          icon: '💾', label: 'Data',           hint: 'Export or import a backup' },
+// Drawn marks rather than emoji, for the reason the attack-mode pill gave up
+// its own: an emoji is full-colour and can't inherit `currentColor`, so four
+// of them made a settings list the most saturated thing on a screen the
+// palette works to keep quiet. These take the row's own colour and size.
+const MENU: { id: ProfileSection; Icon: (p: { className?: string }) => React.ReactElement; label: string; hint: string }[] = [
+  { id: 'medications',   Icon: TabletIcon, label: 'My medications', hint: 'Acute and preventive' },
+  { id: 'accessibility', Icon: EyeIcon,    label: 'Accessibility',  hint: 'Text size and screen brightness' },
+  { id: 'account',       Icon: CloudIcon,  label: 'Account & sync', hint: 'Sign in to sync across devices' },
+  { id: 'data',          Icon: DataIcon,   label: 'Data',           hint: 'Export or import a backup' },
 ];
 
 // Every group is its own sub-page. An earlier version kept these flat and
@@ -41,7 +46,7 @@ export function ProfileView({ onOpen, accountEnabled }: MenuProps) {
           onClick={() => onOpen(item.id)}
           className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-4 text-left transition-colors hover:bg-bg-raised"
         >
-          <span aria-hidden="true" className="text-lg">{item.icon}</span>
+          <item.Icon className="h-5 w-5 shrink-0 text-text-secondary" />
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium text-text-primary">{item.label}</span>
             <span className="block text-xs text-text-secondary">{item.hint}</span>

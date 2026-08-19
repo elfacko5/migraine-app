@@ -6,30 +6,16 @@ import {
   DEFAULT_FILTERS, SORT_LABELS,
   type LogFilters, type SortOrder,
 } from '../utils/logFilters';
-import { chipClass } from '../utils/chipStyles';
 
-type Period = 'all' | '7d' | '30d' | '3m';
-
-const PERIOD_OPTIONS: { value: Period; label: string }[] = [
-  { value: '7d',   label: '7 days' },
-  { value: '30d',  label: '30 days' },
-  { value: '3m',   label: '3 months' },
-  { value: 'all',  label: 'All' },
-];
-
-const PERIOD_MS: Record<Exclude<Period, 'all'>, number> = {
-  '7d':  7  * 24 * 60 * 60 * 1000,
-  '30d': 30 * 24 * 60 * 60 * 1000,
-  '3m':  90 * 24 * 60 * 60 * 1000,
-};
-
-// The period row stays a row of its own rather than moving into the filter
-// sheet: it's the one control that's adjusted constantly, and every other
-// filter is set occasionally and then left alone.
+// **The period moved into the filter sheet and the list opens on all time.**
+// It had a permanent row of pills here on the argument that it was adjusted
+// constantly while every other filter was set once and left — but defaulting
+// to 7 days meant the page opened hiding most of what it exists to show, and
+// a quiet week read as an empty diary. It is a filter like any other, so it
+// lives with them; when it isn't "all time" it says so in the chip row below,
+// which is the same way every other filter announces itself.
 interface Props {
   attacks: Attack[];
-  period: Period;
-  onPeriod: (p: Period) => void;
   filters: LogFilters;
   onFilters: (f: LogFilters) => void;
   sort: SortOrder;
@@ -40,28 +26,15 @@ interface Props {
 }
 
 export function HistoryView({
-  attacks, period, onPeriod, filters, onFilters, sort, onSort, onOpenFilters, onAttackClick,
+  attacks, filters, onFilters, sort, onSort, onOpenFilters, onAttackClick,
 }: Props) {
-  // Two stages, kept separate so the empty state can tell the user which one
-  // emptied the list — the period or the filters. Blaming the wrong one sends
-  // someone looking in a sheet they never opened.
-  const inPeriod = useMemo(() => {
-    if (period === 'all') return attacks;
-    // the period filter is relative to now by definition, and it is
-    // re-derived on every render that changes `attacks` or `period`.
-    // Freezing "now" at mount would silently stop the window moving on an
-    // app left open overnight.
-    // eslint-disable-next-line react-hooks/purity
-    const cutoff = Date.now() - PERIOD_MS[period];
-    return attacks.filter((a) => new Date(a.snapshots[0].time).getTime() >= cutoff);
-  }, [attacks, period]);
-
+  // One stage now that the period is a filter like the rest. The empty state
+  // below still distinguishes "nothing matched" from "nothing logged", which
+  // is the distinction that actually mattered.
   const visible = useMemo(
-    // same as above: the duration sorts measure against now, and there is
-    // nothing to freeze.
     // eslint-disable-next-line react-hooks/purity
-    () => sortAttacks(applyFilters(inPeriod, filters), sort, Date.now()),
-    [inPeriod, filters, sort]
+    () => sortAttacks(applyFilters(attacks, filters), sort, Date.now()),
+    [attacks, filters, sort]
   );
 
   const chips = activeFilterChips(filters);
@@ -112,22 +85,6 @@ export function HistoryView({
             <span className="rounded-full bg-accent/25 px-1.5 tabular-nums">{count}</span>
           )}
         </button>
-      </div>
-
-      {/* Period filter chips */}
-      <div className="flex gap-2 flex-wrap">
-        {PERIOD_OPTIONS.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => onPeriod(value)}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-              chipClass(period === value)
-            }`}
-          >
-            {label}
-          </button>
-        ))}
       </div>
 
       {/* Active filters and a non-default sort, each removable on its own.
@@ -201,5 +158,3 @@ export function HistoryView({
     </div>
   );
 }
-
-export type { Period };
