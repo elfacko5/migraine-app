@@ -384,8 +384,21 @@ Three things the test taught that reasoning had not:
   follow-up scheduled in the past, which looked like a broken chain. It wasn't:
   `reschedule` copies the delivered notification's content, which carries
   `userInfo["cap_schedule"]`, and that — not the trigger — is what
-  `getPending()` reports. The trigger was always right. The handler now
-  updates the copied schedule date too.
+  `getPending()` reports. The trigger was always right.
+
+  The fix took two goes, and the second one is the lesson. Updating the
+  plugin's `cap_schedule` worked, but it depended on casting the whole
+  `userInfo` in one step, which can fail silently and would leave the stale
+  date in place looking like an answer. The handler now also writes its own
+  `nextAt` into `cap_extra` — a key we own and always set — and the readout
+  prefers it. **Verified on device**: after a fresh reschedule the entry reads
+  two hours ahead rather than the time it just fired.
+
+  **A stale entry immediately after a rebuild is expected, not a symptom.**
+  iOS keeps already-queued notifications across an app update, so an entry
+  scheduled by the previous binary carries its old metadata until it fires or
+  is replaced. Only the next reschedule can show the fix — which cost a round
+  of "I rebuilt and it still shows the old time".
 
 ## Accessibility audit (2026-08-19)
 
