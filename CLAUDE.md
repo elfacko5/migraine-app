@@ -375,10 +375,22 @@ prospective diary exists to avoid.
   exception to it, and this is not a second one.
 - The Profile marker is **text, not a coloured dot** — a dot on a settings row
   reads as an alert, and this is a suggestion.
-- **One question per screen**, with a progress rule and Back. Six at once is a
-  form to get through; one is a question to think about, and with a four-week
-  recall the thinking is the point. Answering advances automatically, except
-  on the last question — the final tap must not also be the tap that submits.
+- **One question per screen**, with **Back/Next in the logging wizard's own
+  shape** — secondary + primary, `rounded-xl py-3 text-sm font-medium`, and
+  the disabled primary is the muted `bg-bg-raised text-text-secondary`
+  treatment, never a faded accent. Six at once is a form to get through; one
+  is a question to think about, and with a four-week recall the thinking is
+  the point.
+- **Selecting an answer does not advance.** It costs a tap, deliberately: with
+  auto-advance a mis-tap is committed and gone before you have read what you
+  picked, and there is no reason to hurry someone through a question about the
+  last four weeks. Rejected on 2026-08-19 after shipping it.
+- **The step count is the sub-page title** ("3 of 6"), not "Headache impact" —
+  the name is already on the row you tapped to get here, and repeating it
+  costs the one line worth having in a top bar mid-flow. **The progress rule
+  is specific to this screen and should not be pushed into the logging
+  wizard**, whose header already carries a step count and the text-size
+  stepper and has no room for one.
 - **It explains itself before asking anything** (the intro screen): why it is
   worth answering, that **nobody else reads it**, and what happens to an
   answer. A six-question form that opens on question one is asking for

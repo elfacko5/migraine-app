@@ -17,6 +17,11 @@ interface Props {
 }
 
 const CHIP = 'w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors';
+// The app's one button shape — same classes the wizard's Back/Next pair uses,
+// including the disabled treatment. A disabled primary is a *muted* button
+// here, never a faded accent one.
+const BTN = 'rounded-xl py-3 text-sm font-medium transition-all';
+const BTN_OFF = 'bg-bg-raised text-text-secondary cursor-not-allowed';
 
 /**
  * The Headache Impact Test, as its own Profile sub-page.
@@ -47,12 +52,13 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
   const last = latestHit6(entries);
   const history = [...entries].sort((a, b) => b.takenAt.localeCompare(a.takenAt));
 
+  // Selecting an answer does **not** advance. It costs a tap, and that is the
+  // point: auto-advance means a mis-tap is committed and gone before you have
+  // read what you picked, and there is no reason to hurry someone through a
+  // question about the last four weeks. Back/Next also matches the logging
+  // wizard, which is the only other multi-step flow in the app.
   function answer(value: number, index: number) {
     setAnswers((prev) => prev.map((a, j) => (j === index ? value : a)));
-    // Advance on its own, the way a one-question-per-screen form should — but
-    // not off the end: the last question waits, so the final tap isn't also
-    // the tap that submits.
-    if (index < HIT6_QUESTIONS.length - 1) setStage(index + 1);
   }
 
   function submit() {
@@ -89,7 +95,7 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
             Saved to your diary. It sits alongside your attack history, so you can see the two together —
             and it's worth answering again in about four weeks, since the questions ask about that window.
           </p>
-          <button type="button" onClick={onClose} className="btn-primary w-full">Done</button>
+          <button type="button" onClick={onClose} className={`btn-primary w-full ${BTN}`}>Done</button>
         </div>
       </ProfileSubPage>
     );
@@ -99,19 +105,23 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
   if (typeof stage === 'number') {
     const i = stage;
     const isLast = i === HIT6_QUESTIONS.length - 1;
+    const unanswered = answers[i] === null;
     return (
-      <ProfileSubPage title="Headache impact" onClose={onClose}>
+      // The step count *is* the title. "Headache impact" is already on the row
+      // you tapped to get here, and repeating it costs the line that says
+      // where you are — which is the thing worth having in a top bar mid-flow.
+      <ProfileSubPage title={`${i + 1} of ${HIT6_QUESTIONS.length}`} onClose={onClose}>
         <div className="space-y-6">
-          <div className="space-y-2">
-            <p className="text-xs text-text-secondary">Question {i + 1} of {HIT6_QUESTIONS.length}</p>
-            {/* A plain rule rather than a percentage bar: it says where you are
-                without turning six questions into a thing being scored. */}
-            <div className="h-1 w-full overflow-hidden rounded-full bg-bg-raised">
-              <div
-                className="h-full rounded-full bg-accent/60 transition-all"
-                style={{ width: `${((i + 1) / HIT6_QUESTIONS.length) * 100}%` }}
-              />
-            </div>
+          {/* A plain rule, not a percentage: it says where you are without
+              turning six questions into something being scored. The logging
+              wizard has no room for one — its header already carries a step
+              count and the text-size stepper — so this is deliberately not a
+              pattern to push back into that flow. */}
+          <div className="h-1 w-full overflow-hidden rounded-full bg-bg-raised">
+            <div
+              className="h-full rounded-full bg-accent/60 transition-all"
+              style={{ width: `${((i + 1) / HIT6_QUESTIONS.length) * 100}%` }}
+            />
           </div>
 
           <p className="text-base text-text-primary">{HIT6_QUESTIONS[i]}</p>
@@ -130,29 +140,23 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
             ))}
           </div>
 
-          <div className="space-y-2">
-            {isLast && (
-              <button
-                type="button"
-                onClick={submit}
-                disabled={answers.some((a) => a === null)}
-                className="btn-primary w-full disabled:opacity-40"
-              >
-                See my score
-              </button>
-            )}
+          {/* Back/Next as a pair, in the wizard's own shape and order. */}
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setStage(i === 0 ? 'intro' : i - 1)}
-              className="btn-secondary w-full"
+              className={`btn-secondary flex-1 ${BTN}`}
             >
               Back
             </button>
-            {isLast && answers.some((a) => a === null) && (
-              <p className="text-center text-xs text-text-secondary">
-                One or more questions are still unanswered — the score only means anything with all six.
-              </p>
-            )}
+            <button
+              type="button"
+              onClick={() => (isLast ? submit() : setStage(i + 1))}
+              disabled={unanswered}
+              className={`flex-1 ${BTN} ${unanswered ? BTN_OFF : 'btn-primary active:scale-[.99]'}`}
+            >
+              {isLast ? 'See my score' : 'Next'}
+            </button>
           </div>
         </div>
       </ProfileSubPage>
@@ -195,7 +199,7 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
           </p>
         )}
 
-        <button type="button" onClick={() => setStage(0)} className="btn-primary w-full">
+        <button type="button" onClick={() => setStage(0)} className={`btn-primary w-full ${BTN} active:scale-[.99]`}>
           {entries.length === 0 ? 'Start' : 'Answer again'}
         </button>
 
