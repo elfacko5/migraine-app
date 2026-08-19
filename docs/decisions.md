@@ -734,7 +734,17 @@ device end to end.
    The wizard is the one flow used mid-attack and attack mode currently only
    restyles it. Not yet scoped — do it after item 3, since rewriting the step
    instructions is likely to answer part of it.
-6. **"Edit details" + per-section voice editing** — settle together; both are
+6. **Editing an existing record.** **Option 1 done 2026-08-19** — "Edit
+   details" on `AttackDetail`, metadata only (`wokeWithMigraine`, `end`,
+   `triggers`) via `updateAttackDetails`, whose patch type cannot express a
+   snapshot change. Verified on screen: snapshots byte-identical after a save,
+   `impact` never written, triggers round-tripping, and the sheet updating
+   live. Verification caught two things — the end time losing its seconds on
+   every save that didn't touch it, and `detailAttack` stashing the attack
+   object so the sheet showed a pre-edit copy (the bug `updateAttackId` had
+   already been fixed for). **Options 2 and 3 remain open**: correcting a
+   reading (with an `editedAt` trace) and deleting one. Original framing —
+   settle together; both are
    "change one part of an existing record". **A written assessment comes
    first** (agreed 2026-08-19): what editing actually means, what it costs
    against the never-rewrite-snapshots invariant, what it does to sync's

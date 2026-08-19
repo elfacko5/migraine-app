@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import type { Tab, Attack, Snapshot, Medication } from './types';
+import type { Tab, Snapshot, Medication } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useMedications } from './hooks/useMedications';
@@ -58,7 +58,10 @@ export default function App() {
   // Looked up fresh from `attacks` by id rather than stashing the object, so
   // it always reflects the latest snapshots even if this stays open a while.
   const [updateAttackId, setUpdateAttackId] = useState<number | null>(null);
-  const [detailAttack, setDetailAttack] = useState<Attack | null>(null);
+  // The *id*, not the attack — looked up fresh from `attacks` each render,
+  // the same rule `updateAttackId` follows. Stashing the object meant an
+  // "Edit details" save left the sheet rendering its own pre-edit copy.
+  const [detailAttackId, setDetailAttackId] = useState<number | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [profileSheet, setProfileSheet] = useState<ProfileSection | null>(null);
 
@@ -87,7 +90,7 @@ export default function App() {
   const auth = useAuth();
   const userId = auth.user?.id ?? null;
   const {
-    attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, setImpact, deleteAttack,
+    attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, setImpact, updateAttackDetails, deleteAttack,
     syncStatus: attacksSyncStatus, lastSyncedAt: attacksLastSyncedAt,
   } = useAttacks(userId);
   const {
@@ -196,6 +199,7 @@ export default function App() {
   const sortedReliefs = useMemo(() => sortByFrequency(reliefs, reliefFrequency(attacks)), [reliefs, attacks]);
 
   const updateAttack = attacks.find((a) => a.id === updateAttackId) ?? null;
+  const detailAttack = attacks.find((a) => a.id === detailAttackId) ?? null;
 
   // Voice logging has two entry points, both ending here:
   //
@@ -446,7 +450,7 @@ export default function App() {
                 attack={ongoingAttack}
                 onAddUpdate={() => setUpdateAttackId(ongoingAttack.id)}
                 onEnd={() => setEndConfirmOpen(true)}
-                onOpenDetail={() => setDetailAttack(ongoingAttack)}
+                onOpenDetail={() => setDetailAttackId(ongoingAttack.id)}
               />
             )}
 
@@ -506,7 +510,7 @@ export default function App() {
               sort={logsSort}
               onSort={setLogsSort}
               onOpenFilters={() => setLogsFilterOpen(true)}
-              onAttackClick={(a) => setDetailAttack(a)}
+              onAttackClick={(a) => setDetailAttackId(a.id)}
             />
           </section>
         )}
@@ -684,17 +688,22 @@ export default function App() {
 
       {/* Attack detail sheet — flush/bareHeader because AttackDetail brings
           its own top bar and pins its own footer. */}
-      <Sheet open={!!detailAttack} onClose={() => setDetailAttack(null)} title="Attack details" flush bareHeader>
+      <Sheet open={!!detailAttack} onClose={() => setDetailAttackId(null)} title="Attack details" flush bareHeader>
         {detailAttack && (
           <AttackDetail
             attack={detailAttack}
             onDelete={() => deleteAttack(detailAttack.id)}
-            onClose={() => setDetailAttack(null)}
-            onAddUpdate={() => { setUpdateAttackId(detailAttack.id); setDetailAttack(null); }}
+            onClose={() => setDetailAttackId(null)}
+            onAddUpdate={() => { setUpdateAttackId(detailAttack.id); setDetailAttackId(null); }}
             // Only for the attack actually in progress — an ended one has
             // nothing to end. Opens the same dialog the Today tab uses, so
             // its presets and minute-vs-second clamping aren't duplicated.
             onEndAttack={detailAttack.end === null ? () => setEndConfirmOpen(true) : undefined}
+            // Attack-level metadata only — the mutation itself refuses to
+            // touch snapshots. See docs/editing-assessment.md.
+            onSaveDetails={(patch) => updateAttackDetails(detailAttack.id, patch)}
+            triggerOptions={sortedTriggers}
+            onAddTrigger={addTrigger}
           />
         )}
       </Sheet>
@@ -715,7 +724,7 @@ export default function App() {
             if (updateAttackId === ongoingAttack.id) closeUpdateSheet();
             // …and from the detail sheet, which would otherwise sit there
             // still offering "End attack" for an attack that just ended.
-            if (detailAttack?.id === ongoingAttack.id) setDetailAttack(null);
+            if (detailAttack?.id === ongoingAttack.id) setDetailAttackId(null);
           }}
         />
       )}

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Attack } from '../types';
-import { formatDate, formatTime, formatDuration } from '../utils/format';
+import { formatDate, formatTime, formatDuration, isoToLocalInput, localInputToIso } from '../utils/format';
 import { attackMaxSeverity } from '../utils/stats';
 import { SeverityBreakdown } from './SeverityBreakdown';
 import { SnapshotRow } from './SnapshotRow';
@@ -10,6 +10,9 @@ import { IMPACT_SHORT } from '../utils/impact';
 import { attackFirstDoses } from '../utils/medDisplay';
 import { MedIcon } from './drawnIcons';
 import { isRetired } from '../utils/retired';
+import { ChipSelector } from './ChipSelector';
+import { chipClass } from '../utils/chipStyles';
+import { openPicker } from '../utils/openPicker';
 
 interface Props {
   attack: Attack;
@@ -18,6 +21,11 @@ interface Props {
   onAddUpdate?: () => void;
   /** Only passed for an attack still in progress. */
   onEndAttack?: () => void;
+  /** Attack-level metadata only — never snapshots. Omit to hide the Edit
+   *  details action entirely. */
+  onSaveDetails?: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>>) => void;
+  triggerOptions?: string[];
+  onAddTrigger?: (label: string) => void;
 }
 
 /**
@@ -29,11 +37,25 @@ interface Props {
  * same reason — a footer that has to stay put above the home indicator is
  * more reliable flex-pinned than `sticky` inside an iOS PWA scroll container.
  */
-export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAttack }: Props) {
+export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAttack, onSaveDetails, triggerOptions = [], onAddTrigger }: Props) {
   const maxSev = attackMaxSeverity(attack);
   const start = attack.snapshots[0];
   const firstDoses = attackFirstDoses(attack, isRetired, formatDuration);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const ongoing = attack.end === null;
+
+  if (editing && onSaveDetails) {
+    return (
+      <EditDetailsView
+        attack={attack}
+        triggerOptions={triggerOptions}
+        onAddTrigger={onAddTrigger}
+        onCancel={() => setEditing(false)}
+        onSave={(patch) => { onSaveDetails(patch); setEditing(false); }}
+      />
+    );
+  }
 
   // A per-row date is only worth showing once the attack actually touches
   // more than one calendar day — otherwise the header's date already covers
@@ -180,11 +202,17 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           logged attack can be backfilled with the readings it actually had;
           only "End attack" is exclusive to one that's still running.
 
-          A past attack shows "Add update" as its primary action for now. The
-          design calls for "Edit details" in that slot, with this demoted to
-          secondary — that's parked until the scope of editing an existing
-          attack is decided (there is no edit path today), so rather than
-          ship a dead button the remaining action takes the primary role. */}
+          "Edit details" takes the primary slot on a past attack, as the
+          design always called for, now that there is something behind it —
+          and "Add update" steps down to secondary there. On an attack still
+          running the order is the other way round: adding a reading is what
+          you came for, and editing metadata is not.
+
+          What it edits is deliberately narrow — see
+          docs/editing-assessment.md. Snapshots are the record of what was
+          reported at the time; correcting one is a larger job that has to
+          leave a visible trace, and impact is excluded outright because it is
+          asked once inside a 24-hour window on purpose. */}
       <div
         className="flex flex-col gap-2 border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
         style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
@@ -193,9 +221,27 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           <button
             type="button"
             onClick={onAddUpdate}
-            className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors"
+            className={`${ongoing || !onSaveDetails ? 'btn-primary' : 'btn-secondary'} w-full rounded-xl py-3 text-sm font-medium transition-colors`}
           >
             Add update
+          </button>
+        )}
+        {onSaveDetails && !ongoing && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors order-first"
+          >
+            Edit details
+          </button>
+        )}
+        {onSaveDetails && ongoing && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="btn-secondary w-full rounded-xl py-3 text-sm font-medium transition-colors"
+          >
+            Edit details
           </button>
         )}
         {onEndAttack && (
@@ -218,6 +264,140 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => { onDelete(); onClose(); }}
       />
+    </div>
+  );
+}
+
+/**
+ * "Edit details" — attack-level metadata only.
+ *
+ * The scope is the whole design (docs/editing-assessment.md): the three
+ * fields here describe the episode rather than any one reading, and all three
+ * are already rewritten elsewhere in the app today (`endAttack` writes `end`;
+ * `wokeWithMigraine` and `triggers` are set at creation and never revisited).
+ * Nothing here can reach `snapshots`.
+ *
+ * `impact` is absent on purpose and must stay absent. It is asked once, in a
+ * 24-hour window, and left unanswered for good if that passes — a level
+ * reconstructed later is the recall bias a prospective diary exists to avoid,
+ * and it counts in the disability figures where an absent answer does not.
+ */
+function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSave }: {
+  attack: Attack;
+  triggerOptions: string[];
+  onAddTrigger?: (label: string) => void;
+  onCancel: () => void;
+  onSave: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>>) => void;
+}) {
+  const [triggers, setTriggers] = useState<string[]>(attack.triggers);
+  const [woke, setWoke] = useState<boolean>(attack.wokeWithMigraine ?? false);
+  const [end, setEnd] = useState<string>(() => isoToLocalInput(attack.end ?? undefined));
+  const endRef = useRef<HTMLInputElement>(null);
+
+  // An end time can never precede the last reading. Same clamp EndAttackDialog
+  // applies, and for the same reason: the picker is minute-precision while
+  // snapshots are second-precision, so choosing the exact minimum can land a
+  // few seconds early.
+  const minTime = attack.snapshots[attack.snapshots.length - 1].time;
+
+  function save() {
+    const patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>> = {
+      triggers,
+      wokeWithMigraine: woke,
+    };
+    // Only when it actually changed. The picker is minute-precision and the
+    // stored time is second-precision, so round-tripping an untouched value
+    // would silently shave up to 59 seconds off the end of the attack every
+    // time this screen was opened and saved.
+    if (attack.end !== null && end && end !== isoToLocalInput(attack.end)) {
+      const iso = localInputToIso(end);
+      patch.end = iso < minTime ? minTime : iso;
+    }
+    onSave(patch);
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div
+        className="flex items-center gap-3 border-b border-bg-border bg-bg-surface px-4 sm:px-6 py-3"
+        style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
+      >
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-full p-2 text-text-secondary transition-colors hover:text-text-primary"
+          aria-label="Back"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+        </button>
+        <h2 className="min-w-0 flex-1 truncate text-base font-medium text-text-primary">Edit details</h2>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-6">
+        <p className="text-xs text-text-secondary">
+          This changes what's recorded about the attack as a whole. The readings themselves stay as they
+          were logged.
+        </p>
+
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-text-primary">Onset</h3>
+          {/* Ring on both states, never a border: a border would make the
+              unpressed control 2px shorter, which is visible on a toggle
+              sitting alone — exactly how this one was caught before. */}
+          <button
+            type="button"
+            aria-pressed={woke}
+            onClick={() => setWoke((w) => !w)}
+            className={`flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${chipClass(woke)}`}
+          >
+            <SunriseIcon className="h-4 w-4 shrink-0" />
+            Woke up with this migraine
+          </button>
+        </div>
+
+        {attack.end !== null && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-text-primary">Ended</h3>
+            <input
+              ref={endRef}
+              type="datetime-local"
+              value={end}
+              min={isoToLocalInput(minTime)}
+              max={isoToLocalInput()}
+              onChange={(e) => setEnd(e.target.value)}
+              onClick={() => openPicker(endRef.current)}
+              className="w-full min-w-0 rounded-xl border border-bg-border bg-bg-raised px-3 py-3 text-sm text-text-primary"
+            />
+            <p className="text-xs text-text-secondary">
+              It can't be set before the last reading at {formatTime(minTime)}.
+            </p>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-text-primary">Triggers</h3>
+          <ChipSelector
+            options={triggerOptions}
+            selected={triggers}
+            onChange={setTriggers}
+            onAddCustom={onAddTrigger}
+          />
+        </div>
+      </div>
+
+      <div
+        className="flex flex-col gap-2 border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
+        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+      >
+        <button type="button" onClick={save} className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors">
+          Save changes
+        </button>
+        <button type="button" onClick={onCancel} className="btn-secondary w-full rounded-xl py-3 text-sm font-medium transition-colors">
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }

@@ -234,6 +234,36 @@ export function useAttacks(userId: string | null) {
     if (updated && userId) trackPush(pushAttacks([updated], userId));
   }, [attacks, commit, userId, trackPush]);
 
+  /**
+   * Attack-level metadata on an existing record — the "Edit details" path.
+   *
+   * Deliberately narrow, and the narrowness is the point (see
+   * docs/editing-assessment.md). It cannot reach `snapshots`: those are the
+   * record of what was reported at the time, and correcting one is a separate,
+   * larger job that has to leave a visible trace. This only touches fields
+   * that describe the episode as a whole, which `endAttack` and `setImpact`
+   * already rewrite today.
+   *
+   * `impact` is **not** in the patch type on purpose. It is asked once, in a
+   * 24-hour window, and left permanently unanswered if that window passes —
+   * an answer reconstructed days later is the recall bias a prospective diary
+   * exists to avoid, and a badly remembered level counts in the disability
+   * figures where an absent one does not. Adding it here would quietly undo
+   * that decision. `setImpact` remains the only writer.
+   */
+  const updateAttackDetails = useCallback((
+    attackId: number,
+    patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>>,
+  ) => {
+    let updated: Attack | undefined;
+    commit(attacks.map((a) => {
+      if (a.id !== attackId) return a;
+      updated = { ...a, ...patch, updatedAt: new Date().toISOString() };
+      return updated;
+    }));
+    if (updated && userId) trackPush(pushAttacks([updated], userId));
+  }, [attacks, commit, userId, trackPush]);
+
   const deleteAttack = useCallback((attackId: number) => {
     cancelNotification(attackId);
     commit(attacks.filter((a) => a.id !== attackId));
@@ -242,5 +272,5 @@ export function useAttacks(userId: string | null) {
 
   const ongoingAttack = attacks.find((a) => a.end === null) ?? null;
 
-  return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, setImpact, deleteAttack, syncStatus, lastSyncedAt };
+  return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, setImpact, updateAttackDetails, deleteAttack, syncStatus, lastSyncedAt };
 }
