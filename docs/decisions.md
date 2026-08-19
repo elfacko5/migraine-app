@@ -706,7 +706,9 @@ device end to end.
 
 **P2 — known gaps with decisions already attached**
 
-3. **The wizard's step instructions are written denser than §9.5 asks.**
+3. ~~**The wizard's step instructions are written denser than §9.5 asks.**~~
+   **Done 2026-08-19** — all 14 rewritten across `LogForm` and
+   `QuickUpdateForm`. Original scope and reasoning:
    Attack mode reduces *what is on screen*; no copy actually simplifies.
    **Scope settled 2026-08-19, and it is not what §9.5 literally asks for:**
    **one register, not two.** The instructions get rewritten plainer for

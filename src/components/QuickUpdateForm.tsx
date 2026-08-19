@@ -60,13 +60,15 @@ const blank = (defaultTime: string): FormState => ({
 const TOTAL_STEPS = 6;
 
 const STEP_LABELS = ['Update time', 'Pain areas', 'Medication', 'Relief methods', 'Symptoms', 'Note'];
+// Plain register, matching LogForm's — see the note above STEP_SUBHEADS
+// there for why there is one register rather than an attack-mode variant.
 const STEP_SUBHEADS = [
-  'When is this update from?',
-  'Rate how it feels right now — this is a new reading, not an edit',
-  'Log any medication you took',
-  'What helped relieve it?',
-  'Select any symptoms you noticed',
-  'Anything else worth noting?',
+  'When is this reading from?',
+  'How does it feel now? This adds a reading — it doesn\'t change the last one',
+  'Did you take anything for it?',
+  'Did anything help?',
+  'What else are you feeling?',
+  'Anything else you want to write down?',
 ];
 
 // Small "last entry" caption text shown below each step's picker — a reference

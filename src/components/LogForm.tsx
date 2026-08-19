@@ -125,15 +125,27 @@ const STEP_LABELS = [
 ];
 
 // Sentence-case instruction shown under each step's H2 title.
+//
+// **One register, not two** (settled 2026-08-19). §9.5 asks for simpler copy
+// the deeper into an attack someone is, and the obvious reading of that is an
+// attack-mode variant of every string — but a second register is a permanent
+// tax (every string added later needs both, or silently falls back to the
+// dense one) and nobody wants the denser sentence on a good day either. So
+// these are written plainly for everyone.
+//
+// Plain here means: ask a question rather than issue an instruction, use the
+// words someone would say out loud, and keep it to one clause. "Select all
+// areas affected and rate severity" is not hard to understand on a good day —
+// it is hard to *act on* while the thing it describes is happening.
 const STEP_SUBHEADS = [
-  'When did your attack start and end?',
-  'Select all areas affected and rate severity',
-  'Log any medication you took',
-  'What helped relieve it?',
-  'Select any symptoms you noticed',
-  'What may have triggered this?',
-  'Anything else worth noting?',
-  'Get reminded to check in during your attack',
+  'When did it start, and has it ended?',
+  'Tap where it hurts, then set how bad',
+  'Did you take anything for it?',
+  'Did anything help?',
+  'What else are you feeling?',
+  'Anything that might have set it off?',
+  'Anything else you want to write down?',
+  'Want a reminder to check in later?',
 ];
 
 export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, medications, attacks, textScale, onTextScale, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave, voiceDraft }: Props) {
