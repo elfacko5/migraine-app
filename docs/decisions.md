@@ -361,6 +361,12 @@ the app closed, queued into `UserDefaults`, drained on next open, and the
 reading landed **stamped at the tap time** rather than the drain time. That
 last part is the whole reason the Swift handler and the pending queue exist.
 
+Run twice. The second run removed the watch, and the **phone itself vibrated
+and lit its screen**, which proves phone-side delivery independently of wrist
+routing; "No change" was tapped straight from the lock screen and the reading
+was on the timeline a minute later. Both halves of the delivery path are
+therefore verified, not inferred.
+
 Three things the test taught that reasoning had not:
 
 - **The readout that made it diagnosable was worth more than the fix.** Three
@@ -638,6 +644,69 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
 - **SNOOP red flags.** The dossier asks for a "see a clinician" nudge on thunderclap onset, new headache after 50, neurological deficit, fever, marked pattern change — and says it must never reassure. It's a safety feature and the wording carries real weight, so it needs its own discussion rather than being folded into a UI pass.
 - **Phase tracking** — premonitory, aura, postdrome. The app models only the pain phase. The dossier argues premonitory/postdrome capture is where a prospective diary beats recall, which makes this the largest single scope item on the list: it changes the data model, not just the flow.
 - **Periodic MIDAS / HIT-6 check-ins.** `Attack.impact` is a pragmatic per-attack proxy; the dossier wants both diary counts *and* the validated questionnaires, because the 2026 REFORM study found they disagree on treatment response.
+
+## The backlog, in priority order (2026-08-19)
+
+The canonical list. It was previously spread over three sections and had to
+be reassembled each time anyone asked, so it lives here now and the sections
+below hold the *reasoning* rather than the ordering.
+
+**P0 — none.** Both cleared on 2026-08-19: the repo is pushed (69 commits had
+existed only on one machine), and the dose-retimed reminder is verified on
+device end to end.
+
+**P1 — clinical completeness, in the order I'd take them**
+
+1. **`startedOn` is captured but nothing reads it.** The ≥50%-reduction
+   question — migraine days a month before a preventive started against after
+   — is the best value-per-effort item on this list: the data is already
+   there and the metric is the one a review appointment turns on.
+2. **Aura has no structure.** There is an "Aura" symptom chip, but ICHD-3 1.2
+   needs its own fields (visual / sensory / speech, gradual spread ≥5 min,
+   duration 5–60 min, headache within 60 min). Roughly a third of patients,
+   and a tick-box cannot support the diagnosis it is named after. Note this
+   is a narrower claim than the older "aura is not captured anywhere".
+3. **SNOOP red flags.** The only *safety* item on the list, which is why it
+   outranks the metrics below it. Wording carries real weight and the dossier
+   is explicit it must never reassure.
+4. **Headache days can't be reported.** The chronic-migraine line is headache
+   on ≥15 days/month *of which ≥8 migrainous* — two counts, and the app can
+   only produce one. Needs a "headache, not a migraine" path: a product
+   decision about scope.
+5. **Periodic MIDAS / HIT-6.** The 2026 REFORM finding is that diary counts
+   and questionnaires disagree, so the dossier wants both.
+
+**P2 — known gaps with decisions already attached**
+
+6. **§9.5 is only half implemented.** Attack mode reduces *what is on screen*;
+   no copy actually simplifies. Needs a second register for the strings read
+   mid-attack — start with the wizard's step instructions.
+7. **Attack mode simplifies Today only.** The other three tabs are restyled
+   but not reduced; Insights in particular has never been thought through for
+   that state.
+8. **"Edit details" + per-section voice editing** — settle together; both are
+   "change one part of an existing record".
+9. **Preventive adherence and daily reminders** — parked together; `kind`
+   already ships so neither needs a migration.
+
+**P3 — open by choice, needs Sunny's eye**
+
+10. `--color-text-primary` (`#cdc7bb` vs `#d7d1c6`) — only settleable on a
+    real screen mid-attack.
+11. The head diagram's disabled areas, parked pending a possible redraw.
+12. The tablet icon is a generic capsule.
+13. A warm light theme — specified, parked; needs a second variant of ~44
+    hand-mirrored colours.
+
+**P4 — before any public release**
+
+14. **Text scale caps at 150%; WCAG 1.4.4 asks 200%.** Justified today because
+    this is a single-user app. That justification disappears the moment it
+    ships, and accessibility is the app's whole thesis.
+
+**Closed as considered-and-declined:** the ~920KB bundle. 264KB gzipped,
+fetched once and then cached, and splitting would put a loading state on a
+list scrolled mid-attack.
 
 ## Open, needs Sunny
 

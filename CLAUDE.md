@@ -6,7 +6,7 @@ This file holds the **rules** — what a change has to respect. The **reasoning*
 
 | File | Read it before |
 |------|----------------|
-| [`docs/decisions.md`](docs/decisions.md) | undoing anything here that looks redundant or over-careful |
+| [`docs/decisions.md`](docs/decisions.md) | undoing anything here that looks redundant or over-careful — it also carries **the backlog in priority order**, which is the canonical list of what's left |
 | [`docs/voice-parsing.md`](docs/voice-parsing.md) | changing any rule in `src/utils/voiceParse.ts` |
 | [`docs/viewport-architecture.md`](docs/viewport-architecture.md) | touching the app shell's height, offset, or overlay positioning |
 | [`docs/notifications.md`](docs/notifications.md) | changing how a reminder is scheduled, sounded, or answered |
