@@ -696,32 +696,68 @@ device end to end.
 
 **P2 — known gaps with decisions already attached**
 
-3. **§9.5 is only half implemented.** Attack mode reduces *what is on screen*;
-   no copy actually simplifies. Needs a second register for the strings read
-   mid-attack — start with the wizard's step instructions.
-4. **Attack mode simplifies Today only.** The other three tabs are restyled
-   but not reduced; Insights in particular has never been thought through for
-   that state.
-5. **"Edit details" + per-section voice editing** — settle together; both are
-   "change one part of an existing record".
-6. **Preventive adherence and daily reminders** — parked together; `kind`
+3. **The wizard's step instructions are written denser than §9.5 asks.**
+   Attack mode reduces *what is on screen*; no copy actually simplifies.
+   **Scope settled 2026-08-19, and it is not what §9.5 literally asks for:**
+   **one register, not two.** The instructions get rewritten plainer for
+   everyone rather than gaining an attack-mode variant. A second register is
+   a permanent tax — every string added afterwards needs two versions or it
+   silently falls back to the dense one — and nobody benefits from a denser
+   sentence on a good day, so the branch would be carrying its cost to buy
+   something that was never wanted. Scope is `LogForm` and `QuickUpdateForm`'s
+   per-step instruction lines only: that is the one flow read end to end while
+   in pain. Today is glanced at, not read.
+4. ~~**Attack mode simplifies Today only.**~~ **Closed as
+   considered-and-declined, 2026-08-19.** The question that settled it was
+   Sunny's: *what value do any of the other tabs bring during an attack?*
+   None. Insights is entirely figures to read and think about, Logs is a diary
+   reviewed afterwards, Profile is settings — nothing on any of them changes
+   the next hour, which is the test `TodaySummary` already applies. So
+   restyled-but-not-reduced is the **correct end state** for those three, not
+   an unfinished one. It did expose a real gap, which is now item 3's
+   neighbour rather than this one's: **the logging wizard gets no reduction in
+   attack mode either**, and unlike the other three tabs it genuinely is used
+   during an attack.
+5. **Reduce the logging wizard in attack mode.** Falls out of closing item 4.
+   The wizard is the one flow used mid-attack and attack mode currently only
+   restyles it. Not yet scoped — do it after item 3, since rewriting the step
+   instructions is likely to answer part of it.
+6. **"Edit details" + per-section voice editing** — settle together; both are
+   "change one part of an existing record". **A written assessment comes
+   first** (agreed 2026-08-19): what editing actually means, what it costs
+   against the never-rewrite-snapshots invariant, what it does to sync's
+   last-write-wins, and where voice editing fits. No code until that is read.
+7. **A warm light theme.** Specified, and **wanted — moved out of "parked" on
+   2026-08-19.** The cost is the reason it sat still: ~44 tokens in
+   `@theme`, plus every value hand-mirrored outside CSS (`headDiagram.ts`,
+   `SeverityChart`, `HeadHeatmap`, `StatsView`, `medDisplay`,
+   `AreaSeverityPicker`), and the photophobia spec gives **no light-mode
+   values** — they have to be derived and contrast-measured the way the dark
+   ones were, not inverted.
+8. **Preventive adherence and daily reminders** — parked together; `kind`
    already ships so neither needs a migration.
 
 **P3 — open by choice, needs Sunny's eye**
 
-7. `--color-text-primary` (`#cdc7bb` vs `#d7d1c6`) — only settleable on a
+9. **Redraw the head diagram's disabled areas.** **Wanted for v1 if there is
+   time** (2026-08-19) — previously parked pending a possible redraw, now the
+   redraw is the intent. The drawing is Sunny's; the code side is re-inlining
+   the path data into `headDiagram.ts` and re-measuring crown alignment, which
+   the diagram section of CLAUDE.md spells out.
+10. **The medication icons read flat and small.** Restated 2026-08-19: the
+    old entry said "the tablet icon is a generic capsule", and generic is
+    **fine** — the actual complaint is the weight and size of the mark. That
+    makes it a drawing job across the `MedIcon` set rather than an argument
+    about needing a drug database, and a much cheaper one.
+11. `--color-text-primary` (`#cdc7bb` vs `#d7d1c6`) — only settleable on a
     real screen mid-attack.
-8. The head diagram's disabled areas, parked pending a possible redraw.
-9. The tablet icon is a generic capsule.
-10. A warm light theme — specified, parked; needs a second variant of ~44
-    hand-mirrored colours.
 
 **P4 — before any public release**
 
-11. **Text scale caps at 150%; WCAG 1.4.4 asks 200%.** Justified today because
+12. **Text scale caps at 150%; WCAG 1.4.4 asks 200%.** Justified today because
     this is a single-user app. That justification disappears the moment it
     ships, and accessibility is the app's whole thesis.
-12. **Aura has no structure.** There is an "Aura" symptom chip, but ICHD-3 1.2
+13. **Aura has no structure.** There is an "Aura" symptom chip, but ICHD-3 1.2
     needs its own fields (visual / sensory / speech, gradual spread ≥5 min,
     duration 5–60 min, headache within 60 min). Roughly a third of patients,
     and a tick-box cannot support the diagnosis it is named after. **Deferred
@@ -729,7 +765,7 @@ device end to end.
     diary, and structured aura fields buy nothing for a single user who knows
     whether they get aura. It becomes a requirement the moment anyone else
     uses it. (Narrower claim than the older "aura is not captured anywhere".)
-13. **Headache days can't be reported.** The chronic-migraine line is headache
+14. **Headache days can't be reported.** The chronic-migraine line is headache
     on ≥15 days/month *of which ≥8 migrainous* — two counts, and the app can
     only produce one. Needs a "headache, not a migraine" log path.
     **Deferred to pre-release by decision on 2026-08-19**, alongside aura and
@@ -737,7 +773,7 @@ device end to end.
     support someone else's diagnosis, and the design question (a one-tap day
     marker on Today, versus a type field on the wizard) is worth answering
     then rather than now.
-14. **SNOOP red flags.** A "see a clinician" nudge on thunderclap onset, a
+15. **SNOOP red flags.** A "see a clinician" nudge on thunderclap onset, a
     new headache after 50, neurological deficit, fever, or a marked change in
     pattern — and the dossier is explicit it must never reassure, so there is
     no reassuring state and no green tick, only present or absent.
@@ -754,7 +790,8 @@ device end to end.
     None of this survives a public release, where the app would be read by
     people the flags do apply to.
 
-**Closed as considered-and-declined:** the ~920KB bundle. 264KB gzipped,
+**Closed as considered-and-declined:** attack mode beyond Today (item 4
+above), and the ~920KB bundle. 264KB gzipped,
 fetched once and then cached, and splitting would put a loading state on a
 list scrolled mid-attack.
 
