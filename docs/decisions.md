@@ -351,6 +351,36 @@ layout work already records.
   rationalisation was more plausible than the truth, which is exactly when
   this sort of thing survives a review.
 
+## The notification chain, verified on device (2026-08-19)
+
+The dose-retimed reminder was tested end to end on a real phone, which is the
+only place any of this can be trusted, and everything held: permission
+granted, the reminder scheduled, brought forward by the dose to `dose + 2h`,
+delivered to a paired Apple Watch with vibration, answered as "No change" with
+the app closed, queued into `UserDefaults`, drained on next open, and the
+reading landed **stamped at the tap time** rather than the drain time. That
+last part is the whole reason the Swift handler and the pending queue exist.
+
+Three things the test taught that reasoning had not:
+
+- **The readout that made it diagnosable was worth more than the fix.** Three
+  notification failures in this project have looked identical from outside —
+  nothing arrives — whether the cause was a missing sound file, a stale
+  bundle, a permission never granted, or a schedule never made. Profile → Data
+  now reads the permission and the pending queue back from the OS, and the
+  first real test resolved in thirty seconds what had previously taken a
+  two-hour wait per attempt.
+- **A silent phone with a buzzing watch is iOS working correctly.** With a
+  paired watch on the wrist and the phone locked, iOS routes the alert to the
+  watch only. It also proves the bundled sound resolves, since an unresolvable
+  sound name kills the wrist tap too.
+- **A diagnostic that lies is worse than none.** The readout showed a
+  follow-up scheduled in the past, which looked like a broken chain. It wasn't:
+  `reschedule` copies the delivered notification's content, which carries
+  `userInfo["cap_schedule"]`, and that — not the trigger — is what
+  `getPending()` reports. The trigger was always right. The handler now
+  updates the copied schedule date too.
+
 ## Accessibility audit (2026-08-19)
 
 Measured in the live DOM rather than read off the source — the same rule the

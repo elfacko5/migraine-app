@@ -152,6 +152,20 @@ final class NotificationActionHandler: NSObject, UNUserNotificationCenterDelegat
         // silent reminder produces no vibration and no wrist tap, so one that
         // arrives unnoticed is one that didn't happen.
 
+        // It also carries the original's `cap_schedule`, which is what the
+        // plugin's `getPending()` reports back as the fire time — so without
+        // this the reminders readout in Profile → Data shows the moment the
+        // *previous* notification fired and looks like a follow-up that was
+        // never scheduled. The trigger below is what actually decides when it
+        // fires; this only keeps the metadata honest, and a diagnostic that
+        // lies is worse than none.
+        if var info = content.userInfo as? [String: Any],
+           var schedule = info["cap_schedule"] as? [String: Any] {
+            schedule["at"] = Date().addingTimeInterval(interval)
+            info["cap_schedule"] = schedule
+            content.userInfo = info
+        }
+
         UNUserNotificationCenter.current().add(
             UNNotificationRequest(
                 identifier: request.identifier,
