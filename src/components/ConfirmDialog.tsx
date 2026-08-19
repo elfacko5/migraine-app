@@ -47,6 +47,9 @@ export function ConfirmDialog({
     <div
       className={`fixed inset-0 z-[60] flex items-center justify-center p-4 ${open ? '' : 'pointer-events-none'}`}
       aria-hidden={!open}
+      // Closed dialogs stayed in the focus order — see the note in Sheet.
+      inert={!open}
+      style={{ visibility: open ? 'visible' : 'hidden', transition: `visibility 0s linear ${open ? '0s' : '200ms'}` }}
     >
       {/* Backdrop */}
       <div

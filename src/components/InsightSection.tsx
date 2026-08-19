@@ -31,7 +31,11 @@ export function InsightSection({ title, children, note }: Props) {
           the content it labels; out here it labels the whole card. The stat
           tiles at the top keep their labels inside, because there the label
           and its figure *are* the content. */}
-      <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{title}</h3>
+      {/* `h2`, not `h3`. The tab's own title is the `h1` and there is nothing
+          between, so an `h3` skipped a level — which is how a screen-reader
+          user navigating by heading discovers a page's structure. The size is
+          set by the class, not the tag. */}
+      <h2 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{title}</h2>
 
       <div className="space-y-2 rounded-2xl bg-bg-surface p-3">
         {note ? (

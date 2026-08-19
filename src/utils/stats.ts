@@ -11,6 +11,22 @@ export function attackMaxSeverity(attack: Attack): number {
 }
 
 /**
+ * Severity at the most recent reading — "how bad is it right now".
+ *
+ * Distinct from `attackMaxSeverity`, and the distinction matters live: the
+ * peak is the worst it has *been*, which on an attack that is easing off is a
+ * fact about the past stated in the present tense. Falls back to the newest
+ * reading that recorded any area, since a reading can be saved with none.
+ */
+export function attackLatestSeverity(attack: Attack): number {
+  for (let i = attack.snapshots.length - 1; i >= 0; i--) {
+    const sev = maxSeverity(attack.snapshots[i]);
+    if (sev > 0) return sev;
+  }
+  return 0;
+}
+
+/**
  * The attack's average severity, **weighted by how long each reading held**.
  *
  * A plain mean of the readings would measure the diary as much as the attack.

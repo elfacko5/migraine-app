@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { cloneElement, useId, useState } from 'react';
 import type { MedClass, Medication } from '../types';
 import { DEFAULT_UNIT } from '../utils/medGuardrails';
 import { MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from '../utils/stats';
@@ -51,13 +51,13 @@ const INFO: Record<string, { title: string; message: string }> = {
       `a month" below, that is used instead and the type stops mattering.`,
   },
   maxPerIntake: {
-    title: 'Maximum in one go',
+    title: 'Max in one go',
     message:
       'The most units your prescription or the leaflet says to take at once. When a dose you are logging ' +
       'is above it, the app says so and shows your number — it never stops you logging what you actually took.',
   },
   maxPerDay: {
-    title: 'Maximum in 24 hours',
+    title: 'Max in 24 hours',
     message:
       'The most units in a rolling 24 hours, which is how a leaflet usually states it. Rolling rather than ' +
       'per calendar day, so a late-night dose and an early-morning one count together instead of falling ' +
@@ -70,7 +70,7 @@ const INFO: Record<string, { title: string; message: string }> = {
       'falls due and shows the time — as your own figure, not as an instruction.',
   },
   maxDaysPerMonth: {
-    title: 'Maximum days a month',
+    title: 'Max days a month',
     message:
       'The most days a month the label allows — some boxes print this directly. Leave it blank and the ' +
       'guideline number for the Type above is used instead. It counts days, not doses, so twice in one day ' +
@@ -84,28 +84,45 @@ const INFO: Record<string, { title: string; message: string }> = {
   },
 };
 
-/** A label row with the field's own "More info" opener, then the control. */
+// A label row with the field's own "More info" opener, then the control.
+//
+// **The text is a real `<label>` tied to the control, not a styled span.** As
+// a span it looked identical and named nothing: all seven fields in this
+// editor announced themselves as "edit text, blank" to a screen reader, and a
+// placeholder is not a name — it disappears the moment you type. The id is
+// generated and injected into the child, so the association can't be
+// forgotten and the layout stays as it was: label row on top, full-width
+// control beneath.
+//
+// "More info" is outside the label, and names the field it explains — nested
+// inside it would activate the control on tap and be read out as part of the
+// field's own name, and four identical "More info" buttons in a row tell a
+// screen-reader user nothing about which is which.
 function Field({ label, infoKey, onInfo, children }: {
   label: string;
   infoKey?: string;
   onInfo?: (key: string) => void;
-  children: React.ReactNode;
+  children: React.ReactElement<{ id?: string }>;
 }) {
+  const id = useId();
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline gap-3">
-        <span className="min-w-0 flex-1 text-sm text-text-secondary">{label}</span>
+        <label htmlFor={id} className="min-w-0 flex-1 text-sm text-text-secondary">{label}</label>
         {infoKey && onInfo && (
           <button
             type="button"
             onClick={() => onInfo(infoKey)}
-            className="shrink-0 text-xs text-accent-light hover:underline"
+            aria-label={`More info about ${label}`}
+            // `tap-44` expands the touch target without changing the layout:
+            // as drawn this was 66×21, under even WCAG 2.2's 24px floor.
+            className="tap-44 shrink-0 text-xs text-accent-light hover:underline"
           >
             More info
           </button>
         )}
       </div>
-      {children}
+      {cloneElement(children, { id })}
     </div>
   );
 }
@@ -115,7 +132,11 @@ const inputClass =
   'placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent';
 
 /** A numeric limit with its unit spelled out at the trailing edge of the box. */
-function NumberField({ value, onChange, suffix, placeholder }: {
+function NumberField({ id, value, onChange, suffix, placeholder }: {
+  /** Injected by `Field`. It has to reach the input, not the wrapper — the
+   *  suffix needs a positioned parent, and a `<div>` carrying the id would
+   *  leave the control itself nameless. */
+  id?: string;
   value: string;
   onChange: (v: string) => void;
   suffix: string;
@@ -124,6 +145,7 @@ function NumberField({ value, onChange, suffix, placeholder }: {
   return (
     <div className="relative">
       <input
+        id={id}
         type="number"
         inputMode="decimal"
         min={0}
@@ -230,7 +252,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
+          className="tap-44 rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
             <path d="M18 6 6 18M6 6l12 12" />
@@ -246,7 +268,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
             type="button"
             onClick={() => setConfirmDelete(true)}
             aria-label="Delete medication"
-            className="ml-auto rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-severity-high/15 hover:text-severity-high transition-colors"
+            className="tap-44 ml-auto rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-severity-high/15 hover:text-severity-high transition-colors"
           >
             <BinIcon />
           </button>
@@ -338,7 +360,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
                 </select>
               </Field>
 
-              <Field label="Maximum in one go" infoKey="maxPerIntake" onInfo={setInfo}>
+              <Field label="Max in one go" infoKey="maxPerIntake" onInfo={setInfo}>
                 <NumberField
                   value={maxPerIntake}
                   onChange={setMaxPerIntake}
@@ -350,7 +372,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
               {/* Kept, though it wasn't in the sketch: it's the figure behind
                   "3 of 6 in the last 24h" on Today and in the wizard, which is
                   the running total this whole feature was asked for. */}
-              <Field label="Maximum in 24 hours" infoKey="maxPerDay" onInfo={setInfo}>
+              <Field label="Max in 24 hours" infoKey="maxPerDay" onInfo={setInfo}>
                 <NumberField
                   value={maxPerDay}
                   onChange={setMaxPerDay}
@@ -368,7 +390,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
                 />
               </Field>
 
-              <Field label="Maximum days a month" infoKey="maxDaysPerMonth" onInfo={setInfo}>
+              <Field label="Max days a month" infoKey="maxDaysPerMonth" onInfo={setInfo}>
                 <NumberField
                   value={maxDaysPerMonth}
                   onChange={setMaxDaysPerMonth}

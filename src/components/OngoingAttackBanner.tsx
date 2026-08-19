@@ -1,6 +1,6 @@
 import type { Attack } from '../types';
 import { formatElapsed } from '../utils/format';
-import { attackMaxSeverity } from '../utils/stats';
+import { attackLatestSeverity, attackMaxSeverity } from '../utils/stats';
 import { useNowTick } from '../hooks/useNowTick';
 import { HomeCard } from './HomeCard';
 import cardImage from '../assets/card-ongoing.jpg';
@@ -17,7 +17,17 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }
   // foreground, which is the case a bare interval silently got wrong.
   useNowTick();
 
-  const maxSev = attackMaxSeverity(attack);
+  // **Now and peak, not one number labelled ambiguously.** This line read
+  // "Pain severity: 9" off `attackMaxSeverity`, which is the worst the attack
+  // has *been* — so an attack that had eased from 9 to 3 still announced a 9
+  // in the present tense, which is the one thing a live card must not do.
+  //
+  // Not the time-weighted average the Logs row carries, either: that figure
+  // summarises a finished episode, and mid-attack it is a partial number that
+  // keeps moving as the attack sits. Live, the useful pair is where it is now
+  // and how bad it got.
+  const nowSev = attackLatestSeverity(attack);
+  const peakSev = attackMaxSeverity(attack);
   const start = attack.snapshots[0].time;
 
   return (
@@ -27,11 +37,16 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }
       imageAnchor="right"
       label="Ongoing attack"
       headline={`Started ${formatElapsed(start)}`}
-      // The worst area's severity, stated plainly rather than colour-coded.
-      // The card sits on artwork, where a severity-tinted number would read as
-      // part of the picture; the detail line is the same shape as the
-      // attack-free card's, which keeps the two interchangeable at a glance.
-      detail={<>Pain severity: {maxSev}</>}
+      // Stated plainly rather than colour-coded: the card sits on artwork,
+      // where a severity-tinted number would read as part of the picture, and
+      // the detail line keeps the same shape as the attack-free card's.
+      // Peak is dropped when it equals now — on a single-reading attack the
+      // two are the same number said twice.
+      detail={
+        nowSev === peakSev
+          ? <>Severity {nowSev}</>
+          : <>Severity now {nowSev} · peak {peakSev}</>
+      }
       onOpenDetail={onOpenDetail}
     >
       <button

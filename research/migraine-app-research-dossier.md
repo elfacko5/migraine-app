@@ -7,7 +7,8 @@ source material for writing the case study.*
 
 **Last compiled:** August 2026
 **Scope:** clinical background · diagnosis · treatment · quality-of-life measures · digital-tool
-evidence · accessibility (fonts, color, sizing) · design tokens · design rationale · sources.
+evidence · accessibility (fonts, color, sizing) · tone, voice & UX copy · design tokens · design
+rationale · sources.
 
 > Note on sources: clinical claims below are drawn from named guidelines and studies (see
 > Sources). Where evidence is preliminary or mixed, that is stated explicitly — useful for a
@@ -194,15 +195,21 @@ brightness/dim and warm-filter control** rather than relying on OS settings mid-
 ### 8.2 Fonts
 
 Recommended, in order of relevance:
-- **Atkinson Hyperlegible** (free, Braille Institute) — engineered for maximum character
-  distinction (I/l/1, O/0, b/d); reduces reading effort exactly when cognition is impaired. Primary.
-- **Lexend** (free, Google Fonts) — engineered to reduce visual stress. Strong alternative.
-- Safe fallbacks: **Open Sans, IBM Plex Sans, Source Sans, Verdana**; system fonts (SF Pro/Roboto).
+- **Lexend** (free, Google Fonts) — **primary.** Engineered to improve reading fluency and reduce
+  visual stress; modern, rounded, high x-height, clear at small sizes and low brightness.
+- **Inter** (free) — **fallback / alternative primary.** The de-facto modern app UI face: large
+  x-height, open apertures, highly legible on screen. Enable its "disambiguation" stylistic set so
+  l / I / 1 stay distinct.
+- **IBM Plex Sans** — warmer, characterful middle ground; very readable, broad language support.
+- **Atkinson Hyperlegible** (free, Braille Institute) — maximum character distinction; offer as an
+  optional in-app accessibility toggle for users who want it (its look is polarizing, so not the
+  default here).
+- Safe fallbacks: **Open Sans, Source Sans, Verdana**; system fonts (SF Pro / Roboto).
 
 Rules: **sans-serif for body; minimum weight 400 (no thin/light weights — they shimmer for
 light-sensitive eyes); line height ~1.5; line length 50–75 characters; never convey meaning by
 color alone** (some users view through tinted lenses). Skip OpenDyslexic as the default (weak
-evidence); offer Atkinson Hyperlegible instead, optionally as a user choice.
+evidence). Recommended stack: **primary Lexend, fallback Inter, optional Atkinson Hyperlegible.**
 
 ### 8.3 Font sizes
 
@@ -226,7 +233,61 @@ attack in a couple of big taps.
 
 ---
 
-## 9. Design tokens (starting values — tune on real screens)
+## 9. Tone, voice & UX copy
+
+The copy talks to someone who may be in pain, nauseated, and cognitively taxed. For a health
+tracker this is as important as the visual design. Two evidence bases apply: **trauma-informed
+content design** (safety, trust, choice, control, empowerment, no blame) and the **chronic-illness
+"toxic positivity"** literature (relentless cheerfulness invalidates lived experience and is
+actively harmful to people in chronic pain).
+
+### 9.1 Core tension: supportive without false cheer
+
+The target voice is **calm, plain, matter-of-fact, and validating** — it witnesses the experience
+without performing emotion about it. "Great job! 🎉" after a 9/10 attack reads as tone-deaf; grim
+or clinical-cold is also wrong. Aim for the steady, kind register of a good nurse.
+
+### 9.2 Gamification caveat (important for a tracker)
+
+Streaks, badges, and "congratulations" mechanics backfire here: a user must **never** feel they
+"failed" or "broke a streak" because they had more migraines, and pain days must not be celebrated.
+**Reward the logging habit, never the health outcome.** This is a defining, portfolio-worthy design
+decision.
+
+### 9.3 Voice principles
+
+- **Calm and plain, never alarmist.** Short sentences, everyday words — cognitive load is real.
+- **Validating, not cheerful.** Acknowledge difficulty neutrally; don't force optimism/gratitude.
+- **Person-first, non-judgmental.** "You" / "your migraine"; never imply fault ("you forgot,"
+  "you missed"). Avoid catastrophizing pain words.
+- **User in control, low pressure.** Choice, graceful exits, easy skip/undo, no guilt in reminders,
+  no dark patterns.
+- **Honest and transparent**, especially about health data — say plainly why you collect something.
+- **Supportive, not diagnostic.** The app observes and reflects; it never tells someone what's wrong.
+
+### 9.4 Microcopy — do / don't for key moments
+
+| Moment | Do | Don't |
+|---|---|---|
+| Log an attack | "How's the pain right now?" · "Saved. Rest up." | "Tell us all about your migraine!" · "Awesome, complete! 🎉" |
+| Reminder | "A quick check-in when you're ready." · "No rush." | "You haven't logged today!" · "Don't break your streak!" |
+| Habit reinforcement | "You've checked in 5 days this week — a clearer picture for you and your doctor." | "5 migraine-free days, keep it up!" |
+| Empty state | "Nothing logged yet. Add your first entry when you're ready — it only takes a moment." | "No data!" |
+| Error | "That didn't save — let's try again." · "Something went wrong on our end." | "Invalid entry." · "You did that wrong." |
+| Med-overuse warning | "You've logged acute medication on 10 days this month. Frequent use can sometimes lead to more headaches — it may be worth a chat with your doctor." | Fear-based or scolding language |
+| Red-flag / SNOOP nudge | "Some of what you described can have other causes. It's a good idea to check in with a healthcare professional." | Alarmist or diagnostic phrasing |
+| Insight / correlation | "On days you logged poor sleep, you were more likely to record a migraine. This is a personal pattern, not a definite cause." | "Poor sleep causes your migraines." |
+
+### 9.5 Copy as an accessibility feature
+
+Plain language and short structure are cognitive-accessibility features, not just tone. **The deeper
+someone is into an attack, the shorter and simpler the copy should get** — attack mode strips labels
+to essentials, uses large plain buttons, and avoids anything requiring careful reading. The
+tone system and the text-scaling / attack-mode system are the same idea expressed two ways.
+
+---
+
+## 10. Design tokens (starting values — tune on real screens)
 
 Warm, low-saturation palette; never pure #FFF or #000; green accents kept low-saturation.
 
@@ -262,12 +323,14 @@ Warm, low-saturation palette; never pure #FFF or #000; green accents kept low-sa
 /* + reduce brightness, disable animation, enlarge type, minimal UI */
 ```
 
+**Font stack:** primary **Lexend**, fallback **Inter** (enable disambiguation set), optional
+**Atkinson Hyperlegible** toggle.
 **Type scale (mobile base):** body 16–18px · caption 14px · H3 20 / H2 24 / H1 28+ ·
 line-height 1.5 · attack-mode body 20–24px.
 
 ---
 
-## 10. Case-study talking points (design rationale in one place)
+## 11. Case-study talking points (design rationale in one place)
 
 - **"Designed for the worst moment, not the best."** Photophobia, nausea, and impaired focus during
   attacks drove an attack mode, warm low-stimulation palette, and large low-friction inputs.
@@ -281,7 +344,11 @@ line-height 1.5 · attack-mode body 20–24px.
   app's output is meaningful to a clinician, and med-day counting adds a safety feature (overuse
   warning) grounded in guideline definitions.
 - **"Accessibility as the core thesis, not a checkbox."** OS-respecting text scaling, WCAG 200%
-  reflow, Atkinson Hyperlegible, and reduced-motion support are foundational rather than added late.
+  reflow, legible typography (Lexend), and reduced-motion support are foundational rather than
+  added late.
+- **"The words are part of the care."** Trauma-informed, validating copy — and the deliberate choice
+  to reward the *logging habit* rather than *health outcomes* — means the app never makes a user in
+  pain feel judged, failed, or falsely cheered.
 
 ---
 
@@ -326,6 +393,16 @@ https://www.iubenda.com/en/help/182497-most-accessible-fonts/ ·
 https://www.a11y-collective.com/blog/wcag-minimum-font-size/ ·
 https://www.smashingmagazine.com/2025/04/inclusive-dark-mode-designing-accessible-dark-themes/ ·
 https://www.boia.org/blog/web-design-mistakes-that-impact-light-sensitive-users
+
+Tone, voice & UX copy:
+https://www.galaxyux.studio/blog/trauma-informed-ux-writing/ (trauma-informed UX writing) ·
+https://uxcontent.com/a-guide-to-trauma-informed-content-design/ (trauma-informed content design) ·
+https://creakyjoints.org/living-with-arthritis/mental-health/keep-complaining-toxic-positivity/ (toxic positivity & chronic illness) ·
+https://www.bezzypsa.com/discover/living-well-psa/health-resisting-the-lure-of-toxic-positivity-while-chronically-ill/ ·
+https://aci.health.nsw.gov.au/chronic-pain/health-professionals/positive-language (positive language in chronic pain) ·
+https://medium.com/@rounakbajoriastar/ux-writing-for-empty-states-errors-and-success-messages-tiny-texts-big-impact-70559a28306d (empty/error/success microcopy) ·
+https://www.uxpin.com/studio/blog/ultimate-guide-to-error-messaging-accessibility/ (accessible error messages) ·
+https://link.springer.com/chapter/10.1007/978-3-031-85575-7_5 (gamifying chronic-pain mHealth — do's and don'ts)
 
 *Disclaimer: research reference for product/design purposes, not medical advice. Verify clinical
 details against primary sources before any health-related claim in published material.*

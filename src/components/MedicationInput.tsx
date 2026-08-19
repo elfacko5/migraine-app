@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Attack, Medication } from '../types';
 import { formatTime } from '../utils/format';
+import { CHIP_ON, CHIP_OFF } from '../utils/chipStyles';
 import { MedIcon } from './drawnIcons';
 import {
   checkDose, doseUnits, findMedication, DEFAULT_UNIT, unitsLabel,
@@ -89,9 +90,7 @@ export function MedicationInput({
                 onClick={() => pick(med)}
                 aria-pressed={selected?.name === med.name}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  selected?.name === med.name
-                    ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/40'
-                    : 'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-border hover:text-text-primary'
+                  selected?.name === med.name ? CHIP_ON : CHIP_OFF
                 }`}
               >
                 <MedIcon name={med.name} dose={med.dose} className="h-4 w-4" />
@@ -107,6 +106,9 @@ export function MedicationInput({
           <div className="flex flex-wrap gap-2">
             <input
               type="text"
+              // Placeholders are not accessible names — they vanish the moment
+              // you type. Every free-text field here carries its own.
+              aria-label="Medication name"
               placeholder="Medication name"
               value={value.name}
               onChange={(e) => onChange({ ...value, name: e.target.value })}
@@ -114,6 +116,7 @@ export function MedicationInput({
             />
             <input
               type="text"
+              aria-label="Dose or strength"
               placeholder="Dose / strength"
               value={value.dose}
               onChange={(e) => onChange({ ...value, dose: e.target.value })}
@@ -157,9 +160,7 @@ export function MedicationInput({
                 aria-pressed={units === n}
                 onClick={() => setUnits(n)}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                  units === n
-                    ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/40'
-                    : 'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-border hover:text-text-primary'
+                  units === n ? CHIP_ON : CHIP_OFF
                 }`}
               >
                 {n} {n === 1 ? unit : `${unit}s`}

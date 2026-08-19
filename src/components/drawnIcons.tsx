@@ -22,6 +22,7 @@
 // they're labelling text that is right there, so they only have to be
 // *distinguishable*, not self-explanatory.
 
+import { useId } from 'react';
 import { medForm, type MedForm } from '../utils/medDisplay';
 
 interface IconProps { className?: string }
@@ -375,6 +376,14 @@ export function SideGlyph({ side, className = 'h-8 w-8' }: {
   side: 'left' | 'right' | 'both';
   className?: string;
 }) {
+  // **Ids must be per-instance.** These were two fixed strings, so a Logs list
+  // of ten rows emitted ten copies of each — duplicate ids are invalid, and
+  // `url(#id)` resolves to whichever the parser saw first, which is only
+  // harmless here because every instance happens to define the same geometry.
+  // `useId` makes that a fact rather than a coincidence.
+  const uid = useId();
+  const clipLeft = `${uid}-screen-left`;
+  const clipRight = `${uid}-screen-right`;
   // The head outline, and the vertical midline the fill is clipped against.
   const head = 'M12 3c3.6 0 5.8 2.6 5.8 6.2 0 2.3-.5 3.6-1.2 4.7-.5.8-.6 1.2-.6 2.1V18c0 1.1-.9 2-2 2h-4c-1.1 0-2-.9-2-2v-2c0-.9-.1-1.3-.6-2.1-.7-1.1-1.2-2.4-1.2-4.7C6.2 5.6 8.4 3 12 3z';
   // Screen-left is the subject's RIGHT (mirrored), so the fills are crossed.
@@ -384,16 +393,16 @@ export function SideGlyph({ side, className = 'h-8 w-8' }: {
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <defs>
         {/* Half-width rects, used to clip the same head path to each side. */}
-        <clipPath id="side-glyph-screen-left"><rect x="0" y="0" width="12" height="24" /></clipPath>
-        <clipPath id="side-glyph-screen-right"><rect x="12" y="0" width="12" height="24" /></clipPath>
+        <clipPath id={clipLeft}><rect x="0" y="0" width="12" height="24" /></clipPath>
+        <clipPath id={clipRight}><rect x="12" y="0" width="12" height="24" /></clipPath>
       </defs>
       {/* Subject's right = screen-left. */}
       {fillRight && (
-        <path d={head} fill="currentColor" fillOpacity="0.9" clipPath="url(#side-glyph-screen-left)" />
+        <path d={head} fill="currentColor" fillOpacity="0.9" clipPath={`url(#${clipLeft})`} />
       )}
       {/* Subject's left = screen-right. */}
       {fillLeft && (
-        <path d={head} fill="currentColor" fillOpacity="0.9" clipPath="url(#side-glyph-screen-right)" />
+        <path d={head} fill="currentColor" fillOpacity="0.9" clipPath={`url(#${clipRight})`} />
       )}
       <path d={head} fill="none" stroke="currentColor" strokeWidth={1.3} strokeOpacity="0.65" />
       <path d="M12 3.4v16.2" stroke="currentColor" strokeWidth={0.9} strokeOpacity="0.4" />

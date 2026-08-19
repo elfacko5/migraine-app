@@ -302,7 +302,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="rounded-full p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
+          className="tap-44 rounded-full p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
             <path d="M18 6 6 18M6 6l12 12" />
@@ -514,7 +514,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                   </div>
                 </div>
                 {form.startMode === 'manual' && (
-                  <input ref={startInputRef} type="datetime-local" value={form.startTime} max={isoToLocalInput()}
+                  <input ref={startInputRef} type="datetime-local" aria-label="Attack start time" value={form.startTime} max={isoToLocalInput()}
                     onChange={(e) => set('startTime', e.target.value)}
                     className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
                 )}
@@ -552,7 +552,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                   </div>
                 </div>
                 {form.endMode === 'manual' && (
-                  <input ref={endInputRef} type="datetime-local" value={form.endTime} max={isoToLocalInput()}
+                  <input ref={endInputRef} type="datetime-local" aria-label="Attack end time" value={form.endTime} max={isoToLocalInput()}
                     onChange={(e) => set('endTime', e.target.value)}
                     className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
                 )}
@@ -600,7 +600,8 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         {/* ── Step 7: Note — grows to fill the remaining space, so long entries
             never need to scroll within their own tiny box ── */}
         {step === 7 && (
-          <textarea rows={4} value={form.note} placeholder="Anything else worth noting…"
+          <textarea rows={4} value={form.note} aria-label="Note"
+            placeholder="Anything else worth noting…"
             onChange={(e) => set('note', e.target.value)}
             className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
         )}

@@ -185,6 +185,9 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
           </div>
           <input
             type="range"
+            // A slider with no name reads as "slider, 20%" — the percentage
+            // without the thing it is a percentage of.
+            aria-label="Screen dimming"
             min={0}
             max={80}
             step={5}
@@ -279,6 +282,7 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
           <input
             ref={fileRef}
             type="file"
+            aria-label="Backup file to import"
             accept="application/json,.json"
             className="hidden"
             onChange={onFile}
@@ -395,6 +399,10 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
           <input
             type="text"
             inputMode="numeric"
+            // Named, and marked up as a one-time code so both password
+            // managers and iOS's own SMS/email autofill offer to fill it.
+            aria-label="6-digit sign-in code"
+            autoComplete="one-time-code"
             required
             value={code}
             onChange={(e) => setCode(e.target.value)}
@@ -421,6 +429,7 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
       </p>
       <input
         type="email"
+        aria-label="Email address"
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}

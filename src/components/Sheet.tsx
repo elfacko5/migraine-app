@@ -36,7 +36,22 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
   }, [open, onClose]);
 
   return (
-    <div className={`absolute inset-0 z-50 ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
+    // **A closed overlay must leave the focus order, not just stop taking
+    // taps.** `aria-hidden` + `pointer-events-none` hid it from assistive
+    // tech and the mouse, but every button inside stayed tabbable — so a
+    // keyboard user tabbing through Today walked straight into a closed
+    // sheet's controls, and `aria-hidden` with focusable descendants is
+    // itself the violation. `inert` fixes both in one attribute; the
+    // delayed `visibility` is the belt-and-braces version for older Safari
+    // (the deployment target is iOS 15, and `inert` only landed in 15.5),
+    // and it is delayed by the transition's own length so the close still
+    // animates instead of vanishing.
+    <div
+      className={`absolute inset-0 z-50 ${open ? '' : 'pointer-events-none'}`}
+      aria-hidden={!open}
+      inert={!open}
+      style={{ visibility: open ? 'visible' : 'hidden', transition: `visibility 0s linear ${open ? '0s' : '300ms'}` }}
+    >
       {/* Backdrop */}
       <div
         className={`absolute inset-0 bg-bg-base/70 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
@@ -62,7 +77,7 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="rounded-full p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
+              className="tap-44 rounded-full p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
                 <path d="M18 6 6 18M6 6l12 12" />

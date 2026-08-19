@@ -25,7 +25,7 @@ export function ProfileSubPage({ title, onClose, children }: Props) {
           type="button"
           onClick={onClose}
           aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-raised text-text-secondary transition-colors hover:text-text-primary"
+          className="tap-44 flex h-9 w-9 items-center justify-center rounded-full bg-bg-raised text-text-secondary transition-colors hover:text-text-primary"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
             <path d="m15 18-6-6 6-6" />

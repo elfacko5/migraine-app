@@ -61,6 +61,7 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
           <div className="flex items-center gap-1">
             <input
               autoFocus
+              aria-label={placeholder}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitCustom(); if (e.key === 'Escape') setAdding(false); }}

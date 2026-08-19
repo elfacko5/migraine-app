@@ -66,6 +66,9 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
     <div
       className={`fixed inset-0 z-[60] flex items-center justify-center p-4 ${open ? '' : 'pointer-events-none'}`}
       aria-hidden={!open}
+      // Closed dialogs stayed in the focus order — see the note in Sheet.
+      inert={!open}
+      style={{ visibility: open ? 'visible' : 'hidden', transition: `visibility 0s linear ${open ? '0s' : '200ms'}` }}
     >
       <div
         className={`absolute inset-0 bg-bg-base/70 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
@@ -115,6 +118,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
             <input
               ref={inputRef}
               type="datetime-local"
+            aria-label="End time"
               value={manualTime}
               min={minLocal}
               max={maxLocal}

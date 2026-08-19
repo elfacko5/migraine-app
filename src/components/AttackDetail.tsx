@@ -59,7 +59,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
+          className="tap-44 rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
             <path d="M18 6 6 18M6 6l12 12" />
@@ -74,7 +74,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           type="button"
           onClick={() => setConfirmDelete(true)}
           aria-label="Delete attack"
-          className="ml-auto rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-severity-high/15 hover:text-severity-high transition-colors"
+          className="tap-44 ml-auto rounded-full bg-bg-raised/60 p-2 text-text-secondary hover:bg-severity-high/15 hover:text-severity-high transition-colors"
         >
           <BinIcon />
         </button>

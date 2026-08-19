@@ -250,7 +250,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="rounded-full p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
+          className="tap-44 rounded-full p-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
             <path d="M18 6 6 18M6 6l12 12" />
@@ -304,6 +304,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
             {step === 1 && (
               <input
                 type="datetime-local"
+                aria-label="Time of this update"
                 value={form.time}
                 min={isoToLocalInput(minTime)}
                 max={isoToLocalInput(maxTime)}
@@ -347,7 +348,8 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
 
             {/* ── Step 6: Note — grows to fill the remaining space ── */}
             {step === 6 && (
-              <textarea rows={4} value={form.note} placeholder="What changed?"
+              <textarea rows={4} value={form.note} aria-label="Note"
+                placeholder="What changed?"
                 onChange={(e) => set('note', e.target.value)}
                 className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
             )}
