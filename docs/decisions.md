@@ -681,7 +681,17 @@ device end to end.
    both window lengths and the short-run caveat. Verification also surfaced
    the partial-first-month behaviour now recorded in CLAUDE.md. Still unseen
    against Sunny's own account, which is only reachable from their device.
-2. **Periodic HIT-6.** The 2026 REFORM finding is that diary counts and
+2. ~~**Periodic HIT-6.**~~ **Done 2026-08-19** — `src/utils/hit6.ts`,
+   `useHit6`, `Hit6View`, a fifth Profile row with a quiet "Due" marker, and
+   its own `hit6` / `hit6_updated_at` columns on `user_prefs`. **Verified on
+   screen** at 375px on the scratch origin: scoring (42 and 60 against hand
+   arithmetic), both bands, the incomplete-form guard, the change-since-last
+   line and the history list. Verification also caught the confirmation screen
+   reporting a first-ever HIT-6 as "the same as last time" — it re-derived the
+   previous entry *after* saving and found the one just written. **Two things
+   remain**: Sunny must run the `alter table` statements in
+   `supabase/schema.sql` before any HIT-6 push will succeed, and it has not
+   been seen on device. Original reasoning: the 2026 REFORM finding is that diary counts and
    questionnaires disagree, so the dossier wants both. **Scope settled
    2026-08-19:** HIT-6 only, not MIDAS — 6 questions on a 4-week recall,
    short enough to answer monthly, and its published severity bands make
@@ -761,10 +771,14 @@ device end to end.
 
 **P4 — before any public release**
 
-12. **Text scale caps at 150%; WCAG 1.4.4 asks 200%.** Justified today because
+12. **HIT-6 is a licensed instrument.** Shipped and fine for a personal
+    diary; a public release needs permission from the rights holder
+    (QualityMetric). Nothing to build — a permissions question, recorded here
+    so it is not discovered late.
+13. **Text scale caps at 150%; WCAG 1.4.4 asks 200%.** Justified today because
     this is a single-user app. That justification disappears the moment it
     ships, and accessibility is the app's whole thesis.
-13. **Aura has no structure.** There is an "Aura" symptom chip, but ICHD-3 1.2
+14. **Aura has no structure.** There is an "Aura" symptom chip, but ICHD-3 1.2
     needs its own fields (visual / sensory / speech, gradual spread ≥5 min,
     duration 5–60 min, headache within 60 min). Roughly a third of patients,
     and a tick-box cannot support the diagnosis it is named after. **Deferred
@@ -772,7 +786,7 @@ device end to end.
     diary, and structured aura fields buy nothing for a single user who knows
     whether they get aura. It becomes a requirement the moment anyone else
     uses it. (Narrower claim than the older "aura is not captured anywhere".)
-14. **Headache days can't be reported.** The chronic-migraine line is headache
+15. **Headache days can't be reported.** The chronic-migraine line is headache
     on ≥15 days/month *of which ≥8 migrainous* — two counts, and the app can
     only produce one. Needs a "headache, not a migraine" log path.
     **Deferred to pre-release by decision on 2026-08-19**, alongside aura and
@@ -780,7 +794,7 @@ device end to end.
     support someone else's diagnosis, and the design question (a one-tap day
     marker on Today, versus a type field on the wizard) is worth answering
     then rather than now.
-15. **SNOOP red flags.** A "see a clinician" nudge on thunderclap onset, a
+16. **SNOOP red flags.** A "see a clinician" nudge on thunderclap onset, a
     new headache after 50, neurological deficit, fever, or a marked change in
     pattern — and the dossier is explicit it must never reassure, so there is
     no reassuring state and no green tick, only present or absent.

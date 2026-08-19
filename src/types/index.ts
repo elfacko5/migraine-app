@@ -109,3 +109,18 @@ export type Tab = 'log' | 'history' | 'stats' | 'profile';
 // Reported by useAttacks/useUserPrefs so Settings can show a combined
 // "synced just now" / "sync failed" indicator instead of failing silently.
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
+
+/**
+ * One completed HIT-6. Answers are the *scored* values (6/8/10/11/13), in
+ * question order, so a stored entry can be re-read without depending on the
+ * option table never changing.
+ */
+export interface Hit6Entry {
+  id: string;
+  /** ISO timestamp of when it was answered. */
+  takenAt: string;
+  answers: number[];
+  /** 36-78. Stored rather than derived so a historical entry can't be
+   *  retro-scored by a later change to the instrument. */
+  score: number;
+}

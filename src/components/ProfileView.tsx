@@ -8,18 +8,22 @@ import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../u
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
-import { TabletIcon, EyeIcon, CloudIcon, DataIcon } from './drawnIcons';
+import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon } from './drawnIcons';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
 // Fixed px values used only in this picker as a visual size-comparison reference.
 const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
 
-export type ProfileSection = 'medications' | 'accessibility' | 'account' | 'data';
+export type ProfileSection = 'medications' | 'hit6' | 'accessibility' | 'account' | 'data';
 
 interface MenuProps {
   onOpen: (section: ProfileSection) => void;
   accountEnabled: boolean;
+  /** Shows a quiet marker on the Headache impact row when it's worth
+   *  answering again. This is the *only* place HIT-6 asks for attention —
+   *  deliberately not a card on Today and not a notification. */
+  hit6Due?: boolean;
 }
 
 // Drawn marks rather than emoji, for the reason the attack-mode pill gave up
@@ -27,7 +31,8 @@ interface MenuProps {
 // of them made a settings list the most saturated thing on a screen the
 // palette works to keep quiet. These take the row's own colour and size.
 const MENU: { id: ProfileSection; Icon: (p: { className?: string }) => React.ReactElement; label: string; hint: string }[] = [
-  { id: 'medications',   Icon: TabletIcon, label: 'My medications', hint: 'Acute and preventive' },
+  { id: 'medications',   Icon: TabletIcon,   label: 'My medications',  hint: 'Acute and preventive' },
+  { id: 'hit6',          Icon: ChecklistIcon, label: 'Headache impact', hint: 'Every four weeks' },
   { id: 'accessibility', Icon: EyeIcon,    label: 'Accessibility',  hint: 'Text size and screen brightness' },
   { id: 'account',       Icon: CloudIcon,  label: 'Account & sync', hint: 'Sign in to sync across devices' },
   { id: 'data',          Icon: DataIcon,   label: 'Data',           hint: 'Export or import a backup' },
@@ -37,7 +42,7 @@ const MENU: { id: ProfileSection; Icon: (p: { className?: string }) => React.Rea
 // gave only medications a row, which left one row sitting above three loose
 // sections and read as an accident rather than a choice — the page needs to
 // be one thing or the other.
-export function ProfileView({ onOpen, accountEnabled }: MenuProps) {
+export function ProfileView({ onOpen, accountEnabled, hit6Due = false }: MenuProps) {
   return (
     <div className="space-y-2">
       {MENU.filter((m) => m.id !== 'account' || accountEnabled).map((item) => (
@@ -52,6 +57,11 @@ export function ProfileView({ onOpen, accountEnabled }: MenuProps) {
             <span className="block text-sm font-medium text-text-primary">{item.label}</span>
             <span className="block text-xs text-text-secondary">{item.hint}</span>
           </span>
+          {/* Text, not a coloured dot: a dot on a settings row reads as an
+              alert, and this is a suggestion about a questionnaire. */}
+          {item.id === 'hit6' && hit6Due && (
+            <span className="shrink-0 text-xs text-text-secondary">Due</span>
+          )}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-text-secondary" aria-hidden="true">
             <path d="m9 18 6-6-6-6"/>
           </svg>

@@ -3,6 +3,7 @@ import type { Tab, Attack, Snapshot, Medication } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useMedications } from './hooks/useMedications';
+import { useHit6 } from './hooks/useHit6';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
 import { useAuth } from './hooks/useAuth';
@@ -34,6 +35,7 @@ import { OngoingAttackBanner } from './components/OngoingAttackBanner';
 import { AttackFreeCard } from './components/AttackFreeCard';
 import { ImpactPrompt } from './components/ImpactPrompt';
 import { attackAwaitingImpact } from './utils/impact';
+import { hit6Due } from './utils/hit6';
 import { TodaySummary } from './components/TodaySummary';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
@@ -42,6 +44,7 @@ import { LogsFilterPanel, LogsFilterReset } from './components/LogsFilterPanel';
 import { DEFAULT_FILTERS, type LogFilters, type SortOrder } from './utils/logFilters';
 import { ProfileView, AccessibilityPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
+import { Hit6View } from './components/Hit6View';
 import { MedicationEditor } from './components/MedicationEditor';
 import { AttackModePill } from './components/AttackModePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
@@ -95,6 +98,10 @@ export default function App() {
     medications, addMedication, updateMedication, removeMedication,
     syncStatus: medsSyncStatus, lastSyncedAt: medsLastSyncedAt,
   } = useMedications(userId);
+  const {
+    hit6Entries, addHit6,
+    syncStatus: hit6SyncStatus, lastSyncedAt: hit6LastSyncedAt,
+  } = useHit6(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
   const { textScale, setTextScale, brightness, setBrightness, attackMode, setAttackMode } = useSettings();
 
@@ -108,16 +115,21 @@ export default function App() {
   // in any takes priority, then in-flight, then the most recent successful
   // sync of the three.
   const syncStatus = useMemo(() => {
-    const all = [attacksSyncStatus, prefsSyncStatus, medsSyncStatus];
+    const all = [attacksSyncStatus, prefsSyncStatus, medsSyncStatus, hit6SyncStatus];
     if (all.includes('error')) return 'error' as const;
     if (all.includes('syncing')) return 'syncing' as const;
-    if (attacksLastSyncedAt || prefsLastSyncedAt || medsLastSyncedAt) return 'synced' as const;
+    if (attacksLastSyncedAt || prefsLastSyncedAt || medsLastSyncedAt || hit6LastSyncedAt) return 'synced' as const;
     return 'idle' as const;
-  }, [attacksSyncStatus, prefsSyncStatus, medsSyncStatus, attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt]);
+  }, [attacksSyncStatus, prefsSyncStatus, medsSyncStatus, hit6SyncStatus, attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt, hit6LastSyncedAt]);
   const lastSyncedAt = useMemo(() => {
-    const stamps = [attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt].filter(Boolean) as string[];
+    const stamps = [attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt, hit6LastSyncedAt].filter(Boolean) as string[];
     return stamps.length ? stamps.reduce((a, b) => (a > b ? a : b)) : null;
-  }, [attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt]);
+  }, [attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt, hit6LastSyncedAt]);
+
+  // Whether the Profile row shows its "Due" marker. Recomputed per render
+  // rather than on a tick: the window is four weeks, so it does not need to
+  // turn over live, and the Profile tab is re-entered often enough.
+  const hit6IsDue = useMemo(() => hit6Due(hit6Entries), [hit6Entries]);
 
   // Medications offered in the logging wizard and used to correct spoken drug
   // names in voiceParse: the user's own acute library first, in their order,
@@ -509,7 +521,7 @@ export default function App() {
         {/* ── Settings tab ─────────────────────────── */}
         {tab === 'profile' && (
           <section className="space-y-4">
-            <ProfileView onOpen={setProfileSheet} accountEnabled={auth.enabled} />
+            <ProfileView onOpen={setProfileSheet} accountEnabled={auth.enabled} hit6Due={hit6IsDue} />
           </section>
         )}
         </div>
@@ -590,6 +602,13 @@ export default function App() {
             medications={medications}
             onEdit={(med) => setMedEditor({ med })}
             onAddNew={(kind) => setMedEditor({ newKind: kind })}
+            onClose={() => setProfileSheet(null)}
+          />
+        )}
+        {profileSheet === 'hit6' && (
+          <Hit6View
+            entries={hit6Entries}
+            onSubmit={addHit6}
             onClose={() => setProfileSheet(null)}
           />
         )}

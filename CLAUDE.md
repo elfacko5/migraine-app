@@ -171,6 +171,7 @@ interface Attack {
 | `hd_symptoms` | `string[]` | User's symptom list (seeded from `DEFAULT_SYMPTOMS`) |
 | `hd_reliefs` | `string[]` | User's relief-method list (seeded from `DEFAULT_RELIEFS`) |
 | `hd_medications` | `{ items: Medication[]; updatedAt: string }` | The user's medication library (acute + preventive) |
+| `hd_hit6` | `{ items: Hit6Entry[]; updatedAt: string }` | Completed HIT-6 questionnaires |
 | `hd_notification_default` | `NotificationConfig` | Saved notification preference |
 | `hd_text_scale` | `TextScale` | UI text-size setting (87.5%–150%) |
 | `hd_attack_mode` | `boolean` | Attack-mode theme on/off |
@@ -335,11 +336,47 @@ The Logs filter/sort sheet is **`LogsFilterPanel.tsx`** (body) plus `LogsFilterR
 
 ## Profile tab
 
-Four rows, each opening a full-screen sub-page: **My medications** · **Accessibility** (text size + brightness) · **Account & sync** (hidden unless `supabase` is non-null) · **Data** (export/import). `ProfileView.tsx` holds the menu and exports `AccessibilityPanel` / `AccountPanel` / `DataPanel`; `MedicationsView.tsx` is the fourth. Every panel wraps itself in **`ProfileSubPage`**, which owns the top bar and the scroll region — so a new sub-page never re-derives the safe-area padding or the back button.
+Five rows, each opening a full-screen sub-page: **My medications** · **Headache impact** (HIT-6) · **Accessibility** (text size + brightness) · **Account & sync** (hidden unless `supabase` is non-null) · **Data** (export/import). `ProfileView.tsx` holds the menu and exports `AccessibilityPanel` / `AccountPanel` / `DataPanel`; `MedicationsView.tsx` and `Hit6View.tsx` are the other two. Every panel wraps itself in **`ProfileSubPage`**, which owns the top bar and the scroll region — so a new sub-page never re-derives the safe-area padding or the back button.
 
 **The sub-pages are a drill-down, not a modal.** They enter from the right (`Sheet`'s `enterFrom="right"`) and their leading control is a **back chevron**, not a close X — these are rows you go one level *into* from a list. `AttackDetail` and the wizards keep the default bottom entry and their X for exactly that contrast: they interrupt what you were doing, a settings page doesn't. If you add a sheet, pick the pair deliberately — a panel that slides up with a back arrow, or in from the right with a close X, tells the user two different things at once.
 
 **The Sheets live in `App.tsx`, not inside `ProfileView`.** `Sheet` is `absolute inset-0` against the app root; rendered from inside the tab's scroll container it would anchor to the wrong ancestor and reintroduce exactly the clipping the viewport architecture exists to avoid. One `Sheet` switches its contents on `profileSheet: ProfileSection | null`.
+
+### Headache impact (HIT-6)
+
+Six questions on a four-week recall, scored 36–78, in `src/utils/hit6.ts` and
+`Hit6View.tsx`. It answers a different question from the diary — how much
+headaches affected life, rather than how many days there were — and the 2026
+REFORM finding is that the two disagree about treatment response, which is why
+the dossier asks for both. **MIDAS was considered and rejected**: it is the
+name a clinic asks for, but its three-month recall is the recall bias a
+prospective diary exists to avoid.
+
+- **It never interrupts.** No card on Today, no notification — the only signal
+  is a quiet **"Due"** on the Profile row, from `hit6Due` (28 days, matching
+  the questions' own window). This is deliberately the opposite call from
+  `ImpactPrompt`, for the opposite reason: impact expires in 24 hours and has
+  to be caught, HIT-6 asks about the last four weeks and keeps. A
+  six-question form put in front of someone mid-attack is either answered
+  badly or dismissed to be rid of it, and both are worse data than one
+  answered on purpose. The marker is **text, not a coloured dot** — a dot on a
+  settings row reads as an alert, and this is a suggestion.
+- **The scored values are stored, not the option indices**, and `score` is
+  stored rather than derived — a historical entry must not be retro-scored by
+  a later change to the instrument.
+- **The confirmation screen captures the previous entry at submit time**, in
+  the same state as the new score. Re-deriving "the last entry" after saving
+  finds the entry just written, which reported every first-ever HIT-6 as *"the
+  same as last time"* — caught in verification.
+- **The five responses are not evenly spaced** (6/8/10/11/13). That is the
+  instrument's weighting, not a mistake to tidy up.
+- **Sync mirrors medications, not the trigger lists**: whole-list
+  last-write-wins on its own `updatedAt` via `pushHit6`, its own columns
+  (`hit6`, `hit6_updated_at`) so neither hook clobbers the other's. **An
+  already-created `user_prefs` table needs the `alter table` statements** in
+  `supabase/schema.sql`.
+- **HIT-6 is a licensed instrument.** Fine for a personal diary; a public
+  release needs permission from the rights holder. In the P4 backlog.
 
 **It's a menu or it isn't.** A first version kept these flat and gave only medications a row, which left one row sitting above three loose sections — it read as an accident rather than a choice. If a fifth group is added, it gets a row too.
 

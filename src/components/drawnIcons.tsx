@@ -345,6 +345,13 @@ export function CloudIcon({ className = 'h-5 w-5' }: IconProps) {
   ));
 }
 
+export function ChecklistIcon({ className = 'h-5 w-5' }: IconProps) {
+  return svg(className, <>
+    <path d="M8 4.5h8a1.5 1.5 0 0 1 1.5 1.5v13a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 19V6A1.5 1.5 0 0 1 8 4.5z" />
+    <path d="M9.5 9.5h5M9.5 13h5M9.5 16.5h3" />
+  </>);
+}
+
 export function DataIcon({ className = 'h-5 w-5' }: IconProps) {
   return svg(className, <>
     <path d="M3.5 6.5c0-1.4 3.8-2.5 8.5-2.5s8.5 1.1 8.5 2.5-3.8 2.5-8.5 2.5-8.5-1.1-8.5-2.5z" />

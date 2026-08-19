@@ -41,6 +41,8 @@ create table if not exists user_prefs (
   brightness numeric,
   medications jsonb,
   medications_updated_at timestamptz,
+  hit6 jsonb,
+  hit6_updated_at timestamptz,
   updated_at timestamptz not null default now()
 );
 
@@ -50,6 +52,8 @@ create table if not exists user_prefs (
 -- until they exist:
 -- alter table user_prefs add column if not exists medications jsonb;
 -- alter table user_prefs add column if not exists medications_updated_at timestamptz;
+-- alter table user_prefs add column if not exists hit6 jsonb;
+-- alter table user_prefs add column if not exists hit6_updated_at timestamptz;
 
 alter table user_prefs enable row level security;
 

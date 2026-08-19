@@ -1,4 +1,4 @@
-import type { Attack, NotificationConfig, Medication } from '../types';
+import type { Attack, NotificationConfig, Medication, Hit6Entry } from '../types';
 import { supabase } from './supabase';
 
 interface AttackRow {
@@ -68,6 +68,8 @@ interface UserPrefsRow {
   notification_default: NotificationConfig | null;
   medications: Medication[] | null;
   medications_updated_at: string | null;
+  hit6: Hit6Entry[] | null;
+  hit6_updated_at: string | null;
 }
 
 export async function pullUserPrefs(): Promise<UserPrefsRow | null> {
@@ -87,6 +89,20 @@ export async function pushMedications(items: Medication[], updatedAt: string, us
     user_id: userId,
     medications: items,
     medications_updated_at: updatedAt,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+}
+
+// Same one-row-per-user table and the same reason for its own push path as
+// pushMedications: useHit6 owns these columns and must not null out the ones
+// it doesn't hold.
+export async function pushHit6(entries: Hit6Entry[], updatedAt: string, userId: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.from('user_prefs').upsert({
+    user_id: userId,
+    hit6: entries,
+    hit6_updated_at: updatedAt,
     updated_at: new Date().toISOString(),
   });
   if (error) throw error;
