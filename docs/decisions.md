@@ -670,52 +670,72 @@ device end to end.
 
 **P1 — clinical completeness, in the order I'd take them**
 
-1. **`startedOn` is captured but nothing reads it.** The ≥50%-reduction
-   question — migraine days a month before a preventive started against after
-   — is the best value-per-effort item on this list: the data is already
-   there and the metric is the one a review appointment turns on.
-2. **Aura has no structure.** There is an "Aura" symptom chip, but ICHD-3 1.2
-   needs its own fields (visual / sensory / speech, gradual spread ≥5 min,
-   duration 5–60 min, headache within 60 min). Roughly a third of patients,
-   and a tick-box cannot support the diagnosis it is named after. Note this
-   is a narrower claim than the older "aura is not captured anywhere".
-3. **SNOOP red flags.** The only *safety* item on the list, which is why it
+1. ~~**`startedOn` is captured but nothing reads it.**~~ **Done 2026-08-19** —
+   `preventiveEffect` in `stats.ts` and `PreventiveInsights` on the Insights
+   page. The rules that keep it honest (excluded start month, excluded month
+   in progress, `no-baseline` when the diary doesn't reach back) are in
+   CLAUDE.md's Medications section. **Not yet seen with real data**: no
+   preventive in the live account carries a `startedOn`, so this has been
+   type-checked and linted but not looked at on a screen.
+2. **SNOOP red flags.** The only *safety* item on the list, which is why it
    outranks the metrics below it. Wording carries real weight and the dossier
    is explicit it must never reassure.
-4. **Headache days can't be reported.** The chronic-migraine line is headache
-   on ≥15 days/month *of which ≥8 migrainous* — two counts, and the app can
-   only produce one. Needs a "headache, not a migraine" path: a product
-   decision about scope.
-5. **Periodic MIDAS / HIT-6.** The 2026 REFORM finding is that diary counts
-   and questionnaires disagree, so the dossier wants both.
+3. **Periodic HIT-6.** The 2026 REFORM finding is that diary counts and
+   questionnaires disagree, so the dossier wants both. **Scope settled
+   2026-08-19:** HIT-6 only, not MIDAS — 6 questions on a 4-week recall,
+   short enough to answer monthly, and its published severity bands make
+   change legible. MIDAS is the name a clinic asks for, but its 3-month
+   recall is exactly the bias a prospective diary exists to avoid. It lives
+   as its own **Profile sub-page with a quiet "due" marker on the row**, and
+   deliberately does *not* prompt on Today or fire a notification: a
+   six-question form answered mid-attack, or dismissed to get rid of it, is
+   worse data than one answered on purpose. (This is the opposite call from
+   `ImpactPrompt`, and for the opposite reason — impact expires in 24h and
+   has to be caught, HIT-6 asks about the last four weeks and doesn't.)
 
 **P2 — known gaps with decisions already attached**
 
-6. **§9.5 is only half implemented.** Attack mode reduces *what is on screen*;
+5. **§9.5 is only half implemented.** Attack mode reduces *what is on screen*;
    no copy actually simplifies. Needs a second register for the strings read
    mid-attack — start with the wizard's step instructions.
-7. **Attack mode simplifies Today only.** The other three tabs are restyled
+6. **Attack mode simplifies Today only.** The other three tabs are restyled
    but not reduced; Insights in particular has never been thought through for
    that state.
-8. **"Edit details" + per-section voice editing** — settle together; both are
+7. **"Edit details" + per-section voice editing** — settle together; both are
    "change one part of an existing record".
-9. **Preventive adherence and daily reminders** — parked together; `kind`
+8. **Preventive adherence and daily reminders** — parked together; `kind`
    already ships so neither needs a migration.
 
 **P3 — open by choice, needs Sunny's eye**
 
-10. `--color-text-primary` (`#cdc7bb` vs `#d7d1c6`) — only settleable on a
+9. `--color-text-primary` (`#cdc7bb` vs `#d7d1c6`) — only settleable on a
     real screen mid-attack.
-11. The head diagram's disabled areas, parked pending a possible redraw.
-12. The tablet icon is a generic capsule.
-13. A warm light theme — specified, parked; needs a second variant of ~44
+10. The head diagram's disabled areas, parked pending a possible redraw.
+11. The tablet icon is a generic capsule.
+12. A warm light theme — specified, parked; needs a second variant of ~44
     hand-mirrored colours.
 
 **P4 — before any public release**
 
-14. **Text scale caps at 150%; WCAG 1.4.4 asks 200%.** Justified today because
+13. **Text scale caps at 150%; WCAG 1.4.4 asks 200%.** Justified today because
     this is a single-user app. That justification disappears the moment it
     ships, and accessibility is the app's whole thesis.
+14. **Aura has no structure.** There is an "Aura" symptom chip, but ICHD-3 1.2
+    needs its own fields (visual / sensory / speech, gradual spread ≥5 min,
+    duration 5–60 min, headache within 60 min). Roughly a third of patients,
+    and a tick-box cannot support the diagnosis it is named after. **Deferred
+    to pre-release by decision on 2026-08-19**: this build is Sunny's own
+    diary, and structured aura fields buy nothing for a single user who knows
+    whether they get aura. It becomes a requirement the moment anyone else
+    uses it. (Narrower claim than the older "aura is not captured anywhere".)
+15. **Headache days can't be reported.** The chronic-migraine line is headache
+    on ≥15 days/month *of which ≥8 migrainous* — two counts, and the app can
+    only produce one. Needs a "headache, not a migraine" log path.
+    **Deferred to pre-release by decision on 2026-08-19**, alongside aura and
+    for the same reason: the distinction earns its keep when the diary has to
+    support someone else's diagnosis, and the design question (a one-tap day
+    marker on Today, versus a type field on the wizard) is worth answering
+    then rather than now.
 
 **Closed as considered-and-declined:** the ~920KB bundle. 264KB gzipped,
 fetched once and then cached, and splitting would put a loading state on a

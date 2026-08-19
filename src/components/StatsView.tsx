@@ -13,6 +13,7 @@ import {
 import { HeadHeatmap } from './HeadHeatmap';
 import { MigraineDaysChart } from './MigraineDaysChart';
 import { MedicationInsights } from './MedicationInsights';
+import { PreventiveInsights } from './PreventiveInsights';
 import { InsightSection } from './InsightSection';
 import { chipClass } from '../utils/chipStyles';
 
@@ -202,6 +203,7 @@ export function StatsView({ attacks, medications = [] }: Props) {
           medication count, which is the number someone would be checking. */}
       <MigraineDaysChart attacks={attacks} />
       <MedicationInsights attacks={attacks} medications={medications} />
+      <PreventiveInsights attacks={attacks} medications={medications} />
 
       {filtered.length > 0 && (
         <>

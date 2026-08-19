@@ -1,4 +1,4 @@
-import type { Attack, Snapshot } from '../types';
+import type { Attack, Medication, Snapshot } from '../types';
 import { isRetired } from './retired';
 
 export function maxSeverity(snapshot: Snapshot): number {
@@ -319,7 +319,7 @@ export interface MonthDays {
  * silently under-report the count it's named after, so the UI says migraine
  * days and shows the 15-day line for context rather than as a diagnosis.
  */
-export function migraineDaysByMonth(attacks: Attack[], months = 6, now: number = Date.now()): MonthDays[] {
+function migraineDaysByMonthMap(attacks: Attack[], now: number): Map<string, Set<string>> {
   const byMonth = new Map<string, Set<string>>();
   for (const a of attacks) {
     if (a.snapshots.length === 0) continue;
@@ -329,6 +329,11 @@ export function migraineDaysByMonth(attacks: Attack[], months = 6, now: number =
       byMonth.get(month)!.add(day);
     }
   }
+  return byMonth;
+}
+
+export function migraineDaysByMonth(attacks: Attack[], months = 6, now: number = Date.now()): MonthDays[] {
+  const byMonth = migraineDaysByMonthMap(attacks, now);
 
   const out: MonthDays[] = [];
   const cur = new Date(now);
@@ -476,4 +481,142 @@ export function medicationResponse(attacks: Attack[]): MedResponse[] {
       return { name, measured: e.changes.length, unmeasured: e.unmeasured, medianChange, helped: e.helped };
     })
     .sort((a, b) => (b.measured + b.unmeasured) - (a.measured + a.unmeasured) || a.name.localeCompare(b.name));
+}
+
+/**
+ * The reduction in monthly migraine days that counts as a preventive working.
+ * It is the primary endpoint of essentially every preventive trial, and the
+ * number a review appointment turns on.
+ */
+export const PREVENTIVE_RESPONSE_PCT = 50;
+
+/** Complete calendar months read either side of the start date, at most. */
+export const PREVENTIVE_WINDOW_MONTHS = 3;
+
+export interface PreventiveEffect {
+  name: string;
+  /** Local YYYY-MM-DD, as entered. */
+  startedOn: string;
+  /**
+   * `ready` - both windows are covered and the figures below mean something.
+   * `too-soon` - no complete calendar month has passed since it started.
+   * `no-baseline` - the diary does not reach back far enough to say what the
+   *   months before looked like. Reporting 0 days there would read as a
+   *   perfect result when it only means nothing was being logged yet.
+   */
+  status: 'ready' | 'too-soon' | 'no-baseline';
+  beforeMonths: number;
+  afterMonths: number;
+  /** Migraine days per month, averaged over the months in each window. */
+  beforeAvg: number;
+  afterAvg: number;
+  /** Negative is a reduction. Null unless status is `ready`. */
+  changePct: number | null;
+}
+
+function monthKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Migraine days a month before a preventive started against after — the
+ * >=50%-reduction question, and the reason `Medication.startedOn` is captured.
+ *
+ * Three rules keep the comparison honest, and each is the difference between a
+ * figure worth showing a clinician and one that flatters itself:
+ *
+ * - **The month the preventive started is excluded from both sides.** It is
+ *   part on, part off, and counting it either way biases whichever side takes
+ *   it. Same for the month in progress, whose count is still climbing.
+ * - **The diary has to reach back past the start of the before window**, or
+ *   the result is `no-baseline`. A month with no attacks logged because the
+ *   app was not yet in use is indistinguishable from a month with no attacks,
+ *   and the first would report as a 100% reduction.
+ * - **It states the number of months on each side**, because two months
+ *   against one is a much weaker claim than three against three and the
+ *   percentage alone cannot say so.
+ *
+ * It concludes nothing: the caller states the figures and the guideline, the
+ * same rule the medication-overuse copy follows.
+ */
+export function preventiveEffect(
+  attacks: Attack[],
+  medications: Medication[],
+  now: number = Date.now(),
+): PreventiveEffect[] {
+  const byMonth = migraineDaysByMonthMap(attacks, now);
+
+  // The earliest day the diary can speak for. Attacks are the only record
+  // there is, so history begins at the first one.
+  let earliest = Infinity;
+  for (const a of attacks) {
+    if (a.snapshots.length === 0) continue;
+    const t = new Date(a.snapshots[0].time).getTime();
+    if (t < earliest) earliest = t;
+  }
+
+  const today = new Date(now);
+  const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const daysIn = (m: Date) => byMonth.get(monthKey(m))?.size ?? 0;
+  const mean = (ms: Date[]) =>
+    ms.length === 0 ? 0 : ms.reduce((sum, m) => sum + daysIn(m), 0) / ms.length;
+
+  return medications
+    .filter((m) => m.kind === 'preventive' && m.startedOn && !isRetired(m.name))
+    .map((m): PreventiveEffect => {
+      const [y, mo] = m.startedOn!.split('-').map(Number);
+
+      // After: whole months from the one following the start, up to the last
+      // complete month. Before: whole months up to the one preceding it.
+      const after: Date[] = [];
+      for (let i = 1; i <= PREVENTIVE_WINDOW_MONTHS; i++) {
+        const d = new Date(y, mo - 1 + i, 1);
+        if (d >= currentMonth) break;
+        after.push(d);
+      }
+      const before: Date[] = [];
+      for (let i = 1; i <= PREVENTIVE_WINDOW_MONTHS; i++) {
+        before.push(new Date(y, mo - 1 - i, 1));
+      }
+
+      const beforeAvg = mean(before);
+      const afterAvg = mean(after);
+      const base = {
+        name: m.name,
+        startedOn: m.startedOn!,
+        beforeMonths: before.length,
+        afterMonths: after.length,
+        beforeAvg,
+        afterAvg,
+      };
+
+      if (after.length === 0) return { ...base, status: 'too-soon', changePct: null };
+
+      // The oldest month we are about to average has to be one the diary was
+      // actually running for.
+      const oldest = before[before.length - 1];
+      if (!(earliest <= oldest.getTime())) {
+        // Fall back to whatever complete months the diary does cover.
+        const covered = before.filter((d) => earliest <= d.getTime());
+        if (covered.length === 0) {
+          return { ...base, beforeMonths: 0, beforeAvg: 0, status: 'no-baseline', changePct: null };
+        }
+        const avg = mean(covered);
+        return {
+          ...base,
+          beforeMonths: covered.length,
+          beforeAvg: avg,
+          status: 'ready',
+          changePct: avg === 0 ? null : ((afterAvg - avg) / avg) * 100,
+        };
+      }
+
+      return {
+        ...base,
+        status: 'ready',
+        changePct: beforeAvg === 0 ? null : ((afterAvg - beforeAvg) / beforeAvg) * 100,
+      };
+    })
+    .sort((a, b) => b.startedOn.localeCompare(a.startedOn) || a.name.localeCompare(b.name));
 }
