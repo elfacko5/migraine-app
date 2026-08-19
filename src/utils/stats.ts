@@ -431,7 +431,9 @@ export interface MedResponse {
 // 1-4h keeps a reading that arrived late (the reminder is answered when it's
 // answered) while refusing one so far out that it says nothing about the dose.
 const FOLLOW_UP_MIN_MS = 60 * 60 * 1000;
-const FOLLOW_UP_MAX_MS = 4 * 60 * 60 * 1000;
+/** Exported so the reminder scheduler can aim inside the same window it will
+ *  later be measured against — two copies of "4 hours" would drift. */
+export const FOLLOW_UP_MAX_MS = 4 * 60 * 60 * 1000;
 const TARGET_MS = 2 * 60 * 60 * 1000;
 
 export function medicationResponse(attacks: Attack[]): MedResponse[] {

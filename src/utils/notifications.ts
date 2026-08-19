@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import type { Attack } from '../types';
-import { attackMaxSeverity } from './stats';
+import { attackMaxSeverity, FOLLOW_UP_MAX_MS } from './stats';
 import { formatTime } from './format';
 import { queuePendingAction } from './pendingActions';
 
@@ -267,11 +267,44 @@ export const MED_CHECK_IN_MS = 2 * 60 * 60 * 1000;
  * response window runs to four hours, so a late reading still counts, and a
  * notification that arrives the instant you finish logging is noise.
  */
+/**
+ * A dose logged late still gets a check-in, as long as a reading can land
+ * inside the window that will measure it. Ten minutes: long enough not to
+ * arrive while someone is still putting the phone down, short enough to leave
+ * room inside the window.
+ */
+const LATE_DOSE_LEAD_MS = 10 * 60 * 1000;
+
 export function medCheckInDelay(attack: Attack, baseDelay: number, now: number = Date.now()): number {
   const lastDose = [...attack.snapshots].reverse().find((s) => s.medication?.name);
   if (!lastDose) return baseDelay;
-  const due = new Date(lastDose.time).getTime() + MED_CHECK_IN_MS - now;
-  return due > 0 && due < baseDelay ? due : baseDelay;
+
+  const doseAt = new Date(lastDose.time).getTime();
+  const checkInAt = doseAt + MED_CHECK_IN_MS;
+
+  let target: number | null;
+  if (checkInAt > now) {
+    target = checkInAt;
+  } else {
+    // **The two-hour mark has already passed** — which happens whenever a dose
+    // is logged after the fact, and found on device: a dose entered 2h07m late
+    // fell seven minutes the wrong side of the line and got no check-in at
+    // all. The next reminder was then a full 2h away, i.e. dose + 4h07m, past
+    // the window `medicationResponse` measures in — so that dose could never
+    // be scored for whether it worked, which is the one thing the check-in
+    // exists to capture.
+    //
+    // Aim just ahead instead, and only while a reading would still land
+    // inside that window. Past it there is nothing to salvage and the normal
+    // cadence is the honest answer.
+    const windowEndsAt = doseAt + FOLLOW_UP_MAX_MS;
+    const catchUpAt = now + LATE_DOSE_LEAD_MS;
+    target = catchUpAt < windowEndsAt ? catchUpAt : null;
+  }
+  if (target === null) return baseDelay;
+
+  const delay = target - now;
+  return delay < baseDelay ? delay : baseDelay;
 }
 
 export function nextDelay(attack: Attack): number {

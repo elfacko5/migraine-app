@@ -581,10 +581,16 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
   notification, and both original blockers disappear — nothing to suppress and
   no second id namespace. It is also a smaller change than the one specced.
 
-  It only ever moves a reminder *earlier*. A dose backdated more than two
-  hours leaves the schedule alone: the response window runs to four hours so a
-  late reading still counts, and a notification arriving the moment you finish
-  logging is noise.
+  It only ever moves a reminder *earlier*, and a dose logged after its
+  two-hour mark has passed gets a **10-minute catch-up** rather than nothing —
+  but only while a reading would still land inside the 1–4h window
+  `medicationResponse` measures in. **The device test found this.** A dose
+  entered 2h07m late fell seven minutes the wrong side of the original rule,
+  so it got no check-in, and the next reminder was a full 2h away — dose +
+  4h07m, outside the window — meaning that dose could never be scored for
+  whether it worked, which is the one thing the check-in exists to capture.
+  Logging a dose a couple of hours after taking it is an ordinary thing to do,
+  not an edge case.
 
   **Worth separating the three two-hours in this app**, because they are
   unrelated and share a number: the trial endpoint above; Sumatriptan's
