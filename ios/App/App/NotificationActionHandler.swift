@@ -159,12 +159,23 @@ final class NotificationActionHandler: NSObject, UNUserNotificationCenterDelegat
         // never scheduled. The trigger below is what actually decides when it
         // fires; this only keeps the metadata honest, and a diagnostic that
         // lies is worse than none.
-        if var info = content.userInfo as? [String: Any],
-           var schedule = info["cap_schedule"] as? [String: Any] {
-            schedule["at"] = Date().addingTimeInterval(interval)
+        //
+        // Two keys, because `cap_schedule` is the plugin's own and its shape
+        // is not ours to rely on: casting the whole `userInfo` in one go can
+        // fail silently and leave the stale date in place with nothing to say
+        // so. `nextAt` inside `cap_extra` is ours, always written, and the
+        // readout prefers it — so if the plugin's key ever stops taking the
+        // update, the panel still reports the truth instead of a lie.
+        let fireDate = Date().addingTimeInterval(interval)
+        var info = content.userInfo
+        if var schedule = info["cap_schedule"] as? [String: Any] {
+            schedule["at"] = fireDate
             info["cap_schedule"] = schedule
-            content.userInfo = info
         }
+        var extra = info["cap_extra"] as? [String: Any] ?? [:]
+        extra["nextAt"] = Self.timestamp.string(from: fireDate)
+        info["cap_extra"] = extra
+        content.userInfo = info
 
         UNUserNotificationCenter.current().add(
             UNNotificationRequest(

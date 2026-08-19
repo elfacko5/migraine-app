@@ -109,10 +109,18 @@ export async function pendingReminders(): Promise<PendingReminder[] | null> {
   if (!isNative()) return null;
   try {
     const res = await LocalNotifications.getPending();
-    return res.notifications.map((n) => ({
-      id: n.id,
-      at: n.schedule?.at ? new Date(n.schedule.at).toISOString() : null,
-    }));
+    return res.notifications.map((n) => {
+      // **`nextAt` wins over `schedule.at`.** A reminder the Swift handler
+      // rescheduled carries the *delivered* notification's `cap_schedule`,
+      // because the content is copied wholesale — so `schedule.at` reports
+      // the moment the previous one fired and the readout looks like a
+      // follow-up that was never queued. The handler writes `nextAt` itself,
+      // which is the one value here that is always about the notification in
+      // front of you.
+      const extra = n.extra as { nextAt?: string } | undefined;
+      const at = extra?.nextAt ?? n.schedule?.at;
+      return { id: n.id, at: at ? new Date(at).toISOString() : null };
+    });
   } catch (err) {
     console.error('Failed to read pending notifications:', err);
     return null;
