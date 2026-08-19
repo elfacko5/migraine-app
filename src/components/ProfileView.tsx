@@ -169,7 +169,7 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
         </div>
 
         <p className="text-xs text-text-secondary">
-          Changes apply instantly across the app, and every screen reflows rather than clipping — XL is twice the default size.
+          Changes apply instantly across the app, and every screen reflows rather than clipping — XL is 50% larger than the default.
         </p>
       </div>
 

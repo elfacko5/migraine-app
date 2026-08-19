@@ -342,7 +342,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
           <div className="min-w-0">
             <h2 className="text-xl font-medium text-text-primary">
-              {step === 0 ? 'Here’s what I heard' : STEP_LABELS[step - 1]}
+              {step === 0 ? "Here's what I heard" : STEP_LABELS[step - 1]}
             </h2>
             <p className="mt-1 text-sm text-text-secondary">
               {step === 0 ? 'Check it over before saving.' : STEP_SUBHEADS[step - 1]}
@@ -409,10 +409,10 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                 {voiceDraft.startMinutesAgo === null && (form.wokeWithMigraine || voiceDraft.startedText) ? (
                   <>
                     <p className="text-base text-text-primary">
-                      {form.wokeWithMigraine ? 'Woke up with it' : `“${voiceDraft.startedText}”`}
+                      {form.wokeWithMigraine ? 'Woke up with it' : `"${voiceDraft.startedText}"`}
                     </p>
                     <p className="text-sm text-text-secondary">
-                      Couldn’t pin that to a time — saving now records it as just now. Tap “Make changes” to set it.
+                      Couldn't pin that to a time — saving now records it as just now. Tap "Make changes" to set it.
                     </p>
                   </>
                 ) : (
@@ -464,8 +464,8 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
 
               {areaNames.length === 0 && (
                 <p className="text-sm text-text-secondary">
-                  Nothing specific was recognised. What you said is kept as a note — tap
-                  “Make changes” to fill in the rest.
+                  Nothing specific was recognised — what you said is kept as a note.
+                  Tap "Make changes" to fill in the rest.
                 </p>
               )}
 
@@ -475,7 +475,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                     verbatim of the user. When a field looks wrong, this is
                     almost always where it went wrong. */}
                 <p className="text-xs uppercase tracking-wider text-text-secondary">What Siri heard</p>
-                <p className="text-sm italic text-text-secondary">“{voiceDraft.note}”</p>
+                <p className="text-sm italic text-text-secondary">"{voiceDraft.note}"</p>
               </div>
             </div>
           );

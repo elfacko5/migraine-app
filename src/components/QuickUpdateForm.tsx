@@ -293,7 +293,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
                     {voiceDraft.matched.map((m) => <li key={m}>{m}</li>)}
                   </ul>
                 ) : (
-                  <p>Nothing specific was recognized — what you said was saved as a note.</p>
+                  <p>Nothing specific was recognised — what you said is kept as a note.</p>
                 )}
                 <p>Review each step before saving.</p>
               </div>
