@@ -319,6 +319,56 @@ layout work already records.
   layout was correct — pointer events, the app-height variables, no overlay —
   while input still didn't arrive.
 
+## Accessibility audit (2026-08-19)
+
+Measured in the live DOM rather than read off the source — the same rule the
+iOS layout work follows, and it is what turned up the ones that looked fine in
+the code.
+
+- **A closed overlay must leave the focus order, not just stop taking taps.**
+  `aria-hidden` + `pointer-events-none` left every button inside tabbable, so
+  a keyboard user tabbing through Today walked into a closed dialog — and
+  `aria-hidden` with focusable descendants is itself the failure. `inert`
+  fixes both; the delayed `visibility` flip is the fallback for iOS 15, since
+  `inert` only landed in Safari 15.5, and the delay is the transition's own
+  length so closing still animates.
+- **A placeholder is not an accessible name.** It disappears the moment
+  someone types. Eleven controls announced as "edit text, blank"; seven of
+  them were self-inflicted, when the `MedicationEditor` rewrite replaced
+  `<label>`s with styled `<span>`s. The lesson worth keeping: a label that
+  *looks* right is not a label — `Field` now generates the id and injects it,
+  so the association can't be dropped by restyling.
+- **A wrapper element will happily swallow an injected id.** `NumberField`
+  needs its `<div>` for the suffix, so the id landed there and the input
+  stayed nameless. Anything taking an id from a parent has to forward it to
+  the control.
+- **`.tap-44` expands a target invisibly**, for the small icon buttons and
+  inline text links that fell under WCAG 2.2's 24px floor or Apple's 44pt ask.
+  **Deliberately not applied to the filter pills**: on a wrapped row with an
+  8px gap it would make adjacent rows' targets overlap, which trades one
+  mis-tap for another. Those need a real size or gap change — see the open
+  item.
+- **Heading levels are structure, not size.** Insights jumped h1 → h3;
+  `InsightSection` is an h2 now and looks identical, because the size was
+  always the class.
+- **Check contrast against the tightest surface.** 14px secondary text
+  measured 4.38:1 on `bg-elevated`, under the AA 4.5 the palette is tuned to —
+  the same trap the severity colours fell into against `bg-raised`.
+  `#3b3733` → `#383430` reads 4.58 and stays lighter than `bg-raised`.
+- **Fixed ids inside a repeated component are a latent bug.** `SideGlyph` set
+  two literal clipPath ids, so a ten-row list emitted ten copies of each; it
+  only rendered correctly because every copy defined the same geometry.
+  `useId` per instance.
+- **A live card must not state a past figure in the present tense.** The Today
+  card read "Pain severity: 9" off `attackMaxSeverity` — the worst it had
+  *been* — so an attack that had eased to 3 still announced a 9. It reads
+  "Severity now 4 · peak 9" now, and collapses to one number when they agree.
+  Deliberately not the Logs row's time-weighted average: that summarises a
+  finished episode, and mid-attack it is a partial figure that keeps moving.
+- **A rewrite can quietly revert an agreed decision.** "Max in one go" had come
+  back as "Maximum in one go" when the editor was restructured. Worth a
+  re-read of recent decisions after any wholesale rewrite of a file.
+
 ## Head diagram (2026-08-18)
 
 - **Both views share one viewBox, aligned on the crown.** Three attempts. Cropped
@@ -501,6 +551,22 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
   cheap — the shapes are in `drawnIcons.tsx` with nothing else depending on
   them.
 - **`SideGlyph` is interim artwork**, pending Sunny's illustration.
+- **Filter pills are 32×32.** That clears WCAG 2.2's 24px minimum but sits
+  under Apple's 44pt guidance. The invisible-hit-area fix doesn't work here —
+  on a wrapped row with an 8px gap, expanding to 44 makes adjacent rows
+  overlap — so it needs either taller pills or a bigger gap, both of which
+  change the sheet's density visibly. A judgement call, and the earlier note
+  already said to make it on device.
+- **`ChipSelector`'s unselected chips are `text-primary`** while `CHIP_OFF`
+  everywhere else is `text-secondary`. Arguably right — these are options you
+  read to choose, not filters you glance past — but it is the one place the
+  shared chip rule is not followed, and unifying it would change the weight of
+  three wizard steps.
+- **No tone-of-voice research exists yet.** The copy was audited for internal
+  consistency against the rules already recorded (never dosing advice, never
+  conclude, "not answered" is not "no impact", never present a default as
+  though it were stated) and it holds. A real pass needs the dossier section
+  that was intended but not written.
 
 ## Known gaps
 
