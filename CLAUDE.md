@@ -16,6 +16,8 @@ This file holds the **rules** — what a change has to respect. The **reasoning*
 
 Nearly every rule in both places was paid for with a round of device testing. A rule with no visible justification has one — it's in `docs/`.
 
+**There is also a skill: `.claude/skills/lidd-ui/SKILL.md`.** Invoke it *before* building any user-facing UI — a screen, card, button, chip, sheet, icon, wizard step or user-facing string. It is the short version of the sections below, ordered as a checklist, and it exists because the same class of mistake kept recurring: a new piece of UI built from first principles instead of from the pattern already shipping, which then costs one round to spot and another to fix. Most "new" UI here is an existing pattern applied again.
+
 ## Commands
 
 `npm` is not on the default PATH — source nvm first:
@@ -115,6 +117,8 @@ The wording spec is **§9 of the research dossier** — read it before writing a
 The Today hero card (`OngoingAttackBanner`, `AttackFreeCard`) and the HIT-6 prompt both use `btn-compact`, and it is the **only** definition of that size — the hero cards used to spell out `px-5 py-2.5` by hand, which is how a card added later ended up with footer-sized `flex-1` buttons a few pixels below them. **A new card's actions take `btn-compact`; a new panel's footer takes the default.** Getting this wrong is not a style slip — two cards adjacent on the same screen with different button sizes read as two different apps.
 
 **A disabled `btn-primary`/`btn-secondary` is automatically the muted `bg-raised` treatment**, so `disabled:opacity-40` is never the reach.
+
+**`btn-secondary`'s outline is a ring (inset `box-shadow`), never a `border`** — fixed 2026-08-19. A border takes layout space, so a secondary button measured **46px against the primary's 44px** wherever the two sat side by side, which is most of the app: the Today hero card, every wizard footer, both dialogs. This is the same rule `chipStyles.ts` already followed, and the `LogForm` preset comment used to cite `btn-secondary` as the counter-example — it isn't one any more. All four buttons on Today now measure 44px.
 
 ## Dark-first design, photophobia-aware
 

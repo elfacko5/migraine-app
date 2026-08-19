@@ -100,7 +100,9 @@ const END_OPTIONS: { value: EndMode; label: string }[] = [
 // styles for one idea: End-attack's time presets were solid while its impact
 // pills were tinted.
 // **Both states are ring-based, and must stay that way.** `ring` is a
-// box-shadow and takes no layout space; `btn-secondary`'s 1px `border` does.
+// box-shadow and takes no layout space; a `border` does. (`btn-secondary`
+// used to be the counter-example here and was the same bug — it is a ring
+// too as of 2026-08-19.)
 // Mixing them made an unselected preset 2px taller than a selected one, which
 // is invisible in a flex row (siblings stretch to the tallest) and obvious on
 // a preset that sits alone on its own line — "Woke up with this migraine"

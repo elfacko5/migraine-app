@@ -137,9 +137,15 @@
   .btn-primary { background-color: var(--color-accent); color: var(--color-bg-base); }
   .btn-primary:hover:not(:disabled) { background-color: var(--color-accent-light); }
 
+  /* **The outline is a ring (inset box-shadow), never a `border`.** A border
+     takes layout space, so a secondary button rendered 2px taller than the
+     primary one beside it — visible wherever the two sit side by side, which
+     is most of the app: the Today hero card, every wizard footer, both
+     dialogs. Measured 46px against 44px before this. It is the same rule the
+     chips already follow (`chipStyles.ts`) and for the same reason. */
   .btn-secondary {
     background-color: var(--color-button-secondary-bg);
-    border: 1px solid var(--color-button-secondary-border);
+    box-shadow: inset 0 0 0 1px var(--color-button-secondary-border);
     color: var(--color-text-primary);
   }
   .btn-secondary:hover:not(:disabled) { background-color: var(--color-bg-raised); }
@@ -166,7 +172,7 @@
      it comes for free, so `disabled:opacity-40` is never the reach. */
   .btn-primary:disabled, .btn-secondary:disabled {
     background-color: var(--color-bg-raised);
-    border-color: transparent;
+    box-shadow: none;
     color: var(--color-text-secondary);
     cursor: not-allowed;
   }

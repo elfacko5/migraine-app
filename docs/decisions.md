@@ -658,17 +658,107 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
 - **Phase tracking** — premonitory, aura, postdrome. The app models only the pain phase. The dossier argues premonitory/postdrome capture is where a prospective diary beats recall, which makes this the largest single scope item on the list: it changes the data model, not just the flow.
 - **Periodic MIDAS / HIT-6 check-ins.** `Attack.impact` is a pragmatic per-attack proxy; the dossier wants both diary counts *and* the validated questionnaires, because the 2026 REFORM study found they disagree on treatment response.
 
+## Working practice — the button-shape incident (2026-08-19)
+
+Two rounds of "these buttons don't match what we use everywhere else", on the
+same screens, is what prompted this section. The cause was not carelessness in
+either round, and that is why it is written down.
+
+**Round one.** `.btn-primary` and friends applied *colour only* — the CSS
+carried a comment reading "call sites add size, radius, font". So
+`className="btn-primary"` was silently half a button: no radius, no padding,
+no weight, and nothing failed. Every correct button in the app was correct
+because somebody remembered to append four utilities. The fix was structural:
+the classes now carry their own shape and disabled treatment, so the plain
+case is right and overrides still win (component layer vs Tailwind's
+utilities layer).
+
+**Round two, same screens.** Giving them a shape fixed "no shape" but handed
+everything the **full-width footer** size — and the HIT-6 prompt is a *card*,
+sitting directly beneath the Today hero card, whose actions hug their text at
+`px-5 py-2.5`. Two cards a few pixels apart, two button systems. Fixed by
+naming the two sizes (`.btn-compact` for in-card actions, the default for
+footers) and making `btn-compact` the **only** definition of that size — the
+hero cards had been spelling the values out by hand, which is exactly what let
+a later card drift from them.
+
+**Then the 2px.** `btn-secondary` used a `border` where everything else in the
+app uses a ring, so it rendered 46px against the primary's 44px wherever the
+two sat together. Same rule, same reason, already documented for chips.
+
+Three lessons, all now enforced somewhere rather than remembered:
+
+- **When the same mistake happens twice, fix the mechanism, not the memory.**
+  A note in CLAUDE.md is what had already failed. A default that is wrong
+  unless you recall four extra utilities will keep producing this.
+- **Verifying the change is not verifying the screen.** Round two was
+  "verified" by measuring that the CSS resolved to the right computed padding.
+  It did. The question was whether the card looked right *next to the card
+  above it*, and the screenshot taken didn't include that card. **Compare at
+  375px with neighbours in frame, and measure with `getBoundingClientRect`
+  when two things are meant to match.**
+- **Check the existing pattern before building, not after review.** This is
+  now `.claude/skills/lidd-ui/SKILL.md`, to be invoked before any UI work: it
+  lists the primitives, the two button sizes, the sheet pair, the surfaces,
+  the copy register and the verification rule.
+
+## A live account on the scratch origin, again (2026-08-19)
+
+The `localhost:5174` origin was signed out at the start of the session and
+**signed in to the real account by the end of it**, without any sign-in step in
+this session. Seeded test data therefore reached the real diary a second time
+(one fabricated ongoing attack; Sunny's call was that it doesn't matter and it
+can stay). No data was lost — pushes upsert, and nothing calls
+`deleteAttackRemote` except an explicit delete.
+
+What this changes: **"I checked it was signed out earlier" is not a valid
+basis for a later write.** The check has to happen in the same call as the
+write, every time, and the session state can change between two calls minutes
+apart. The existing rule already said to confirm `location.origin` in the same
+call; it now has to cover the `sb-` session key too, which is what caught it
+here — the guard fired and refused to clear.
+
+Better still, and the reason this is a working-practice note rather than a
+one-line fix: **a read-only check needs no seeding at all.** The final button
+verification used the account's own ongoing attack to render the hero card,
+wrote nothing, and was a better test than seeded data would have been.
+
 ## The backlog, in priority order (2026-08-19)
 
 The canonical list. It was previously spread over three sections and had to
 be reassembled each time anyone asked, so it lives here now and the sections
 below hold the *reasoning* rather than the ordering.
 
+**Session paused 2026-08-19.** Everything below is committed and pushed;
+nothing is half-built in the working tree. The list is the state to resume
+from.
+
+**Open right now — needs Sunny, not code**
+
+- **Nothing shipped this session has been seen on device.** That is
+  `PreventiveInsights`, HIT-6 (prompt + questionnaire + Profile row), "Edit
+  details", the redrawn medication icons, the plainer wizard instructions, and
+  the button-system change (which touches *every* button in the app and is the
+  one most worth a look on real hardware).
+- **`PreventiveInsights` has never rendered against real data** — it needs a
+  preventive with a `startedOn` and enough diary history either side.
+- **The HIT-6 `alter table` statements have been run** (Sunny, 2026-08-19), so
+  sync should work; unverified because signing in isn't something to do on
+  Sunny's behalf.
+- **Editing Options 2 and 3 are undecided** — correcting a reading (with an
+  `editedAt` trace) and deleting one. Option 1 shipped. See
+  `docs/editing-assessment.md`.
+- **`MED_STROKE` may be one notch too heavy.** A medication mark now carries
+  visibly more weight than the symptom mark beside it on the same Logs card.
+  Deliberate, but worth a look on device; the lever is one constant.
+- **A fabricated ongoing attack is in the live diary** (2026-08-19, Forehead 9,
+  Sumatriptan). Sunny's call: leave it.
+
 **P0 — none.** Both cleared on 2026-08-19: the repo is pushed (69 commits had
 existed only on one machine), and the dose-retimed reminder is verified on
 device end to end.
 
-**P1 — clinical completeness, in the order I'd take them**
+**P1 — clinical completeness. Both items done 2026-08-19; nothing open here.**
 
 1. ~~**`startedOn` is captured but nothing reads it.**~~ **Done 2026-08-19** —
    `preventiveEffect` in `stats.ts` and `PreventiveInsights` on the Insights
@@ -732,8 +822,11 @@ device end to end.
    during an attack.
 5. **Reduce the logging wizard in attack mode.** Falls out of closing item 4.
    The wizard is the one flow used mid-attack and attack mode currently only
-   restyles it. Not yet scoped — do it after item 3, since rewriting the step
-   instructions is likely to answer part of it.
+   restyles it. **Still unscoped, and deliberately not started** — reducing it
+   means deciding which steps or fields disappear mid-attack, which changes
+   what gets recorded. That is a product call with a data cost, so it needs
+   Sunny rather than a default. Item 3 (the plainer instructions) has since
+   shipped and answers part of it.
 6. **Editing an existing record.** **Option 1 done 2026-08-19** — "Edit
    details" on `AttackDetail`, metadata only (`wokeWithMigraine`, `end`,
    `triggers`) via `updateAttackDetails`, whose patch type cannot express a
