@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TextScale } from '../hooks/useSettings';
 import type { useAuth } from '../hooks/useAuth';
 import type { SyncStatus } from '../types';
-import { formatSince, formatDatetime } from '../utils/format';
+import { formatSince, formatDatetime, formatTime } from '../utils/format';
 import { useNowTick } from '../hooks/useNowTick';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -255,10 +255,24 @@ export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: Accoun
 function ReminderDiagnostics() {
   const [perm, setPerm] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingReminder[] | null | undefined>(undefined);
+  // **A read that changes nothing still has to look like it happened.** The
+  // control was a text link with only a `hover:` style, which on a touch
+  // screen is no feedback at all — and when the queue is unchanged the list
+  // doesn't move either, so a working refresh and a dead button were
+  // indistinguishable. The timestamp always changes; the button now has a
+  // pressed state.
+  const [checkedAt, setCheckedAt] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
-    setPerm(await notificationPermission());
-    setPending(await pendingReminders());
+    setBusy(true);
+    try {
+      setPerm(await notificationPermission());
+      setPending(await pendingReminders());
+      setCheckedAt(new Date().toISOString());
+    } finally {
+      setBusy(false);
+    }
   }, []);
 
   // Reads the OS's own state on mount — a subscription to an external system,
@@ -266,16 +280,34 @@ function ReminderDiagnostics() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { refresh(); }, [refresh]);
 
+  // And again on every return to the app, because the interesting moment is
+  // exactly when someone comes back from answering a notification.
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [refresh]);
+
   return (
     <section className="space-y-2 border-t border-bg-border pt-5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Reminders</p>
-        <button type="button" onClick={refresh} className="tap-44 text-xs text-accent-light hover:underline">
-          Refresh
+        <button
+          type="button"
+          onClick={refresh}
+          disabled={busy}
+          className="btn-secondary rounded-lg px-3 py-1.5 text-xs font-medium transition-colors active:opacity-60 disabled:opacity-40"
+        >
+          {busy ? 'Checking…' : 'Refresh'}
         </button>
       </div>
       <p className="text-xs text-text-secondary">
         Permission: <span className="text-text-primary">{perm ?? '…'}</span>
+        {checkedAt && <> · checked {formatTime(checkedAt)}</>}
       </p>
       {pending === null ? (
         <p className="text-xs text-text-secondary">
