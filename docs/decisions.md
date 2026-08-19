@@ -304,7 +304,32 @@ Both were plausible, neither had a measurable effect; they're recorded so they a
 - **`pod install` needs a UTF-8 locale**, or it dies inside Ruby's Unicode normalisation.
 - **Add Swift files to the target with the `xcodeproj` gem** (ships with CocoaPods), not by hand-editing `project.pbxproj`.
 - **Rasterise SVG with `librsvg`** (`brew install librsvg`). `qlmanage` produces a small off-centre thumbnail on a white field.
-- **Xcode does not reliably re-copy `public/` on an incremental build**, so a web fix can appear not to work when it simply isn't on the phone. This cost three rounds of device testing in one session, twice producing "the fix didn't work" reports against code that predated the fix. **⇧⌘K (Clean Build Folder) before running a device test**, and settle it by reading the installed bundle rather than re-reasoning about the code:
+- **Xcode now rebuilds and copies the web bundle itself** (2026-08-18), as a
+  run-script phase on the `App` target ahead of Copy Bundle Resources. It ends
+  a failure that had recurred all session and across sessions: Xcode compiles
+  `ios/App/App/public/`, only `cap copy` refreshes it, and Run does not call
+  `cap copy` — so Run rebuilt the last copied bundle, succeeded, and put stale
+  UI on the phone with no error anywhere to suggest otherwise.
+
+  **The point is that it is structural rather than remembered.** `npm run ios`
+  already existed and already worked; it kept not being run, because Run in
+  Xcode bypasses it and nothing about a stale build looks wrong. A rule that
+  has to be followed on exactly the run where you're distracted by the bug
+  you're chasing is not a fix.
+
+  Verified the only way worth verifying — by reading the product, not by
+  trusting the build: edited a source string, ran `xcodebuild` alone with no
+  `npm run build` and no `cap copy`, and found the new string inside
+  `App.app/public/assets/` under a fresh hash. Note the first attempt proved
+  nothing, because the marker was a trailing space inside JSX text and JSX
+  trims it — the bundle was byte-identical and the hash never moved. If a
+  build-freshness test shows no change, check the change survives the build
+  before concluding anything about the copy.
+
+- ~~**Xcode does not reliably re-copy `public/` on an incremental build**~~ —
+  superseded by the phase above; kept because the diagnostic is still the
+  right one whenever a device seems to be behind. A web fix could appear not
+  to work when it simply wasn't on the phone. This cost three rounds of device testing in one session, twice producing "the fix didn't work" reports against code that predated the fix. **⇧⌘K (Clean Build Folder) before running a device test**, and settle it by reading the installed bundle rather than re-reasoning about the code:
 
   ```bash
   grep -rl "some string from the new build" ~/Library/Developer/Xcode/DerivedData/App-*/Build/Products/Debug-iphoneos/App.app/public/assets/
