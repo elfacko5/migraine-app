@@ -727,6 +727,13 @@ device end to end.
    first** (agreed 2026-08-19): what editing actually means, what it costs
    against the never-rewrite-snapshots invariant, what it does to sync's
    last-write-wins, and where voice editing fits. No code until that is read.
+   **Done — [`docs/editing-assessment.md`](editing-assessment.md), 2026-08-19.**
+   It came back smaller than expected: sync is a non-issue (attacks push whole
+   on last-write-wins, so editing a snapshot is as granular as adding one) and
+   nothing caches a derived figure, so every stat self-heals. Recommendation is
+   metadata-only first, correcting a reading second, deleting one only if
+   double-logging proves real; voice editing is an entry point that cannot be
+   scoped until editing exists.
 7. **A warm light theme.** Specified, and **wanted — moved out of "parked" on
    2026-08-19.** The cost is the reason it sat still: ~44 tokens in
    `@theme`, plus every value hand-mirrored outside CSS (`headDiagram.ts`,
