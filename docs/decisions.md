@@ -674,9 +674,13 @@ device end to end.
    `preventiveEffect` in `stats.ts` and `PreventiveInsights` on the Insights
    page. The rules that keep it honest (excluded start month, excluded month
    in progress, `no-baseline` when the diary doesn't reach back) are in
-   CLAUDE.md's Medications section. **Not yet seen with real data**: no
-   preventive in the live account carries a `startedOn`, so this has been
-   type-checked and linted but not looked at on a screen.
+   CLAUDE.md's Medications section. **Verified on screen** at 375px on the
+   scratch origin with synthetic data (a preventive started 10 May against 26
+   attacks either side, seeded and cleared on a signed-out 5174 following the
+   working-practice rule below): 6.5 → 2.5 days a month, "62% fewer", with
+   both window lengths and the short-run caveat. Verification also surfaced
+   the partial-first-month behaviour now recorded in CLAUDE.md. Still unseen
+   against Sunny's own account, which is only reachable from their device.
 2. **Periodic HIT-6.** The 2026 REFORM finding is that diary counts and
    questionnaires disagree, so the dossier wants both. **Scope settled
    2026-08-19:** HIT-6 only, not MIDAS — 6 questions on a 4-week recall,
