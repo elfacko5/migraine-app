@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { chipClass } from '../utils/chipStyles';
 
 interface Props {
   options: string[];
@@ -40,15 +41,14 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
             type="button"
             aria-pressed={active}
             onClick={() => toggle(opt)}
-            // Selected is a tint plus a ring rather than a solid accent fill:
-            // a screen of solid sage pills is a lot of weight for what is an
-            // optional step, and this matches the medication chips, which
-            // already worked this way.
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${
-              active
-                ? 'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/50'
-                : 'bg-bg-raised text-text-primary ring-1 ring-inset ring-bg-border hover:bg-bg-border'
-            }`}
+            // Both states come from `chipStyles`, like every other chip in
+            // the app. This was the one place that didn't: its unselected
+            // state used `text-primary` and a background hover, against the
+            // shared `text-secondary` and colour hover. There is no principle
+            // separating these chips from the filter sheet's — both are sets
+            // of options you open a screen to read and pick from — so the
+            // difference was drift, not a decision.
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${chipClass(active)}`}
           >
             {renderIcon?.(opt)}
             {opt}

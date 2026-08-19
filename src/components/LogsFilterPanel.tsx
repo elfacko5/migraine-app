@@ -35,7 +35,9 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   return (
     <section className="space-y-1.5">
       <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{label}</h3>
-      <div className="flex flex-wrap gap-2">{children}</div>
+      {/* gap-4, not gap-2 — see the note on Pill: the expanded touch targets
+          need 16px between rows to stay clear of each other. */}
+      <div className="flex flex-wrap gap-x-2 gap-y-4">{children}</div>
     </section>
   );
 }
@@ -58,7 +60,13 @@ function Pill({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+      // `tap-44` expands the touch target to 44px without changing the drawn
+      // pill, which measured 32 — over WCAG 2.2's 24px floor but under
+      // Apple's 44pt. The row gap below is `gap-4` rather than `gap-2` for
+      // exactly this: the expansion adds 6px above and below each pill, so an
+      // 8px gap would make adjacent rows' targets overlap and trade one
+      // mis-tap for another.
+      className={`tap-44 rounded-full px-3 py-1 text-sm font-medium transition-colors ${
         chipClass(active)
       }`}
     >

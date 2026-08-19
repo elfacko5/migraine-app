@@ -319,6 +319,25 @@ layout work already records.
   layout was correct — pointer events, the app-height variables, no overlay —
   while input still didn't arrive.
 
+## Chips, settled (2026-08-19)
+
+- **Filter pills keep their drawn size and gain a 44px target.** 32×32 clears
+  WCAG 2.2's 24px floor but not Apple's 44pt. `.tap-44` expands the target
+  invisibly, and the row gap went `gap-2` → `gap-y-4` because the expansion
+  adds 6px above and below each pill: at an 8px gap the rows' targets would
+  overlap and trade one mis-tap for another. Measured after the change — 23
+  pills, still drawn at 32, zero overlapping targets.
+- **`ChipSelector` now uses the shared `chipClass`, like everything else.** It
+  had been the one component with its own unselected style (`text-primary`
+  and a background hover, against the shared `text-secondary` and colour
+  hover). The defence offered for keeping it — that these are options you read
+  to choose from, where a filter pill is something you glance past — **does
+  not survive scrutiny, and Sunny pushed back on it**: the filter sheet's
+  pills are also options you open a screen specifically to read and pick from.
+  It was drift being rationalised after the fact. Recorded because the
+  rationalisation was more plausible than the truth, which is exactly when
+  this sort of thing survives a review.
+
 ## Accessibility audit (2026-08-19)
 
 Measured in the live DOM rather than read off the source — the same rule the
@@ -539,29 +558,19 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
 
 ## Open, needs Sunny
 
-- **Three fabricated attacks are in the live account** (ids `1787022926677`,
-  `1786871726677`, `1786698926677` — one carries the invented symptom "Wobbly
-  legs"). They were seeded on the scratch origin while it held a Supabase
-  session, reached the account, and synced back. **They must be deleted from
-  Supabase, not just locally**, or the next sync restores them. Awaiting a
-  go-ahead, since deleting from a real medical record is irreversible; the
-  app's own Delete on each attack does the same job.
+- ~~**Three fabricated attacks are in the live account**~~ — **resolved
+  2026-08-19.** Sunny deleted all three through the app, which routes through
+  `deleteAttackRemote` and so clears Supabase as well as the local copy.
+  Verified the way the earlier check should have been: a sync round-trip was
+  triggered and allowed to settle before reading, and the account came back
+  42 attacks with none of the three ids and no "Wobbly legs" anywhere. The
+  practice rules this produced are in "the scratch origin is not a safe
+  sandbox" above.
 - **Two drawn marks are weak at chip size**: Stretching and Exercise resolve to
   a similar horizontal bar, and the tablet is a generic capsule. Redrawing is
   cheap — the shapes are in `drawnIcons.tsx` with nothing else depending on
   them.
 - **`SideGlyph` is interim artwork**, pending Sunny's illustration.
-- **Filter pills are 32×32.** That clears WCAG 2.2's 24px minimum but sits
-  under Apple's 44pt guidance. The invisible-hit-area fix doesn't work here —
-  on a wrapped row with an 8px gap, expanding to 44 makes adjacent rows
-  overlap — so it needs either taller pills or a bigger gap, both of which
-  change the sheet's density visibly. A judgement call, and the earlier note
-  already said to make it on device.
-- **`ChipSelector`'s unselected chips are `text-primary`** while `CHIP_OFF`
-  everywhere else is `text-secondary`. Arguably right — these are options you
-  read to choose, not filters you glance past — but it is the one place the
-  shared chip rule is not followed, and unifying it would change the weight of
-  three wizard steps.
 - **No tone-of-voice research exists yet.** The copy was audited for internal
   consistency against the rules already recorded (never dosing advice, never
   conclude, "not answered" is not "no impact", never present a default as
