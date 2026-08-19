@@ -654,7 +654,7 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
 
 ## Separate conversations, not scheduled
 
-- **SNOOP red flags.** The dossier asks for a "see a clinician" nudge on thunderclap onset, new headache after 50, neurological deficit, fever, marked pattern change — and says it must never reassure. It's a safety feature and the wording carries real weight, so it needs its own discussion rather than being folded into a UI pass.
+- **SNOOP red flags.** The dossier asks for a "see a clinician" nudge on thunderclap onset, new headache after 50, neurological deficit, fever, marked pattern change — and says it must never reassure. It's a safety feature and the wording carries real weight, so it needs its own discussion rather than being folded into a UI pass. **That discussion happened on 2026-08-19 and parked it to P4** — four of the five flags need fields Sunny says don't apply to them, so see the backlog entry.
 - **Phase tracking** — premonitory, aura, postdrome. The app models only the pain phase. The dossier argues premonitory/postdrome capture is where a prospective diary beats recall, which makes this the largest single scope item on the list: it changes the data model, not just the flow.
 - **Periodic MIDAS / HIT-6 check-ins.** `Attack.impact` is a pragmatic per-attack proxy; the dossier wants both diary counts *and* the validated questionnaires, because the 2026 REFORM study found they disagree on treatment response.
 
@@ -677,10 +677,7 @@ device end to end.
    CLAUDE.md's Medications section. **Not yet seen with real data**: no
    preventive in the live account carries a `startedOn`, so this has been
    type-checked and linted but not looked at on a screen.
-2. **SNOOP red flags.** The only *safety* item on the list, which is why it
-   outranks the metrics below it. Wording carries real weight and the dossier
-   is explicit it must never reassure.
-3. **Periodic HIT-6.** The 2026 REFORM finding is that diary counts and
+2. **Periodic HIT-6.** The 2026 REFORM finding is that diary counts and
    questionnaires disagree, so the dossier wants both. **Scope settled
    2026-08-19:** HIT-6 only, not MIDAS — 6 questions on a 4-week recall,
    short enough to answer monthly, and its published severity bands make
@@ -695,32 +692,32 @@ device end to end.
 
 **P2 — known gaps with decisions already attached**
 
-5. **§9.5 is only half implemented.** Attack mode reduces *what is on screen*;
+3. **§9.5 is only half implemented.** Attack mode reduces *what is on screen*;
    no copy actually simplifies. Needs a second register for the strings read
    mid-attack — start with the wizard's step instructions.
-6. **Attack mode simplifies Today only.** The other three tabs are restyled
+4. **Attack mode simplifies Today only.** The other three tabs are restyled
    but not reduced; Insights in particular has never been thought through for
    that state.
-7. **"Edit details" + per-section voice editing** — settle together; both are
+5. **"Edit details" + per-section voice editing** — settle together; both are
    "change one part of an existing record".
-8. **Preventive adherence and daily reminders** — parked together; `kind`
+6. **Preventive adherence and daily reminders** — parked together; `kind`
    already ships so neither needs a migration.
 
 **P3 — open by choice, needs Sunny's eye**
 
-9. `--color-text-primary` (`#cdc7bb` vs `#d7d1c6`) — only settleable on a
+7. `--color-text-primary` (`#cdc7bb` vs `#d7d1c6`) — only settleable on a
     real screen mid-attack.
-10. The head diagram's disabled areas, parked pending a possible redraw.
-11. The tablet icon is a generic capsule.
-12. A warm light theme — specified, parked; needs a second variant of ~44
+8. The head diagram's disabled areas, parked pending a possible redraw.
+9. The tablet icon is a generic capsule.
+10. A warm light theme — specified, parked; needs a second variant of ~44
     hand-mirrored colours.
 
 **P4 — before any public release**
 
-13. **Text scale caps at 150%; WCAG 1.4.4 asks 200%.** Justified today because
+11. **Text scale caps at 150%; WCAG 1.4.4 asks 200%.** Justified today because
     this is a single-user app. That justification disappears the moment it
     ships, and accessibility is the app's whole thesis.
-14. **Aura has no structure.** There is an "Aura" symptom chip, but ICHD-3 1.2
+12. **Aura has no structure.** There is an "Aura" symptom chip, but ICHD-3 1.2
     needs its own fields (visual / sensory / speech, gradual spread ≥5 min,
     duration 5–60 min, headache within 60 min). Roughly a third of patients,
     and a tick-box cannot support the diagnosis it is named after. **Deferred
@@ -728,7 +725,7 @@ device end to end.
     diary, and structured aura fields buy nothing for a single user who knows
     whether they get aura. It becomes a requirement the moment anyone else
     uses it. (Narrower claim than the older "aura is not captured anywhere".)
-15. **Headache days can't be reported.** The chronic-migraine line is headache
+13. **Headache days can't be reported.** The chronic-migraine line is headache
     on ≥15 days/month *of which ≥8 migrainous* — two counts, and the app can
     only produce one. Needs a "headache, not a migraine" log path.
     **Deferred to pre-release by decision on 2026-08-19**, alongside aura and
@@ -736,6 +733,22 @@ device end to end.
     support someone else's diagnosis, and the design question (a one-tap day
     marker on Today, versus a type field on the wizard) is worth answering
     then rather than now.
+14. **SNOOP red flags.** A "see a clinician" nudge on thunderclap onset, a
+    new headache after 50, neurological deficit, fever, or a marked change in
+    pattern — and the dossier is explicit it must never reassure, so there is
+    no reassuring state and no green tick, only present or absent.
+    **Deferred to pre-release by decision on 2026-08-19.** This was P1 and the
+    only *safety* item on the list, so the reasoning matters: four of the five
+    flags are not recordable today and each needs a new field — a
+    sudden-onset flag on the When step, a stored date of birth, and red-flag
+    symptoms told apart from ordinary ones — and Sunny's answer was that none
+    of the four applies to them. Building four fields nobody will fill in, to
+    drive a warning that can therefore never fire, is worse than not having
+    it: it would look like a safety net that is in fact switched off. The
+    fifth, **marked pattern change, is derivable from the diary alone** and is
+    the cheap half — if any part of this is picked up early, that is the part.
+    None of this survives a public release, where the app would be read by
+    people the flags do apply to.
 
 **Closed as considered-and-declined:** the ~920KB bundle. 264KB gzipped,
 fetched once and then cached, and splitting would put a loading state on a
