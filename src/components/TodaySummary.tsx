@@ -159,19 +159,33 @@ export function TodaySummary({ attacks, ongoing, medications = [], attackMode = 
 
       {!attackMode && (
       <div className="grid grid-cols-2 gap-3">
-        {/* Figure and unit on one line. Three lines to a tile made each one
-            taller than its content needed and put the unit far enough from
-            the number to read as a separate fact; "8 migraine days" is the
-            sentence anyone says out loud. `items-baseline` so the 24px figure
-            and the 12px unit sit on the same line rather than the unit
+        {/* **Both tiles are label = the subject, value = the unit and the
+            period.** The left one used to label the *period* ("This month")
+            and put the subject in the value ("9 migraine days"), so two tiles
+            side by side were built the opposite way round from each other and
+            neither could be read against the other. Now it's Migraine · 9 days
+            this month, Medication · 5 days this month.
+
+            "Migraine" rather than "Migraine days": the word "days" already
+            follows in the value, and the pair still reads as *migraine days* —
+            which is the term that has to survive, since the app counts migraine
+            days and has no way to log a plain headache day (see
+            MigraineDaysChart in CLAUDE.md).
+
+            Figure and unit stay on one line. Three lines to a tile made each
+            one taller than its content needed and put the unit far enough from
+            the number to read as a separate fact. `items-baseline` so the 24px
+            figure and the 12px unit sit on the same line rather than the unit
             floating mid-height, and the unit takes `whitespace-nowrap` so it
             wraps as a whole phrase if a larger text scale runs it out of
             room. */}
         <div className="rounded-xl bg-bg-surface px-4 py-3">
-          <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">This month</p>
+          <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">Migraine</p>
           <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-text-primary">
             <span className="text-2xl font-bold leading-none">{migraineDays}</span>
-            <span className="text-[0.75rem] whitespace-nowrap text-text-secondary">migraine days</span>
+            <span className="text-[0.75rem] whitespace-nowrap text-text-secondary">
+              {migraineDays === 1 ? 'day' : 'days'} this month
+            </span>
           </p>
         </div>
         <div className="rounded-xl bg-bg-surface px-4 py-3">
