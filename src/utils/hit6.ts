@@ -62,21 +62,27 @@ export function latestHit6(entries: Hit6Entry[]): Hit6Entry | null {
   return entries.reduce((a, b) => (b.takenAt > a.takenAt ? b : a));
 }
 
+const INTERVAL_MS = HIT6_INTERVAL_DAYS * 24 * 60 * 60 * 1000;
+
 /**
- * Whether it is worth asking again. Four weeks since the last one — or never
- * answered at all.
+ * Whether it is worth asking again: four weeks since the last one, or never
+ * answered at all — and not waved away inside that same window.
  *
- * This drives a quiet marker on the Profile row and nothing else: no card on
- * Today, no notification. A six-question form put in front of someone
- * mid-attack is either answered badly or dismissed to get rid of it, and both
- * are worse data than one answered on purpose. That is the opposite call from
- * ImpactPrompt, for the opposite reason — impact expires in 24 hours and has
- * to be caught; HIT-6 asks about the last four weeks and keeps.
+ * `dismissedAt` is what makes a Today card tolerable. Being due is a *durable*
+ * state (unlike impact, which expires by itself in 24 hours), so without it a
+ * cleared card would be back on the next launch and every launch after that,
+ * which is nagging rather than prompting. Clearing therefore means "not this
+ * cycle": it hides the card for another four weeks, or until an answer lands.
  */
-export function hit6Due(entries: Hit6Entry[], now: number = Date.now()): boolean {
+export function hit6Due(
+  entries: Hit6Entry[],
+  dismissedAt: string | null = null,
+  now: number = Date.now(),
+): boolean {
   const last = latestHit6(entries);
-  if (!last) return true;
-  return now - new Date(last.takenAt).getTime() >= HIT6_INTERVAL_DAYS * 24 * 60 * 60 * 1000;
+  if (last && now - new Date(last.takenAt).getTime() < INTERVAL_MS) return false;
+  if (dismissedAt && now - new Date(dismissedAt).getTime() < INTERVAL_MS) return false;
+  return true;
 }
 
 /** Change against the previous entry. Negative is a lower score, i.e. less

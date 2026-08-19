@@ -4,6 +4,12 @@ import { pullUserPrefs, pushHit6 } from '../lib/sync';
 import { hit6Score } from '../utils/hit6';
 
 const KEY = 'hd_hit6';
+// Deliberately its own key and **not synced**. Clearing the Today card is a
+// statement about this device's screen right now, not about the record — and
+// pushing it would mean waving the card away on a phone also cleared it on a
+// laptop that had never shown it. Keeping it out of the `hd_hit6` object also
+// stops a remote pull, which replaces that object wholesale, from dropping it.
+const DISMISS_KEY = 'hd_hit6_dismissed';
 
 interface Stored {
   items: Hit6Entry[];
@@ -40,6 +46,7 @@ function save(items: Hit6Entry[]): Stored {
  */
 export function useHit6(userId: string | null) {
   const [entries, setEntries] = useState<Hit6Entry[]>(() => load().items);
+  const [dismissedAt, setDismissedAt] = useState<string | null>(() => localStorage.getItem(DISMISS_KEY));
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const syncingRef = useRef(false);
@@ -117,5 +124,12 @@ export function useHit6(userId: string | null) {
     commit(entries.filter((e) => e.id !== id));
   }, [entries, commit]);
 
-  return { hit6Entries: entries, addHit6, removeHit6, syncStatus, lastSyncedAt };
+  /** Clear the Today card for this cycle. See hit6Due for why it persists. */
+  const dismissHit6 = useCallback(() => {
+    const at = new Date().toISOString();
+    localStorage.setItem(DISMISS_KEY, at);
+    setDismissedAt(at);
+  }, []);
+
+  return { hit6Entries: entries, hit6DismissedAt: dismissedAt, addHit6, removeHit6, dismissHit6, syncStatus, lastSyncedAt };
 }

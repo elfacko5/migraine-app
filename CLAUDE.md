@@ -353,15 +353,41 @@ the dossier asks for both. **MIDAS was considered and rejected**: it is the
 name a clinic asks for, but its three-month recall is the recall bias a
 prospective diary exists to avoid.
 
-- **It never interrupts.** No card on Today, no notification — the only signal
-  is a quiet **"Due"** on the Profile row, from `hit6Due` (28 days, matching
-  the questions' own window). This is deliberately the opposite call from
-  `ImpactPrompt`, for the opposite reason: impact expires in 24 hours and has
-  to be caught, HIT-6 asks about the last four weeks and keeps. A
-  six-question form put in front of someone mid-attack is either answered
-  badly or dismissed to be rid of it, and both are worse data than one
-  answered on purpose. The marker is **text, not a coloured dot** — a dot on a
-  settings row reads as an alert, and this is a suggestion.
+- **It prompts on Today when due** (`Hit6Prompt`), and shows a quiet **"Due"**
+  on the Profile row. The prompt **reverses the original "Profile row only"
+  call** (2026-08-19, on Sunny's instruction): the first version signalled
+  only on a settings page, and a marker somewhere nobody opens is a reminder
+  that never fires. Two things keep it from becoming nagging, and both are
+  load-bearing:
+  - **Clearing it lasts.** Being due is *durable*, unlike impact's 24-hour
+    window, so a session-only dismissal would put the card back on the next
+    launch and every launch after it. "Not now" writes `hd_hit6_dismissed`
+    and means *not this cycle* — four more weeks. That key is deliberately
+    **its own, and not synced**: clearing a card is about this device's screen
+    now, and it also can't live inside `hd_hit6`, which a remote pull replaces
+    wholesale.
+  - **The dismissal applies to the card only.** `hit6Due(entries)` drives the
+    Profile row, `hit6Due(entries, dismissedAt)` drives the card. "Not now"
+    silences an interruption; it does not make the questionnaire un-due, and a
+    settings page that hid that would be lying.
+- **Not shown in attack mode.** It changes nothing about the next hour, which
+  is the rule Today applies in that mode — `ImpactPrompt` is the documented
+  exception to it, and this is not a second one.
+- The Profile marker is **text, not a coloured dot** — a dot on a settings row
+  reads as an alert, and this is a suggestion.
+- **One question per screen**, with a progress rule and Back. Six at once is a
+  form to get through; one is a question to think about, and with a four-week
+  recall the thinking is the point. Answering advances automatically, except
+  on the last question — the final tap must not also be the tap that submits.
+- **It explains itself before asking anything** (the intro screen): why it is
+  worth answering, that **nobody else reads it**, and what happens to an
+  answer. A six-question form that opens on question one is asking for
+  compliance rather than an answer.
+- **Entries can't be edited, and the intro says so.** Each is a dated
+  measurement of a particular four weeks; revising one later would make the
+  history a record of present opinion rather than of how those months were.
+  **Deleting is offered instead** — the honest operation, since it removes a
+  wrong entry without pretending a later answer was given at the earlier time.
 - **The scored values are stored, not the option indices**, and `score` is
   stored rather than derived — a historical entry must not be retro-scored by
   a later change to the instrument.

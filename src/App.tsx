@@ -34,6 +34,7 @@ import { QuickUpdateForm } from './components/QuickUpdateForm';
 import { OngoingAttackBanner } from './components/OngoingAttackBanner';
 import { AttackFreeCard } from './components/AttackFreeCard';
 import { ImpactPrompt } from './components/ImpactPrompt';
+import { Hit6Prompt } from './components/Hit6Prompt';
 import { attackAwaitingImpact } from './utils/impact';
 import { hit6Due } from './utils/hit6';
 import { TodaySummary } from './components/TodaySummary';
@@ -102,7 +103,7 @@ export default function App() {
     syncStatus: medsSyncStatus, lastSyncedAt: medsLastSyncedAt,
   } = useMedications(userId);
   const {
-    hit6Entries, addHit6,
+    hit6Entries, hit6DismissedAt, addHit6, removeHit6, dismissHit6,
     syncStatus: hit6SyncStatus, lastSyncedAt: hit6LastSyncedAt,
   } = useHit6(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
@@ -132,7 +133,13 @@ export default function App() {
   // Whether the Profile row shows its "Due" marker. Recomputed per render
   // rather than on a tick: the window is four weeks, so it does not need to
   // turn over live, and the Profile tab is re-entered often enough.
+  // Two different questions, and they must not share an answer. The Profile
+  // row reports *status* and ignores the dismissal — "Not now" silences an
+  // interruption, it doesn't make the questionnaire un-due, and a settings
+  // page that hid that would be lying. The Today card is the interruption, so
+  // it is the one the dismissal applies to.
   const hit6IsDue = useMemo(() => hit6Due(hit6Entries), [hit6Entries]);
+  const hit6Prompting = useMemo(() => hit6Due(hit6Entries, hit6DismissedAt), [hit6Entries, hit6DismissedAt]);
 
   // Medications offered in the logging wizard and used to correct spoken drug
   // names in voiceParse: the user's own acute library first, in their order,
@@ -475,6 +482,19 @@ export default function App() {
               />
             )}
 
+            {/* Offered on Today when it's due, on Sunny's instruction — see
+                Hit6Prompt for why that reverses the original "Profile row
+                only" call, and for the two things that keep it from nagging.
+                Hidden in attack mode: it changes nothing about the next hour,
+                which is the rule ImpactPrompt above is the exception to. */}
+            {hit6Prompting && !attackMode && (
+              <Hit6Prompt
+                first={hit6Entries.length === 0}
+                onStart={() => { setTab('profile'); setProfileSheet('hit6'); }}
+                onDismiss={dismissHit6}
+              />
+            )}
+
             {/* Below the hero card: the month's two figures, and — only when
                 they apply — an overuse warning and the last dose taken. */}
             {(ongoingAttack || lastAttackEnd) && (
@@ -613,6 +633,7 @@ export default function App() {
           <Hit6View
             entries={hit6Entries}
             onSubmit={addHit6}
+            onDelete={removeHit6}
             onClose={() => setProfileSheet(null)}
           />
         )}
