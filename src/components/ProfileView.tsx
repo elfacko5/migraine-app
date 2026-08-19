@@ -1,12 +1,13 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TextScale } from '../hooks/useSettings';
 import type { useAuth } from '../hooks/useAuth';
 import type { SyncStatus } from '../types';
-import { formatSince } from '../utils/format';
+import { formatSince, formatDatetime } from '../utils/format';
 import { useNowTick } from '../hooks/useNowTick';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
+import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon } from './drawnIcons';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
@@ -244,6 +245,60 @@ export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: Accoun
   );
 }
 
+// **What the OS is actually holding.** Reminder failures here have been
+// invisible three times running — a missing bundled sound, a stale web
+// bundle, and a schedule nobody could confirm was ever made all present the
+// same way: nothing arrives. The app could say what it intended and never
+// what iOS had queued, so every diagnosis began by guessing. This reads it
+// back. Native only; on the web the timers live in the service worker, which
+// offers no equivalent.
+function ReminderDiagnostics() {
+  const [perm, setPerm] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingReminder[] | null | undefined>(undefined);
+
+  const refresh = useCallback(async () => {
+    setPerm(await notificationPermission());
+    setPending(await pendingReminders());
+  }, []);
+
+  // Reads the OS's own state on mount — a subscription to an external system,
+  // not state derived from props.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return (
+    <section className="space-y-2 border-t border-bg-border pt-5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Reminders</p>
+        <button type="button" onClick={refresh} className="tap-44 text-xs text-accent-light hover:underline">
+          Refresh
+        </button>
+      </div>
+      <p className="text-xs text-text-secondary">
+        Permission: <span className="text-text-primary">{perm ?? '…'}</span>
+      </p>
+      {pending === null ? (
+        <p className="text-xs text-text-secondary">
+          Scheduled reminders can only be read on the installed app, not in a browser.
+        </p>
+      ) : pending === undefined ? (
+        <p className="text-xs text-text-secondary">Checking…</p>
+      ) : pending.length === 0 ? (
+        <p className="text-xs text-text-secondary">Nothing scheduled.</p>
+      ) : (
+        <ul className="space-y-1">
+          {pending.map((n) => (
+            <li key={n.id} className="text-xs text-text-primary">
+              {n.at ? formatDatetime(n.at) : 'no time reported'}{' '}
+              <span className="text-text-secondary">· id {n.id}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>; onClose: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importErr, setImportErr] = useState<string | null>(null);
@@ -295,6 +350,8 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
           </p>
           {importErr && <p className="text-xs text-severity-high">{importErr}</p>}
         </div>
+
+        <ReminderDiagnostics />
 
       <ConfirmDialog
         open={!!pending}

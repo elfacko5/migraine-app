@@ -85,6 +85,50 @@ export async function registerNotificationActions(): Promise<void> {
   }
 }
 
+/** A reminder the OS is actually holding, for the diagnostics readout. */
+export interface PendingReminder {
+  id: number;
+  /** When it will fire, if the OS reports a schedule. */
+  at: string | null;
+}
+
+/**
+ * What is genuinely queued, read back from the OS rather than inferred.
+ *
+ * **This exists because notification bugs here have been invisible three
+ * times.** Every failure so far looked identical from the outside — nothing
+ * arrives — whether the cause was a missing bundled sound, a stale web
+ * bundle, permission never granted, or a schedule that was never made. The
+ * app could always say what it *meant* to do and never what the OS was
+ * actually holding, so every diagnosis started by guessing.
+ *
+ * Native only: on the web the pending timers live inside the service worker,
+ * which has no equivalent read-back.
+ */
+export async function pendingReminders(): Promise<PendingReminder[] | null> {
+  if (!isNative()) return null;
+  try {
+    const res = await LocalNotifications.getPending();
+    return res.notifications.map((n) => ({
+      id: n.id,
+      at: n.schedule?.at ? new Date(n.schedule.at).toISOString() : null,
+    }));
+  } catch (err) {
+    console.error('Failed to read pending notifications:', err);
+    return null;
+  }
+}
+
+/** Whether the OS will actually deliver anything — the other silent failure. */
+export async function notificationPermission(): Promise<string> {
+  if (!isNative()) return typeof Notification === 'undefined' ? 'unsupported' : Notification.permission;
+  try {
+    return (await LocalNotifications.checkPermissions()).display;
+  } catch {
+    return 'unknown';
+  }
+}
+
 export function scheduleNotification(attack: Attack, delayMs: number) {
   const body = notificationBody(attack);
 

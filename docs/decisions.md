@@ -270,6 +270,19 @@ mid-attack, so it's worth a look on the next build.
   leaflet doesn't explain itself. `dose` became derived rather than typed, so
   it can't disagree with the structured fields.
 
+## Working practice — push, don't hoard (2026-08-19)
+
+**Commits go to `origin` as a matter of course.** The "commit per task, push
+nothing" rule was written for one unattended session, so the work could be
+reviewed before it left the machine. It then quietly became the default: by
+the time anyone looked, 69 commits — over a month — existed only on this
+laptop, with a perfectly good remote sitting unused. A single disk failure
+would have taken all of it.
+
+Push after committing, or at the latest at the end of a session. Confirm
+first only for the genuinely irreversible: force-pushing, rewriting history,
+tags, releases, opening a PR.
+
 ## Working practice — the scratch origin is not a safe sandbox (2026-08-19)
 
 Recorded at length because it went wrong twice in one day, and the second
