@@ -600,11 +600,15 @@ Ordered as agreed on 2026-08-18. The first two of the four are done; these are t
   42 attacks with none of the three ids and no "Wobbly legs" anywhere. The
   practice rules this produced are in "the scratch origin is not a safe
   sandbox" above.
-- **Two drawn marks are weak at chip size**: Stretching and Exercise resolve to
-  a similar horizontal bar, and the tablet is a generic capsule. Redrawing is
-  cheap — the shapes are in `drawnIcons.tsx` with nothing else depending on
-  them.
-- **`SideGlyph` is interim artwork**, pending Sunny's illustration.
+- **The tablet mark is a generic capsule.** Redrawing is cheap — the shapes
+  are in `drawnIcons.tsx` with nothing else depending on them. (The
+  Stretching/Exercise collision is gone: Stretching was dropped from the
+  relief options.)
+- ~~**`SideGlyph` is interim artwork**~~ — **done 2026-08-19.** Sunny's
+  `Face.svg`, inlined from the repo root. It arrives split into one path per
+  half, so the schematic head and its clip paths (and the `useId` they needed)
+  are gone: a side is now a per-path `fillOpacity`. The mirroring and the
+  accessible label were already right and did not move.
 - **No tone-of-voice research exists yet.** The copy was audited for internal
   consistency against the rules already recorded (never dosing advice, never
   conclude, "not answered" is not "no impact", never present a default as

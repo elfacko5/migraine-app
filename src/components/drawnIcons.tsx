@@ -22,7 +22,6 @@
 // they're labelling text that is right there, so they only have to be
 // *distinguishable*, not self-explanatory.
 
-import { useId } from 'react';
 import { medForm, type MedForm } from '../utils/medDisplay';
 
 interface IconProps { className?: string }
@@ -357,55 +356,43 @@ export function DataIcon({ className = 'h-5 w-5' }: IconProps) {
 // ── Laterality ───────────────────────────────────────────────────────────
 
 /**
- * A head seen from the front, with the affected side filled.
+ * A face seen from the front, with the affected side filled.
+ *
+ * Inlined from `Face.svg` at the repo root — Sunny's artwork, which arrives
+ * already split into one path per half, so the fill is a per-path opacity and
+ * there is no clipping to do.
  *
  * **Mirrored, like the picker.** `AreaSeverityPicker`'s front view shows the
- * subject facing you, so the subject's *left* is on the screen's *right* —
- * that's how a clinician looks at a patient, and the head diagram already
- * commits to it. A glyph that flipped it would put the shading on the
- * opposite side from where the same person just tapped to record it, which is
- * a worse confusion than the one it would solve. The visible label and the
- * `sr-only` text both still say which side it is.
+ * subject facing you, so the subject's *left* is on the screen's *right*, and
+ * the head diagram already commits to that. A glyph that flipped it would put
+ * the shading on the opposite side from where the same person just tapped to
+ * record it. The visible label on the row and the `sr-only` text both still
+ * say which side it is.
  *
- * **Interim artwork.** Sunny is drawing a proper illustration; this is a
- * schematic head so the layout can be built and judged now. Swapping it means
- * replacing the two paths below and nothing else — the sizing, the mirroring
- * and the accessible label all live here.
+ * The unaffected half stays faintly filled rather than disappearing: at this
+ * size a lone half-face reads as a smudge, where a whole face with one side
+ * darker reads as a face.
  */
-export function SideGlyph({ side, className = 'h-8 w-8' }: {
+
+/** Screen-right half — the subject's LEFT. */
+const FACE_SCREEN_RIGHT =
+  'M159.881 429.876C210.074 433.554 260.325 354.348 277.172 330.135C294.018 305.921 284.179 283.969 301.951 269.821C319.724 255.673 323.468 198.862 316.766 188.201C313.655 183.252 305.646 186.775 304.773 171.87C301.613 117.931 315.734 0.352052 159.881 0V429.876Z';
+
+/** Screen-left half — the subject's RIGHT. */
+const FACE_SCREEN_LEFT =
+  'M159.881 429.876C109.726 433.554 59.5119 354.348 42.6781 330.135C25.8442 305.921 35.6756 283.969 17.9167 269.821C0.156952 255.673 -3.58347 198.862 3.11322 188.201C6.22189 183.252 14.2246 186.775 15.0975 171.87C18.2553 117.931 4.1443 0.352052 159.881 0V429.876Z';
+
+export function SideGlyph({ side, className = 'h-9 w-auto' }: {
   side: 'left' | 'right' | 'both';
   className?: string;
 }) {
-  // **Ids must be per-instance.** These were two fixed strings, so a Logs list
-  // of ten rows emitted ten copies of each — duplicate ids are invalid, and
-  // `url(#id)` resolves to whichever the parser saw first, which is only
-  // harmless here because every instance happens to define the same geometry.
-  // `useId` makes that a fact rather than a coincidence.
-  const uid = useId();
-  const clipLeft = `${uid}-screen-left`;
-  const clipRight = `${uid}-screen-right`;
-  // The head outline, and the vertical midline the fill is clipped against.
-  const head = 'M12 3c3.6 0 5.8 2.6 5.8 6.2 0 2.3-.5 3.6-1.2 4.7-.5.8-.6 1.2-.6 2.1V18c0 1.1-.9 2-2 2h-4c-1.1 0-2-.9-2-2v-2c0-.9-.1-1.3-.6-2.1-.7-1.1-1.2-2.4-1.2-4.7C6.2 5.6 8.4 3 12 3z';
-  // Screen-left is the subject's RIGHT (mirrored), so the fills are crossed.
-  const fillLeft = side === 'left' || side === 'both';
-  const fillRight = side === 'right' || side === 'both';
+  const subjectLeft = side === 'left' || side === 'both';
+  const subjectRight = side === 'right' || side === 'both';
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
-      <defs>
-        {/* Half-width rects, used to clip the same head path to each side. */}
-        <clipPath id={clipLeft}><rect x="0" y="0" width="12" height="24" /></clipPath>
-        <clipPath id={clipRight}><rect x="12" y="0" width="12" height="24" /></clipPath>
-      </defs>
-      {/* Subject's right = screen-left. */}
-      {fillRight && (
-        <path d={head} fill="currentColor" fillOpacity="0.9" clipPath={`url(#${clipLeft})`} />
-      )}
-      {/* Subject's left = screen-right. */}
-      {fillLeft && (
-        <path d={head} fill="currentColor" fillOpacity="0.9" clipPath={`url(#${clipRight})`} />
-      )}
-      <path d={head} fill="none" stroke="currentColor" strokeWidth={1.3} strokeOpacity="0.65" />
-      <path d="M12 3.4v16.2" stroke="currentColor" strokeWidth={0.9} strokeOpacity="0.4" />
+    <svg viewBox="0 0 320 430" className={className} aria-hidden="true">
+      {/* Screen-left is the subject's right, and vice versa — see above. */}
+      <path d={FACE_SCREEN_LEFT} fill="currentColor" fillOpacity={subjectRight ? 0.85 : 0.16} />
+      <path d={FACE_SCREEN_RIGHT} fill="currentColor" fillOpacity={subjectLeft ? 0.85 : 0.16} />
     </svg>
   );
 }
