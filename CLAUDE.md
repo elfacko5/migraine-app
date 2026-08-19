@@ -327,7 +327,13 @@ Four rows, each opening a full-screen sub-page: **My medications** · **Accessib
 
 ## Medications (Profile → My medications)
 
-The user's own medication library, in two kinds. `Medication` (`src/types/index.ts`) is `{ id, name, dose, kind: 'acute' | 'preventive', createdAt }`, stored under `hd_medications` and owned by `src/hooks/useMedications.ts`.
+The user's own medication library, in two kinds. `Medication` (`src/types/index.ts`) is `{ id, name, dose, strength?, quantity?, unitLabel?, kind: 'acute' | 'preventive', createdAt }` plus the optional guardrails below, stored under `hd_medications` and owned by `src/hooks/useMedications.ts`.
+
+**`MedicationEditor` is two sections, and the split is the contract.** *Medication details* — name, strength, quantity, unit — is **required**, and Save is disabled with a line naming what's missing until all four are set. They're what every other screen renders, and a medication that can't say what one dose of it is can't be counted against anything. *Additional information* is optional throughout, and each field carries its own **More info** opening a `ConfirmDialog` in `dismissOnly` mode: the fields are transcribed off a leaflet, and a leaflet doesn't explain itself — "maximum days a month" reads as a limit the app is imposing until you know it's the number *you* typed. That copy lives in one `INFO` map and must stay descriptive; it may never read as dosing advice, the same rule the Insights caption and the Today warning follow.
+
+- **`dose` is derived, never typed.** It's `strength` alone at a quantity of one, else `"2 tablets · 50mg"`. It stays the single string every reader uses (the wizard's chips, the library rows, and the copy written into `Snapshot.medication`), so it isn't stored twice and allowed to disagree — but it is still free text on records that predate the structured fields, so **nothing may assume `strength`/`quantity` exist**. `doseUnits` parses the derived form correctly, since the unit count leads it.
+- **Quantity and Unit are dropdowns, not free text.** The unit labels the wizard's quantity picker ("2 sprays") and a typo would read as a different medication's unit for good; both start empty rather than defaulting, so "required" means a choice was actually made.
+- **The guideline number for the chosen Type is a placeholder on "maximum days a month", never a filled-in value.** A figure the app invented must not end up stored as though it came off the label — the same rule as the invented severity in the voice draft.
 
 - **Acute** — taken to treat an attack. These feed the logging wizard.
 - **Preventive** — taken daily, *including on attack days*. Deliberately **never offered in the wizard**: the Medication step records what was taken *for this attack*, and a dose taken daily regardless is not that. It would also inflate any future medication-overuse figure, which applies to acute treatment only.

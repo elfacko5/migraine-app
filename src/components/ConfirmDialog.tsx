@@ -7,6 +7,9 @@ interface Props {
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  /** One dismiss button instead of a pair — for a panel that only explains
+   *  something and has nothing to agree or disagree with. */
+  dismissOnly?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -23,7 +26,7 @@ interface Props {
 export function ConfirmDialog({
   open, title, message,
   confirmLabel = 'Confirm', cancelLabel = 'Cancel',
-  danger = false, onConfirm, onCancel,
+  danger = false, dismissOnly = false, onConfirm, onCancel,
 }: Props) {
   const confirmRef = useRef<HTMLButtonElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -60,6 +63,7 @@ export function ConfirmDialog({
         <h2 className="text-base font-medium text-text-primary">{title}</h2>
         {message && <p className="mt-1.5 text-sm text-text-secondary leading-relaxed">{message}</p>}
         <div className="mt-5 flex gap-3">
+          {!dismissOnly && (
           <button
             ref={cancelRef}
             type="button"
@@ -68,6 +72,7 @@ export function ConfirmDialog({
           >
             {cancelLabel}
           </button>
+          )}
           <button
             ref={confirmRef}
             type="button"

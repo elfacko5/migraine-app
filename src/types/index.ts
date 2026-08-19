@@ -48,7 +48,27 @@ export type MedClass = 'triptan' | 'combination' | 'simple' | 'other';
 export interface Medication {
   id: string;
   name: string;
+  /**
+   * The display string — "50mg", "2 tablets · 50mg". **Derived** from the
+   * three fields below when a medication is saved through the editor, and
+   * kept as the one thing every reader uses (the wizard's chips, the library
+   * rows, and the copy written into `Snapshot.medication`). It is still
+   * free text on records that predate the structured fields, which is why
+   * nothing may assume those exist.
+   */
   dose: string;
+
+  // ---- The prescribed single dose ---------------------------------------
+  //
+  // Optional in the type, required by the editor: they were added after the
+  // library already held medications, so an older record has none of them and
+  // still has to render. Off the prescription, or off the label when it's
+  // something bought over the counter.
+  /** As printed — "50mg", "500mg/65mg". */
+  strength?: string;
+  /** Units in one prescribed dose. */
+  quantity?: number;
+
   kind: 'acute' | 'preventive';
   createdAt: string;
 
@@ -60,8 +80,6 @@ export interface Medication {
   // against them and repeats the number back; it never blocks a dose and
   // never phrases a warning as an instruction.
   class?: MedClass;
-  /** 'tablet' | 'spray' | 'capsule' … defaults to 'tablet' when unset. */
-  unitLabel?: string;
   /** Units in one intake. */
   maxPerIntake?: number;
   /** Units per *rolling* 24 hours — how a leaflet states it, and what catches
@@ -72,6 +90,11 @@ export interface Medication {
   /** Days a month off the label — Treo prints "højst 10 dage om måneden".
    *  Beats the class-derived ICHD number when set. */
   maxDaysPerMonth?: number;
+
+  /** What one unit is called — 'tablet' | 'spray' | 'capsule' … Defaults to
+   *  'tablet' when unset. Not limited to acute: it labels the quantity of a
+   *  single dose, which every medication has. */
+  unitLabel?: string;
 
   // ---- Preventive only ---------------------------------------------------
   /** Local date (YYYY-MM-DD) the preventive was started. It's what makes the
