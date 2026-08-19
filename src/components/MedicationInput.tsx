@@ -194,6 +194,23 @@ export function MedicationInput({
                   {formatTime(check.nextAllowedAt)}.
                 </p>
               )}
+              {/* **Points at the number, not at the dose.** A breach is far
+                  more often a limit typed wrong than a limit crossed, and the
+                  figure is only ever the user's own — so the useful thing to
+                  say is "check what you entered", which is about data entry.
+                  Anything about spacing or skipping the dose would be dosing
+                  advice, which this app does not give: it counts, states your
+                  own reference points, and stops. Same register as the overuse
+                  warning's "worth raising at your next appointment".
+                  
+                  Once per block, not under each note — all three can fire at
+                  the same time, and three copies of it would be nagging. */}
+              {(check.exceedsIntake || check.exceedsDaily || check.tooSoon) && (
+                <p className="text-xs text-text-secondary">
+                  That's the limit you entered — worth checking it against your label or what your doctor
+                  told you.
+                </p>
+              )}
             </div>
           )}
         </div>
