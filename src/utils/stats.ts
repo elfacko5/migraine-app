@@ -10,6 +10,46 @@ export function attackMaxSeverity(attack: Attack): number {
   return Math.max(0, ...attack.snapshots.map(maxSeverity));
 }
 
+/**
+ * The attack's average severity, **weighted by how long each reading held**.
+ *
+ * A plain mean of the readings would measure the diary as much as the attack.
+ * Severity is sampled whenever a reminder happens to be answered, so an attack
+ * logged eight times while it faded averages lower than the identical attack
+ * logged twice at its worst — the number would move with how diligently
+ * someone logged rather than with how bad it was.
+ *
+ * Weighting fixes that, and the snapshot model already says how: each reading
+ * *is* the state held until the next one (the same rule the plateau analytics
+ * rely on). So each contributes in proportion to the time it covered, and the
+ * last one runs to the attack's end — or to now while it is still going, which
+ * is why the clock is read here rather than by a component.
+ *
+ * Falls back to a plain mean when there is no elapsed time to weight by: one
+ * reading, or several sharing a timestamp.
+ */
+export function attackAvgSeverity(attack: Attack, now: number = Date.now()): number {
+  const snaps = attack.snapshots;
+  if (snaps.length === 0) return 0;
+
+  const endMs = attack.end ? new Date(attack.end).getTime() : now;
+  let weighted = 0;
+  let total = 0;
+  for (let i = 0; i < snaps.length; i++) {
+    const from = new Date(snaps[i].time).getTime();
+    const to = i + 1 < snaps.length ? new Date(snaps[i + 1].time).getTime() : endMs;
+    const held = Math.max(0, to - from);
+    weighted += maxSeverity(snaps[i]) * held;
+    total += held;
+  }
+
+  if (total === 0) {
+    const mean = snaps.reduce((n, s) => n + maxSeverity(s), 0) / snaps.length;
+    return Math.round(mean * 10) / 10;
+  }
+  return Math.round((weighted / total) * 10) / 10;
+}
+
 // Duration in minutes of the longest consecutive run of notification_no_change snapshots.
 export function longestPlateauMinutes(attack: Attack): number {
   const snaps = attack.snapshots;

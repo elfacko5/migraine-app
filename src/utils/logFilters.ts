@@ -3,6 +3,7 @@ import { attackMaxSeverity } from './stats';
 import { isRetired } from './retired';
 import { IMPACT_SHORT } from './impact';
 import { LOW_MAX, MID_MAX } from './severity';
+import { attackSide, SIDE_SHORT, type Side } from './laterality';
 
 // Filtering and sorting for the Logs list. It lives out here rather than in
 // `HistoryView` because the filter *sheet* has to be rendered from `App.tsx`
@@ -31,6 +32,14 @@ import { LOW_MAX, MID_MAX } from './severity';
 //     pattern across attacks is the only useful form of it, and scrolling
 //     looking for sunrise icons is not a way to find one.
 //
+// **Side replaced the 17-zone area filter**, following the card. Filtering by
+// a zone the row no longer shows asks about something you can't see, and the
+// zone-level question ("which attacks touched my left eye") is one the
+// Insights heatmap answers better than a list ever did. Side is the part that
+// carries diagnostic weight — ICHD-3 criterion B's *unilateral* — and it keeps
+// the real cross-attack question askable: whether one-sided attacks behave
+// differently from both-sided ones.
+//
 // Symptoms are deliberately absent: ~15 possible values needs its own picker
 // and earns less than any of the above.
 
@@ -42,7 +51,7 @@ export interface LogFilters {
   treated: TreatedFilter;
   /** Impact levels to include. Empty means "any" — see the note below. */
   impact: number[];
-  area: string | null;
+  side: Side | null;
   severity: SeverityBand;
   /** True = only attacks flagged as woken up with. Never "only those not". */
   wokeWith: boolean;
@@ -51,7 +60,7 @@ export interface LogFilters {
 export const DEFAULT_FILTERS: LogFilters = {
   treated: 'any',
   impact: [],
-  area: null,
+  side: null,
   severity: 'any',
   wokeWith: false,
 };
@@ -74,12 +83,6 @@ export function attackMedications(attack: Attack): string[] {
   return [...new Set(names)];
 }
 
-/** Every pain area recorded at any point in the attack. */
-export function attackAreas(attack: Attack): string[] {
-  const areas = attack.snapshots.flatMap((s) => Object.keys(s.areas));
-  return [...new Set(areas)];
-}
-
 // Ongoing attacks measure to now, so a live attack sorts by how long it has
 // been running rather than falling to the bottom as a zero.
 function durationMs(attack: Attack, now: number): number {
@@ -96,15 +99,19 @@ function inBand(sev: number, band: SeverityBand): boolean {
 }
 
 // ── The options a user can actually pick ─────────────────────────────────
-// Areas are narrowed to the ones that actually appear in history, so the sheet
-// never offers a filter returning nothing and doesn't list all 17 zones when
-// most people use a handful. Every value is still one `PAIN_AREAS` defines —
-// narrowing a closed set is not the same as building options out of free text.
+// Narrowed to sides that actually appear in history, so the sheet never offers
+// a filter that returns nothing. Three fixed values rather than seventeen
+// narrowed ones — which is most of the point of the change.
 
-export function areaOptions(attacks: Attack[]): string[] {
-  const areas = new Set<string>();
-  for (const a of attacks) for (const x of attackAreas(a)) areas.add(x);
-  return [...areas].sort((a, b) => a.localeCompare(b));
+const SIDE_ORDER: Side[] = ['left', 'right', 'both'];
+
+export function sideOptions(attacks: Attack[]): { value: Side; label: string }[] {
+  const present = new Set<Side>();
+  for (const a of attacks) {
+    const side = attackSide(a);
+    if (side) present.add(side);
+  }
+  return SIDE_ORDER.filter((s) => present.has(s)).map((s) => ({ value: s, label: SIDE_SHORT[s] }));
 }
 
 // ── Applying ─────────────────────────────────────────────────────────────
@@ -121,7 +128,10 @@ export function applyFilters(attacks: Attack[], f: LogFilters): Attack[] {
       if (!f.impact.includes(a.impact)) return false;
     }
 
-    if (f.area && !attackAreas(a).includes(f.area)) return false;
+    // An attack with no laterality recorded (only `Nose`, the one sideless
+    // zone) matches no side filter — the same rule as an unanswered impact:
+    // absent is not a value, and must not be matched by one.
+    if (f.side && attackSide(a) !== f.side) return false;
 
     const meds = attackMedications(a);
     if (f.treated === 'treated' && meds.length === 0) return false;
@@ -183,7 +193,7 @@ export function activeFilterChips(f: LogFilters): FilterChip[] {
       label: `Impact: ${sorted.map((i) => IMPACT_SHORT[i as 0 | 1 | 2 | 3]).join(', ')}`,
     });
   }
-  if (f.area) chips.push({ key: 'area', label: f.area });
+  if (f.side) chips.push({ key: 'side', label: `${SIDE_SHORT[f.side]} side` });
   if (f.treated !== 'any') {
     chips.push({ key: 'treated', label: f.treated === 'treated' ? 'Treated' : 'Untreated' });
   }

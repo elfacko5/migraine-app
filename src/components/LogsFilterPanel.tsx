@@ -2,7 +2,7 @@ import type { Attack } from '../types';
 import { IMPACT_OPTIONS } from '../utils/impact';
 import {
   DEFAULT_FILTERS, SORT_LABELS,
-  areaOptions, filterCount,
+  sideOptions, filterCount,
   type LogFilters, type SortOrder, type SeverityBand, type TreatedFilter,
 } from '../utils/logFilters';
 import { LOW_MAX, MID_MAX } from '../utils/severity';
@@ -83,7 +83,7 @@ const TREATED: { value: TreatedFilter; label: string }[] = [
 const SORTS = Object.keys(SORT_LABELS) as SortOrder[];
 
 export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onClose }: Props) {
-  const areas = areaOptions(attacks);
+  const sides = sideOptions(attacks);
 
   const set = <K extends keyof LogFilters>(key: K, value: LogFilters[K]) =>
     onChange({ ...filters, [key]: value });
@@ -152,13 +152,20 @@ export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onCl
           offered "Dry" as a filterable drug, the mis-parsed tail of a retired
           entry. Treatment above answers the same question within a closed set.
 
-          Areas are absent entirely when there's no history to narrow to — an
-          empty group heading is worse than no group. */}
-      {areas.length > 0 && (
-        <Group label="Pain area">
-          {areas.map((a) => (
-            <Pill key={a} active={filters.area === a} onClick={() => toggle('area', a)}>
-              {a}
+          **Side, not the 17 pain zones.** Filtering by a zone the row no
+          longer shows asks about something you can't see, and the zone-level
+          question is one the Insights heatmap answers better than a list of
+          pills. Side is the part that carries diagnostic weight — ICHD-3
+          criterion B's *unilateral* — and it keeps the cross-attack question
+          askable: do my one-sided attacks behave differently?
+
+          Absent entirely when there's no history to narrow to — an empty
+          group heading is worse than no group. */}
+      {sides.length > 0 && (
+        <Group label="Side">
+          {sides.map((s) => (
+            <Pill key={s.value} active={filters.side === s.value} onClick={() => toggle('side', s.value)}>
+              {s.label}
             </Pill>
           ))}
         </Group>
