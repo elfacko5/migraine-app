@@ -68,7 +68,7 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
               placeholder="Custom…"
               className="w-28 rounded-full bg-bg-raised px-3 py-1.5 text-sm text-text-primary placeholder:text-text-secondary ring-1 ring-inset ring-border-subtle outline-none"
             />
-            <button type="button" onClick={commitCustom} className="btn-tertiary text-sm font-medium">Add</button>
+            <button type="button" onClick={commitCustom} className="btn-tertiary px-2 py-1.5 text-sm font-medium">Add</button>
             <button type="button" onClick={() => setAdding(false)} className="text-sm text-text-secondary hover:text-text-primary">✕</button>
           </div>
         ) : (

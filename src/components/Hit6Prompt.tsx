@@ -42,10 +42,10 @@ export function Hit6Prompt({ onStart, onDismiss, first }: Props) {
           : 'Six short questions about the last four weeks — it\'s been a month since the last one.'}
       </p>
       <div className="mt-3 flex gap-2">
-        <button type="button" onClick={onStart} className="btn-primary flex-1 text-sm">
+        <button type="button" onClick={onStart} className="btn-primary flex-1">
           Answer now
         </button>
-        <button type="button" onClick={onDismiss} className="btn-secondary flex-1 text-sm">
+        <button type="button" onClick={onDismiss} className="btn-secondary flex-1">
           Not now
         </button>
       </div>

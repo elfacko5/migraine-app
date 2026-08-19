@@ -17,11 +17,6 @@ interface Props {
 }
 
 const CHIP = 'w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors';
-// The app's one button shape — same classes the wizard's Back/Next pair uses,
-// including the disabled treatment. A disabled primary is a *muted* button
-// here, never a faded accent one.
-const BTN = 'rounded-xl py-3 text-sm font-medium transition-all';
-const BTN_OFF = 'bg-bg-raised text-text-secondary cursor-not-allowed';
 
 /**
  * The Headache Impact Test, as its own Profile sub-page.
@@ -77,7 +72,11 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
     const band = hit6Band(result.score);
     const change = result.prev ? result.score - result.prev.score : null;
     return (
-      <ProfileSubPage title="Headache impact" onClose={onClose}>
+      <ProfileSubPage
+        title="Headache impact"
+        onClose={onClose}
+        footer={<button type="button" onClick={onClose} className="btn-primary w-full">Done</button>}
+      >
         <div className="space-y-4">
           <div className="rounded-xl bg-bg-raised p-4">
             <div className="text-3xl font-bold text-text-primary">{result.score}</div>
@@ -95,7 +94,6 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
             Saved to your diary. It sits alongside your attack history, so you can see the two together —
             and it's worth answering again in about four weeks, since the questions ask about that window.
           </p>
-          <button type="button" onClick={onClose} className={`btn-primary w-full ${BTN}`}>Done</button>
         </div>
       </ProfileSubPage>
     );
@@ -110,7 +108,32 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
       // The step count *is* the title. "Headache impact" is already on the row
       // you tapped to get here, and repeating it costs the line that says
       // where you are — which is the thing worth having in a top bar mid-flow.
-      <ProfileSubPage title={`${i + 1} of ${HIT6_QUESTIONS.length}`} onClose={onClose}>
+      <ProfileSubPage
+        title={`${i + 1} of ${HIT6_QUESTIONS.length}`}
+        onClose={onClose}
+        // Pinned above the home indicator, like the logging wizard's own
+        // Back/Next. On the longer questions the pair otherwise sat below the
+        // fold, so the way forward was something you had to scroll to find.
+        footer={
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setStage(i === 0 ? 'intro' : i - 1)}
+              className="btn-secondary flex-1"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => (isLast ? submit() : setStage(i + 1))}
+              disabled={unanswered}
+              className="btn-primary flex-1 active:scale-[.99]"
+            >
+              {isLast ? 'See my score' : 'Next'}
+            </button>
+          </div>
+        }
+      >
         <div className="space-y-6">
           {/* A plain rule, not a percentage: it says where you are without
               turning six questions into something being scored. The logging
@@ -138,25 +161,6 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
                 {opt.label}
               </button>
             ))}
-          </div>
-
-          {/* Back/Next as a pair, in the wizard's own shape and order. */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setStage(i === 0 ? 'intro' : i - 1)}
-              className={`btn-secondary flex-1 ${BTN}`}
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              onClick={() => (isLast ? submit() : setStage(i + 1))}
-              disabled={unanswered}
-              className={`flex-1 ${BTN} ${unanswered ? BTN_OFF : 'btn-primary active:scale-[.99]'}`}
-            >
-              {isLast ? 'See my score' : 'Next'}
-            </button>
           </div>
         </div>
       </ProfileSubPage>
@@ -199,7 +203,7 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
           </p>
         )}
 
-        <button type="button" onClick={() => setStage(0)} className={`btn-primary w-full ${BTN} active:scale-[.99]`}>
+        <button type="button" onClick={() => setStage(0)} className="btn-primary w-full active:scale-[.99]">
           {entries.length === 0 ? 'Start' : 'Answer again'}
         </button>
 

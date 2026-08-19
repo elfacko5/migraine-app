@@ -430,7 +430,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
           // missing — a control that only appears once its precondition is met
           // gives no hint it exists, the same call the wizard's "Finish now"
           // makes.
-          className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors disabled:opacity-40"
+          className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors"
         >
           Save
         </button>

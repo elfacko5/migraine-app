@@ -109,9 +109,31 @@
 
 /* ── Three-tier button hierarchy ───────────────────────
    primary: one per screen (main action) · secondary: companion actions
-   · tertiary: low-emphasis / inline. Apply colour treatment; call sites add
-   size, radius, font. */
+   · tertiary: low-emphasis / inline.
+
+   **These carry their own shape — radius, padding, type and the disabled
+   treatment — not just colour.** They used to apply colour only, with a
+   comment saying "call sites add size, radius, font", and that is exactly how
+   the HIT-6 screens shipped with flat full-width rectangles that matched
+   nothing else in the app (2026-08-19): a `btn-primary` written on its own
+   was *silently* half a button, and nothing failed. A default that is wrong
+   unless you remember four extra utilities is a trap, not a convention.
+
+   Call sites can still override anything — these live in `@layer components`
+   and Tailwind's utilities layer wins — so a deliberately smaller or
+   square-cornered button is still one class away. What changed is that the
+   plain case is now correct. Existing call sites repeating `rounded-xl py-3
+   text-sm font-medium` are harmless duplicates of what they now inherit. */
 @layer components {
+  .btn-primary, .btn-secondary, .btn-tertiary {
+    border-radius: 0.75rem;              /* rounded-xl */
+    padding: 0.75rem 1rem;               /* py-3 px-4 */
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    font-weight: 500;                    /* font-medium */
+    transition: background-color 150ms, color 150ms, border-color 150ms;
+  }
+
   .btn-primary { background-color: var(--color-accent); color: var(--color-bg-base); }
   .btn-primary:hover:not(:disabled) { background-color: var(--color-accent-light); }
 
@@ -124,6 +146,16 @@
 
   .btn-tertiary { background-color: transparent; color: var(--color-accent-light); }
   .btn-tertiary:hover:not(:disabled) { color: var(--color-accent); }
+
+  /* A disabled primary is a *muted* button, never a faded accent one — the
+     treatment the logging wizard spells out by hand at each call site. Here
+     it comes for free, so `disabled:opacity-40` is never the reach. */
+  .btn-primary:disabled, .btn-secondary:disabled {
+    background-color: var(--color-bg-raised);
+    border-color: transparent;
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
+  }
 }
 
 /* ── Text scale ──────────────────────────────────────

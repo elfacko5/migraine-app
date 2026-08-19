@@ -2,6 +2,10 @@ interface Props {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** Actions pinned above the home indicator, the way the logging wizard and
+   *  AttackDetail pin theirs. A primary action that scrolls away with the
+   *  content is one the user has to go looking for. */
+  footer?: React.ReactNode;
 }
 
 // Shared shell for every Profile sub-page (My medications, Accessibility,
@@ -14,7 +18,7 @@ interface Props {
 // from the right (`enterFrom="right"`): these are rows you go one level into
 // from a list, not a modal that interrupts what you were doing. AttackDetail
 // keeps its X for exactly that contrast — it *is* a detour.
-export function ProfileSubPage({ title, onClose, children }: Props) {
+export function ProfileSubPage({ title, onClose, children, footer }: Props) {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div
@@ -37,10 +41,21 @@ export function ProfileSubPage({ title, onClose, children }: Props) {
 
       <div
         className="flex-1 overflow-y-auto px-4 py-5"
-        style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
+        // With a footer below, the inset is that element's job — adding it
+        // here too would reserve the home indicator's height twice.
+        style={{ paddingBottom: footer ? '1.25rem' : 'calc(1.25rem + env(safe-area-inset-bottom))' }}
       >
         {children}
       </div>
+
+      {footer && (
+        <div
+          className="border-t border-border-subtle bg-bg-surface px-4 py-4"
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        >
+          {footer}
+        </div>
+      )}
     </div>
   );
 }
