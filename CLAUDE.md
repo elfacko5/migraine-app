@@ -11,6 +11,7 @@ This file holds the **rules** — what a change has to respect. The **reasoning*
 | [`docs/viewport-architecture.md`](docs/viewport-architecture.md) | touching the app shell's height, offset, or overlay positioning |
 | [`docs/notifications.md`](docs/notifications.md) | changing how a reminder is scheduled, sounded, or answered |
 | [`docs/today-cards.md`](docs/today-cards.md) | restyling `HomeCard` or swapping its artwork |
+| [`docs/palette.md`](docs/palette.md) | changing a colour token, adding a call site that hardcodes hex, or reopening light mode — it holds all three palettes with their measured contrast |
 | [`docs/editing-assessment.md`](docs/editing-assessment.md) | building any way to change an existing attack or reading — it settles what the never-rewrite-snapshots rule actually forbids |
 | [`research/migraine-app-research-dossier.md`](research/migraine-app-research-dossier.md) | changing anything clinical, **any user-facing wording** (§9 is the tone and copy spec), or the palette/type/attack-mode rules — it's the evidence the app is built on (ICHD-3 fields, MOH thresholds, MIDAS/HIT-6, the photophobia colour science, the accessibility targets) |
 
