@@ -270,6 +270,147 @@ mid-attack, so it's worth a look on the next build.
   leaflet doesn't explain itself. `dose` became derived rather than typed, so
   it can't disagree with the structured fields.
 
+## Today's hero, and where an action lives (2026-08-25)
+
+- **The Today hero's actions duplicated the nav's FAB, and the duplicates
+  went.** `AttackFreeCard` carried "Log an attack" and `OngoingAttackBanner`
+  carried "Add update" — in both cases the FAB's own action, in a second and
+  louder place. **Duplicated entry points are not the fault**; HIG and Material
+  both expect a persistent action in the chrome alongside contextual in-content
+  ones, and the FAB earns its place by being reachable from the other three
+  tabs where the hero isn't. The fault was two **solid-accent** targets in one
+  viewport on a screen where accent means *press this* and nothing else on
+  Today is accent-filled. So the hero keeps only what the FAB can't express —
+  `End attack` — and the attack-free hero carries nothing at all.
+- **`End attack` stays `btn-secondary`** rather than being promoted into the
+  vacated primary slot. Promoting it would rebuild the competition the change
+  removes.
+- **The first-run empty state keeps its labelled "Start logging" button.** A
+  bare plus is a weak first affordance, and someone with no history needs the
+  words once.
+- **The FAB's `aria-label` was wrong and is now a prop.** It was hardcoded
+  "Log a migraine" while opening *Add update* whenever an attack was ongoing —
+  a live bug, and one that matters more now the FAB is the only route.
+- **Moving `AttackModePill` was considered and rejected.** With the hero's
+  accent button gone, the pill is the nearest labelled thing to the FAB, and it
+  is categorically different — a mode toggle in the floating layer beside a
+  create action, where the chrome is where a toggle would normally live. The
+  obvious destination is `TopBar`'s trailing slot. **Wrong for this app**: top
+  right is the hardest corner to reach one-handed, and this control is reached
+  mid-attack by someone not reading carefully, which is the reason it was moved
+  to the bottom in the first place. It also doesn't compete on the axis that
+  actually signals importance here — its off state is `bg-raised` /
+  `text-secondary`, the quietest interactive treatment in the app. If it ever
+  does read wrong, the levers in order are: push its bottom offset up a step
+  (checking it against the `calc(10rem + inset)` page reserve, which is tuned
+  to its height), default it collapsed on Today only, then `TopBar`.
+
+- **The hero stopped being a card.** It was a rounded `bg-bg-surface` panel
+  inset in the page padding, holding a hard-edged image box — two visible
+  frames around the one thing on Today that should read as the top of the
+  screen rather than an object on it. It now bleeds past the page padding and
+  up to the top of the scroll region, and **Today renders no `TopBar` while a
+  hero is on screen**: a greeting bar above it would put a strip of chrome
+  between the status bar and artwork meant to start at the top. The hero's
+  label and headline are the page's heading in that state; the first-run state
+  has no hero and keeps the bar.
+- **The blend works because the hero has no background of its own.** The
+  gradients fade from `bg-bg-base` — the page colour itself — so the artwork
+  dissolves into the page instead of into a card tone that then has to meet the
+  page at a seam of its own. They fade to `bg-bg-base/0`, never `transparent`:
+  interpolating towards `rgba(0,0,0,0)` greys the mid-stops.
+- **Three tuning rules, all found by looking at it on a phone-width viewport:**
+  the artwork must stop short of the very top (it ran to y=0 and put the clock
+  and battery on top of the picture); the **band's height** is what sizes the
+  artwork, not its width (square sources, `object-cover`, so the taller
+  dimension drives the scale — a hero that looks too zoomed wants a shorter
+  `min-h`); and the vertical fades need to be long and carry a mid stop,
+  because a short linear fade finishes with a kink the eye reads as an edge of
+  its own. The text block is **centred against the artwork**, not top-aligned
+  in it — top-aligned it read as text that happens to have a picture behind it.
+- **How well it blends still depends on the artwork.** The attack-free image is
+  near-black and disappears into the page completely; the ongoing one carries a
+  cool navy plate that stays visible as a lighter, bluer field where the
+  gradient has faded. That is the picture, not a seam — but it is why a
+  replacement image should be dark and warm at its edges.
+
+- **The attack-free hero lost its detail line and gained a greeting.** It read
+  "Since Thu 20 Aug, 10:40" directly under "8 minutes" — the timestamp the
+  headline is measured *from*, which is the same fact a second way, occupying
+  the largest piece of real estate in the app. Nobody glancing at Today wants
+  the exact end time; it is still on the attack in `AttackDetail` if it is ever
+  wanted. The freed line went to a time-of-day greeting, which is also where
+  the "Hello" that `TopBar` used to carry on Today ended up — a page that opens
+  on a bare figure reads colder than this app is meant to. **The ongoing hero
+  gets no greeting**: "Good morning" above "Ongoing attack" would be the app
+  failing to notice. `greeting()` reads the clock inside the util rather than
+  in the component, the rule `medGuardrails` already follows, so nothing new
+  lands in the `Date.now()`-during-render lint budget.
+- **The four nav tab marks became Lucide paths, inlined unchanged** —
+  `calendar`, `list`, `line-chart`, `user` — matching Sunny's Figma nav and the
+  recorded rule that a generic UI affordance comes from Lucide, whose contract
+  is the one every icon here already follows. Today is a **calendar, not a
+  house** (the tab is a day, and a house said "start here" about one tab of
+  four); Logs a list rather than a clock-with-an-arrow, which read as "undo";
+  Insights a trend line rather than bars. **Profile keeps the person and not
+  the comp's gear** — that comp is labelled "Settings", which the tab stopped
+  being once it took on medications and account.
+- **The attack-mode pill's `FlareUpIcon` was replaced by `AttackModeIcon`.**
+  The supplied artwork was the right metaphor as the wrong kind of drawing:
+  five *filled* concentric scalloped rings in a 39×40 box, ~16KB of path data,
+  carrying far more detail than the 20px pill can resolve — on device it read
+  as a small flower or a gear. Redrawn to the contract everything else follows:
+  five elements, one stroke weight, no interior detail. **Arcs, not rays**, and
+  that is the constraint if it is redrawn again — a dot with straight rays is a
+  sun, and the sun is the brightness pill at the same screen position in the
+  opposite state; a crescent is taken too, since `MoonIcon` means sleep as both
+  a relief and a trigger, and all three can be on screen together. This is the
+  same failure Health Icons was rejected for and worth noting as a pattern:
+  **detail that survives at 40px does not survive at 16–20px.**
+- **Then it had to be drawn bigger, twice over.** The first redraw inherited
+  the old mark's proportions and sat in the middle 50% of the 24-unit box, so
+  at `h-5` it put ~10px of visible ink beside a 16px label. Fixed the way the
+  medication forms were fixed in the same situation: the arcs now use ~78% of
+  the box, and the pill renders it at 24px rather than 20 — the nav pairs a
+  24px icon with a 14px label, and this control is physically larger than a nav
+  tab. Measured, not eyeballed: 12.9×10px of ink before, 18.9×18px after.
+  **Two separate levers, and reaching for only one of them under-fixes it** —
+  how much of the box the drawing uses, and how large the box is rendered.
+- **The brightness pill's `🔆` was the last emoji in the app, and it is gone.**
+  `BrightnessIcon`, inlined from `icons/brightness 1.svg`, which had been
+  sitting unused. The rule it broke is the one the attack-mode pill gave up its
+  own emoji for: a full-colour glyph can't inherit `currentColor`, so the
+  brightest mark on screen belonged to the control that exists to make the
+  screen dimmer.
+- **Health Icons for the domain marks: raised again, parked.** Sunny asked for
+  health-related icons to come from Health Icons and everything else from
+  Lucide; the Lucide half matches what is recorded, the Health Icons half is
+  what the 2026-08-19 spike ruled out for these sizes. Recorded as **unsettled
+  rather than decided** — the note above was written from the spike, and Sunny
+  recalls a different recommendation. If it is picked up, the thing to produce
+  first is a side-by-side of a few Health Icons against the drawn marks at
+  their real shipping sizes (14–16px for chips, 18px for medication headings),
+  because that is the only question in dispute.
+- **Triggers got an icon set**, reversing the earlier note that they had none
+  and that a half-iconed row reads worse than one with no icons at all. That
+  note described what existed rather than deciding anything: symptoms and
+  reliefs had marks and triggers didn't, which is exactly the inconsistency the
+  drawn-icon set exists to prevent. `TriggerIcon` + `TRIGGER_ICON_RULES` in
+  `drawnIcons.tsx`, matched by pattern like the other two families, wired into
+  the `LogForm` trigger step, `AttackDetail`'s Edit details picker, and the
+  read-only trigger line in `AttackDetail`'s header — which was a comma-joined
+  string, the one list in the app that read as raw text.
+- **Most of the marks are reused, and that is right rather than merely cheap.**
+  Caffeine is the same cup whether it helped or set the attack off; drawing a
+  second near-identical one would be a distinction nobody could see at 16px.
+  Six are new — stress, alcohol, weather, hormones, menstruation, screen time.
+- **Two of the six avoid a collision that only shows up on one screen.**
+  `AttackDetail` can display triggers, symptoms and reliefs together, so stress
+  is drawn as chevrons pressing inward rather than a lightning bolt (one zigzag
+  too close to `AuraIcon`), menstruation as a cycle arrow rather than the
+  obvious droplet (already the hydration relief), and hormones as a *smooth*
+  wave, because a sharp one at 14px is `ThrobbingIcon`'s ECG line.
+
 ## Working practice — push, don't hoard (2026-08-19)
 
 **Commits go to `origin` as a matter of course.** The "commit per task, push
@@ -766,6 +907,20 @@ Better still, and the reason this is a working-practice note rather than a
 one-line fix: **a read-only check needs no seeding at all.** The final button
 verification used the account's own ongoing attack to render the hero card,
 wrote nothing, and was a better test than seeded data would have been.
+
+**A third time, 2026-08-25**, and the read-only approach is now the whole
+method rather than the fallback. The origin held the live session and 46
+attacks; Sunny was *actively logging on the phone during the session*, so an
+attack synced in and ended again mid-verification. Everything that needed a
+state the account didn't happen to be in was checked with a **temporary source
+flip** — forcing the other hero branch to render, screenshotting, reverting —
+which writes nothing at all and needs no session check. The two things that
+genuinely could not be reached that way (the trigger chips in the wizard, the
+brightness pill) were left explicitly unverified and said so, which is the
+right trade against a stray tap on a real diary. The origin reset itself to
+signed-out and empty later the same session, which is worth knowing precisely
+because it means **its state is not stable across a preview restart** — so the
+check really does belong in the same call as the write.
 
 ## The backlog, in priority order (2026-08-19)
 

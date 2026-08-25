@@ -1,4 +1,4 @@
-import { FlareUpIcon } from './icons';
+import { AttackModeIcon } from './drawnIcons';
 
 interface Props {
   active: boolean;
@@ -7,10 +7,13 @@ interface Props {
   collapsed?: boolean;
 }
 
-// The glyph is the supplied flare-up mark (concentric rings radiating from a
-// centre), inlined in icons.tsx like every other icon here rather than drawn
-// in this file. It replaces a half-filled circle, the conventional dim/
-// contrast mark.
+// The glyph is a flare radiating from a centre — `AttackModeIcon` in
+// drawnIcons.tsx, drawn there rather than in this file like every other icon
+// here. It replaced a half-filled circle (the conventional dim/contrast mark),
+// then the supplied `FlareUpIcon` artwork, which was the same metaphor as five
+// filled concentric scalloped rings and carried more detail than a 20px pill
+// can resolve — on device it read as a small flower or a gear. Same idea, one
+// stroke weight, five elements.
 //
 // **The old reason to avoid a crescent moon here has expired**, and is
 // recorded only so nobody reinstates the rule from memory: the moon used to
@@ -62,7 +65,12 @@ export function AttackModePill({ active, onToggle, collapsed = false }: Props) {
           : 'bg-bg-raised text-text-secondary ring-bg-border hover:text-text-primary'
       }`}
     >
-      <FlareUpIcon />
+      {/* 24px, not the 20px it shipped at. The mark read small beside a 16px
+          label — the nav pairs a 24px icon with a 14px one, and this control is
+          physically larger than a nav tab, so 20px was the odd one out. Fixed,
+          like the nav's, rather than scaling with the text setting: the pill's
+          own font is clamped, and it has to keep clearing the nav below it. */}
+      <AttackModeIcon className="h-6 w-6" />
       {/* The label collapses by width rather than unmounting, so the pill
           shrinks toward its icon instead of the text vanishing and leaving a
           wide empty pill behind. The gap before it is the span's own padding

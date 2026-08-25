@@ -1,5 +1,5 @@
-// Drawn icons — symptoms, relief methods, medication forms and the Profile
-// menu, plus the laterality glyph.
+// Drawn icons — symptoms, triggers, relief methods, medication forms and the
+// Profile menu, plus the laterality glyph.
 //
 // Unlike `icons.tsx` — whose components are hand-inlined from SVG files in
 // `/icons` — these were authored here, so there is no source file to keep in
@@ -10,8 +10,8 @@
 // thing on a screen the palette works to keep quiet, which is the rule the
 // attack-mode pill's emoji broke and why it became a drawn mark.
 //
-// **Matched by pattern, not by exact name.** The symptom and relief lists are
-// add-only open text — someone can type "light sensitivity in left eye" — so
+// **Matched by pattern, not by exact name.** The symptom, trigger and relief
+// lists are add-only open text — someone can type "light sensitivity in left eye" — so
 // each family matches on what a name *contains* and falls back to a neutral
 // mark rather than guessing. Extend the rule tables as new ones come up; order
 // matters, because the first match wins.
@@ -111,6 +111,31 @@ export function NeckIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
 /** Anything the rules don't recognise — a custom symptom someone typed. */
 export function OtherSymptomIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
   return svg(className, <circle cx="12" cy="12" r="6" />);
+}
+
+/**
+ * Attack mode — a flare radiating from a centre, as arcs rather than rays.
+ *
+ * It replaces `FlareUpIcon` (2026-08-25), which was the same idea as *filled*
+ * artwork: five concentric scalloped rings in a 39×40 box, carrying more
+ * detail than a 20px pill can resolve, so on device it rendered as a small
+ * flower or a gear. This is the same metaphor drawn to the contract everything
+ * else here follows — five elements, one stroke weight, no interior detail.
+ *
+ * **Arcs, not rays, and that is the constraint to respect if it's redrawn.**
+ * A dot with straight rays is a sun, and the sun is the *brightness* pill,
+ * which sits at the same screen position in the opposite state. A crescent was
+ * the other obvious option and is also taken: `MoonIcon` means sleep, as a
+ * relief and as a trigger, and all three can be on screen together.
+ */
+export function AttackModeIcon({ className = 'h-5 w-5' }: IconProps) {
+  return svg(className, <>
+    <circle cx="12" cy="12" r="2.25" />
+    <path d="M9 7a6.75 6.75 0 0 0 0 10" />
+    <path d="M15 7a6.75 6.75 0 0 1 0 10" />
+    <path d="M6 3a13.5 13.5 0 0 0 0 18" />
+    <path d="M18 3a13.5 13.5 0 0 1 0 18" />
+  </>);
 }
 
 type IconComponent = (p: IconProps) => React.ReactElement;
@@ -266,6 +291,94 @@ const RELIEF_ICON_RULES: { pattern: RegExp; Icon: IconComponent }[] = [
 
 export function ReliefIcon({ name, className }: { name: string; className?: string }) {
   const Icon = RELIEF_ICON_RULES.find((r) => r.pattern.test(name))?.Icon ?? OtherSymptomIcon;
+  return <Icon className={className} />;
+}
+
+// ── Triggers ─────────────────────────────────────────────────────────────
+// Added 2026-08-25, reversing the earlier "triggers have no icon set" note in
+// `ChipSelector` — that was a description of what existed, not a decision to
+// keep, and a chip row with marks on symptoms and reliefs but not triggers is
+// the inconsistency the drawn-icon set exists to prevent.
+//
+// Most of the list is already covered by marks drawn for the other two
+// families, and reusing them is right rather than merely cheap: caffeine is
+// the same cup whether it helped or set the attack off, and drawing a second
+// near-identical one would be a distinction nobody could see at 16px. Only
+// the six with nothing to borrow from are new.
+
+/** Squeezed from both sides — pressure, not a lightning bolt. A bolt would be
+ *  one zigzag too close to `AuraIcon`, and the two can sit on the same screen
+ *  in `AttackDetail`. */
+export function StressIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+  return svg(className, <>
+    <path d="M12 4v16" />
+    <path d="M6.5 8.5 3 12l3.5 3.5" />
+    <path d="M17.5 8.5 21 12l-3.5 3.5" />
+  </>);
+}
+
+/** A stemmed glass. */
+export function AlcoholIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+  return svg(className, <>
+    <path d="M7 4h10l-1 5a4 4 0 0 1-8 0L7 4z" />
+    <path d="M12 13v5" />
+    <path d="M9 20h6" />
+  </>);
+}
+
+/** A cloud. Weather *change* has no mark of its own that reads at this size —
+ *  the chip's own text carries the change. */
+export function WeatherIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+  return svg(className, <path d="M7.5 19h9.5a3.5 3.5 0 0 0 .3-7A5 5 0 0 0 7.6 11 3.9 3.9 0 0 0 7.5 19z" />);
+}
+
+/** A smooth wave — a level that rises and falls. Deliberately smooth: the ECG
+ *  spike is `ThrobbingIcon`, and at 14px a sharp wave would read as that. */
+export function HormoneIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+  return svg(className, <path d="M3 15c3 0 3-6 6-6s3 6 6 6 3-6 6-6" />);
+}
+
+/** A cycle. A droplet was the obvious mark and is already the hydration
+ *  relief, which `AttackDetail` can show on the same screen. */
+export function CycleIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+  return svg(className, <>
+    <path d="M20 12a8 8 0 1 1-3.4-6.5" />
+    <path d="M20 4v4h-4" />
+  </>);
+}
+
+/** A display on a stand. */
+export function ScreenIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
+  return svg(className, <>
+    <rect x="3" y="4.5" width="18" height="12" rx="2" />
+    <path d="M12 16.5V20" />
+    <path d="M8.5 20h7" />
+  </>);
+}
+
+// Order matters, first match wins. "Bright light" has to reach LightIcon
+// before anything broader claims it, and "Skipped meal" is still a meal.
+const TRIGGER_ICON_RULES: { pattern: RegExp; Icon: IconComponent }[] = [
+  { pattern: /stress|anxiet|tension|worry/i, Icon: StressIcon },
+  { pattern: /sleep|insomnia|tired|fatigue|oversle/i, Icon: MoonIcon },
+  { pattern: /alcohol|wine|beer|spirit|hangover/i, Icon: AlcoholIcon },
+  { pattern: /caffeine|coffee|tea\b|cola|energy drink/i, Icon: CoffeeIcon },
+  { pattern: /light|glare|bright|sun\b|flicker/i, Icon: LightIcon },
+  { pattern: /noise|loud|sound|music/i, Icon: SoundIcon },
+  { pattern: /meal|food|eat|hunger|hungry|fasting|sugar/i, Icon: FoodIcon },
+  { pattern: /weather|pressure|humid|storm|heat wave|cold front/i, Icon: WeatherIcon },
+  { pattern: /menstr|period|cycle/i, Icon: CycleIcon },
+  { pattern: /hormon|oestrogen|estrogen|ovulat/i, Icon: HormoneIcon },
+  { pattern: /screen|phone|computer|laptop|monitor/i, Icon: ScreenIcon },
+  { pattern: /dehydrat|water|thirst/i, Icon: DropletIcon },
+  { pattern: /exercise|exertion|workout|gym|run|cycl/i, Icon: DumbbellIcon },
+  { pattern: /smell|perfume|odour|odor|smoke/i, Icon: AirIcon },
+  { pattern: /neck|posture|shoulder/i, Icon: NeckIcon },
+];
+
+/** The icon for a trigger name, matched on what it contains. */
+export function TriggerIcon({ name, className }: { name: string; className?: string }) {
+  const Icon = TRIGGER_ICON_RULES.find((r) => r.pattern.test(name))?.Icon ?? OtherSymptomIcon;
   return <Icon className={className} />;
 }
 

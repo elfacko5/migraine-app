@@ -2,18 +2,32 @@ import type { Tab } from '../types';
 
 interface NavItem { id: Tab; label: string; icon: React.ReactNode }
 
-function HomeIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+// The four tab marks are Lucide paths, inlined unchanged — `calendar`, `list`,
+// `line-chart` and `user` — which is the rule for a generic UI affordance:
+// Lucide's contract (24×24, fill none, currentColor, round caps) is the same
+// one every icon here already follows, so a path drops straight in. They match
+// the nav in Sunny's Figma, and the stroke is 1.8 rather than Lucide's own 2
+// because that is what the nav has always used at this size.
+
+/** Today. A calendar, not a house: the tab is a day, not a home screen, and
+ *  the house said "start here" about a tab that is one of four. */
+function TodayIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
 }
+/** Logs. A list, which is what the tab is — the clock-with-an-arrow read as
+ *  "undo" or "recently viewed" rather than "everything you have logged". */
 function HistoryIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l3 3"/></svg>
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/></svg>
 }
+/** Insights. A trend line on an axis: the page's own charts are trends over
+ *  time, and bars are the one chart type it doesn't lead with. */
 function StatsIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="0.5"/><rect x="12" y="8" width="3" height="10" rx="0.5"/><rect x="17" y="5" width="3" height="13" rx="0.5"/></svg>
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
 }
-// A person, not a gear: the tab holds the user's own medications and account
-// alongside the accessibility controls, and a gear under the word "Profile"
-// still reads as the old Settings destination.
+// A person, not a gear, and **deliberately not the gear in the Figma nav** —
+// that comp is labelled "Settings", which this tab stopped being: it holds the
+// user's own medications and account alongside the accessibility controls, and
+// a gear under the word "Profile" still reads as the old destination.
 function ProfileIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>
 }
@@ -22,7 +36,7 @@ function PlusIcon() {
 }
 
 const LEFT_TABS: NavItem[] = [
-  { id: 'log', label: 'Today', icon: <HomeIcon /> },
+  { id: 'log', label: 'Today', icon: <TodayIcon /> },
   { id: 'history', label: 'Logs', icon: <HistoryIcon /> },
 ];
 
@@ -35,9 +49,15 @@ interface Props {
   active: Tab;
   onChange: (tab: Tab) => void;
   onAdd: () => void;
+  /**
+   * What the FAB does right now — "Log a migraine", or "Add update" while an
+   * attack is ongoing. It is a bare plus with no visible label, so this is the
+   * only thing a screen reader has to go on, and the action genuinely changes.
+   */
+  addLabel: string;
 }
 
-export function BottomNav({ active, onChange, onAdd }: Props) {
+export function BottomNav({ active, onChange, onAdd, addLabel }: Props) {
   return (
     <>
       {/* `absolute` (not `fixed`) relative to App's own correctly-sized,
@@ -59,7 +79,7 @@ export function BottomNav({ active, onChange, onAdd }: Props) {
         <li className="flex flex-1 justify-center pb-1.5">
           <button
             type="button"
-            aria-label="Log a migraine"
+            aria-label={addLabel}
             onClick={onAdd}
             className="-mt-8 flex items-center justify-center rounded-full bg-accent text-bg-base ring-4 ring-bg-base transition-colors hover:bg-accent-light active:scale-95 [&_svg]:h-[min(1.75rem,32px)] [&_svg]:w-[min(1.75rem,32px)]"
             style={{ height: 'min(3.5rem, 68px)', width: 'min(3.5rem, 68px)' }}

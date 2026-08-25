@@ -74,3 +74,20 @@ export function isoToLocalInput(iso?: string): string {
 export function localInputToIso(local: string): string {
   return new Date(local).toISOString();
 }
+
+// The time-of-day greeting on Today's attack-free hero.
+//
+// The clock is read inside the util rather than by the caller, the same rule
+// the medication guardrails follow: `Date.now()` during a component's render
+// is a lint error here, and the per-site disables exist so a real one stays
+// visible. The caller pairs this with `useNowTick`, so it crosses noon and
+// 18:00 without a reload.
+//
+// Boundaries are the ordinary ones and deliberately not clever — no "good
+// night", which reads as a send-off to someone who has just opened the app.
+export function greeting(now = new Date()): string {
+  const h = now.getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}

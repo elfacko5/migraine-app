@@ -8,9 +8,9 @@ interface Props {
   onAddCustom?: (label: string) => void;
   placeholder?: string;
   /** Optional leading mark per option. Passed only by the symptom steps —
-   *  triggers and reliefs have no icon set, and half-iconed rows read worse
-   *  than none. A render prop rather than a flag so this component keeps
-   *  knowing nothing about what it is listing. */
+   *  every list that has a mark passes one — symptoms, triggers and reliefs —
+   *  since a half-iconed row reads worse than none. A render prop rather than
+   *  a flag, so this component keeps knowing nothing about what it lists. */
   renderIcon?: (option: string) => React.ReactNode;
 }
 

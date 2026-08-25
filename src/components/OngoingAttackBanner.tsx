@@ -7,12 +7,11 @@ import cardImage from '../assets/card-ongoing.jpg';
 
 interface Props {
   attack: Attack;
-  onAddUpdate: () => void;
   onEnd: () => void;
   onOpenDetail: () => void;
 }
 
-export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }: Props) {
+export function OngoingAttackBanner({ attack, onEnd, onOpenDetail }: Props) {
   // Keeps "Started 3m" honest — every minute, and on every return to the
   // foreground, which is the case a bare interval silently got wrong.
   useNowTick();
@@ -60,13 +59,16 @@ export function OngoingAttackBanner({ attack, onAddUpdate, onEnd, onOpenDetail }
       }
       onOpenDetail={onOpenDetail}
     >
-      <button
-        type="button"
-        onClick={onAddUpdate}
-        className="btn-primary btn-compact"
-      >
-        Add update
-      </button>
+      {/* **The only action the hero carries, and the only one it should.**
+          "Add update" used to sit here as the primary, which was the FAB's
+          action repeated in a second, louder place — two solid-accent targets
+          in one viewport on a screen where accent means "press this". Ending
+          an attack is the thing the nav can't express, so it is what stays.
+
+          It stays `btn-secondary` rather than being promoted into the vacated
+          primary slot: the FAB is now the one accent target on Today, and
+          giving the hero an accent fill again would rebuild the competition
+          this change exists to remove. */}
       <button
         type="button"
         onClick={onEnd}

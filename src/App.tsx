@@ -181,6 +181,10 @@ export default function App() {
     return ends.length ? ends.reduce((max, e) => (e > max ? e : max)) : null;
   }, [attacks]);
 
+  // Whether Today is showing its hero. The hero owns the top of the screen in
+  // that state, so TopBar stands down — see the note at its call site.
+  const heroOnToday = tab === 'log' && !!(ongoingAttack || lastAttackEnd);
+
   // The attack whose impact Today should ask about, if any.
   //
   // Read during render rather than on a tick, and deliberately not wrapped in
@@ -432,7 +436,13 @@ export default function App() {
           see docs/viewport-architecture.md), so it's also the only place a
           floating control can learn which way the user is going. */}
       <div ref={scrollRef} className="h-full overflow-y-auto">
-        <TopBar title={TAB_TITLES[tab]} />
+        {/* Today gives its top edge to the hero, which bleeds to the screen
+            edges and runs under the status bar — a "Hello" bar above it would
+            put a strip of chrome between the status bar and artwork that is
+            meant to start at the top. The hero's own label and headline are
+            the page's heading in that state. Every other tab, and Today's
+            first-run state (which has no hero), keep the bar. */}
+        {!heroOnToday && <TopBar title={TAB_TITLES[tab]} />}
         <div
           className="mx-auto max-w-2xl px-4 pt-5 sm:px-6"
           // The reserve has to clear the floating pill, not just the nav —
@@ -455,14 +465,13 @@ export default function App() {
             {ongoingAttack && (
               <OngoingAttackBanner
                 attack={ongoingAttack}
-                onAddUpdate={() => setUpdateAttackId(ongoingAttack.id)}
                 onEnd={() => setEndConfirmOpen(true)}
                 onOpenDetail={() => setDetailAttackId(ongoingAttack.id)}
               />
             )}
 
             {!ongoingAttack && lastAttackEnd && (
-              <AttackFreeCard lastEnd={lastAttackEnd} onStart={() => setLogSheetOpen(true)} />
+              <AttackFreeCard lastEnd={lastAttackEnd} />
             )}
 
             {/* Asked here rather than in the end-attack dialog, so closing an
@@ -558,6 +567,11 @@ export default function App() {
         active={tab}
         onChange={setTab}
         onAdd={() => (ongoingAttack ? setUpdateAttackId(ongoingAttack.id) : setLogSheetOpen(true))}
+        // The FAB is now the only route to both actions, so its label has to
+        // say which one it is. It was hardcoded "Log a migraine" while opening
+        // Add update whenever an attack was ongoing, which announced the wrong
+        // action to a screen reader.
+        addLabel={ongoingAttack ? 'Add update' : 'Log a migraine'}
       />
 
       {/* Log attack sheet */}

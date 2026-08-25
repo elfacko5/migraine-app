@@ -8,7 +8,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { BinIcon, SunriseIcon } from './icons';
 import { IMPACT_SHORT } from '../utils/impact';
 import { attackFirstDoses } from '../utils/medDisplay';
-import { MedIcon } from './drawnIcons';
+import { MedIcon, TriggerIcon } from './drawnIcons';
 import { isRetired } from '../utils/retired';
 import { ChipSelector } from './ChipSelector';
 import { chipClass } from '../utils/chipStyles';
@@ -113,8 +113,18 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
             : 'Ongoing'}
           {' · '}max severity {maxSev}
         </p>
+        {/* Each trigger carries its mark, the same way the symptoms on a Logs
+            row and the medications on a reading do — a comma-joined line was
+            the one list in the app that read as raw text. */}
         {attack.triggers.length > 0 && (
-          <p className="text-xs text-text-secondary mt-1">{attack.triggers.join(', ')}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {attack.triggers.map((t) => (
+              <span key={t} className="inline-flex items-center gap-1 text-xs text-text-secondary">
+                <TriggerIcon name={t} />
+                {t}
+              </span>
+            ))}
+          </div>
         )}
         {/* **Read-only, and absent entirely when unanswered.** Impact is a
             judgement about the episode made while it's fresh — the Today
@@ -383,6 +393,7 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
             selected={triggers}
             onChange={setTriggers}
             onAddCustom={onAddTrigger}
+            renderIcon={(t) => <TriggerIcon name={t} className="h-4 w-4" />}
           />
         </div>
       </div>
