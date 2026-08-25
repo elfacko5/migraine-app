@@ -6,7 +6,8 @@ import {
 } from '../utils/hit6';
 import { ProfileSubPage } from './ProfileSubPage';
 import { ConfirmDialog } from './ConfirmDialog';
-import { chipClass } from '../utils/chipStyles';
+import { chipClass} from '../utils/chipStyles';
+import { ChipCheck } from './ChipCheck';
 import { formatDateShort } from '../utils/format';
 
 interface Props {
@@ -16,7 +17,7 @@ interface Props {
   onClose: () => void;
 }
 
-const CHIP = 'w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors';
+const CHIP = 'flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors';
 
 /**
  * The Headache Impact Test, as its own Profile sub-page.
@@ -158,7 +159,8 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
                 onClick={() => answer(opt.value, i)}
                 className={`${CHIP} ${chipClass(answers[i] === opt.value)}`}
               >
-                {opt.label}
+                <span className="flex-1">{opt.label}</span>
+                <ChipCheck selected={answers[i] === opt.value} />
               </button>
             ))}
           </div>

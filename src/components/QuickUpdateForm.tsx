@@ -311,7 +311,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
                 min={isoToLocalInput(minTime)}
                 max={isoToLocalInput(maxTime)}
                 onChange={(e) => set('time', e.target.value)}
-                className="w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+                className="w-full rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle"
               />
             )}
 
@@ -353,7 +353,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
               <textarea rows={4} value={form.note} aria-label="Note"
                 placeholder="What changed?"
                 onChange={(e) => set('note', e.target.value)}
-                className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
+                className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
             )}
 
             {/* Reference to what was logged last time — never pre-filled, just

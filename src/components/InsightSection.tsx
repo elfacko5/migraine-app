@@ -31,6 +31,20 @@ export function InsightSection({ title, children, note }: Props) {
           the content it labels; out here it labels the whole card. The stat
           tiles at the top keep their labels inside, because there the label
           and its figure *are* the content. */}
+      {/* **The note sits below the content** (changed 2026-08-25, on Sunny's
+          instruction). It was above, on the reasoning that a caption defining
+          what the figure counts — "migraine days" and not "headache days", an
+          attack past midnight counting as two — has to be read *before* the
+          chart can be read at all, and that underneath it becomes a footnote
+          you only reach after guessing.
+
+          That reasoning is recorded rather than deleted because it is the
+          argument for putting it back, and it has not been refuted — what
+          changed is the call. The captions here run to five or six lines, and
+          leading with a wall of small grey text pushes the thing the section
+          exists to show below the fold on a phone. The chart is what the page
+          is opened for; the caption qualifies it. Don't flip this back without
+          reading both halves. */}
       {/* `h2`, not `h3`. The tab's own title is the `h1` and there is nothing
           between, so an `h3` skipped a level — which is how a screen-reader
           user navigating by heading discovers a page's structure. The size is
@@ -40,8 +54,8 @@ export function InsightSection({ title, children, note }: Props) {
       <div className="space-y-2 rounded-2xl bg-bg-surface p-3">
         {note ? (
           <>
-            <p className="text-xs text-text-secondary">{note}</p>
             <div className="rounded-xl bg-bg-elevated p-3">{children}</div>
+            <p className="text-xs text-text-secondary">{note}</p>
           </>
         ) : (
           children

@@ -43,7 +43,7 @@ export function ImpactPrompt({ onAnswer, onDismiss }: Props) {
             key={value}
             type="button"
             onClick={() => onAnswer(value)}
-            className="rounded-full bg-bg-raised px-3 py-1.5 text-sm text-text-primary ring-1 ring-inset ring-bg-border transition-colors hover:bg-bg-border"
+            className="rounded-full bg-bg-raised px-3 py-1.5 text-sm text-text-primary ring-1 ring-inset ring-border-control transition-colors hover:bg-bg-border"
           >
             {label}
           </button>

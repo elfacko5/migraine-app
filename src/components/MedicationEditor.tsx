@@ -128,7 +128,7 @@ function Field({ label, infoKey, onInfo, children }: {
 }
 
 const inputClass =
-  'w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2.5 text-sm text-text-primary ' +
+  'w-full rounded-lg bg-bg-raised border border-border-control px-3 py-2.5 text-sm text-text-primary ' +
   'placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent';
 
 /** A numeric limit with its unit spelled out at the trailing edge of the box. */

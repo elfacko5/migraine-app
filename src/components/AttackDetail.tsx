@@ -11,7 +11,8 @@ import { attackFirstDoses } from '../utils/medDisplay';
 import { MedIcon, TriggerIcon } from './drawnIcons';
 import { isRetired } from '../utils/retired';
 import { ChipSelector } from './ChipSelector';
-import { chipClass } from '../utils/chipStyles';
+import { chipClass} from '../utils/chipStyles';
+import { ChipCheck } from './ChipCheck';
 import { openPicker } from '../utils/openPicker';
 
 interface Props {
@@ -363,7 +364,8 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
             className={`flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${chipClass(woke)}`}
           >
             <SunriseIcon className="h-4 w-4 shrink-0" />
-            Woke up with this migraine
+            <span className="flex-1">Woke up with this migraine</span>
+            <ChipCheck selected={woke} />
           </button>
         </div>
 
@@ -378,7 +380,7 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
               max={isoToLocalInput()}
               onChange={(e) => setEnd(e.target.value)}
               onClick={() => openPicker(endRef.current)}
-              className="w-full min-w-0 rounded-xl border border-bg-border bg-bg-raised px-3 py-3 text-sm text-text-primary"
+              className="w-full min-w-0 rounded-xl border border-border-control bg-bg-raised px-3 py-3 text-sm text-text-primary"
             />
             <p className="text-xs text-text-secondary">
               It can't be set before the last reading at {formatTime(minTime)}.

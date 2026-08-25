@@ -1,4 +1,5 @@
-import { CHIP_ON } from '../utils/chipStyles';
+import { chipClass} from '../utils/chipStyles';
+import { ChipCheck } from './ChipCheck';
 import type { NotificationConfig } from '../types';
 
 interface Props {
@@ -24,7 +25,11 @@ export function NotificationSettings({ value, onChange }: Props) {
           aria-label="Enable reminders"
           onClick={() => onChange({ ...value, enabled: !value.enabled })}
           className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-light ${
-            value.enabled ? 'bg-accent' : 'bg-bg-border'
+            // The off track is the only thing that says a switch is here, so it
+            // takes the control-outline token: bg-bg-border measured 1.47:1
+            // against the page, well under the 3:1 WCAG 1.4.11 asks of a
+            // component's own visual boundary. The on state is the accent fill.
+            value.enabled ? 'bg-accent' : 'bg-border-control'
           }`}
         >
           <span
@@ -46,13 +51,12 @@ export function NotificationSettings({ value, onChange }: Props) {
                   key={mode}
                   type="button"
                   onClick={() => onChange({ ...value, mode })}
-                  className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
-                    value.mode === mode
-                      ? CHIP_ON
-                      : 'bg-bg-border text-text-primary hover:bg-bg-raised'
-                  }`}
+                  className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-colors ${chipClass(
+                    value.mode === mode,
+                  )}`}
                 >
                   {mode === 'adaptive' ? 'Adaptive' : 'Fixed'}
+                  <ChipCheck selected={value.mode === mode} />
                 </button>
               ))}
             </div>
@@ -71,13 +75,12 @@ export function NotificationSettings({ value, onChange }: Props) {
                     key={min}
                     type="button"
                     onClick={() => onChange({ ...value, fixedIntervalMinutes: min })}
-                    className={`flex-1 rounded-lg py-2 text-xs font-medium transition-colors ${
-                      value.fixedIntervalMinutes === min
-                        ? CHIP_ON
-                        : 'bg-bg-border text-text-primary hover:bg-bg-raised'
-                    }`}
+                    className={`flex-1 inline-flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium transition-colors ${chipClass(
+                      value.fixedIntervalMinutes === min,
+                    )}`}
                   >
                     {min < 60 ? `${min}m` : `${min / 60}h`}
+                    <ChipCheck selected={value.fixedIntervalMinutes === min} />
                   </button>
                 ))}
               </div>

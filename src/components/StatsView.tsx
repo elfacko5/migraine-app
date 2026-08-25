@@ -15,7 +15,8 @@ import { MigraineDaysChart } from './MigraineDaysChart';
 import { MedicationInsights } from './MedicationInsights';
 import { PreventiveInsights } from './PreventiveInsights';
 import { InsightSection } from './InsightSection';
-import { chipClass } from '../utils/chipStyles';
+import { chipClass} from '../utils/chipStyles';
+import { ChipCheck } from './ChipCheck';
 
 type Period = 'all' | '7d' | '30d' | '3m';
 
@@ -159,11 +160,12 @@ export function StatsView({ attacks, medications = [] }: Props) {
             key={value}
             type="button"
             onClick={() => setPeriod(value)}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
               chipClass(period === value)
             }`}
           >
             {label}
+            <ChipCheck selected={period === value} />
           </button>
         ))}
       </div>

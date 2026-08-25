@@ -112,7 +112,7 @@ const presetCls = (active: boolean) =>
   `rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${
     active
       ? 'bg-accent/20 text-accent-light ring-accent/50'
-      : 'bg-bg-raised text-text-primary ring-bg-border hover:bg-bg-border'
+      : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'
   }`;
 
 const STEP_LABELS = [
@@ -530,7 +530,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                 {form.startMode === 'manual' && (
                   <input ref={startInputRef} type="datetime-local" aria-label="Attack start time" value={form.startTime} max={isoToLocalInput()}
                     onChange={(e) => set('startTime', e.target.value)}
-                    className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
+                    className="w-full rounded-lg bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
                 )}
                 <button
                   type="button"
@@ -568,7 +568,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                 {form.endMode === 'manual' && (
                   <input ref={endInputRef} type="datetime-local" aria-label="Attack end time" value={form.endTime} max={isoToLocalInput()}
                     onChange={(e) => set('endTime', e.target.value)}
-                    className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
+                    className="w-full rounded-lg bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
                 )}
               </div>
             </div>
@@ -618,7 +618,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
           <textarea rows={4} value={form.note} aria-label="Note"
             placeholder="Anything else worth noting…"
             onChange={(e) => set('note', e.target.value)}
-            className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
+            className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
         )}
 
         {/* ── Step 8: Reminders (ongoing only) ── */}

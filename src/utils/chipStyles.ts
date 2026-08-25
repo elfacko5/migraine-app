@@ -27,7 +27,7 @@ export const CHIP_ON =
   'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/50';
 
 export const CHIP_OFF =
-  'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-border hover:text-text-primary';
+  'bg-bg-raised text-text-secondary ring-1 ring-inset ring-border-control hover:text-text-primary';
 
 /** The pair, for the common `className={...}` case. */
 export const chipClass = (selected: boolean) => (selected ? CHIP_ON : CHIP_OFF);

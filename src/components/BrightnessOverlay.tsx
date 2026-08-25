@@ -34,7 +34,7 @@ export function BrightnessOverlay({ brightness, attackMode, onOpenProfile }: Pro
           type="button"
           onClick={onOpenProfile}
           aria-label="Adjust screen brightness"
-          className="absolute bottom-[5.5rem] right-4 z-[45] flex h-10 items-center gap-1.5 rounded-full bg-bg-raised px-3 text-sm font-medium text-text-secondary ring-1 ring-bg-border hover:text-text-primary transition-colors"
+          className="absolute bottom-[5.5rem] right-4 z-[45] flex h-10 items-center gap-1.5 rounded-full bg-bg-raised px-3 text-sm font-medium text-text-secondary ring-1 ring-border-control hover:text-text-primary transition-colors"
         >
           {/* Was a `🔆` emoji — the last one in the app, and the rule it broke
               is the one the attack-mode pill gave up its own emoji for: a

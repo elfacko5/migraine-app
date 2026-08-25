@@ -61,7 +61,7 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
           step. Everything here is scaled to fit that 32px — 2px of track
           padding around a 28px segment. */}
       <div className="flex justify-center">
-        <div className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-bg-border bg-bg-raised/40 p-0.5">
+        <div className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-border-control bg-bg-raised/40 p-0.5">
           {VIEWS.map((v) => {
             const isActive = v.id === activeViewId;
             const n = selectedCount(v);

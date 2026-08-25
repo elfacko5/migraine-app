@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { chipClass } from '../utils/chipStyles';
+import { chipClass} from '../utils/chipStyles';
+import { ChipCheck } from './ChipCheck';
 
 interface Props {
   options: string[];
@@ -52,6 +53,7 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
           >
             {renderIcon?.(opt)}
             {opt}
+            <ChipCheck selected={active} />
           </button>
         );
       })}

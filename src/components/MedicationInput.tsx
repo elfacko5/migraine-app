@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { Attack, Medication } from '../types';
 import { formatTime } from '../utils/format';
-import { CHIP_ON, CHIP_OFF } from '../utils/chipStyles';
+import { CHIP_ON, CHIP_OFF} from '../utils/chipStyles';
+import { ChipCheck } from './ChipCheck';
 import { MedIcon } from './drawnIcons';
 import {
   checkDose, doseUnits, findMedication, DEFAULT_UNIT, unitsLabel,
@@ -95,6 +96,7 @@ export function MedicationInput({
               >
                 <MedIcon name={med.name} dose={med.dose} className="h-4 w-4" />
                 {med.name}{med.dose ? ` · ${med.dose}` : ''}
+                <ChipCheck selected={selected?.name === med.name} />
               </button>
             ))}
           </div>
@@ -112,7 +114,7 @@ export function MedicationInput({
               placeholder="Medication name"
               value={value.name}
               onChange={(e) => onChange({ ...value, name: e.target.value })}
-              className="flex-1 min-w-0 rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 min-w-0 rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
             />
             <input
               type="text"
@@ -120,7 +122,7 @@ export function MedicationInput({
               placeholder="Dose / strength"
               value={value.dose}
               onChange={(e) => onChange({ ...value, dose: e.target.value })}
-              className="w-32 rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-32 rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -159,11 +161,12 @@ export function MedicationInput({
                 type="button"
                 aria-pressed={units === n}
                 onClick={() => setUnits(n)}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   units === n ? CHIP_ON : CHIP_OFF
                 }`}
               >
                 {n} {n === 1 ? unit : `${unit}s`}
+                <ChipCheck selected={units === n} />
               </button>
             ))}
           </div>

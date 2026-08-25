@@ -6,7 +6,8 @@ import {
   type LogFilters, type SortOrder, type SeverityBand, type TreatedFilter,
 } from '../utils/logFilters';
 import { LOW_MAX, MID_MAX } from '../utils/severity';
-import { chipClass } from '../utils/chipStyles';
+import { chipClass} from '../utils/chipStyles';
+import { ChipCheck } from './ChipCheck';
 
 // The body of the Logs "Filter & sort" sheet. It renders from App.tsx, like
 // every other Sheet — inside the tab's own scroll container a Sheet anchors to
@@ -66,11 +67,12 @@ function Pill({
       // exactly this: the expansion adds 6px above and below each pill, so an
       // 8px gap would make adjacent rows' targets overlap and trade one
       // mis-tap for another.
-      className={`tap-44 rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+      className={`tap-44 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-colors ${
         chipClass(active)
       }`}
     >
       {children}
+      <ChipCheck selected={active} />
     </button>
   );
 }

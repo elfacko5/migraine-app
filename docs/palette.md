@@ -9,6 +9,28 @@ for exactly that reason. The light palette diverges in the same way and for the 
 literal `--text: #2A2724` measures 13.0:1 against its own `--bg`, which is the max-contrast pairing
 §8.1 says to avoid in the same breath as it asks for AA.
 
+## The Figma library
+
+These tokens are mirrored in Figma: **Lidd Design System** —
+<https://www.figma.com/design/eIOtxkHeEPguTLY2gWdhxF> (built 2026-08-25).
+
+- **The `Color` collection carries all three modes** — Dark, Light, Attack — as Figma variable
+  modes, so selecting a frame and switching the mode re-resolves everything bound to a semantic
+  token. The Colour page shows the three side by side, driven by one set of variables with
+  `setExplicitVariableModeForCollection` per column.
+- **Semantic tokens alias a hidden `Primitives` ramp** (`sand` 26 / `sage` 7 / `amber` 3 / `clay` 2 —
+  38 values, named by hue family and lightness). The primitives have **empty scopes** so they never
+  appear in a property picker; binding one directly would produce a value that cannot respond to a
+  mode. **Primitives deliberately carry no code syntax**, because no CSS variable corresponds to
+  `sand/450` — inventing one would misrepresent the codebase.
+- Every semantic variable carries its real CSS name as WEB code syntax (`var(--color-bg-base)`), so
+  Dev Mode reports the token this repo actually uses.
+- **There are no effect styles, deliberately** — the app uses no drop shadows; depth is the four
+  surface tones.
+- **This file is a mirror, not the source.** `src/index.css` stays authoritative for Dark and
+  Attack, and this document for Light. Nothing syncs automatically: a value changed here has to be
+  changed in Figma by hand, and vice versa.
+
 ## The rules all three obey
 
 Straight from §8.1, and they are what makes these three palettes one system rather than three
@@ -51,12 +73,13 @@ values.
 | `--color-bg-elevated` | `#d8d1c3` | `#383430` | `#2f2a1f` |
 | `--color-bg-border` | `#d5cec0` | `#3a3733` | `#34322a` |
 | `--color-border-subtle` | `#bfb7a6` | `#47433d` | `#403d33` |
+| `--color-border-control` | `#827966` | `#7d7669` | `#736d5a` |
 | `--color-text-primary` | `#3a3733` | `#cdc7bb` | `#c9c4b8` |
-| `--color-text-secondary` | `#5a554c` | `#a39d92` | `#8e8a7e` |
+| `--color-text-secondary` | `#5a554c` | `#a39d92` | `#9a9689` |
 | `--color-accent` | `#4f6b57` | `#7fa187` | `#7fa187` |
 | `--color-accent-light` | `#3c5544` | `#9bb9a1` | `#93ae99` |
 | `--color-button-secondary-bg` | `#ece7dd` | `#262421` | `#1e1e17` |
-| `--color-button-secondary-border` | `#bfb7a6` | `#47433d` | `#403d33` |
+| `--color-button-secondary-border` | `#827966` | `#7d7669` | `#736d5a` |
 | `--color-severity-low` | `#3f6249` | `#8fb096` | `#8fb096` |
 | `--color-severity-mid` | `#7b5020` | `#c39257` | `#c39257` |
 | `--color-severity-high` | `#82423b` | `#c68880` | `#c68880` |
@@ -101,7 +124,7 @@ Contrast ratio of each foreground against each surface. **Bold** is below AA 4.5
 | | base | surface | raised | elevated |
 |---|---|---|---|---|
 | text-primary | 10.62 | 9.63 | 9.11 | 8.20 |
-| text-secondary | 5.35 | 4.86 | 4.60 | **4.14** |
+| text-secondary | 6.24 | 5.66 | 5.36 | 4.82 |
 | accent | 6.47 | 5.86 | 5.55 | 4.99 |
 | accent-light | 7.70 | 6.99 | 6.61 | 5.95 |
 | severity-low | 7.76 | 7.04 | 6.66 | 5.99 |
@@ -165,57 +188,109 @@ together proves nothing. `text-accent` turns out to be unused anywhere in `src/`
 
 | Rendered pair | Dark | Attack | Light |
 |---|---|---|---|
-| `FreqBars` count · `MigraineDaysChart` month label — 14px secondary on `bg-elevated` | 4.58 | **4.14** | 4.87 |
+| `FreqBars` count · `MigraineDaysChart` month label — 14px secondary on `bg-elevated` | 4.58 | 4.82 | 4.87 |
 | Chart content — 14px primary on `bg-elevated` | 7.33 | 8.20 | 7.79 |
 | `StatCard` label — 12px secondary on `bg-raised/60` | 5.66 | 4.93 | 5.89 |
 | `StatCard` value — 28px primary | 9.06 | 9.78 | 9.43 |
-| Disabled button / chip-off label — secondary on `bg-raised` | 5.08 | 4.60 | 5.42 |
+| Disabled button / chip-off label — secondary on `bg-raised` | 5.08 | 5.36 | 5.42 |
 | Chip-on label — `accent-light` on `accent/20` over `bg-raised` | 4.67 | 4.78 | 4.68 |
 
-**Passes, with one exception.** Attack mode's `--color-text-secondary` measures **4.14:1** on
-`bg-elevated`, which is where `InsightSection` puts a chart's own labels once the section has a
-note. Reachable today: Insights is untouched by attack mode, so the frequency-bar counts and the
-migraine-days month labels render there below AA whenever attack mode is on. Nudging the token to
-`#96917f` clears it at 4.52 without changing anything else; `#9a9689` gives 4.82 with more headroom.
+**Passes.** It did not when this was first measured: attack mode's `--color-text-secondary` was
+`#8e8a7e` and read **4.14:1** on `bg-elevated`, which is where `InsightSection` puts a chart's own
+labels once the section has a note — so the frequency-bar counts and the migraine-days month labels
+rendered below AA whenever attack mode was on, Insights being untouched by that mode. **Fixed
+2026-08-25** by lifting the token to `#9a9689` (4.82 on elevated, 6.24 on the page).
+
+The dark palette's own fix for the identical bug moved `bg-elevated` rather than the text, and that
+route is closed in attack mode: its elevated sits only 1.11 from `bg-raised`, and darkening it far
+enough to clear 4.5 collapses the two together (1.03 apart at `#28241b`, and still only 4.48). Dark
+had room because its elevated goes *lighter* than raised. Attack mode remains the lower-contrast of
+the two themes — dark's secondary reads 6.46 on its own page against this 6.24.
 
 The 12px `StatCard` labels are the documented type-scale exception. They pass 1.4.3 comfortably —
 the divergence there is from the app's own 14px caption floor, not from WCAG.
 
 ### 1.4.11 Non-text contrast — UI components and states, 3:1
 
+**Fixed 2026-08-25.** Every author-drawn edge measured 1.15–1.8:1 when first
+audited. The fix was not a brighter `--color-bg-border`: that token has 73 call
+sites and only ~17 are controls — 47 are decorative dividers, info-box outlines
+and section cards, and raising it globally would have turned all of them into a
+visible grid, which *is* a photophobia regression under §8.1. A separate
+`--color-border-control` was added instead, at 3:1 against the tightest surface
+a control sits on, and applied only to controls.
+
 | Boundary | Dark | Attack | Light |
 |---|---|---|---|
-| Chip-off ring vs its own fill | **1.16** | **1.24** | **1.15** |
-| Chip-off fill vs the page | **1.27** | **1.17** | **1.22** |
-| Chip-on ring (`accent/50`) vs its tint | **1.71** | **1.79** | **1.54** |
-| `btn-secondary` ring vs its own fill | **1.58** | **1.54** | **1.62** |
-| `btn-secondary` ring vs the page | **1.77** | **1.70** | **1.78** |
-| Toggle OFF track vs page | **1.47** | **1.44** | **1.40** |
+| Chip / preset ring vs its own fill | 1.16 → **3.04** | 1.24 → **3.07** | 1.15 → **3.15** |
+| Chip / preset ring vs the page | 1.47 → **3.87** | 1.44 → **3.58** | 1.40 → **3.85** |
+| `btn-secondary` ring vs its own fill | 1.58 → **3.44** | 1.54 → **3.24** | 1.62 → **3.49** |
+| Toggle OFF track vs page | 1.47 → **3.87** | 1.44 → **3.58** | 1.40 → **3.85** |
+| Toggle thumb vs track (off / on) | **3.44 / 5.42** | **3.24 / 5.86** | — |
 | Toggle ON track vs page | 6.09 | 6.47 | 5.26 |
 | Focus ring vs page / vs `bg-raised` | 6.09 / 4.79 | 6.47 / 5.55 | 5.26 / 4.30 |
 | Logs sparkline (low / high) vs card | 6.50 / 5.33 | 7.04 / 5.77 | 5.58 / 6.10 |
 | `MigraineDaysChart` bar vs its track | 4.21 | 4.68 | 3.79 |
-| 15-day threshold line vs track | **2.23** | **2.01** | **2.00** |
+| 15-day threshold line vs track | *2.23* | *2.01* | *2.00* |
 | Diagram zone fill vs head fill | 6.16 | 6.16 | 5.28 |
-| Diagram disabled region vs head fill | **1.06** | **1.06** | **1.09** |
-| Diagram head vs page | **1.18** | **1.26** | **1.17** |
+| Diagram disabled region vs head fill | *1.06* | *1.06* | *1.09* |
+| Diagram head vs page | *1.18* | *1.26* | *1.17* |
 
-**Does not pass, and the failure is structural rather than palette-specific** — the same boundaries
-fall short in all three modes by almost identical margins, because they come from one decision:
-outlines are drawn one step off their own surface. Everything that carries *meaning* through colour
-— focus ring, severity fills, sparklines, the on-state toggle — clears 3:1 with room. Everything
-that merely draws an *edge* is around 1.2–1.8:1.
+The italicised rows are **exempt, not outstanding** — see "Deliberately left"
+below. The `btn-secondary` ring stays an inset `box-shadow`, so raising it
+costs no layout: it still measures 44px beside its paired primary.
+
+**A second defect surfaced while looking at the screen**, which is the argument
+for verifying with neighbours in frame rather than trusting the token table.
+The app has two switches and they had drifted: `ProfileView`'s attack-mode
+toggle used a light thumb (`bg-text-primary`) where `NotificationSettings`'
+used a dark one (`bg-bg-surface`). The light thumb measured **1.70:1 against
+the accent track when ON** — the switch's own state indicator was the least
+visible thing on it, in the state that matters, and that was true before any of
+this work. Both now use the dark thumb. `NotificationSettings`' interval rows
+were also hand-rolling their unselected state as `bg-bg-border` instead of
+`CHIP_OFF`, against the documented rule; they use `chipClass` now.
 
 ### State difference — selected vs unselected, 3:1
 
-| | Dark | Attack | Light |
-|---|---|---|---|
-| Chip fill: `accent/20` tint vs `bg-raised` | **1.38** | **1.38** | **1.28** |
-| Chip label: `accent-light` vs `text-secondary` | **1.26** | **1.44** | **1.10** |
-| Toggle track: accent vs `bg-border` | 4.14 | 4.49 | 3.76 |
+**Fixed 2026-08-25** by adding a mark rather than by raising contrast.
 
-The chip's selected state is carried by three simultaneous changes — fill tint, ring, label colour —
-**none of which individually reaches 3:1**, though they compound. The toggle passes.
+| | Before | After |
+|---|---|---|
+| Chip fill: `accent/20` tint vs `bg-raised` | 1.38 | 1.38 *(unchanged)* |
+| Chip label: `accent-light` vs `text-secondary` | 1.26 | 1.26 *(unchanged)* |
+| **`ChipCheck` glyph on the selected tint** | — | **4.68** |
+| Toggle track: accent vs off-track | 4.14 | 4.14 |
+
+The colour deltas are deliberately unchanged: raising them would mean a louder
+selected state on screens that show dozens of chips. `ChipCheck`
+(`src/components/ChipCheck.tsx`) carries the state instead, at 4.68:1 with no
+palette change — and it satisfies §8.2's stricter "never by colour alone",
+which matters here specifically because FL-41 lenses shift exactly the
+sage-vs-grey distinction the chips were relying on.
+
+**The slot is always rendered, at `opacity-0` when unselected.** A check that
+appears on tap makes a chip wider than its unselected self, so a wrapped row
+reflows on every toggle — the same failure as the "Woke up with this migraine"
+toggle that changed height as it toggled. Verified at 375px: toggling one chip
+in an 8-chip wrapped row moved **nothing** — zero change in width, x or y for
+all eight.
+
+### Deliberately left failing
+
+Each has a WCAG exemption, and claiming otherwise would be worse than the gap:
+
+- **Diagram disabled regions** (1.06) — 1.4.11 exempts inactive components.
+- **The 15-day threshold line** (2.23) — every row prints its day count as
+  text, and the line is already `aria-hidden`; information available in text is
+  exempt.
+- **The diagram head outline and decorative hairlines** — not required to
+  identify any control. This is the whole point of keeping `--color-bg-border`
+  quiet.
+- **The selected chip's own ring** (`accent/50`, 1.71 against its tint) — the
+  selected state is identified by the tint plus the glyph; the ring is
+  reinforcement, and raising it would undo the "selected is a tint, never a
+  solid fill" rule.
 
 ### The other colour criteria
 
@@ -227,55 +302,13 @@ The chip's selected state is carried by three simultaneous changes — fill tint
   Already recorded in CLAUDE.md with its justification and the condition that it must be revisited
   before any public release.
 
-### The tension, stated honestly
+### The tension, resolved
 
-1.4.11 pushes toward stronger edges; §8.1 pushes contrast inward. These are less opposed than they
-look — 3:1 is not a harsh boundary, and most of the shortfalls above sit at 1.2–1.8, with a lot of
-room below "harsh". The toggle's off-track reaches 3:1 at roughly `#6b655c` in dark, which is still
-a quiet grey.
+1.4.11 pushes toward stronger edges; §8.1 pushes contrast inward. They turned
+out to be far less opposed than they looked. 3:1 is not a harsh boundary, and a
+1px hairline adds negligible luminance whatever its contrast — §8.1's concern is
+large bright fields and saturated hues. The trap was the *token*, not the
+requirement: one value doing both jobs meant fixing controls would have meant
+brightening 47 decorative lines. Splitting it made the fix cost nothing the
+palette cares about.
 
-The **chip ring is the genuinely hard case**, because it sits between two colours and needs 3:1
-against *both*: in dark that means about `#7d7669` (3.04 against the chip fill, 3.87 against the
-page), which is a visibly brighter outline on every chip in the app, on screens that show dozens.
-That one is a real design trade, not an oversight to correct — and it is the decision to take
-deliberately if the app is ever released publicly on an accessibility thesis.
-
-## Audit findings on the shipping palettes
-
-Found while measuring, not part of the light-mode work, and **not changed**:
-
-- **Dark `--color-warning` is 3.35:1 on `bg-elevated`** and 3.71 on `bg-raised` — below the AA this
-  palette is tuned to hit. It currently renders on Today (`bg-base`, 4.72) so nothing on screen is
-  failing, but it is the one token that would fail the moment it moved into an Insights section.
-  Attack mode's is 3.87 on elevated.
-- **Dark severity-mid (4.45) and severity-high (4.25) are just under AA on `bg-elevated`.**
-  CLAUDE.md's rule names `bg-raised` as the tight surface, where both pass (4.94 / 4.72).
-  `bg-elevated` is tighter still and postdates that rule.
-- Four call sites still hardcode `#e4dfd6` (the dossier's rejected text value) and one hardcodes
-  `#a65a52` (the rejected severity-high). Listed in the session that found them; they are in the
-  SVG/Recharts group above, which is exactly the group that goes stale.
-
-## What shipping light mode would take
-
-The palette is the small half. In order:
-
-1. A `[data-theme="light"]` block in `src/index.css` — the table above, mechanical.
-2. **`color-scheme: light`** switched with it, or every native control (the `datetime-local`
-   pickers, scrollbars, the WKWebView's own chrome) stays dark inside a light page.
-3. **A second copy of every hand-mirrored constant**, read through a function rather than a
-   module constant, because those files are evaluated once at import and can't respond to a theme
-   attribute. This is the real work, and it touches the head diagram, both charts and the heatmap.
-4. **The Today hero artwork.** The gradients fade from `bg-bg-base` so the photograph dissolves into
-   the page; against a light page the same images need a light-mode treatment or the hero becomes
-   the one dark rectangle in the app.
-5. A third state on the theme control, which today is a boolean (`hd_attack_mode`), plus the
-   interaction with `BrightnessOverlay` — its scrim is a warm *dark* wash and would need to become
-   a lightening one, or dimming a light page would only muddy it.
-6. Re-verification on device. §8.1's whole point is that a large light field at phone brightness is
-   itself the aggravating stimulus, so a light mode has to be judged on a phone in a dark room by
-   someone with photophobia — which is the test this palette has not had.
-
-**Whether to ship it is a separate question from whether it exists.** §8.1 says to offer warm light
-*and* true dark *and* attack mode; CLAUDE.md's "the app is always dark" is a narrower call taken
-because this is a single-user app whose user wanted dark. This document exists so that call can be
-revisited with the numbers already done.

@@ -591,6 +591,85 @@ the code.
   back as "Maximum in one go" when the editor was restructured. Worth a
   re-read of recent decisions after any wholesale rewrite of a file.
 
+## The palette measured against WCAG, and what it cost (2026-08-25)
+
+A full contrast audit of all three palettes, measured on the pairs that
+**actually render** rather than on the token table — a token pair nothing puts
+together proves nothing. Every number, and the exemptions, are in
+[`palette.md`](palette.md). What it changed:
+
+- **Attack mode's `--color-text-secondary` was below AA on `bg-elevated`**
+  (4.14:1) — which is where `InsightSection` puts a chart's own labels, so the
+  frequency counts and migraine-days month labels rendered under AA whenever
+  attack mode was on. Lifted to `#9a9689` (4.82). **The dark palette's own fix
+  for the identical bug moved `bg-elevated` instead, and that route is closed
+  here**: attack's elevated sits 1.11 from `bg-raised` and darkening it far
+  enough collapses the stack before clearing 4.5. Dark had room because its
+  elevated goes *lighter* than raised.
+- **Non-text contrast (1.4.11) failed everywhere and structurally** — every
+  author-drawn edge measured 1.15–1.8:1 against the required 3:1, in all three
+  modes, by near-identical margins, because they came from one decision:
+  outlines drawn one step off their own surface. Fixed with a **second token**,
+  `--color-border-control`, not a brighter `--color-bg-border`: that token has
+  73 call sites and only ~17 are controls, so raising it globally would have
+  turned 47 decorative dividers into a visible grid — which *is* the §8.1
+  regression the palette exists to avoid. Confined to controls it costs a 1px
+  hairline on things meant to be pressed.
+- **The tension between 1.4.11 and §8.1 was largely illusory.** 3:1 is not a
+  harsh boundary and a hairline adds negligible luminance whatever its
+  contrast; §8.1's concern is large bright fields and saturated hues. The trap
+  was one token doing two jobs.
+- **Selected chip state now carries `ChipCheck`, not just colour.** The
+  selected-vs-unselected delta was 1.38 on the fill and 1.26 on the label. The
+  glyph reads 4.68:1 with **no palette change**, and it satisfies §8.2's
+  stricter "never by colour alone" — which matters here specifically because
+  FL-41 lenses shift exactly the sage-vs-grey distinction the chips relied on.
+  **Its slot is always rendered at `opacity-0`**, because a check that appears
+  on tap makes the chip wider than its unselected self and a wrapped row
+  reflows on every toggle. Verified: toggling one chip in an eight-chip row
+  moved nothing.
+- **Two pre-existing defects surfaced only by looking at the screen**, which is
+  the argument for verifying with neighbours in frame rather than trusting the
+  numbers. The app has two switches and they had drifted: `ProfileView`'s used
+  a light thumb measuring **1.70:1 against its own accent track when on** — the
+  switch's state indicator was the least visible thing on it, in the state that
+  matters. And `NotificationSettings` was hand-rolling its unselected interval
+  state instead of using `CHIP_OFF`.
+- **Four things are left failing, with their exemptions written down** rather
+  than quietly: disabled diagram regions (1.4.11 exempts inactive components),
+  the 15-day threshold line (the count is printed as text beside it, and it is
+  already `aria-hidden`), decorative hairlines, and the selected chip's own
+  ring. 1.4.4 also still knowingly fails at the 150% ceiling.
+
+**A methodology note worth keeping.** Two rounds were wasted on a measurement
+artefact: mutating `data-theme` and reading `color` in the *same* synchronous
+script returns a stale colour while custom-property lookups resolve fresh, so
+the fix looked inert on a server that was serving it correctly. Split the
+mutation and the read across separate calls. The compiled CSS in `dist/` is the
+deterministic check when a browser reading disagrees with itself.
+
+## The design system, mirrored into Figma (2026-08-25)
+
+**Lidd Design System** — <https://www.figma.com/design/eIOtxkHeEPguTLY2gWdhxF>.
+Variable collections only, no components: `Primitives` (38, hidden behind empty
+scopes), `Color` (18 semantic × Dark/Light/Attack), `Radius`, `Typography`, plus
+eight Lexend text styles and foundations pages.
+
+- **All three modes are real Figma modes**, so one set of bound variables
+  resolves three ways — the Colour page proves it with three columns pinned via
+  `setExplicitVariableModeForCollection`.
+- **It is a hand-maintained mirror, not a source.** `index.css` stays
+  authoritative for Dark and Attack, `palette.md` for Light. Nothing syncs; a
+  value changed in one place has to be changed in the other, exactly like the
+  hand-mirrored SVG and Recharts constants.
+- **Primitives deliberately carry no code syntax** — no CSS variable
+  corresponds to `sand/450`, and inventing one would misrepresent the codebase.
+  **No effect styles either**, since the app uses no drop shadows.
+- Gotcha for anyone building components there: `figma.createAutoLayout()`
+  defaults to a **white fill**. 69 rows across three pages had it before it was
+  caught on a screenshot.
+
+
 ## Head diagram (2026-08-18)
 
 - **Both views share one viewBox, aligned on the crown.** Three attempts. Cropped
@@ -1143,6 +1222,35 @@ list scrolled mid-attack.
   half, so the schematic head and its clip paths (and the `useId` they needed)
   are gone: a side is now a per-path `fillOpacity`. The mirroring and the
   accessible label were already right and did not move.
+- **Insights needs a proper design review — flagged 2026-08-25, deferred by
+  Sunny to a session of its own.** Two specific things to settle, plus
+  whatever else a real pass turns up:
+  - **The note now sits *below* the content in every `InsightSection`**,
+    swapped on Sunny's instruction. The previous order was argued for and
+    that argument was never refuted — a caption saying what the figure counts
+    ("migraine days" not "headache days"; an attack past midnight counting as
+    two days) has to be known *before* the chart can be read, and underneath
+    it becomes a footnote reached only after guessing. What changed is the
+    call, not the reasoning: the captions run five or six lines and leading
+    with them pushed the figure below the fold on a phone. Both halves are
+    written into `InsightSection.tsx` so whoever revisits it has the case for
+    either order. A third option nobody has costed: shorten the captions.
+  - **The stat tiles at the top still read label-then-number**, which is now
+    the opposite order from the sections below them. Defensible — a two-word
+    tile label is not a caption — but it is an inconsistency on one page and
+    it was noticed immediately.
+  This is a *review*, not a defect list. Insights is also the tab attack mode
+  still does nothing to (see Known gaps), so the two questions could usefully
+  be answered together.
+- **`ChipCheck` is applied to single-select controls too, and that was a
+  judgement call** (2026-08-25). The mark went on every chip in the app —
+  including the Insights period pills, the HIT-6 answer options and the
+  medication quantity picker — so nothing runs a parallel pattern. Material
+  does use a check for single-select chips, so this is defensible; but a check
+  conventionally reads as "one of many" and a radio as "one of these", and if
+  the single-select cases should lose it, that is a small revert confined to
+  three call sites. Nobody has looked at it on a real screen yet.
+
 - **No tone-of-voice research exists yet.** The copy was audited for internal
   consistency against the rules already recorded (never dosing advice, never
   conclude, "not answered" is not "no impact", never present a default as
@@ -1155,7 +1263,7 @@ list scrolled mid-attack.
 - **Medication taken without logging an attack is invisible.** Medication exists only inside an attack's snapshots, so a dose on an unlogged day doesn't reach the day counts or the overuse figure. Decided (2026-08-18) to design for both being logged rather than add a standalone dose path, and the Insights caption says outright that such doses aren't counted.
 - **Preventive adherence isn't tracked.** Parked with the preventive reminders. It's the difference between "the drug didn't work" and "I didn't take it".
 - **Open: `--color-text-primary` is unresolved.** It shipped at the dossier's `#e4dfd6`, measured 13.1:1 against the page and 10.3:1 against a raised card — near max contrast, which is the harsh pairing the photophobia research warns against — and was softened to `#cdc7bb` (10.3:1 / 8.1:1, still past AAA). That's a measured improvement, not a settled value: the right number is somewhere in a band, and the only way to pick it is on a real screen mid-attack. `#d7d1c6` sits midway if `#cdc7bb` reads too soft. **Left open deliberately** (2026-08-18) — the severity colours lifted in the same pass are settled and shouldn't be reopened with it.
-- **A warm light theme is specified but not built** (2026-08-18). The photophobia research is genuinely mixed on dark mode: user preference skews dark (~63% in one analysis), controlled studies find no reliable difference, and a badly-built dark theme — vibrant accents on pure black, max contrast — can make symptoms worse. The recommendation was to ship *both* a warm light and a true dark theme plus a dedicated attack mode, with the attack mode rated more valuable than the light/dark toggle itself. Attack mode and the retuned warm dark theme shipped; the light theme is parked because the app currently has one user and no wider audience to serve, and because a light theme needs a second variant for all ~44 hand-mirrored colours in the head diagram and charts. Revisit if the app is ever built for a wider group.
+- **A warm light theme is specified but not built** (2026-08-18). The photophobia research is genuinely mixed on dark mode: user preference skews dark (~63% in one analysis), controlled studies find no reliable difference, and a badly-built dark theme — vibrant accents on pure black, max contrast — can make symptoms worse. The recommendation was to ship *both* a warm light and a true dark theme plus a dedicated attack mode, with the attack mode rated more valuable than the light/dark toggle itself. Attack mode and the retuned warm dark theme shipped; the light theme is parked because the app currently has one user and no wider audience to serve, and because a light theme needs a second variant for all ~44 hand-mirrored colours in the head diagram and charts. Revisit if the app is ever built for a wider group. **A full, measured light palette now exists** (`docs/palette.md`, 2026-08-25) — every token, the hand-mirrored SVG/Recharts constants, and the contrast numbers — so the specification half of this gap is closed and what remains is the wiring: a `[data-theme="light"]` block, `color-scheme`, making those constants read the active theme instead of being module-level, and a light-mode treatment for the Today hero artwork.
 - **Attack mode simplifies Today, and only Today** (updated 2026-08-18). It was the theme, the 20px floor, the dim floor and the loss of animation, with no content reduction at all. `TodaySummary` now drops the two month tiles — figures you read and think about, and the largest, brightest text on the page — and the overuse warning's explanatory paragraph, keeping the warning's own line and the last-dose row: the two things bearing on a decision in the next hour. **The other three tabs are untouched.** Insights is entirely "figures to read", so reducing it means deciding what someone mid-attack would still open it for, and that hasn't been settled. The impact prompt deliberately *does* render in attack mode, against that rule: an attack usually ends while attack mode is still on, so hiding it would mean the 24h window nearly always elapses unseen, and one question with four large targets is what the mode asks for anyway.
 
 - ~~Notification action buttons have not been round-tripped on a device~~ — **verified on device**: "Something changed" opens the wizard; "No change" with the app force-quit leaves the app closed and lands a reading stamped at the tap time, not the drain time; the follow-up reminder fires with the app still closed; snooze returns on schedule; reminders are audible and tap a paired Apple Watch. Note for future debugging: **synthetic taps on Simulator notifications still don't activate action buttons**, so a tap that produces no log line there proves nothing — this had to be done by hand on a phone.

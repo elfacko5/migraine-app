@@ -75,7 +75,7 @@ export function HistoryView({
           className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
             count > 0
               ? 'bg-accent/15 text-accent-light ring-1 ring-accent/40'
-              : 'bg-bg-raised text-text-secondary ring-1 ring-bg-border hover:text-text-primary'
+              : 'bg-bg-raised text-text-secondary ring-1 ring-border-control hover:text-text-primary'
           }`}
         >
           Filter &amp; sort

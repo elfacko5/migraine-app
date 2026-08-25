@@ -60,7 +60,7 @@ export function MedicationsView({ medications, onEdit, onAddNew, onClose }: Prop
                   type="button"
                   onClick={() => onEdit(med)}
                   aria-label={`Edit ${med.name}`}
-                  className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
+                  className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
                 >
                   <MedIcon name={med.name} dose={med.dose} className="h-5 w-5 shrink-0 text-text-secondary" />
                   <span className="min-w-0 flex-1">

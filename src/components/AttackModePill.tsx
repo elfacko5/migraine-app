@@ -62,7 +62,7 @@ export function AttackModePill({ active, onToggle, collapsed = false }: Props) {
       className={`absolute right-4 z-[45] flex items-center rounded-full px-3.5 font-medium ring-1 transition-[color,background-color,box-shadow] ${
         active
           ? 'bg-accent/20 text-accent-light ring-accent/40'
-          : 'bg-bg-raised text-text-secondary ring-bg-border hover:text-text-primary'
+          : 'bg-bg-raised text-text-secondary ring-border-control hover:text-text-primary'
       }`}
     >
       {/* 24px, not the 20px it shipped at. The mark read small beside a 16px

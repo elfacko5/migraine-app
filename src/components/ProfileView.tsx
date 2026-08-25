@@ -50,7 +50,7 @@ export function ProfileView({ onOpen, accountEnabled, hit6Due = false }: MenuPro
           key={item.id}
           type="button"
           onClick={() => onOpen(item.id)}
-          className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-4 text-left transition-colors hover:bg-bg-raised"
+          className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-4 text-left transition-colors hover:bg-bg-raised"
         >
           <item.Icon className="h-5 w-5 shrink-0 text-text-secondary" />
           <span className="min-w-0 flex-1">
@@ -95,7 +95,7 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
           role="switch"
           aria-checked={attackMode}
           onClick={() => onAttackMode(!attackMode)}
-          className="flex w-full items-center gap-3 rounded-xl border border-bg-border bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
+          className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5 shrink-0 text-text-secondary" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
@@ -106,10 +106,18 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
           </span>
           <span
             aria-hidden="true"
-            className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${attackMode ? 'bg-accent' : 'bg-bg-border'}`}
+            /* Matches NotificationSettings' switch, which is the other one in
+               the app — the off track takes the control-outline token (1.4.11
+               wants 3:1 for a component's own boundary; bg-bg-border measured
+               1.47:1 against the page) and the thumb is bg-bg-surface, not
+               text-primary. A light thumb measured 1.70:1 against the accent
+               track when ON, so the switch's own indicator was the least
+               visible thing on it in the state that matters. bg-bg-surface
+               reads 3.44 off / 5.42 on. */
+            className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${attackMode ? 'bg-accent' : 'bg-border-control'}`}
           >
             <span
-              className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-text-primary transition-transform ${attackMode ? 'translate-x-5' : ''}`}
+              className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-bg-surface transition-transform ${attackMode ? 'translate-x-5' : ''}`}
             />
           </span>
         </button>
@@ -126,7 +134,7 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
         <p className="text-sm font-medium text-text-primary">Text size</p>
 
         {/* Five-segment picker */}
-        <div className="flex rounded-xl overflow-hidden border border-bg-border">
+        <div className="flex rounded-xl overflow-hidden border border-border-control">
           {SCALES.map((s, i) => (
             <button
               key={s}
@@ -510,7 +518,7 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="123456"
-            className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+            className="w-full rounded-lg bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
           />
           <button
             type="submit"
@@ -537,7 +545,7 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
-        className="w-full rounded-lg bg-bg-surface border border-bg-border px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+        className="w-full rounded-lg bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
       />
       <button
         type="submit"

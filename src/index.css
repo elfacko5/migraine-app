@@ -70,12 +70,32 @@
   --color-bg-elevated:    #383430;
   --color-bg-border:      #3a3733;
   --color-border-subtle:  #47433d;
+  /* **The outline of something you press, as opposed to a hairline between
+     two things you read.** WCAG 1.4.11 wants 3:1 for the visual information
+     that identifies a control; every author-drawn edge in this app measured
+     1.15-1.8:1 (audit in docs/palette.md, 2026-08-25).
+
+     It is a separate token rather than a brighter --color-bg-border because
+     that one has 73 call sites and only ~17 are controls: 47 are decorative
+     dividers, info-box outlines and section cards. Raising it globally would
+     turn every one of those into a visible grid line, which *would* be a
+     photophobia regression under §8.1. Confined to controls it is a 1px
+     hairline on things meant to be pressed, and adds negligible luminance.
+
+     #7d7669 measures 3.04 against bg-raised (the tightest surface a chip sits
+     on), 3.44 on bg-surface and 3.87 on the page. Don't lower it below 3.0 on
+     bg-raised — that is the number the whole token exists for. */
+  --color-border-control: #7d7669;
   --color-text-primary:   #cdc7bb;  /* soft, never #fff — see the note below */
   --color-text-secondary: #a39d92;
   --color-accent:         #7fa187;  /* muted sage — the safest hue */
   --color-accent-light:   #9bb9a1;
   --color-button-secondary-bg:     #262421;
-  --color-button-secondary-border: #47433d;
+  /* The same 3:1 control-outline value as --color-border-control. A
+     secondary button's ring is the only thing that says it is a button;
+     #47433d measured 1.58:1 against its own fill and 1.77 against the page.
+     Now 3.44 and 3.87. */
+  --color-button-secondary-border: #7d7669;
   /* Lifted off the spec's literal values so severity text clears AA on a
      raised card. #7fa187/#b07a3c/#a65a52 measured 4.8 / 3.7 / 2.7:1 against
      bg-raised — meaning the higher the severity, the dimmer it rendered, and
@@ -99,12 +119,32 @@
   --color-bg-elevated:    #2f2a1f;
   --color-bg-border:      #34322a;
   --color-border-subtle:  #403d33;
+  /* 3.07 against attack's bg-raised, 3.24 on bg-surface, 3.58 on the page. */
+  --color-border-control: #736d5a;
   --color-text-primary:   #c9c4b8;  /* deliberately not the brightest option */
-  --color-text-secondary: #8e8a7e;
+  /* Lifted from #8e8a7e (2026-08-25). 14px secondary text on bg-elevated —
+     which is where InsightSection puts a chart's own labels once the section
+     has a note, so the frequency-bar counts and the migraine-days month
+     labels — measured 4.14:1, under AA. Insights is untouched by attack mode,
+     so that text was rendering below AA whenever the mode was on.
+
+     The dark palette hit the identical bug and fixed it by nudging
+     bg-elevated instead; that route is closed here. Attack's elevated is only
+     1.11 from bg-raised, and darkening it far enough to clear 4.5 collapses
+     the two into each other (1.03 apart at #28241b, and still only 4.48) —
+     dark had room because its elevated goes *lighter* than raised, so
+     darkening it bought contrast without losing the stack.
+
+     #9a9689 measures 4.82 on elevated and 6.24 on the page. Attack mode is
+     still the lower-contrast of the two themes, which is the property that
+     matters: dark's secondary reads 6.46 on its own page. Don't take this
+     brighter — the mode's whole claim is a quieter screen. */
+  --color-text-secondary: #9a9689;
   --color-accent:         #7fa187;
   --color-accent-light:   #93ae99;
   --color-button-secondary-bg:     #1e1e17;
-  --color-button-secondary-border: #403d33;
+  /* 3:1 control outline — see the dark theme's note. */
+  --color-button-secondary-border: #736d5a;
 }
 
 /* ── Three-tier button hierarchy ───────────────────────

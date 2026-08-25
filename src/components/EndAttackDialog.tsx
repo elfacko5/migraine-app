@@ -101,7 +101,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
               type="button"
               onClick={() => setMode('now')}
               aria-pressed={mode === 'now'}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === 'now' ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-bg-border hover:bg-bg-border'}`}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === 'now' ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'}`}
             >
               Just now
             </button>
@@ -109,7 +109,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
               type="button"
               onClick={() => setMode('manual')}
               aria-pressed={mode === 'manual'}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === 'manual' ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-bg-border hover:bg-bg-border'}`}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === 'manual' ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'}`}
             >
               Earlier
             </button>
@@ -123,7 +123,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
               min={minLocal}
               max={maxLocal}
               onChange={(e) => setManualTime(e.target.value)}
-              className="mt-1.5 w-full rounded-lg bg-bg-raised border border-bg-border px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+              className="mt-1.5 w-full rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle"
             />
           )}
           {mode === 'manual' && (
