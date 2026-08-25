@@ -25,6 +25,15 @@ These tokens are mirrored in Figma: **Lidd Design System** —
   `sand/450` — inventing one would misrepresent the codebase.
 - Every semantic variable carries its real CSS name as WEB code syntax (`var(--color-bg-base)`), so
   Dev Mode reports the token this repo actually uses.
+- **Scopes come from the call sites, not from the token's name** — corrected 2026-08-25 after
+  `accent` showed a single swatch in the Fill picker. Figma filters that picker to
+  `FRAME_FILL`/`SHAPE_FILL`, and three tokens had been scoped by what their names implied rather
+  than by how the app uses them: `accent/light` is `.btn-primary`'s hover background and the sync
+  dot, `border/control` fills both toggle tracks, and `text/secondary` fills the sync dot, the
+  "not recorded" rule and the 15-day line. All three now carry fill scopes. The three that stay
+  stroke/text-only — `border/subtle`, `text/primary`, `button/secondary-border` — have zero fill
+  call sites, and `text/primary` only became one of them when the switch thumb moved to
+  `bg-bg-surface`. Re-grep before narrowing a scope.
 - **There are no effect styles, deliberately** — the app uses no drop shadows; depth is the four
   surface tones.
 - **This file is a mirror, not the source.** `src/index.css` stays authoritative for Dark and
