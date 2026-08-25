@@ -281,7 +281,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
                 strokeWidth={isActive ? 3.5 : 2.5}/>
               <text x={cx} y={cy + 6} textAnchor="middle"
                 fontSize={18} fontFamily="Lexend, system-ui, sans-serif" fontWeight="700"
-                fill="#e4dfd6">{s}</text>
+                fill="#cdc7bb">{s}</text>
             </g>
           );
         })}

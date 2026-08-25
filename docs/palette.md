@@ -18,8 +18,8 @@ These tokens are mirrored in Figma: **Lidd Design System** —
   modes, so selecting a frame and switching the mode re-resolves everything bound to a semantic
   token. The Colour page shows the three side by side, driven by one set of variables with
   `setExplicitVariableModeForCollection` per column.
-- **Semantic tokens alias a hidden `Primitives` ramp** (`sand` 26 / `sage` 7 / `amber` 3 / `clay` 2 —
-  38 values, named by hue family and lightness). The primitives have **empty scopes** so they never
+- **Semantic tokens alias a hidden `Primitives` ramp** (48 values across `sand` / `sage` / `amber` /
+  `clay`, named by hue family and lightness). The primitives have **empty scopes** so they never
   appear in a property picker; binding one directly would produce a value that cannot respond to a
   mode. **Primitives deliberately carry no code syntax**, because no CSS variable corresponds to
   `sand/450` — inventing one would misrepresent the codebase.
@@ -36,6 +36,16 @@ These tokens are mirrored in Figma: **Lidd Design System** —
   `bg-bg-surface`. Re-grep before narrowing a scope.
 - **There are no effect styles, deliberately** — the app uses no drop shadows; depth is the four
   surface tones.
+- **The hand-mirrored constants are tokens too** — added 2026-08-25 after the first pass shipped
+  without them. `diagram/head-fill`, `diagram/disabled` and `severity/{low,mid,high}-edge` live in
+  `headDiagram.ts` as TypeScript constants because an SVG presentation attribute cannot read
+  `var()`. They are exactly the values that go stale, so leaving them out of the library left the
+  most drift-prone half of the palette undocumented. **They deliberately carry no WEB code syntax**
+  — there is no CSS variable to name, and inventing one would be a lie; the description names the
+  constant instead.
+- **`accent/tint` and `accent/ring` are the one place a semantic holds a raw value.** They are the
+  chip contract from `chipStyles.ts` (`bg-accent/20` + `ring-accent/50`), and Figma cannot express
+  alpha through an alias — so they must be kept in step with `accent/default` by hand.
 - **This file is a mirror, not the source.** `src/index.css` stays authoritative for Dark and
   Attack, and this document for Light. Nothing syncs automatically: a value changed here has to be
   changed in Figma by hand, and vice versa.

@@ -125,7 +125,7 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
             return (
               <text key={`c-${z.name}`} x={cx} y={cy + 7} textAnchor="middle"
                 fontSize={20} fontFamily="Lexend, system-ui, sans-serif" fontWeight="700"
-                fill="#e4dfd6" pointerEvents="none">
+                fill="#cdc7bb" pointerEvents="none">
                 {count}×
               </text>
             );
@@ -139,7 +139,7 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
               </text>
               {count > 0 && (
                 <text x={cx} y={cy + 22} textAnchor="middle" fontSize={22}
-                  fontFamily="Lexend, system-ui, sans-serif" fontWeight="700" fill="#e4dfd6">
+                  fontFamily="Lexend, system-ui, sans-serif" fontWeight="700" fill="#cdc7bb">
                   {count}×
                 </text>
               )}

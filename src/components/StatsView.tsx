@@ -220,7 +220,7 @@ export function StatsView({ attacks, medications = [] }: Props) {
                     <Tooltip
                       contentStyle={{ background: '#302d29', border: '1px solid #3a3733', borderRadius: 8, fontSize: '0.75rem' }}
                       labelStyle={{ color: '#a39d92' }}
-                      itemStyle={{ color: '#e4dfd6' }}
+                      itemStyle={{ color: '#cdc7bb' }}
                     />
                     <Line type="monotone" dataKey="severity" stroke="#9bb9a1" strokeWidth={2} dot={{ r: 3, fill: '#9bb9a1' }} isAnimationActive={false} />
                   </LineChart>
@@ -249,7 +249,7 @@ export function StatsView({ attacks, medications = [] }: Props) {
             color="#c39257"
             note="Recorded on attack days only — this is what you suspected at the time, not what's been shown to bring one on."
           />
-          <FreqSection title="Top symptoms"       sub={PERIOD_SUB[period]} data={stats.symptoms}    color="#a65a52" />
+          <FreqSection title="Top symptoms"       sub={PERIOD_SUB[period]} data={stats.symptoms}    color="#c68880" />
           <FreqSection title="Top reliefs"        sub={PERIOD_SUB[period]} data={stats.reliefs}     color="#7fa187" />
         </>
       )}
