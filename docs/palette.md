@@ -25,17 +25,24 @@ These tokens are mirrored in Figma: **Lidd Design System** —
   `sand/450` — inventing one would misrepresent the codebase.
 - Every semantic variable carries its real CSS name as WEB code syntax (`var(--color-bg-base)`), so
   Dev Mode reports the token this repo actually uses.
-- **Scopes come from the call sites, not from the token's name** — corrected 2026-08-25 after
-  `accent` showed a single swatch in the Fill picker. Figma filters that picker to
-  `FRAME_FILL`/`SHAPE_FILL`, and three tokens had been scoped by what their names implied rather
-  than by how the app uses them: `accent/light` is `.btn-primary`'s hover background and the sync
-  dot, `border/control` fills both toggle tracks, and `text/secondary` fills the sync dot, the
-  "not recorded" rule and the 15-day line. All three now carry fill scopes. The three that stay
-  stroke/text-only — `border/subtle`, `text/primary`, `button/secondary-border` — have zero fill
-  call sites, and `text/primary` only became one of them when the switch thumb moved to
-  `bg-bg-surface`. Re-grep before narrowing a scope.
-- **There are no effect styles, deliberately** — the app uses no drop shadows; depth is the four
-  surface tones.
+- **Scope for how Figma draws, not for how CSS declares** — corrected twice, 2026-08-25/26, both
+  times because a group showed too few swatches in the Fill picker.
+
+  The first pass scoped by what a token's *name* implied, which hid three tokens that are really
+  fills: `accent/light` is `.btn-primary`'s hover background and the sync dot, `border/control`
+  fills both toggle tracks, `text/secondary` fills the sync dot, the "not recorded" rule and the
+  15-day line.
+
+  The second pass found the deeper error: scoping from **CSS call sites at all** is the wrong model
+  for a design tool. In code an icon is `stroke="currentColor"` — and `currentColor` *is* the text
+  colour — while a divider is a CSS `border`. In Figma an icon is a vector with a fill and a divider
+  is a thin rectangle, so `text/*` and `border/subtle` need shape scopes or the correct token cannot
+  be picked at all. Every group is now complete in a shape Fill picker except `accent`, where
+  `accent/ring` stays stroke-only because a ring in Figma *is* a stroke.
+
+  The rule that survives: **a scope answers "could a designer legitimately need this here?", not
+  "does the current code do this?"** — but never `ALL_SCOPES`, and the 48 primitives stay hidden
+  everywhere so a raw ramp value can't be bound in place of a mode-aware semantic.
 - **The hand-mirrored constants are tokens too** — added 2026-08-25 after the first pass shipped
   without them. `diagram/head-fill`, `diagram/disabled` and `severity/{low,mid,high}-edge` live in
   `headDiagram.ts` as TypeScript constants because an SVG presentation attribute cannot read
