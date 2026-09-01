@@ -496,6 +496,24 @@ private struct NoChangeButton: View {
 /// This is the state that had nothing to put in its lower two thirds, which is
 /// what makes a picture the right answer here and the wrong one there.
 private struct LiddArtwork: View {
+    /// Which way the text is protected — and therefore which way the artwork
+    /// is free to run.
+    ///
+    /// **Horizontal is `HomeCard`'s own arrangement** and belongs on the wide
+    /// family, where the text takes a column on the left and the picture takes
+    /// one on the right, exactly as the Today hero does.
+    ///
+    /// **Vertical is for the square family**, and the reason is the aspect
+    /// ratio rather than a change of mind: on a 158pt square a 64% band leaves
+    /// the artwork a strip, and the horizontal fade spends the other 40% of
+    /// the width on a dark wash with nothing in it. The text is top-anchored
+    /// there anyway, so darkening the top instead lets the picture have the
+    /// whole width below it. Same principle both ways — protect the text, let
+    /// the artwork have everything else.
+    enum Orientation { case horizontal, vertical }
+
+    var orientation: Orientation = .horizontal
+
     /// Resolved once. `Bundle.main` inside an extension is the extension's
     /// own bundle, which is where the file is copied.
     private static let artwork: UIImage? = {
@@ -515,41 +533,64 @@ private struct LiddArtwork: View {
                 // Same class of silent miss as `Image("name")` resolving only
                 // against an asset catalog.
                 if let image = Self.artwork {
+                    // Horizontal keeps the image's *leading* edge, matching
+                    // `imageAnchor="left"` on `AttackFreeCard` — the moon sits
+                    // left of centre in the square source. Vertical runs the
+                    // full width, where a square source on a square widget
+                    // barely crops at all.
+                    let bandWidth = orientation == .horizontal ? geo.size.width * 0.64 : geo.size.width
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: geo.size.width * 0.64, height: geo.size.height, alignment: .leading)
+                        .frame(width: bandWidth, height: geo.size.height, alignment: .leading)
                         .clipped()
                         .frame(width: geo.size.width, height: geo.size.height, alignment: .trailing)
                 }
-                LinearGradient(
-                    stops: [
-                        .init(color: .liddBase, location: 0.40),
-                        .init(color: Color.liddBase.opacity(0.55), location: 0.66),
-                        .init(color: Color.liddBase.opacity(0), location: 0.90),
-                    ],
-                    startPoint: .leading, endPoint: .trailing
-                )
-                VStack(spacing: 0) {
+                if orientation == .horizontal {
+                    LinearGradient(
+                        stops: [
+                            .init(color: .liddBase, location: 0.40),
+                            .init(color: Color.liddBase.opacity(0.55), location: 0.66),
+                            .init(color: Color.liddBase.opacity(0), location: 0.90),
+                        ],
+                        startPoint: .leading, endPoint: .trailing
+                    )
+                    VStack(spacing: 0) {
+                        LinearGradient(
+                            stops: [
+                                .init(color: .liddBase, location: 0),
+                                .init(color: Color.liddBase.opacity(0.45), location: 0.40),
+                                .init(color: Color.liddBase.opacity(0), location: 1),
+                            ],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                        .frame(height: geo.size.height * 0.30)
+                        Spacer(minLength: 0)
+                        LinearGradient(
+                            stops: [
+                                .init(color: Color.liddBase.opacity(0), location: 0),
+                                .init(color: Color.liddBase.opacity(0.55), location: 0.60),
+                                .init(color: .liddBase, location: 1),
+                            ],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                        .frame(height: geo.size.height * 0.40)
+                    }
+                } else {
+                    // Opaque under the label and headline, then a long fade —
+                    // the text is top-anchored, so the solid stop has to clear
+                    // both lines before it starts giving way. No bottom fade:
+                    // the widget's own rounded edge is the boundary there,
+                    // where the Today hero has a page to bleed into.
                     LinearGradient(
                         stops: [
                             .init(color: .liddBase, location: 0),
-                            .init(color: Color.liddBase.opacity(0.45), location: 0.40),
-                            .init(color: Color.liddBase.opacity(0), location: 1),
+                            .init(color: .liddBase, location: 0.30),
+                            .init(color: Color.liddBase.opacity(0.55), location: 0.50),
+                            .init(color: Color.liddBase.opacity(0), location: 0.80),
                         ],
                         startPoint: .top, endPoint: .bottom
                     )
-                    .frame(height: geo.size.height * 0.30)
-                    Spacer(minLength: 0)
-                    LinearGradient(
-                        stops: [
-                            .init(color: Color.liddBase.opacity(0), location: 0),
-                            .init(color: Color.liddBase.opacity(0.55), location: 0.60),
-                            .init(color: .liddBase, location: 1),
-                        ],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                    .frame(height: geo.size.height * 0.40)
                 }
             }
         }
@@ -610,7 +651,7 @@ struct LiddWidgetView: View {
                 maxHeight: .infinity,
                 alignment: showsArtwork ? .topLeading : .leading
             )
-            .liddContainerBackground(artwork: showsArtwork)
+            .liddContainerBackground(artwork: showsArtwork, orientation: family == .systemMedium ? .horizontal : .vertical)
     }
 
     @ViewBuilder
@@ -673,13 +714,15 @@ private extension View {
     /// StandBy tint against. Below 17 the padding has to be drawn by hand,
     /// since the system supplied it only from 17 onward.
     @ViewBuilder
-    func liddContainerBackground(artwork: Bool) -> some View {
+    func liddContainerBackground(artwork: Bool, orientation: LiddArtwork.Orientation) -> some View {
         if #available(iOS 17.0, *) {
             self.containerBackground(for: .widget) {
-                if artwork { LiddArtwork() } else { Color.liddBase }
+                if artwork { LiddArtwork(orientation: orientation) } else { Color.liddBase }
             }
         } else {
-            self.padding(16).background(artwork ? AnyView(LiddArtwork()) : AnyView(Color.liddBase))
+            self.padding(16).background(
+                artwork ? AnyView(LiddArtwork(orientation: orientation)) : AnyView(Color.liddBase)
+            )
         }
     }
 }
