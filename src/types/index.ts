@@ -1,6 +1,6 @@
 export interface Snapshot {
   time: string;
-  areas: Record<string, number>;      // { 'Right eye': 6, 'Left temple': 3 }
+  areas: Record<string, number>;      // { 'Eye right': 6, 'Temple left': 3 }
   symptoms: string[];
   reliefs: string[];
   // `dose` stays free text and keeps its display role ("50mg", "2 tablets").
