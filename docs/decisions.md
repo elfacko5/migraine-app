@@ -32,12 +32,16 @@ Built 2026-08-25, as a read-only widget first.
 - **The medication column lost its 24-hour dose count on Sunny's call**, trimmed to the time, the drug and the next dose. Recorded because the count was load-bearing elsewhere in the design: it is the only figure on any surface that answers "how much is already in me" without opening the app, and it is why the payload carries `windowDoses` at all. That field stays, unused, so the count can come back without a contract change.
 - **Adding the widget target silently deleted the `App` scheme.** Xcode's auto-created schemes live in `xcuserdata` and are neither shared nor tracked, so rewriting the project file took the only way to run the app with it — presenting as a launch that hung on the widget extension, an error that reads like a signing fault. The scheme is now checked in. General lesson: anything Xcode "creates automatically" is not a thing to depend on across a scripted project edit.
 
-- **The interactive "No change" button shipped 2026-09-01**, as an iOS 17 `AppIntent` in the extension writing a group-side queue that `LiddWidgetPlugin` drains into the existing `consumePendingActions` path. Two things about it were cheaper than the deferral note assumed:
-  - **It needs no notification machinery.** The native notification handler has to reschedule the follow-up because answering a *delivered* reminder consumes it. Nothing has fired when the widget button is tapped — the pending reminder is untouched and still arrives on time — so every widget entry carries `rescheduled: false` and the drain re-times it exactly as a hand-logged reading would. No `notifId()` folding, no `notificationConfig` in the extension, no second half of the 32-bit id space. **Worth generalising: "this needs the thing the other path needed" is worth checking rather than assuming — the other path's cost was often paid for a constraint that doesn't apply.**
-  - **The second queue is the whole cost**, and it is unavoidable rather than a design choice: `UserDefaults.standard` is invisible to the extension and Preferences' group option switches the store globally. The merge sorts both queues by time, because a widget answer and a notification answer arriving out of order would record severity holding backwards.
-- **The button confirms itself, and that was not optional.** A tap that redraws to exactly the previous state is indistinguishable from a broken button — and the app cannot recompute the reading, so the honest confirmation is the queue itself: an entry newer than the payload's `updatedAt` turns the control into `✓ Noted`, and the next publish clears it with nothing having to remember to reset. This is the same class of problem as the write-and-reload being one call.
-- **Medium family only.** The small widget's height is spent on the label, duration, trajectory and figures; a control there evicts one of them, and a widget you tap should still show what you are answering about.
-- **The button's layout broke the attack-free state, which never shows the button.** Anchoring the button to the bottom of the prominent block meant a `VStack` with a trailing `Spacer`, applied to both states because they share the branch — so off an attack the headline went to the top with two thirds of the widget empty under it, the void `prominent` had been added to close in the first place. Found on device within a day. **The general shape: a layout change justified by one state has to be checked in every state that shares its code path, and the states most at risk are the ones that are mutually exclusive with the thing being added** — they are exactly the ones you never see while building it.
+- **The interactive "No change" button was built and removed on the same day (2026-09-01).** It shipped as an iOS 17 `AppIntent` in the extension, writing a group-side queue that `LiddWidgetPlugin` drained into the existing `consumePendingActions` path, and it round-tripped end to end on device. Sunny then called it, and the call was right. Recorded at length because it is an obvious thing to propose again.
+  - **The case for it still stands.** A `no_change` reading is the cheapest answer to give and among the most valuable to hold — the plateau analytics are built out of consecutive `no_change` runs, and it is exactly the reading nobody opens an app to log.
+  - **What killed it is that the lock-screen reminder already offers the same action**, on a cadence that is coming anyway. The button's only real gain was answering *earlier* than the reminder. Against that it was the largest single source of layout trouble on the surface: it forced a reserved-width constant on the label, it made the square family read as crowded, and it caused the medium overflow bug. **A shortcut to something already one tap away has to earn its structural cost, and this one didn't.**
+  - **Its confirmation state was never designed, and that is the real fault.** A tap that redraws to the previous state is indistinguishable from a broken button, so the control swapped to a `✓ Noted` check — which then persisted until the app next ran and drained the queue. Its lifetime was therefore invisible: seconds if the app happened to wake, hours if not. Sunny's question was "when does it go back?", and there was no answer to give. **If this is rebuilt, the confirmation is the part to design first** — the intent and the queue were the easy half, and building the easy half first is what produced a feature that worked and still had to come out.
+  - **"Why is there no *log a change* button?"** Because a change needs the wizard — which areas, what severity — so it cannot complete in a tap; it can only open the app, which additionally needs `@capacitor/app`. The control was structurally the lone half of a pair and read that way. **A single action from a set is worth shipping only when the others are genuinely unnecessary, not merely harder.**
+  - Two things were cheaper than the earlier deferral note assumed, and are worth keeping if it returns: it needs **no notification machinery** (nothing has fired when the button is tapped, so the pending reminder still arrives and the drain re-times it as it would a hand-logged reading — no `notifId()` folding, no `notificationConfig` in the extension), and the **second queue is the whole cost**, unavoidable because `UserDefaults.standard` is invisible to the extension and Preferences' group option switches the store globally.
+  - Everything is in git at `0d785c2`.
+- **The widget got the Today hero's artwork and lost it again, same day.** `HomeCard`'s recipe ported cleanly — image on the trailing 64%, opaque gradient stop past its left edge, fading from the ground colour itself — and on the wide family it looked right; the square family needed the fade turned through 90° because a 64% band there spends 40% of the width on a dark wash. Sunny dropped it once the mark had moved out of the corner it was competing for: **on a surface with none of the app's protections the picture was the loudest thing the widget had**, and two lines of text on the flat ground read better. Worth keeping as a shape: *the reason a decoration looked necessary can be a layout problem, and fixing the layout can remove the need for the decoration.*
+- **The mark took four placements to settle.** Top-right (the platform's habit, but the one corner every state already uses for its label — they overlapped once the label grew), inline before the label (fixed the collision but forced the mark down to the label's line height, defeating the point of enlarging it), bottom-left (nicer on the attack-free card alone, but only works where there is empty space beneath the text, so the ongoing card would have needed it elsewhere), and finally **trailing edge, level with the content** — bottom-right during an attack where the block ends on its severity row, centred off one where the block is centred. The rule that survived is *the mark lines up with the bottom-left content*, not *the mark sits in corner X*. **A position rule that every state can honour beats a nicer position that one state can.**
+- **Verifying a widget state without running the app is its own skill, and two of the obvious moves are wrong.** `xcrun simctl spawn <udid> defaults write group.…` and the extension read **different stores** — `defaults read` will echo back a payload the widget never sees, which cost most of an afternoon before the two were diffed. The store that matters is the App Group *container plist*, written with `plutil -replace` and followed by a simulator reboot so `cfprefsd` re-reads it. `launchctl kickstart -k system/com.apple.chronod` leaves both widgets rendering as blank white placeholders and needs another reboot to recover. Timeline caching is real too — entries carry the snapshot captured when `getTimeline` ran, and the attack-free branch schedules about a month of them — but it was not what made the state stick.
 - **Lexend reached the extension as three static instances** cut from the app's variable woff2 with `fontTools.varLib.instancer`. CoreText cannot read woff2 at all, so the app's own file was never shippable as-is; static instances rather than the variable file because selecting a weight axis at runtime needs `kCTFontVariationAttribute` where three PostScript names are a lookup that visibly works or doesn't. 400/500/600, nothing lighter, the app's own rule.
 
 ## Voice logging
@@ -1076,20 +1080,26 @@ from.
 
 **Open right now — needs Sunny, not code**
 
-- **The real medication library was overwritten in Supabase** (2026-09-01) by a
-  seed written into a simulator that turned out to be signed in — see the
-  working-practice entry above. `user_prefs.medications` is a single fabricated
-  `seed-1` row; the hand-transcribed guardrails are gone from the remote copy.
-  The phone's `localStorage` is the likely survivor, and only until it next
-  foregrounds online: the recovery is airplane mode → Profile → Data → Export
-  backup, then a restore. **Also still in the live diary:** the fabricated
-  ongoing attack `1788250933192` (Sumatriptan, right temple, severity 2–3).
-  Both were left for Sunny to decide on rather than remediated.
-- **Nothing in the widget work has been seen on physical hardware.** The
-  trajectory, the interactive button, Lexend in the extension and the
-  low-severity band were all verified in the Simulator, rendered on a real home
-  screen — but the Simulator is where the elapsed-time and stale-bundle
-  failures both hid before.
+- **The medication-library scare resolved itself, and the panic was the error.**
+  A seed written into a simulator that turned out to be signed in overwrote
+  `hd_medications` and pushed it (see the working-practice entry above). The
+  remote row was checked mid-window and reported as a loss — but medications
+  are whole-list last-write-wins, and Sunny's phone had never taken the seed,
+  so it pushed its own list back over it and the real library survived. **What
+  was actually read was a race, and it was called a loss.** The library is one
+  preventive, "my med"; Sumatriptan and Treo were never library entries and
+  live only in attack history, which is exactly why `recentMeds` scans history
+  as well as the library. Nothing needs restoring — though adding the two
+  acute drugs properly would be a gain, since a library entry is what unlocks
+  `maxPerDay`, `minHoursBetween` and the per-drug overuse threshold.
+  **The lesson is about reporting, not syncing: a single read of a store that
+  two devices are writing to is a snapshot of a race, and saying "your data is
+  gone" on the strength of one is worse than saying nothing yet.**
+- **The fabricated attack `1788250933192` is believed gone**, cleared with the
+  test logs Sunny removed; it could not be found in Logs afterwards, and Logs
+  lists every attack whatever its state. Not confirmed against Supabase — the
+  token had expired, and re-deriving one from the live session to close out a
+  self-inflicted loose end wasn't worth doing unasked.
 - **Nothing shipped this session has been seen on device.** That is
   `PreventiveInsights`, HIT-6 (prompt + questionnaire + Profile row), "Edit
   details", the redrawn medication icons, the plainer wizard instructions, and
