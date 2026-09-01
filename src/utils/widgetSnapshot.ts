@@ -145,6 +145,15 @@ export function buildWidgetSnapshot(
   nowMs: number = Date.now(),
 ): WidgetSnapshot {
   const ongoing = attacks.find((a) => !a.end) ?? null;
+  // **Sorted by time, never trusted in array order.** `startAttack` sorts its
+  // own snapshots, but `addSnapshots` appends — so a reading can sit at an
+  // index that has nothing to do with when it happened. Two things here read
+  // order directly and both are wrong without this: the start time, which the
+  // whole elapsed figure hangs off, and the trajectory, which would plot its
+  // points out of sequence and draw a zigzag the attack never did.
+  const ordered = ongoing
+    ? [...ongoing.snapshots].sort((a, b) => a.time.localeCompare(b.time))
+    : [];
 
   // The latest *ended* attack by end time, which is what "since your last
   // attack" means. Not the latest by start: a long attack logged
@@ -169,10 +178,10 @@ export function buildWidgetSnapshot(
     ongoing: ongoing
       ? {
           id: ongoing.id,
-          startedAt: ongoing.snapshots[0].time,
+          startedAt: ordered[0].time,
           severityNow: attackLatestSeverity(ongoing),
           severityPeak: attackMaxSeverity(ongoing),
-          series: ongoing.snapshots.map((snap) => ({ at: snap.time, severity: maxSeverity(snap) })),
+          series: ordered.map((snap) => ({ at: snap.time, severity: maxSeverity(snap) })),
         }
       : null,
     lastEndedAt: ongoing ? null : lastEndedAt,
