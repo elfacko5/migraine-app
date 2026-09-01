@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Attack, Snapshot, NotificationConfig, SyncStatus } from '../types';
 import { scheduleNotification, cancelNotification, nextDelay, medCheckInDelay } from '../utils/notifications';
+import { findOngoing } from '../utils/ongoing';
 import { pullAttacks, pushAttacks, deleteAttackRemote } from '../lib/sync';
 
 const KEY = 'hd_attacks';
@@ -270,7 +271,7 @@ export function useAttacks(userId: string | null) {
     if (userId) trackPush(deleteAttackRemote(attackId));
   }, [attacks, commit, userId, trackPush]);
 
-  const ongoingAttack = attacks.find((a) => a.end === null) ?? null;
+  const ongoingAttack = findOngoing(attacks);
 
   return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, setImpact, updateAttackDetails, deleteAttack, syncStatus, lastSyncedAt };
 }

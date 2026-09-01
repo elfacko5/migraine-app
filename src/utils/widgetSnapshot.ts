@@ -3,6 +3,7 @@ import { LiddWidget } from './liddWidgetPlugin';
 import type { Attack, Medication } from '../types';
 import { attackLatestSeverity, attackMaxSeverity, maxSeverity } from './stats';
 import { isRetired } from './retired';
+import { findOngoing, isOngoing } from './ongoing';
 import { DAY_MS, checkDose, doseUnits, findMedication, lastDoseSnapshot } from './medGuardrails';
 
 // What the home-screen widget reads.
@@ -144,7 +145,7 @@ export function buildWidgetSnapshot(
   medications: Medication[],
   nowMs: number = Date.now(),
 ): WidgetSnapshot {
-  const ongoing = attacks.find((a) => !a.end) ?? null;
+  const ongoing = findOngoing(attacks);
   // **Sorted by time, never trusted in array order.** `startAttack` sorts its
   // own snapshots, but `addSnapshots` appends — so a reading can sit at an
   // index that has nothing to do with when it happened. Two things here read
@@ -160,7 +161,7 @@ export function buildWidgetSnapshot(
   // retrospectively can start before a short one and end after it.
   let lastEndedAt: string | null = null;
   for (const attack of attacks) {
-    if (!attack.end) continue;
+    if (isOngoing(attack) || !attack.end) continue;
     if (!lastEndedAt || attack.end > lastEndedAt) lastEndedAt = attack.end;
   }
 
