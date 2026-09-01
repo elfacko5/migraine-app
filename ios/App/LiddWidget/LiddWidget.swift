@@ -1,6 +1,9 @@
 import WidgetKit
 import SwiftUI
 import UIKit
+#if canImport(AppIntents)
+import AppIntents
+#endif
 
 // The home-screen widget.
 //
@@ -14,6 +17,8 @@ import UIKit
 // `src/utils/widgetSnapshot.ts` by the same functions Today calls, so the two
 // cannot drift into disagreeing — and a widget disagreeing with the app is
 // invisible from inside the app, which is what makes it worth this much care.
+// The one thing the extension owns is *positioning* the readings it is given
+// into a line; what each reading's severity is was decided on the web side.
 
 // MARK: - Palette
 //
@@ -38,9 +43,15 @@ private extension Color {
 
     static let liddBase = Color(hex: 0x1b1a18)
     static let liddSurface = Color(hex: 0x262421)
+    static let liddRaised = Color(hex: 0x302d29)
     static let liddPrimary = Color(hex: 0xcdc7bb)
     static let liddSecondary = Color(hex: 0xa39d92)
     static let liddAccent = Color(hex: 0x7fa187)
+    /// `--color-border-control` — the outline of something you *press*, as
+    /// opposed to a hairline between two things you read. WCAG 1.4.11 wants
+    /// 3:1 for what identifies a control, and this is the value that measures
+    /// it against the tightest surface a control sits on.
+    static let liddControlBorder = Color(hex: 0x7d7669)
 
     /// The app's shared severity ramp — the same three bands and the same
     /// values as `sevTextClass` in `src/utils/severity.ts` and `sevFill` in
@@ -53,34 +64,75 @@ private extension Color {
     }
 }
 
+// MARK: - Type
+//
+// Lexend, the app's own face, bundled into the extension as three static
+// instances cut from `src/assets/fonts/Lexend-Variable.woff2` — CoreText
+// cannot read woff2, and the extension cannot reach the web bundle's copy in
+// any case. Instanced rather than shipped as one variable file because
+// selecting a weight axis at runtime needs `kCTFontVariationAttribute` and a
+// descriptor dance, where three PostScript names are a lookup that either
+// works or visibly doesn't.
+//
+// **400 / 500 / 600 only, and no lighter.** Thin strokes shimmer for
+// light-sensitive eyes, which is the same reason the app ships no weight below
+// 400; 600 is a real weight here rather than a synthesised jump to 700, which
+// is what the variable file bought the app in the first place.
+//
+// `relativeTo:` is what keeps the labels scaling with the reader's Dynamic
+// Type setting. The widget has no text-size control of its own, so the OS
+// setting is the only one it answers to — and the figures deliberately opt out
+// of it (see `StateBlock`), being numerals in a layout with no room to grow.
+private enum LiddFont {
+    static let regular = "Lexend-Regular"
+    static let medium = "Lexend-Medium"
+    static let semibold = "Lexend-SemiBold"
+
+    /// A fixed size that does not scale. For the headline numerals only.
+    static func fixed(_ size: CGFloat, _ name: String = semibold) -> Font {
+        .custom(name, fixedSize: size)
+    }
+
+    static func caption(_ name: String = regular) -> Font { .custom(name, size: 12, relativeTo: .caption) }
+    static func footnote(_ name: String = regular) -> Font { .custom(name, size: 13, relativeTo: .footnote) }
+    static func subheadline(_ name: String = regular) -> Font { .custom(name, size: 15, relativeTo: .subheadline) }
+    static func headline() -> Font { .custom(semibold, size: 17, relativeTo: .headline) }
+}
+
 // MARK: - Timeline
 
 struct LiddEntry: TimelineEntry {
     let date: Date
     let snapshot: LiddSnapshot?
+    /// An answer given from the button that the app has not taken up yet, so
+    /// the button can confirm itself rather than redrawing identically — which
+    /// is indistinguishable from the tap having done nothing.
+    let answered: Bool
 }
 
 struct LiddProvider: TimelineProvider {
     func placeholder(in context: Context) -> LiddEntry {
-        LiddEntry(date: Date(), snapshot: nil)
+        LiddEntry(date: Date(), snapshot: nil, answered: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (LiddEntry) -> Void) {
-        completion(LiddEntry(date: Date(), snapshot: LiddWidgetShared.loadSnapshot()))
+        let snapshot = LiddWidgetShared.loadSnapshot()
+        completion(LiddEntry(
+            date: Date(),
+            snapshot: snapshot,
+            answered: LiddWidgetShared.hasUnappliedAnswer(for: snapshot)
+        ))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<LiddEntry>) -> Void) {
         let now = Date()
         let snapshot = LiddWidgetShared.loadSnapshot()
+        let answered = LiddWidgetShared.hasUnappliedAnswer(for: snapshot)
 
         // One entry now, plus one at each moment a figure on screen stops
-        // being true by itself: a dose ageing out of the rolling 24 hours, and
-        // a minimum gap elapsing. The app republishes on every write and on
+        // being true by itself. The app republishes on every write and on
         // backgrounding, so these are only for the stretches where nothing
         // happens and the display would otherwise go quietly wrong.
-        //
-        // Elapsed times are not in here — those tick natively via
-        // `Text(_:style:.relative)` and cost no timeline entries at all.
         var dates: [Date] = [now]
 
         // One entry at each moment the elapsed wording changes. These are
@@ -116,7 +168,7 @@ struct LiddProvider: TimelineProvider {
         }
 
         let entries = Array(Set(dates)).sorted().prefix(120).map {
-            LiddEntry(date: $0, snapshot: snapshot)
+            LiddEntry(date: $0, snapshot: snapshot, answered: answered)
         }
         // Come back for a fresh timeline once the entries run out, so a widget
         // whose app has not been opened for days keeps going rather than
@@ -140,8 +192,67 @@ private struct LiddLabel: View {
     let text: String
     var body: some View {
         Text(text)
-            .font(.caption)
+            .font(LiddFont.caption())
             .foregroundColor(.liddSecondary)
+    }
+}
+
+/// The attack's trajectory: every reading so far, in order.
+///
+/// This is the half two numbers cannot say — whether it is climbing or easing
+/// off — and it is most of what someone glancing at a home screen wants to
+/// know. It is the same mark the Logs list draws on each row, and follows the
+/// same two rules for the same reasons:
+///
+/// - **The y-domain is pinned to 0…10.** Fitted to its own range, a run of
+///   3→4 would draw the identical shape to one of 2→9, every line filling its
+///   box regardless of what it describes.
+/// - **The colour is the severity ramp at the attack's peak**, not the accent.
+///   Colour carries magnitude everywhere else here; a green line under a
+///   terracotta 9 would have the widget contradicting itself.
+///
+/// Readings are spaced evenly rather than by their timestamps, matching
+/// `SeveritySparkline`. Reminders are answered when they are answered, so the
+/// gaps between them say more about the diary than the attack — and at this
+/// width a true time axis would bunch a cluster into a single pixel.
+private struct TrajectoryLine: View {
+    let series: [LiddSnapshot.Ongoing.Reading]
+    let peak: Int
+    let height: CGFloat
+
+    var body: some View {
+        GeometryReader { geo in
+            let inset: CGFloat = 3
+            let w = geo.size.width - inset * 2
+            let h = geo.size.height - inset * 2
+            let points: [CGPoint] = series.enumerated().map { index, reading in
+                let x = series.count == 1 ? w / 2 : w * CGFloat(index) / CGFloat(series.count - 1)
+                let clamped = min(max(reading.severity, 0), 10)
+                return CGPoint(x: inset + x, y: inset + h * (1 - CGFloat(clamped) / 10))
+            }
+            ZStack {
+                Path { path in
+                    guard let first = points.first else { return }
+                    path.move(to: first)
+                    for point in points.dropFirst() { path.addLine(to: point) }
+                }
+                .stroke(
+                    Color.liddSeverity(peak),
+                    style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+                )
+                ForEach(Array(points.enumerated()), id: \.offset) { _, point in
+                    Circle()
+                        .fill(Color.liddSeverity(peak))
+                        .frame(width: 5, height: 5)
+                        .position(point)
+                }
+            }
+        }
+        .frame(height: height)
+        // Every value it encodes is printed in the line beneath it, so a
+        // screen reader gets numbers rather than a shape — the rule
+        // `SeverityBreakdown`'s sparklines already follow.
+        .accessibilityHidden(true)
     }
 }
 
@@ -167,7 +278,7 @@ private struct StateBlock: View {
                 // for free but rendered seconds under the hour, putting a
                 // stopwatch on the home screen of an app built to sit still.
                 Text(LiddElapsed.short(since: started, at: entryDate))
-                    .font(.system(size: prominent ? 34 : 26, weight: .semibold))
+                    .font(LiddFont.fixed(prominent ? 34 : 26))
                     .foregroundColor(.liddPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -175,47 +286,16 @@ private struct StateBlock: View {
                 // says an attack is ongoing, and a duration under it cannot
                 // mean anything else — the sentence restated its own heading.
                 Spacer(minLength: 6)
-                // **Severity is a figure, not a sentence.** It read as
-                // "Severity now 7 · peak 9" — the Today hero's line lifted
-                // onto a surface with none of the hero's width, where it
-                // became a run of caption text with no hierarchy in it. The
-                // numeral carries it now, coloured by the app's own severity
-                // ramp so magnitude registers before the digit is read, the
-                // peak beside it as the quieter figure and the label beneath:
-                // the stat-tile shape Insights already uses.
-                //
-                // **It matches the duration's size rather than beating it.**
-                // At 40pt against a 26pt headline the digit was the loudest
-                // thing on the widget and the balance tipped the other way —
-                // the first version had no hierarchy, that one had too much.
-                // The two figures are peers; the ramp colour and the weight
-                // are what separate severity from the duration, not size.
-                //
-                // Both are fixed sizes rather than text styles because they
-                // are figures in a layout with no room to grow; every label
-                // around them still scales with the reader's text setting.
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text("\(ongoing.severityNow)")
-                            .font(.system(size: prominent ? 32 : 26, weight: .semibold))
-                            .foregroundColor(.liddSeverity(ongoing.severityNow))
-                            .lineLimit(1)
-                        if let peak = peakLine(ongoing) {
-                            Text(peak)
-                                .font(.footnote)
-                                .foregroundColor(.liddSecondary)
-                                .lineLimit(1)
-                        }
-                    }
-                    Text("Severity now")
-                        .font(.caption)
-                        .foregroundColor(.liddSecondary)
-                        .lineLimit(1)
-                }
+                severity(ongoing)
             } else if let ended = LiddDate.parse(snapshot?.lastEndedAt) {
-                LiddLabel(text: "Since your last attack")
+                // `AttackFreeCard`'s own label, to the hyphen. It read "Since
+                // your last attack", which was drift rather than a decision —
+                // and the widget's phrasing was the worse of the two anyway,
+                // naming the thing that happened rather than the stretch since
+                // it. The app has one string for this; so does the widget.
+                LiddLabel(text: "Attack-free for")
                 Text(LiddElapsed.long(since: ended, at: entryDate))
-                    .font(.system(size: prominent ? 44 : 34, weight: .semibold))
+                    .font(LiddFont.fixed(prominent ? 44 : 34))
                     .foregroundColor(.liddPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -225,24 +305,63 @@ private struct StateBlock: View {
                 // duration to state, and inventing one would be worse.
                 LiddLabel(text: "Lidd")
                 Text("Nothing ongoing")
-                    .font(.headline)
+                    .font(LiddFont.headline())
                     .foregroundColor(.liddPrimary)
             } else {
                 LiddLabel(text: "Lidd")
                 Text(snapshot == nil ? "Open Lidd to set this up" : "Nothing logged yet")
-                    .font(.subheadline)
+                    .font(LiddFont.subheadline())
                     .foregroundColor(.liddPrimary)
                     .lineLimit(2)
             }
         }
     }
 
-    /// The quieter second figure under the severity, or nothing at all. One
-    /// reading has nothing to have peaked against yet, so it gets no line
-    /// rather than a peak equal to itself said twice.
-    private func peakLine(_ ongoing: LiddSnapshot.Ongoing) -> String? {
-        if ongoing.severityNow != ongoing.severityPeak { return "peak \(ongoing.severityPeak)" }
-        return ongoing.readings > 1 ? "at its peak" : nil
+    /// The trajectory, then the figures it ends on.
+    ///
+    /// This is direction C off the design canvas, and it replaced a stat tile
+    /// — a large coloured numeral with the peak beside it and "Severity now"
+    /// beneath. The tile read cleanly but said only where the attack is, and
+    /// where it is going is the more useful half at a glance and the half the
+    /// app has to open to answer. The numeral stays, smaller, as the line's
+    /// endpoint rather than as the headline.
+    ///
+    /// **The line is dropped on a single reading**, which has no trajectory
+    /// and nothing to have peaked against yet — the same rule
+    /// `SeveritySparkline` follows in returning nothing below two points. The
+    /// figures still render, so the state never goes blank.
+    @ViewBuilder
+    private func severity(_ ongoing: LiddSnapshot.Ongoing) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if ongoing.series.count > 1 {
+                TrajectoryLine(
+                    series: ongoing.series,
+                    peak: ongoing.severityPeak,
+                    height: prominent ? 46 : 38
+                )
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                // Fixed rather than a text style: a figure in a layout with no
+                // room to grow. Every label around it still scales.
+                Text("\(ongoing.severityNow)")
+                    .font(LiddFont.fixed(20))
+                    .foregroundColor(.liddSeverity(ongoing.severityNow))
+                    .lineLimit(1)
+                Text(peakLine(ongoing))
+                    .font(LiddFont.caption())
+                    .foregroundColor(.liddSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+        }
+    }
+
+    /// "now · peak 9", or just "now" when there is nothing to compare against.
+    /// One reading has not peaked yet, and an attack sitting at its worst says
+    /// so rather than printing the same number twice.
+    private func peakLine(_ ongoing: LiddSnapshot.Ongoing) -> String {
+        if ongoing.severityNow != ongoing.severityPeak { return "now · peak \(ongoing.severityPeak)" }
+        return ongoing.series.count > 1 ? "now · at its peak" : "now"
     }
 }
 
@@ -254,12 +373,12 @@ private struct DoseBlock: View {
         VStack(alignment: .leading, spacing: 2) {
             if let taken = LiddDate.parse(dose.takenAt) {
                 Text("Taken \(timeOfDay(taken))")
-                    .font(.footnote)
+                    .font(LiddFont.footnote())
                     .foregroundColor(.liddSecondary)
                     .lineLimit(1)
             }
             Text(dose.name)
-                .font(.system(size: 18, weight: .medium))
+                .font(.custom(LiddFont.medium, fixedSize: 18))
                 .foregroundColor(.liddPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -267,11 +386,61 @@ private struct DoseBlock: View {
                 // The user's own number, stated. Never an instruction — the
                 // rule every medication line in the app follows.
                 Text("Next dose from \(timeOfDay(next))")
-                    .font(.footnote)
+                    .font(LiddFont.footnote())
                     .foregroundColor(.liddSecondary)
                     .lineLimit(2)
-                    .padding(.top, 10)
+                    .padding(.top, 8)
             }
+        }
+    }
+}
+
+/// "No change", answerable without opening the app.
+///
+/// The lock-screen reminder button, reachable without a reminder having fired.
+/// It is the cheapest answer to give and one of the more valuable to have —
+/// a run of held severity is what the plateau analytics are built out of, and
+/// it is exactly the reading nobody opens an app to log.
+///
+/// **It is a secondary button, not a primary one.** Solid accent means *press
+/// this* in the app, and a filled sage pill would be the loudest thing on a
+/// surface the palette works to keep quiet — the widget has none of the app's
+/// protections. So it takes `btn-secondary`'s treatment: the raised surface
+/// with a control-token hairline, which is the 3:1 outline WCAG 1.4.11 asks
+/// for on the thing that identifies a control.
+///
+/// **It shows only on the medium family.** The small widget's 120-odd points
+/// of height are already spent on the label, the duration, the trajectory and
+/// the figures, and a control added there would have to evict one of them —
+/// where the point of a widget you tap is that it still shows what you are
+/// answering about. A medium widget has the room.
+@available(iOS 17.0, *)
+private struct NoChangeButton: View {
+    let attackId: Double
+    /// Already answered, and the app has not taken it up yet. The tap has to
+    /// visibly land, or it is indistinguishable from the button not working.
+    let answered: Bool
+
+    var body: some View {
+        if answered {
+            Label("Noted", systemImage: "checkmark")
+                .font(LiddFont.footnote(LiddFont.medium))
+                .foregroundColor(.liddAccent)
+                .labelStyle(.titleAndIcon)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+        } else {
+            Button(intent: LiddNoChangeIntent(attackId: attackId)) {
+                Text("No change")
+                    .font(LiddFont.footnote(LiddFont.medium))
+                    .foregroundColor(.liddPrimary)
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+            }
+            .buttonStyle(.plain)
+            .background(Color.liddRaised, in: Capsule())
+            .overlay(Capsule().strokeBorder(Color.liddControlBorder, lineWidth: 1))
         }
     }
 }
@@ -312,21 +481,44 @@ struct LiddWidgetView: View {
     @ViewBuilder
     private var content: some View {
         if family == .systemMedium, let dose = entry.snapshot?.dose {
+            // Two columns. The button sits under the dose block, which is
+            // three short lines and has the slack for it — where the state
+            // column is full to the bottom with the trajectory.
             HStack(alignment: .top, spacing: 14) {
                 StateBlock(snapshot: entry.snapshot, entryDate: entry.date)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Rectangle()
                     .fill(Color.liddSurface)
                     .frame(width: 1)
-                DoseBlock(dose: dose, now: entry.date)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 0) {
+                    DoseBlock(dose: dose, now: entry.date)
+                    Spacer(minLength: 8)
+                    noChangeButton
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        } else if family == .systemMedium {
+            // Nothing honest to put in a second column, so the headline takes
+            // the width instead of leaving two thirds of the widget empty.
+            VStack(alignment: .leading, spacing: 0) {
+                StateBlock(snapshot: entry.snapshot, entryDate: entry.date, prominent: true)
+                Spacer(minLength: 8)
+                HStack {
+                    Spacer()
+                    noChangeButton
+                }
             }
         } else {
-            StateBlock(
-                snapshot: entry.snapshot,
-                entryDate: entry.date,
-                prominent: family == .systemMedium
-            )
+            StateBlock(snapshot: entry.snapshot, entryDate: entry.date)
+        }
+    }
+
+    /// Only while an attack is running — there is nothing for "no change" to
+    /// mean otherwise — and only where the OS can draw a widget button at all.
+    @ViewBuilder
+    private var noChangeButton: some View {
+        if #available(iOS 17.0, *), let ongoing = entry.snapshot?.ongoing {
+            NoChangeButton(attackId: ongoing.id, answered: entry.answered)
         }
     }
 }

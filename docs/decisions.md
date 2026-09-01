@@ -24,13 +24,20 @@ Built 2026-08-25, as a read-only widget first.
 - **Elapsed times were built on `Text(_:style:.relative)` and that was the wrong call** (reversed on device, 2026-09-01). The reasoning was that WidgetKit's refresh budget could not buy a per-minute rewrite, so the choice looked like one between the app's phrasing and being correct. It wasn't: under an hour that style renders seconds, so the widget put a counter ticking once a second on the home screen — in an app whose palette exists to avoid drawing the eye and which cuts every animation in attack mode. The premise was also wrong. Entries inside a single timeline are pre-rendered and don't each cost a refresh, so a minute-accurate string is affordable after all, and once the figure is in days it changes daily. **The general lesson is the one worth keeping: "the platform gives it to you free" is a claim about cost, not about whether the result is the right thing to show.**
 - **Two hours were lost to Capacitor's plugin registration, twice over.** A plugin in the app target is never auto-registered (only npm packages listed in the generated `capacitor.config.json` are), and then `registerPluginType` — the API that looks right — returns immediately while auto-registration is on. Both failures present identically: the bridge is up, the call crosses, and the web side gets `UNIMPLEMENTED`. `registerPluginInstance` from a `CAPBridgeViewController` subclass is the working route.
 - **App Groups were expected to force the paid account, and don't.** The capability is widely described as unavailable to personal teams, and this was written up as the blocker on shipping the widget to a phone. It is wrong: Xcode issued locally-generated profiles for both the app and the extension with the group entitlement in them, on the same free team and the same 7-day expiry as everything else. Recorded because the assumption is the kind that quietly parks a feature — check what the toolchain actually does before deciding a capability is out of reach.
-- **The ongoing state was redesigned from a canvas of three directions** (2026-09-01), after Sunny read the first build as "a bunch of text with no visual hierarchy". A — duration as the headline, severity as a coloured numeral — shipped. *Rejected for now, both still on the canvas in `design/`:* **B**, severity as the hero with a 10-step scale marking the peak (the scale is close to a progress bar, a shape that implies a goal, which is the wrong metaphor for a symptom); **C**, the Logs sparkline showing the attack's trajectory (the most informative, and the only one needing a payload change — the readings, not just now and peak). If the widget is revisited, C is the one whose cost grows.
+- **The ongoing state was redesigned from a canvas of three directions** (2026-09-01), after Sunny read the first build as "a bunch of text with no visual hierarchy". A — duration as the headline, severity as a coloured numeral — shipped first. **C superseded it the same day**, on Sunny's call: the Logs sparkline showing the attack's trajectory, with the numeral kept smaller as the line's endpoint. A is still on the canvas. **B was never built** — severity as the hero with a 10-step scale marking the peak — and the reason still holds: the scale is close to a progress bar, a shape that implies a goal, which is the wrong metaphor for a symptom.
+- **C was worth reaching for precisely because it was the expensive one.** A and B are view changes; C needed the readings in the payload rather than just now and peak, which is a contract change across a process boundary and gets no cheaper by waiting. The thing it buys is the question two numbers cannot answer — whether the attack is climbing or easing off — which is most of what a glance at a home screen is for, and otherwise costs opening the app. **The general shape: when one option among several is the only one that changes an interface between components, its cost is the one that compounds, and that is an argument for doing it early rather than a reason to defer it.**
+- **The severity numeral went down, not up, under C.** Under A the digit and the duration were peers competing for the same job, and two corrections in opposite directions (40pt, then 26pt to match) were tuning a balance the tile shape could not win. With a line above it the numeral is a caption on a figure already drawn, so 20pt is right. *The fix for "no hierarchy" is rarely "make one thing much bigger"* — that lesson survives A, and C is what it looks like applied properly.
 - **Colour carries severity here, where the Today hero refuses it.** The hero states severity as plain text because it sits on artwork, where a tinted number reads as part of the illustration. The widget sits on a flat ground, so the ramp does the work the Logs list already lets it do — magnitude registers before the digit is read. Not an inconsistency: the same rule applied to two different surfaces.
 - **Sizing the severity figure took two corrections in opposite directions.** The first version had every line at one of two sizes and no hierarchy at all; the fix made the numeral 40pt against a 26pt headline, which Sunny read as off balance — correctly, it was then the loudest thing on the widget. It ended matching the duration's size, with colour and weight as the only separators. Worth remembering as a shape: *the fix for "no hierarchy" is rarely "make one thing much bigger"* — it was the run-on sentence, not the size, that flattened the original.
 - **The medication column lost its 24-hour dose count on Sunny's call**, trimmed to the time, the drug and the next dose. Recorded because the count was load-bearing elsewhere in the design: it is the only figure on any surface that answers "how much is already in me" without opening the app, and it is why the payload carries `windowDoses` at all. That field stays, unused, so the count can come back without a contract change.
 - **Adding the widget target silently deleted the `App` scheme.** Xcode's auto-created schemes live in `xcuserdata` and are neither shared nor tracked, so rewriting the project file took the only way to run the app with it — presenting as a launch that hung on the widget extension, an error that reads like a signing fault. The scheme is now checked in. General lesson: anything Xcode "creates automatically" is not a thing to depend on across a scripted project edit.
 
-- **Interactive buttons are deferred, not rejected.** A "No change" button would be the widget's strongest feature — the same answer the lock-screen reminder takes, from the home screen — and the queue it writes into already exists. It needs iOS 17, and a group-side queue the plugin drains into the existing `consumePendingActions` path, since the current queue lives where the extension cannot reach it.
+- **The interactive "No change" button shipped 2026-09-01**, as an iOS 17 `AppIntent` in the extension writing a group-side queue that `LiddWidgetPlugin` drains into the existing `consumePendingActions` path. Two things about it were cheaper than the deferral note assumed:
+  - **It needs no notification machinery.** The native notification handler has to reschedule the follow-up because answering a *delivered* reminder consumes it. Nothing has fired when the widget button is tapped — the pending reminder is untouched and still arrives on time — so every widget entry carries `rescheduled: false` and the drain re-times it exactly as a hand-logged reading would. No `notifId()` folding, no `notificationConfig` in the extension, no second half of the 32-bit id space. **Worth generalising: "this needs the thing the other path needed" is worth checking rather than assuming — the other path's cost was often paid for a constraint that doesn't apply.**
+  - **The second queue is the whole cost**, and it is unavoidable rather than a design choice: `UserDefaults.standard` is invisible to the extension and Preferences' group option switches the store globally. The merge sorts both queues by time, because a widget answer and a notification answer arriving out of order would record severity holding backwards.
+- **The button confirms itself, and that was not optional.** A tap that redraws to exactly the previous state is indistinguishable from a broken button — and the app cannot recompute the reading, so the honest confirmation is the queue itself: an entry newer than the payload's `updatedAt` turns the control into `✓ Noted`, and the next publish clears it with nothing having to remember to reset. This is the same class of problem as the write-and-reload being one call.
+- **Medium family only.** The small widget's height is spent on the label, duration, trajectory and figures; a control there evicts one of them, and a widget you tap should still show what you are answering about.
+- **Lexend reached the extension as three static instances** cut from the app's variable woff2 with `fontTools.varLib.instancer`. CoreText cannot read woff2 at all, so the app's own file was never shippable as-is; static instances rather than the variable file because selecting a weight axis at runtime needs `kCTFontVariationAttribute` where three PostScript names are a lookup that visibly works or doesn't. 400/500/600, nothing lighter, the app's own rule.
 
 ## Voice logging
 
@@ -442,6 +449,42 @@ would have taken all of it.
 Push after committing, or at the latest at the end of a session. Confirm
 first only for the genuinely irreversible: force-pushing, rewriting history,
 tags, releases, opening a PR.
+
+## Working practice — the simulator is a signed-in origin too (2026-09-01)
+
+The 2026-08-19 entry below says to check for a session before seeding. It is
+about `localhost:5174` because that is where it went wrong then. **The rule is
+about origins, not about that port**, and reading it as being about the scratch
+server is exactly how it went wrong again.
+
+- **A simulator install carries its own WebView `localStorage`, and a previous
+  session's Supabase token survives in it indefinitely.** The iPhone 17 Pro
+  simulator was signed in to the real account from some earlier session. A seed
+  probe injected into the installed bundle's `index.html` — the technique
+  `docs/viewport-architecture.md` recommends, and it is still the right
+  technique — overwrote `hd_attacks` and `hd_medications`, and the app pushed
+  both.
+- **The check that was skipped was the documented one.** The App Group was
+  inspected for a widget payload before seeding; `localStorage` was never
+  inspected for an `sb-…-auth-token`. Looking at *a* store is not looking at
+  *the* store. The one-line safeguard is `select key from ItemTable where key
+  like 'sb-%'` against the WebView's `localstorage.sqlite3`, in the same call as
+  the write.
+- **The damage was asymmetric, and the shape is worth knowing.** Attacks merge
+  by id, so the 40 real ones came straight back on the next pull and only the
+  fabricated record had to be removed. Medications are **whole-list
+  last-write-wins on `updatedAt`**, so a seed list with a fresh timestamp
+  replaced the real library outright — including the guardrails transcribed by
+  hand off leaflets, which nothing else in the app can reconstruct.
+  **Before seeding anything, ask which of the two merge strategies each key you
+  are about to write uses.** A union is survivable; a whole-list write is not.
+- **The recovery window is the other device's next foreground.** `localStorage`
+  stays authoritative for reads, so an untouched phone still holds the real list
+  — until it foregrounds, pulls the newer row, and overwrites it. The fix is an
+  export taken in airplane mode, and it expires on its own.
+- **Prefer a simulator you erased.** `xcrun simctl erase` before a seeding
+  session costs seconds and removes the whole class of problem; a fresh install
+  onto a device that already has the app does not clear its WebView store.
 
 ## Working practice — the scratch origin is not a safe sandbox (2026-08-19)
 
@@ -1032,6 +1075,20 @@ from.
 
 **Open right now — needs Sunny, not code**
 
+- **The real medication library was overwritten in Supabase** (2026-09-01) by a
+  seed written into a simulator that turned out to be signed in — see the
+  working-practice entry above. `user_prefs.medications` is a single fabricated
+  `seed-1` row; the hand-transcribed guardrails are gone from the remote copy.
+  The phone's `localStorage` is the likely survivor, and only until it next
+  foregrounds online: the recovery is airplane mode → Profile → Data → Export
+  backup, then a restore. **Also still in the live diary:** the fabricated
+  ongoing attack `1788250933192` (Sumatriptan, right temple, severity 2–3).
+  Both were left for Sunny to decide on rather than remediated.
+- **Nothing in the widget work has been seen on physical hardware.** The
+  trajectory, the interactive button, Lexend in the extension and the
+  low-severity band were all verified in the Simulator, rendered on a real home
+  screen — but the Simulator is where the elapsed-time and stale-bundle
+  failures both hid before.
 - **Nothing shipped this session has been seen on device.** That is
   `PreventiveInsights`, HIT-6 (prompt + questionnaire + Profile row), "Edit
   details", the redrawn medication icons, the plainer wizard instructions, and

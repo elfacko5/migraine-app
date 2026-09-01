@@ -1,6 +1,7 @@
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
+import { LiddWidget } from './liddWidgetPlugin';
 import type { Attack, Medication } from '../types';
-import { attackLatestSeverity, attackMaxSeverity } from './stats';
+import { attackLatestSeverity, attackMaxSeverity, maxSeverity } from './stats';
 import { isRetired } from './retired';
 import { DAY_MS, checkDose, doseUnits, findMedication, lastDoseSnapshot } from './medGuardrails';
 
@@ -33,8 +34,11 @@ import { DAY_MS, checkDose, doseUnits, findMedication, lastDoseSnapshot } from '
 /** Bumped whenever the shape changes. The widget refuses a version it doesn't
  *  know rather than reading fields it may no longer understand — an app update
  *  and an extension update are installed together, but a widget's timeline can
- *  outlive both by minutes. */
-export const WIDGET_SNAPSHOT_VERSION = 1;
+ *  outlive both by minutes.
+ *
+ *  2 — `readings` (a count) became `series` (the readings themselves), for the
+ *  ongoing state's trajectory sparkline. */
+export const WIDGET_SNAPSHOT_VERSION = 2;
 
 export interface WidgetDosePosition {
   name: string;
@@ -74,7 +78,23 @@ export interface WidgetSnapshot {
      *  severity in the present tense that the attack has already left. */
     severityNow: number;
     severityPeak: number;
-    readings: number;
+    /**
+     * Every reading in the attack, oldest first, as the same figure the Logs
+     * sparkline plots — each snapshot's own maximum severity.
+     *
+     * This is the one place the payload carries a series rather than a
+     * finished figure, and it is what the widget's trajectory line is drawn
+     * from: whether an attack is climbing or easing off is the thing two
+     * numbers cannot say, and it is most of what someone glancing at a home
+     * screen wants to know. The **severity of each reading is still computed
+     * here** — `maxSeverity` is the app's definition of "how bad was it then",
+     * and the extension only positions what it is given.
+     *
+     * It replaced a plain count in v2. The count is `series.length`, so
+     * nothing was lost — but a count could not be derived back into this,
+     * which is why the field is worth its size.
+     */
+    series: { at: string; severity: number }[];
   } | null;
   /** ISO end of the most recently *ended* attack, for the "14 days" figure.
    *  Null when an attack is ongoing or nothing has ever been logged. */
@@ -152,7 +172,7 @@ export function buildWidgetSnapshot(
           startedAt: ongoing.snapshots[0].time,
           severityNow: attackLatestSeverity(ongoing),
           severityPeak: attackMaxSeverity(ongoing),
-          readings: ongoing.snapshots.length,
+          series: ongoing.snapshots.map((snap) => ({ at: snap.time, severity: maxSeverity(snap) })),
         }
       : null,
     lastEndedAt: ongoing ? null : lastEndedAt,
@@ -170,13 +190,6 @@ export function buildWidgetSnapshot(
       : null,
   };
 }
-
-interface LiddWidgetPlugin {
-  /** Writes the payload into the App Group suite and reloads every timeline. */
-  publish(options: { value: string }): Promise<void>;
-}
-
-const LiddWidget = registerPlugin<LiddWidgetPlugin>('LiddWidget');
 
 /**
  * Hands the payload to the widget. A no-op on web, where there is no widget
