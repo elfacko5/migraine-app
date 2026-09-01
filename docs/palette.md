@@ -43,6 +43,15 @@ These tokens are mirrored in Figma: **Lidd Design System** —
   The rule that survives: **a scope answers "could a designer legitimately need this here?", not
   "does the current code do this?"** — but never `ALL_SCOPES`, and the 48 primitives stay hidden
   everywhere so a raw ramp value can't be bound in place of a mode-aware semantic.
+- **Two absences in the pickers are deliberate, and both look like gaps.** `accent/default` is not
+  offered as a text colour: solid accent means *action* — it is `btn-primary` and the FAB — and
+  `accent/light` is the accent-as-text token. Scoping it out is the palette rule enforced by the
+  tool rather than by memory. `accent/ring` is stroke-only, because a ring in Figma *is* a stroke.
+  Neither is an oversight; widening either one quietly removes a rule.
+- **A short group in a picker is usually the property, not a missing token.** A text layer offers
+  only what is legitimately text, a rectangle offers the surfaces and outlines too. Check the
+  selected layer's type before concluding a token is absent — that mistake cost three rounds on
+  2026-08-26.
 - **The hand-mirrored constants are tokens too** — added 2026-08-25 after the first pass shipped
   without them. `diagram/head-fill`, `diagram/disabled` and `severity/{low,mid,high}-edge` live in
   `headDiagram.ts` as TypeScript constants because an SVG presentation attribute cannot read
