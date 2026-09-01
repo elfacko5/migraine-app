@@ -552,18 +552,27 @@ struct LiddWidgetView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         } else if family == .systemMedium, entry.snapshot?.ongoing != nil {
-            // An attack with nothing taken for it: no second column, so the
-            // headline takes the width, and the button anchors the bottom.
-            VStack(alignment: .leading, spacing: 0) {
-                StateBlock(snapshot: entry.snapshot, entryDate: entry.date, prominent: true)
-                Spacer(minLength: 8)
-                HStack {
-                    Spacer()
-                    noChangeButton
-                }
-                // The only layout whose own content reaches the bottom-right,
-                // so the only one that has to leave the mark room.
-                .padding(.trailing, LiddMark.reservedWidth)
+            // An attack with nothing taken for it. There is no dose column, so
+            // the button takes that side rather than stacking under the state
+            // block — **which is what was broken**. Stacked, the block and the
+            // button came to ~159pt against ~126pt of content height even
+            // un-enlarged (~183pt while it was still `prominent`), so the
+            // button was pushed off the bottom edge. Caught on device,
+            // 2026-09-01.
+            //
+            // **This is the one combination never seen while building it**: a
+            // medium widget only loses its dose column *during* an attack when
+            // nothing has been taken yet, so every earlier check had either a
+            // dose beside the block or no attack at all. A vertical budget
+            // that only holds for some of a layout's states holds for none of
+            // them.
+            //
+            // Centred rather than bottom-aligned, so it stays clear of the
+            // mark in the bottom-right corner.
+            HStack(alignment: .center, spacing: 14) {
+                StateBlock(snapshot: entry.snapshot, entryDate: entry.date)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                noChangeButton
             }
         } else if family == .systemMedium {
             // **No `Spacer` here, and that is the point.** Off an attack there
