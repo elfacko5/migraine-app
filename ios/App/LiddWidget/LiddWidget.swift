@@ -313,8 +313,15 @@ private struct StateBlock: View {
                 // naming the thing that happened rather than the stretch since
                 // it. The app has one string for this; so does the widget.
                 LiddLabel(text: "Attack-free for")
+                // **The same size as the ongoing duration, deliberately.**
+                // It was 34/44, inherited from `AttackFreeCard` where the
+                // figure owns a full-width hero and can carry that scale. On a
+                // widget it simply dominated — and worst when the number was
+                // least interesting, since "just now" and "1 minute" are long
+                // strings where "8 days" is short. The headline is the
+                // headline whatever the state is; only the content differs.
                 Text(LiddElapsed.long(since: ended, at: entryDate))
-                    .font(LiddFont.fixed(prominent ? 44 : 34))
+                    .font(LiddFont.fixed(prominent ? 34 : 26))
                     .foregroundColor(.liddPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -586,7 +593,23 @@ struct LiddWidgetView: View {
 
     var body: some View {
         content
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            // **Top-anchored when there is artwork behind it, centred when
+            // there is not**, and the two are the same decision rather than
+            // an inconsistency. On a flat ground a top-anchored block left two
+            // thirds of the widget visibly empty — the "layout that has
+            // failed" reading. With the picture there, that space is doing
+            // something, and the text sitting above it lets more of the
+            // artwork show than centring does. Reinstated on Sunny's call,
+            // 2026-09-01, after the artwork made the void argument moot.
+            //
+            // The no-artwork prominent states — "Nothing ongoing" and the
+            // empty diary — keep the centring, since nothing fills the space
+            // for them either.
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity,
+                alignment: showsArtwork ? .topLeading : .leading
+            )
             .liddContainerBackground(artwork: showsArtwork)
     }
 
