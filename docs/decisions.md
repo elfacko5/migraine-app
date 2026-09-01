@@ -1410,3 +1410,55 @@ the widget kept rendering the old state — and kept *ticking* it — across a
 reboot. Something has to ask WidgetKit to reload, which in practice means
 launching the app, which republishes its own payload. That is why the state
 has to come from the app's own data rather than from a hand-written plist.
+
+## The 2026-07-01 zone rename orphaned real data (found 2026-09-01)
+
+`PAIN_AREAS` shipped on 2026-06-26 as seven zones in **prefix** form:
+
+```
+'Forehead', 'Left temple', 'Right temple', 'Back of head',
+'Top of head', 'Left eye', 'Right eye'
+```
+
+`0739f23` ("Rebuild pain-area picker from custom SVG artwork", 2026-07-01)
+replaced it with the current 17 zones in **suffix** form (`Temple right`).
+CLAUDE.md already warned that renaming zones strands existing
+`snapshot.areas` data, which stores the exact strings — and that is what
+happened, to the five days of diary that predate the rename. Nothing failed
+loudly, so it went unnoticed for two months.
+
+What it costs, per orphaned reading: `attackSide` returns `null`, so the Logs
+row shows no laterality glyph; `HeadHeatmap` resolves zones by name, so the
+reading contributes to nothing in Insights. `SeverityBreakdown` still lists it,
+because it renders whatever key it finds — which is why the detail sheet looks
+complete while the summary surfaces silently drop it.
+
+**Found from the other end**: a missing side glyph on one Logs row. The first
+read of it was that the row was wrong; it was the data. Worth remembering that
+`attackSide` returning `null` is a *correct* answer that looks like a bug.
+
+**Not migrated, and the reason is the mapping, not the effort.** `Forehead`,
+`Top of head` and `Back of head` carry no side, so they cannot be mapped onto
+the current zones without inventing a laterality — which is precisely what
+`attackSide` refuses to do when it returns `null`. Rewriting stored snapshots
+would also cut against the rule that they are the record of what was reported
+at the time. If this is ever revisited, a **read-time** alias (the shape
+`isRetired` already uses) is the direction, and the sideless three still have
+no honest answer.
+
+**Do not mistake these for the fabricated attacks.** Three attacks carry
+non-canonical keys and they are not the same thing:
+
+- `1782466743671` (26 Jun) — **genuine**, logged on the app's first day, in
+  the naming of that day. Keep.
+- `1788250933192` (1 Sep) and `1787158812587` (19 Aug) — fabricated by seeding
+  scripts that used stale zone names well after the rename. The 1 Sep one is
+  the id this file previously recorded as "believed gone"; it is not gone.
+
+**Separately, `1782466743671` has a wrong end time**: recorded as 26 Jun →
+15 Jul, **461.8 hours**, against ICHD-3's 4–72h definition of an attack. It is
+a forgot-to-end-it record, and it is not cosmetic — it contributes 15 of July's
+23 migraine days, which is the difference between an episodic month and a
+chart crossing the 15-day chronic line it draws on every bar. Measured
+2026-09-01: Jun 7 · **Jul 23** · Aug 13 · Sep 1. `updateAttackDetails` can
+patch `end` on an ended attack, which is what that feature is for.
