@@ -497,9 +497,9 @@ struct LiddWidgetView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-        } else if family == .systemMedium {
-            // Nothing honest to put in a second column, so the headline takes
-            // the width instead of leaving two thirds of the widget empty.
+        } else if family == .systemMedium, entry.snapshot?.ongoing != nil {
+            // An attack with nothing taken for it: no second column, so the
+            // headline takes the width, and the button anchors the bottom.
             VStack(alignment: .leading, spacing: 0) {
                 StateBlock(snapshot: entry.snapshot, entryDate: entry.date, prominent: true)
                 Spacer(minLength: 8)
@@ -508,6 +508,15 @@ struct LiddWidgetView: View {
                     noChangeButton
                 }
             }
+        } else if family == .systemMedium {
+            // **No `Spacer` here, and that is the point.** Off an attack there
+            // is no button to anchor the bottom, so a top-aligned block left
+            // two thirds of the widget empty below it — the exact "layout that
+            // has failed" reading `prominent` exists to prevent, and a
+            // regression introduced with the button (caught on device,
+            // 2026-09-01). Bare, it inherits the container's vertical centring,
+            // the way `AttackFreeCard` centres its one figure in the hero.
+            StateBlock(snapshot: entry.snapshot, entryDate: entry.date, prominent: true)
         } else {
             StateBlock(snapshot: entry.snapshot, entryDate: entry.date)
         }
