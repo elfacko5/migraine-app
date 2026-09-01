@@ -73,7 +73,16 @@ export function SeverityBreakdown({ attack }: Props) {
         <span className="text-[0.6875rem] text-text-secondary">Pain areas</span>
         <span />
         <span className="text-center text-[0.6875rem] text-text-secondary">peak</span>
-        <span className="text-center text-[0.6875rem] text-text-secondary">now</span>
+        {/* **"now" only while the attack is running.** On a finished one it
+            was claiming the present tense about a reading that could be days
+            old. It says "last" rather than "end" because that is what the
+            column actually holds — the final *recorded* reading, which may
+            sit well before the attack's end time. The same rule as the
+            missing-value dash below: report what was recorded, never
+            interpolate to what the attack presumably did afterwards. */}
+        <span className="text-center text-[0.6875rem] text-text-secondary">
+          {attack.end ? 'last' : 'now'}
+        </span>
       </div>
 
       {rows.map((row) => {

@@ -111,6 +111,9 @@ enum LiddDate {
 enum LiddElapsed {
     /// `formatElapsed` — "just now" / "45m" / "5h" / "5h 2m". The ongoing
     /// attack's headline, matching the Today hero.
+    /// Stays lowercase to match `formatElapsed`, which the app renders as
+    /// "Started just now". The widget shows it bare, so its one call site
+    /// capitalises — see `sentenceCased`.
     static func short(since start: Date, at now: Date) -> String {
         let totalMin = max(0, Int(now.timeIntervalSince(start) / 60))
         let h = totalMin / 60
@@ -123,9 +126,13 @@ enum LiddElapsed {
 
     /// `formatSinceLong` — "8 days" / "3 hours" / "20 minutes". The
     /// attack-free headline, matching `AttackFreeCard`.
+    ///
+    /// **"Just now" is capitalised here and lowercase in `short`**, exactly as
+    /// the TS pair is: this one only ever stands alone as a headline, where
+    /// `formatElapsed` renders mid-sentence as "Started just now".
     static func long(since start: Date, at now: Date) -> String {
         let seconds = now.timeIntervalSince(start)
-        if seconds < 60 { return "just now" }
+        if seconds < 60 { return "Just now" }
         let totalMin = Int(seconds / 60)
         let days = totalMin / 1440
         let hours = (totalMin % 1440) / 60
@@ -134,6 +141,15 @@ enum LiddElapsed {
         if days > 0 { return unit(days, "day") }
         if hours > 0 { return unit(hours, "hour") }
         return unit(mins, "minute")
+    }
+
+    /// Capitalises the first character and nothing else — for the widget's
+    /// ongoing headline, which renders `short` on its own where the app
+    /// prefixes it with "Started". Not `.capitalized`, which would also
+    /// rewrite "3h 20m".
+    static func sentenceCased(_ value: String) -> String {
+        guard let first = value.first else { return value }
+        return first.uppercased() + value.dropFirst()
     }
 
     /// When `short(since:at:)` next reads differently — the next whole minute

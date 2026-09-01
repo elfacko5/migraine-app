@@ -9,9 +9,15 @@ import { sevTextClass as sevColor } from '../utils/severity';
 // "what else was true at this moment", and each kind of thing is named
 // rather than left to be inferred from its punctuation — which is what the
 // old "Relief: …" / bare-symptom-list rows relied on.
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+// `divided` is false only for the very first block in a card that has no
+// pain-area line and no source label above it — a reading whose whole content
+// is, say, a medication. The rule is a *separator between* sections, so with
+// nothing above it to separate from it was a line drawn across the top of the
+// card for no reason. It showed on some past readings and not others, which
+// is what made it read as a glitch rather than a style.
+function Section({ label, children, divided = true }: { label: string; children: React.ReactNode; divided?: boolean }) {
   return (
-    <div className="border-t border-bg-border pt-2.5">
+    <div className={divided ? 'border-t border-bg-border pt-2.5' : ''}>
       <p className="text-xs uppercase tracking-wider text-text-secondary label-caps">{label}:</p>
       {/* 14px, a step below the pain-area line above it. The values ended up
           the same size as the headline and, being longer runs of much higher
@@ -95,30 +101,50 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
             <p className={`text-xs text-text-secondary ${areas.length > 0 ? 'mt-1' : ''}`}>{sourceLabel}</p>
           )}
 
-          <div className={areas.length > 0 || sourceLabel ? 'mt-3 space-y-2.5' : 'space-y-2.5'}>
-            {snap.medication && (
-              <Section label="Medication">
-                <span className="flex items-center gap-2">
-                  <span aria-hidden="true" className="shrink-0">
-                    <MedIcon name={snap.medication.name} dose={snap.medication.dose} className="inline h-4 w-4 align-[-0.2em]" />
+          {/* Sections as a list, so the separator rule can be "every one
+              after the first thing on the card" rather than "every one".
+              What precedes them is the pain-area line or the "Via reminder"
+              label; with neither — a reading whose whole content is a
+              medication, say — the first section leads the card and takes no
+              rule. */}
+          {(() => {
+            const hasHeader = areas.length > 0 || !!sourceLabel;
+            const sections: { label: string; content: React.ReactNode }[] = [];
+            if (snap.medication) {
+              sections.push({
+                label: 'Medication',
+                content: (
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden="true" className="shrink-0">
+                      <MedIcon name={snap.medication.name} dose={snap.medication.dose} className="inline h-4 w-4 align-[-0.2em]" />
+                    </span>
+                    <span className="min-w-0">
+                      {snap.medication.name}{snap.medication.dose && ` ${snap.medication.dose}`}
+                    </span>
                   </span>
-                  <span className="min-w-0">
-                    {snap.medication.name}{snap.medication.dose && ` ${snap.medication.dose}`}
-                  </span>
-                </span>
-              </Section>
-            )}
-
-            {(snap.reliefs ?? []).length > 0 && (
-              <Section label="Relief">{snap.reliefs!.join(', ')}</Section>
-            )}
-
-            {snap.symptoms.length > 0 && (
-              <Section label="Symptoms">{snap.symptoms.join(', ')}</Section>
-            )}
-
-            {snap.note && <Section label="Note">{snap.note}</Section>}
-          </div>
+                ),
+              });
+            }
+            if ((snap.reliefs ?? []).length > 0) {
+              sections.push({ label: 'Relief', content: snap.reliefs!.join(', ') });
+            }
+            if (snap.symptoms.length > 0) {
+              sections.push({ label: 'Symptoms', content: snap.symptoms.join(', ') });
+            }
+            if (snap.note) {
+              sections.push({ label: 'Note', content: snap.note });
+            }
+            if (sections.length === 0) return null;
+            return (
+              <div className={hasHeader ? 'mt-3 space-y-2.5' : 'space-y-2.5'}>
+                {sections.map((section, i) => (
+                  <Section key={section.label} label={section.label} divided={hasHeader || i > 0}>
+                    {section.content}
+                  </Section>
+                ))}
+              </div>
+            );
+          })()}
         </div>
         )}
       </div>

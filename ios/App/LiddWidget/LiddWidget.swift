@@ -296,7 +296,7 @@ private struct StateBlock: View {
                 // see `LiddElapsed`. `Text(_:style:.relative)` ticked itself
                 // for free but rendered seconds under the hour, putting a
                 // stopwatch on the home screen of an app built to sit still.
-                Text(LiddElapsed.short(since: started, at: entryDate))
+                Text(LiddElapsed.sentenceCased(LiddElapsed.short(since: started, at: entryDate)))
                     .font(LiddFont.fixed(prominent ? 34 : 26))
                     .foregroundColor(.liddPrimary)
                     .lineLimit(1)

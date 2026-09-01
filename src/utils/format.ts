@@ -54,7 +54,11 @@ export function formatSince(iso: string): string {
 // Only the largest unit, since that card is a glance, not a stopwatch.
 export function formatSinceLong(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
-  if (ms < 60_000) return 'just now';
+  // **Capitalised, unlike `formatElapsed`'s**, and the difference is where
+  // each one lands rather than an inconsistency: this is only ever a headline
+  // standing on its own (`AttackFreeCard`, and the widget's attack-free
+  // state), where `formatElapsed` renders mid-sentence as "Started just now".
+  if (ms < 60_000) return 'Just now';
   const totalMin = Math.floor(ms / 60_000);
   const days = Math.floor(totalMin / 1440);
   const hours = Math.floor((totalMin % 1440) / 60);
