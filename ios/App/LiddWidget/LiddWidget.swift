@@ -432,6 +432,20 @@ private struct DoseBlock: View {
 /// sage because that is the brand's own colour and this is the brand's own
 /// mark; the "accent means action" rule governs controls, and this is not one.
 private struct LiddMark: View {
+    /// The gutter the content leaves clear for it: the mark plus a gap. One
+    /// constant, so the mark's size and the space kept for it cannot drift
+    /// apart — which is how it came to overlap the label while it lived in the
+    /// top-right, and how it came to overlap the attack-free headline once
+    /// this was deleted as dead.
+    ///
+    /// **It is not dead and was not only the "No change" button's.** The mark
+    /// is an overlay on the frame, so it takes no layout space and nothing
+    /// subtracts it from the text's own width: a headline measures its
+    /// `minimumScaleFactor` against the whole widget and shrinks only when the
+    /// text alone overflows, never because the mark is sitting on it. The
+    /// button needed this; so does every state without one.
+    static let reservedWidth: CGFloat = 26
+
     var size: CGFloat = 19
     var body: some View {
         if let image = UIImage(named: "LiddMark") {
@@ -466,6 +480,14 @@ struct LiddWidgetView: View {
 
     var body: some View {
         content
+            // **The content leaves the mark's gutter clear; the mark does not
+            // defend it.** An overlay takes no layout space, so without this
+            // the text is proposed the full width and runs underneath the
+            // mark — worst on the square family off an attack, where the
+            // headline is centred on the mark's own line and "just now" is a
+            // long string where "8 days" is short. Padding here rather than
+            // per-block so one rule covers both families and every state.
+            .padding(.trailing, LiddMark.reservedWidth)
             // Vertically centred in every state. It was top-anchored while the
             // artwork was there, since the picture filled what would otherwise
             // have been a void; with the flat ground back, a top-anchored block

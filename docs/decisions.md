@@ -1358,3 +1358,55 @@ list scrolled mid-attack.
 - ~~Siri phrase recognition is unverified~~ — **verified on device**: the phrases are registered, the shortcut is findable in the Shortcuts app, and "log a migraine in Lidd" runs the intent through all four questions. It broke once on rename, for the `CFBundleName` reason above; if it ever answers "I can't help you with that" again, check the two names agree before suspecting anything else.
 - **The voice summary screen has no per-section edit path.** Correcting one thing Siri got wrong (typically the medication) means either "Make changes", which walks the whole wizard, or tapping through to the step. The design adds a pencil per section on the review screen, opening that single step over the summary with Save / Discard changes, while "Make changes" stays for when Siri got everything wrong. Not built: `LogForm` drives every step off one `step` number with each step's body inline in a single conditional, so editing one in isolation means extracting the step bodies, adding state for the overlay, and snapshotting the affected `form` keys so Discard can restore them. **Settle it together with "Edit details"** on the attack detail screen — both are "change one part of an existing record", and answering one probably answers the other.
 - **The typography and palette decisions have no recorded rationale, and the font was never implemented.** Searched on 2026-08-14 after the user recalled settling on **Satoshi** and choosing colours for light sensitivity: "Satoshi" appears nowhere — not in the tree, not in `git log --all -S`, not across any stored session transcript — and `--font-sans` has been `system-ui, "Segoe UI", Roboto, sans-serif` since the first commit, untouched. So the app renders in San Francisco on iOS and always has. The palette *rules* did survive (`cf621be`: no pure black/white, no purple/blue, no drop shadows, plus the fixed `#7d8599`/`#5a9e7a` zone colours), but nothing anywhere states the light-sensitivity reasoning behind them — plausible as photophobia guidance, unverified as intent. The likeliest explanation is that it predates the oldest stored transcript (2026-07-01) or happened in another tool. **Parked at the user's request**; recorded so the search isn't repeated from scratch. Switching to Satoshi would mean self-hosting a `woff2` (the CSP and offline-first bundle rule out a CDN) and confirming its licence.
+
+## The mark's reserved width came back (2026-09-01)
+
+`6ce20c2` deleted `LiddMark.reservedWidth` as dead, on the reading that it
+existed only so the just-removed "No change" button could leave the mark room.
+Half of that was right. Its own docstring recorded the other half — *"which is
+how it came to overlap the label while it lived in the top-right"* — and that
+half was load-bearing.
+
+The mark is an `.overlay` on the frame. An overlay takes no layout space, so
+with the constant gone nothing subtracted the mark's width from the text's:
+a headline measures `minimumScaleFactor` against the whole widget and shrinks
+only when the text alone overflows, never because the mark is sitting on it.
+The same commit also moved the attack-free mark from `.bottomTrailing` to
+`.trailing` — vertically centred, i.e. exactly the headline's own line.
+
+Caught from Sunny's own home screen the same evening, a day before a demo: the
+square family reading "Attack-free for / **Just now**" with the mark against
+the headline, and the ongoing state's mark hard up against "peak 9".
+
+**The fix is the reserve, not another placement.** The placement took three
+tries and is correct; what was wrong is that nothing left room for it. So
+`reservedWidth` is back at 26 and applied as trailing padding on the whole
+content block — one rule, both families, every state — rather than per block,
+which is how the two could drift apart in the first place. The alignment rule
+(`.trailing` off an attack, `.bottomTrailing` during one) is untouched.
+
+The 26pt costs the medium widget's dose column nothing visible: verified with
+"Sumatriptan" at full size and no truncation.
+
+**Verified in the Simulator on a real home screen**, all four states, both
+families: attack-free small and medium, ongoing small, ongoing medium with a
+dose, and ongoing medium with none — the last being the layout that produced
+the earlier overflow bug.
+
+**Working-practice note, and it is the more important half of this entry.**
+The first simulator reached for this check (`iPhone 17 Pro`) turned out to be
+**signed in** — an `sb-…-auth-token` in its `localStorage` and 53KB of real
+`hd_attacks` pulled down. Seeding an ongoing attack there to preview the
+widget would have pushed fabricated data into the live account, which is the
+2026-08-19 incident exactly. The check that caught it was reading the
+`localStorage` keys *before* writing anything. The seed went to a second,
+verifiably empty simulator instead (zero rows, zero `sb-` keys).
+
+Also worth knowing for the next person previewing a widget state: writing the
+App Group container plist and rebooting is **not** sufficient on its own when
+the widget's timeline is still live. The attack-free branch schedules ~30
+daily entries, each carrying the snapshot captured when `getTimeline` ran, so
+the widget kept rendering the old state — and kept *ticking* it — across a
+reboot. Something has to ask WidgetKit to reload, which in practice means
+launching the app, which republishes its own payload. That is why the state
+has to come from the app's own data rather than from a hand-written plist.
