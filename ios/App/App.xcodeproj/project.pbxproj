@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0ACA454A89E0D0702F4C815C /* LiddWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 176ECAE76EF4AB338158062C /* LiddWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		16B13CF4FFAED63EBCED307A /* LiddMark@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 338B2A24A804357163524478 /* LiddMark@3x.png */; };
+		2E753B219137532A11718AE7 /* LiddWidgetShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA2B7FBF43F1ED54006995B0 /* LiddWidgetShared.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -14,15 +17,48 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		708C611B1A22C5418379E58F /* LiddWidgetPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC993669704F9E63A6EEBC9E /* LiddWidgetPlugin.swift */; };
+		90CF370EF999EA6353709853 /* LiddBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 278C1C4280D3E6C13CAEEAA7 /* LiddBridgeViewController.swift */; };
 		98F9E050C89B1250B0AC3F86 /* LogMigraineIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A7FF7AFA6F4F54EDD299108 /* LogMigraineIntent.swift */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
+		B619A6FC7419E7085033EAA4 /* LiddWidgetShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA2B7FBF43F1ED54006995B0 /* LiddWidgetShared.swift */; };
 		D61FDA7DE4113C5F4CA3A62B /* reminder.wav in Resources */ = {isa = PBXBuildFile; fileRef = AD7C9F5AE54B155E6D7A1FE3 /* reminder.wav */; };
+		DE92C9529037420BAAB84A8D /* LiddMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 73A6B20CAC441E686C972B66 /* LiddMark@2x.png */; };
+		DEFFA894B943E63641890DFE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECB84131DAE17B8E33BDC552 /* Foundation.framework */; };
 		E3BFE283E1D7AA13AE7E052A /* NotificationActionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BF5CBA9C4407A0FAC92CC7 /* NotificationActionHandler.swift */; };
+		E3E3B1AD9541DB5CD6541442 /* LiddWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8AF1026D4CCB388282A1408 /* LiddWidget.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		DB4B5DE2FC5CD56471224600 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AD7D6E52E5E70CC5346DE120;
+			remoteInfo = LiddWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		79A764CAA6F9C5AECA4A4F74 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0ACA454A89E0D0702F4C815C /* LiddWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		176ECAE76EF4AB338158062C /* LiddWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiddWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		278C1C4280D3E6C13CAEEAA7 /* LiddBridgeViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LiddBridgeViewController.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		30BF5CBA9C4407A0FAC92CC7 /* NotificationActionHandler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationActionHandler.swift; sourceTree = "<group>"; };
+		338B2A24A804357163524478 /* LiddMark@3x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "LiddMark@3x.png"; sourceTree = "<group>"; };
 		4A7FF7AFA6F4F54EDD299108 /* LogMigraineIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogMigraineIntent.swift; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -32,10 +68,15 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		73A6B20CAC441E686C972B66 /* LiddMark@2x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "LiddMark@2x.png"; sourceTree = "<group>"; };
+		A8AF1026D4CCB388282A1408 /* LiddWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiddWidget.swift; path = LiddWidget.swift; sourceTree = "<group>"; };
 		AD7C9F5AE54B155E6D7A1FE3 /* reminder.wav */ = {isa = PBXFileReference; includeInIndex = 1; path = reminder.wav; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
+		DA2B7FBF43F1ED54006995B0 /* LiddWidgetShared.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiddWidgetShared.swift; path = LiddWidgetShared.swift; sourceTree = "<group>"; };
+		ECB84131DAE17B8E33BDC552 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
+		FC993669704F9E63A6EEBC9E /* LiddWidgetPlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiddWidgetPlugin.swift; path = LiddWidgetPlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,15 +88,52 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7CE0C413CCC3BD621A9E1E3D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DEFFA894B943E63641890DFE /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		14DEF744B15F67DE012E7318 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				ECB84131DAE17B8E33BDC552 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
 		27E2DDA53C4D2A4D1A88CE4A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */,
+				14DEF744B15F67DE012E7318 /* iOS */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		2CB8000ACC9063B9B37B195E /* LiddWidget */ = {
+			isa = PBXGroup;
+			children = (
+				A8AF1026D4CCB388282A1408 /* LiddWidget.swift */,
+				73A6B20CAC441E686C972B66 /* LiddMark@2x.png */,
+				338B2A24A804357163524478 /* LiddMark@3x.png */,
+			);
+			name = LiddWidget;
+			path = LiddWidget;
+			sourceTree = "<group>";
+		};
+		3E0563AFDEAA317773D5464E /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				DA2B7FBF43F1ED54006995B0 /* LiddWidgetShared.swift */,
+			);
+			name = Shared;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 		504EC2FB1FED79650016851F = {
@@ -65,6 +143,8 @@
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
+				3E0563AFDEAA317773D5464E /* Shared */,
+				2CB8000ACC9063B9B37B195E /* LiddWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -72,6 +152,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				176ECAE76EF4AB338158062C /* LiddWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -90,6 +171,8 @@
 				4A7FF7AFA6F4F54EDD299108 /* LogMigraineIntent.swift */,
 				30BF5CBA9C4407A0FAC92CC7 /* NotificationActionHandler.swift */,
 				AD7C9F5AE54B155E6D7A1FE3 /* reminder.wav */,
+				FC993669704F9E63A6EEBC9E /* LiddWidgetPlugin.swift */,
+				278C1C4280D3E6C13CAEEAA7 /* LiddBridgeViewController.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -116,15 +199,34 @@
 				5156556F85DDE3F4834EC09F /* Build web assets (vite + cap copy) */,
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
+				79A764CAA6F9C5AECA4A4F74 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				CCFDE0CA72D9493061D73735 /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		AD7D6E52E5E70CC5346DE120 /* LiddWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0E64923ED55EDB98ECE0D08 /* Build configuration list for PBXNativeTarget "LiddWidget" */;
+			buildPhases = (
+				5884CEBB95089A888A18A000 /* Sources */,
+				7CE0C413CCC3BD621A9E1E3D /* Frameworks */,
+				C9EC6D669E9BE430AC917C62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LiddWidget;
+			productName = LiddWidget;
+			productReference = 176ECAE76EF4AB338158062C /* LiddWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -156,6 +258,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				AD7D6E52E5E70CC5346DE120 /* LiddWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -172,6 +275,15 @@
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				D61FDA7DE4113C5F4CA3A62B /* reminder.wav in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C9EC6D669E9BE430AC917C62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE92C9529037420BAAB84A8D /* LiddMark@2x.png in Resources */,
+				16B13CF4FFAED63EBCED307A /* LiddMark@3x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,10 +353,31 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				98F9E050C89B1250B0AC3F86 /* LogMigraineIntent.swift in Sources */,
 				E3BFE283E1D7AA13AE7E052A /* NotificationActionHandler.swift in Sources */,
+				708C611B1A22C5418379E58F /* LiddWidgetPlugin.swift in Sources */,
+				B619A6FC7419E7085033EAA4 /* LiddWidgetShared.swift in Sources */,
+				90CF370EF999EA6353709853 /* LiddBridgeViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5884CEBB95089A888A18A000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E3E3B1AD9541DB5CD6541442 /* LiddWidget.swift in Sources */,
+				2E753B219137532A11718AE7 /* LiddWidgetShared.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CCFDE0CA72D9493061D73735 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = LiddWidget;
+			target = AD7D6E52E5E70CC5346DE120 /* LiddWidget */;
+			targetProxy = DB4B5DE2FC5CD56471224600 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -378,6 +511,7 @@
 			baseConfigurationReference = FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = W6PWZNS37A;
@@ -399,6 +533,7 @@
 			baseConfigurationReference = AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = W6PWZNS37A;
@@ -411,6 +546,51 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		9CF29D625492B96FDA91BBD4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = LiddWidget/LiddWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = W6PWZNS37A;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LiddWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sunny.migrainetracker2.LiddWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CA04452471DDD4C9BB08D676 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = LiddWidget/LiddWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = W6PWZNS37A;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LiddWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sunny.migrainetracker2.LiddWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -431,6 +611,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A0E64923ED55EDB98ECE0D08 /* Build configuration list for PBXNativeTarget "LiddWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CA04452471DDD4C9BB08D676 /* Release */,
+				9CF29D625492B96FDA91BBD4 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

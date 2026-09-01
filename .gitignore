@@ -2,3 +2,8 @@ node_modules/
 dist/
 .DS_Store
 *.local
+
+# The seeded design canvas: ~2.5MB of editor payload regenerated from the
+# .dc.html working files beside it. Those files are the source; this is build
+# output, and it changes wholesale on every re-seed.
+design/lidd-widget-directions.html

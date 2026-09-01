@@ -1,0 +1,46 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 620, "h": 480, "title": "A — Duration leads, severity as a figure" },
+    { "file": "Current.dc.html", "x": 740, "y": 0, "w": 620, "h": 480, "title": "Shipping today (reference)" },
+    { "file": "DirectionB.dc.html", "x": 0, "y": 660, "w": 620, "h": 480, "title": "B — Severity leads, with a scale" },
+    { "file": "DirectionC.dc.html", "x": 740, "y": 660, "w": 620, "h": 480, "title": "C — Trajectory" }
+  ],
+  "annotations": [
+    {
+      "id": "note-a",
+      "x": 0,
+      "y": -150,
+      "w": 620,
+      "text": "A — Duration leads, severity as a figure\n\nClosest to what ships. Duration stays the headline; severity becomes a real figure with the app's severity ramp carrying magnitude, and the peak sits beside it as the quiet number.\n\nTradeoff: safest, least distinctive. Colour is the only thing doing visual work.\n\nThe severity and peak sliders above the frame change every mockup on it — worth pushing severity to 2 and to 9 to see the ramp switch."
+    },
+    {
+      "id": "note-current",
+      "x": 740,
+      "y": -150,
+      "w": 620,
+      "text": "Shipping today, for comparison\n\nAll four states as they render on the phone right now. Everything is one of two text sizes, so nothing leads — this is the flatness you spotted."
+    },
+    {
+      "id": "note-b",
+      "x": 0,
+      "y": 530,
+      "w": 620,
+      "text": "B — Severity leads, with a scale\n\nSeverity is the hero and duration demotes to a corner. The 10-step scale gives magnitude a position, not just a colour, and marks the peak as an outlined tick — readable without reading a number.\n\nTradeoff: the scale is close to a progress bar, which is a shape that implies a goal. Worth checking it doesn't read as one."
+    },
+    {
+      "id": "note-c",
+      "x": 740,
+      "y": 530,
+      "w": 620,
+      "text": "C — Trajectory\n\nReuses the sparkline already on every Logs row (y pinned 0–10, line coloured by the peak). Shows where the attack has been, not just where it is — the peak becomes a shape rather than a second number.\n\nTradeoff: needs data the widget payload does not carry yet — the readings, not just now and peak. A real change, not just a redraw. Also the least legible at a glance of the three."
+    },
+    {
+      "id": "note-type",
+      "x": 0,
+      "y": 1200,
+      "w": 1360,
+      "text": "All four are drawn in Lexend. The shipping widget uses the system face (SF) — the app's own type spec never crossed into the extension. Worth deciding either way; it is a small change to bundle the font into the widget target."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

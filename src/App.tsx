@@ -15,6 +15,7 @@ import { parseVoiceEntry, type VoiceDraft } from './utils/voiceParse';
 import { onNotificationAction, cancelNotification } from './utils/notifications';
 import { awaitPendingVoiceEntry } from './utils/pendingVoice';
 import { consumePendingActions } from './utils/pendingActions';
+import { useWidgetSnapshot } from './hooks/useWidgetSnapshot';
 import { BottomNav } from './components/BottomNav';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
@@ -108,6 +109,10 @@ export default function App() {
   } = useHit6(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
   const { textScale, setTextScale, brightness, setBrightness, attackMode, setAttackMode } = useSettings();
+
+  // Mirrors what the home-screen widget shows out to the App Group. Watches
+  // the data rather than the writers, so no future save path can forget it.
+  useWidgetSnapshot(attacks, medications);
 
   // The shell's nested scroll container, watched so AttackModePill can shed
   // its label while the user is reading downward and get it back on the way

@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Lexend', system-ui, -apple-system, sans-serif; }
+    a { color: #7fa187; } a:hover { color: #8fb096; }
+  </style>
+</helmet>
+<div style="padding: 32px; box-sizing: border-box; min-height: 100%; background: #857e72; display: flex; flex-direction: column; gap: 26px;">
+
+  <div style="display: flex; gap: 24px; align-items: flex-start;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="font-size: 12px; font-weight: 500; color: #2e2a24;">Ongoing · small</div>
+      <div style="width: 170px; height: 170px; background: #1b1a18; border-radius: 24px; padding: 16px; box-sizing: border-box; position: relative; display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <img src="liddmark.png" alt="" style="position: absolute; top: 16px; right: 16px; width: 17px; height: 17px; opacity: 0.85;">
+          <div style="font-size: 13px; color: #a39d92;">Ongoing attack</div>
+          <div style="font-size: 26px; font-weight: 600; color: #cdc7bb; letter-spacing: -0.01em;">3h 20m</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0px;">
+          <div style="display: flex; align-items: baseline; gap: 8px;">
+            <div style="font-size: 26px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; color: {{sevColor}}">{{sev}}</div>
+            <div style="font-size: 13px; color: #a39d92;">{{peakText}}</div>
+          </div>
+          <div style="font-size: 12px; color: #a39d92; margin-top: 4px;">Severity now</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="font-size: 12px; font-weight: 500; color: #2e2a24;">Ongoing · medium</div>
+      <div style="width: 364px; height: 170px; background: #1b1a18; border-radius: 24px; padding: 16px; box-sizing: border-box; position: relative; display: flex; gap: 14px;">
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <img src="liddmark.png" alt="" style="position: absolute; top: 16px; right: 16px; width: 17px; height: 17px; opacity: 0.85;">
+          <div style="font-size: 13px; color: #a39d92;">Ongoing attack</div>
+            <div style="font-size: 26px; font-weight: 600; color: #cdc7bb; letter-spacing: -0.01em;">3h 20m</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0px;">
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <div style="font-size: 26px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; color: {{sevColor}}">{{sev}}</div>
+              <div style="font-size: 13px; color: #a39d92;">{{peakText}}</div>
+            </div>
+            <div style="font-size: 12px; color: #a39d92; margin-top: 4px;">Severity now</div>
+          </div>
+        </div>
+        <div style="width: 1px; background: #302d29;"></div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+          <div style="font-size: 13px; color: #a39d92;">Taken 10:49</div>
+          <div style="font-size: 18px; font-weight: 500; color: #cdc7bb;">Sumatriptan</div>
+          <div style="font-size: 13px; color: #a39d92; margin-top: 10px;">Next dose from 12:49</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 24px; align-items: flex-start;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="font-size: 12px; font-weight: 500; color: #2e2a24;">Attack-free · small</div>
+      <div style="width: 170px; height: 170px; background: #1b1a18; border-radius: 24px; padding: 16px; box-sizing: border-box; position: relative; display: flex; flex-direction: column; justify-content: center; gap: 4px;">
+        <img src="liddmark.png" alt="" style="position: absolute; top: 16px; right: 16px; width: 17px; height: 17px; opacity: 0.85;">
+        <div style="font-size: 13px; color: #a39d92;">Since your last attack</div>
+        <div style="font-size: 34px; font-weight: 600; color: #cdc7bb; letter-spacing: -0.015em; line-height: 1.05;">8 days</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="font-size: 12px; font-weight: 500; color: #2e2a24;">Attack-free · medium</div>
+      <div style="width: 364px; height: 170px; background: #1b1a18; border-radius: 24px; padding: 16px; box-sizing: border-box; position: relative; display: flex; flex-direction: column; justify-content: center; gap: 4px;">
+        <img src="liddmark.png" alt="" style="position: absolute; top: 16px; right: 16px; width: 17px; height: 17px; opacity: 0.85;">
+        <div style="font-size: 13px; color: #a39d92;">Since your last attack</div>
+        <div style="font-size: 44px; font-weight: 600; color: #cdc7bb; letter-spacing: -0.02em; line-height: 1.05;">8 days</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"severity":{"editor":"range","default":7,"min":1,"max":10,"step":1,"section":"Attack"},"peak":{"editor":"range","default":9,"min":1,"max":10,"step":1,"section":"Attack"},"$preview":{"width":620,"height":480}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const sev = Math.round(this.props.severity ?? 7);
+    let peak = Math.round(this.props.peak ?? 9);
+    if (peak < sev) peak = sev;
+    // The app's shared severity ramp — src/utils/severity.ts and sevFill in
+    // headDiagram.ts. Same three bands, same values.
+    const ramp = (n) => (n <= 3 ? '#8fb096' : n <= 7 ? '#c39257' : '#c68880');
+    return {
+      sev: sev,
+      sevColor: ramp(sev),
+      peakText: peak > sev ? 'peak ' + peak : 'at its peak',
+    };
+  }
+}
+</script>
+</body>
+</html>
