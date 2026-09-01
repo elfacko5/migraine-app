@@ -1,6 +1,4 @@
-import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
-import { LiddWidget } from './liddWidgetPlugin';
 
 // Reminder answers that were resolved outside the app and are waiting to be
 // written into an attack.
@@ -66,38 +64,6 @@ export async function queuePendingAction(entry: PendingAction): Promise<void> {
 }
 
 /**
- * Answers given from the widget's "No change" button, and clears them.
- *
- * A **second queue**, and it has to be: the extension runs in its own process,
- * where `UserDefaults.standard` — and therefore everything
- * `@capacitor/preferences` writes, this file's own key included — is
- * unreachable. So the button writes into the App Group and
- * `LiddWidgetPlugin.drainActions` hands it over here, where it joins the
- * notification answers rather than starting a path of its own. `App.tsx`
- * still has exactly one place a reminder answer is applied.
- *
- * Every widget entry arrives with `rescheduled: false`, which is correct and
- * not a default: answering a *delivered* notification consumes it, which is
- * why the native handler must queue a replacement, but nothing has fired when
- * the button is tapped. The pending reminder is untouched and still arrives on
- * time, so the drain re-times it exactly as it would for a reading logged by
- * hand.
- */
-async function consumeWidgetActions(): Promise<PendingAction[]> {
-  if (!Capacitor.isNativePlatform()) return [];
-  try {
-    const { entries } = await LiddWidget.drainActions();
-    return Array.isArray(entries) ? entries.filter(isPendingAction) : [];
-  } catch (err) {
-    // An older build with no `drainActions`, or no App Group on this build.
-    // Never fatal: the notification queue is drained by the same caller and
-    // must not be lost because the widget's queue could not be read.
-    console.error('Failed to read pending widget actions:', err);
-    return [];
-  }
-}
-
-/**
  * Reads every queued answer and clears the queue, so each is applied once.
  *
  * Clearing before the caller has written the snapshots risks losing a reading
@@ -107,18 +73,6 @@ async function consumeWidgetActions(): Promise<PendingAction[]> {
  * failure.
  */
 export async function consumePendingActions(): Promise<PendingAction[]> {
-  const [notifications, widget] = await Promise.all([
-    consumeNotificationActions(),
-    consumeWidgetActions(),
-  ]);
-  // Oldest first, across both queues. The drain applies readings in the order
-  // it is given them and opens the wizard after, so interleaving matters: a
-  // widget answer given at 14:00 and a notification answer at 15:00 have to
-  // land in that order or the timeline records severity holding backwards.
-  return [...notifications, ...widget].sort((a, b) => a.time.localeCompare(b.time));
-}
-
-async function consumeNotificationActions(): Promise<PendingAction[]> {
   try {
     const { value } = await Preferences.get({ key: PENDING_ACTIONS_KEY });
     if (!value) return [];

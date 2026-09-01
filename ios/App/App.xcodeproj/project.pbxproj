@@ -29,7 +29,6 @@
 		DEFFA894B943E63641890DFE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECB84131DAE17B8E33BDC552 /* Foundation.framework */; };
 		E3BFE283E1D7AA13AE7E052A /* NotificationActionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BF5CBA9C4407A0FAC92CC7 /* NotificationActionHandler.swift */; };
 		E3E3B1AD9541DB5CD6541442 /* LiddWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8AF1026D4CCB388282A1408 /* LiddWidget.swift */; };
-		EC19F316B7656BCF87781529 /* LiddNoChangeIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B43F86B276286D4C4305C033 /* LiddNoChangeIntent.swift */; };
 		F89699CE74407894A73C9FE0 /* Lexend-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BE55AA943B7B538A0A5EEB78 /* Lexend-SemiBold.ttf */; };
 /* End PBXBuildFile section */
 
@@ -79,7 +78,6 @@
 		AD7C9F5AE54B155E6D7A1FE3 /* reminder.wav */ = {isa = PBXFileReference; includeInIndex = 1; path = reminder.wav; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
-		B43F86B276286D4C4305C033 /* LiddNoChangeIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LiddNoChangeIntent.swift; sourceTree = "<group>"; };
 		BE55AA943B7B538A0A5EEB78 /* Lexend-SemiBold.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "Lexend-SemiBold.ttf"; sourceTree = "<group>"; };
 		DA2B7FBF43F1ED54006995B0 /* LiddWidgetShared.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiddWidgetShared.swift; path = LiddWidgetShared.swift; sourceTree = "<group>"; };
 		ECB84131DAE17B8E33BDC552 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -130,7 +128,6 @@
 				A8AF1026D4CCB388282A1408 /* LiddWidget.swift */,
 				73A6B20CAC441E686C972B66 /* LiddMark@2x.png */,
 				338B2A24A804357163524478 /* LiddMark@3x.png */,
-				B43F86B276286D4C4305C033 /* LiddNoChangeIntent.swift */,
 				A3A9A5EFF2F4A773694F7F62 /* Lexend-Regular.ttf */,
 				92F54867932B4E01F10AA58E /* Lexend-Medium.ttf */,
 				BE55AA943B7B538A0A5EEB78 /* Lexend-SemiBold.ttf */,
@@ -380,7 +377,6 @@
 			files = (
 				E3E3B1AD9541DB5CD6541442 /* LiddWidget.swift in Sources */,
 				2E753B219137532A11718AE7 /* LiddWidgetShared.swift in Sources */,
-				EC19F316B7656BCF87781529 /* LiddNoChangeIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

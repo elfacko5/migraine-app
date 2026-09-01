@@ -20,8 +20,7 @@ public class LiddWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "LiddWidgetPlugin"
     public let jsName = "LiddWidget"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "publish", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "drainActions", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "publish", returnType: CAPPluginReturnPromise)
     ]
 
     @objc func publish(_ call: CAPPluginCall) {
@@ -43,32 +42,5 @@ public class LiddWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
             WidgetCenter.shared.reloadAllTimelines()
         }
         call.resolve()
-    }
-
-    /// Hands over every reminder answered from the widget, and clears them.
-    ///
-    /// The widget's "No change" button writes into the App Group, which is the
-    /// only place the extension can write and the app can read. This drains
-    /// that queue so `consumePendingActions` can merge it with the
-    /// notification queue and apply both through one path — a widget answer is
-    /// not a different kind of answer.
-    ///
-    /// **Clearing here, before the web layer has written the snapshot,** is the
-    /// same trade `consumePendingActions` already makes: clearing afterwards
-    /// risks replaying the queue on every foreground and silently multiplying
-    /// readings in a health record, which is much worse than losing one if the
-    /// write then fails.
-    @objc func drainActions(_ call: CAPPluginCall) {
-        let queue = LiddWidgetShared.pendingActions()
-        LiddWidgetShared.clearPendingActions()
-        let entries: [[String: Any]] = queue.map {
-            [
-                "attackId": $0.attackId,
-                "time": $0.time,
-                "action": $0.action,
-                "rescheduled": $0.rescheduled
-            ]
-        }
-        call.resolve(["entries": entries])
     }
 }

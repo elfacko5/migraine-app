@@ -1,9 +1,6 @@
 import WidgetKit
 import SwiftUI
 import UIKit
-#if canImport(AppIntents)
-import AppIntents
-#endif
 
 // The home-screen widget.
 //
@@ -104,30 +101,20 @@ private enum LiddFont {
 struct LiddEntry: TimelineEntry {
     let date: Date
     let snapshot: LiddSnapshot?
-    /// An answer given from the button that the app has not taken up yet, so
-    /// the button can confirm itself rather than redrawing identically — which
-    /// is indistinguishable from the tap having done nothing.
-    let answered: Bool
 }
 
 struct LiddProvider: TimelineProvider {
     func placeholder(in context: Context) -> LiddEntry {
-        LiddEntry(date: Date(), snapshot: nil, answered: false)
+        LiddEntry(date: Date(), snapshot: nil)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (LiddEntry) -> Void) {
-        let snapshot = LiddWidgetShared.loadSnapshot()
-        completion(LiddEntry(
-            date: Date(),
-            snapshot: snapshot,
-            answered: LiddWidgetShared.hasUnappliedAnswer(for: snapshot)
-        ))
+        completion(LiddEntry(date: Date(), snapshot: LiddWidgetShared.loadSnapshot()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<LiddEntry>) -> Void) {
         let now = Date()
         let snapshot = LiddWidgetShared.loadSnapshot()
-        let answered = LiddWidgetShared.hasUnappliedAnswer(for: snapshot)
 
         // One entry now, plus one at each moment a figure on screen stops
         // being true by itself. The app republishes on every write and on
@@ -168,7 +155,7 @@ struct LiddProvider: TimelineProvider {
         }
 
         let entries = Array(Set(dates)).sorted().prefix(120).map {
-            LiddEntry(date: $0, snapshot: snapshot, answered: answered)
+            LiddEntry(date: $0, snapshot: snapshot)
         }
         // Come back for a fresh timeline once the entries run out, so a widget
         // whose app has not been opened for days keeps going rather than
@@ -424,56 +411,6 @@ private struct DoseBlock: View {
     }
 }
 
-/// "No change", answerable without opening the app.
-///
-/// The lock-screen reminder button, reachable without a reminder having fired.
-/// It is the cheapest answer to give and one of the more valuable to have —
-/// a run of held severity is what the plateau analytics are built out of, and
-/// it is exactly the reading nobody opens an app to log.
-///
-/// **It is a secondary button, not a primary one.** Solid accent means *press
-/// this* in the app, and a filled sage pill would be the loudest thing on a
-/// surface the palette works to keep quiet — the widget has none of the app's
-/// protections. So it takes `btn-secondary`'s treatment: the raised surface
-/// with a control-token hairline, which is the 3:1 outline WCAG 1.4.11 asks
-/// for on the thing that identifies a control.
-///
-/// **It shows only on the medium family.** The small widget's 120-odd points
-/// of height are already spent on the label, the duration, the trajectory and
-/// the figures, and a control added there would have to evict one of them —
-/// where the point of a widget you tap is that it still shows what you are
-/// answering about. A medium widget has the room.
-@available(iOS 17.0, *)
-private struct NoChangeButton: View {
-    let attackId: Double
-    /// Already answered, and the app has not taken it up yet. The tap has to
-    /// visibly land, or it is indistinguishable from the button not working.
-    let answered: Bool
-
-    var body: some View {
-        if answered {
-            Label("Noted", systemImage: "checkmark")
-                .font(LiddFont.footnote(LiddFont.medium))
-                .foregroundColor(.liddAccent)
-                .labelStyle(.titleAndIcon)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-        } else {
-            Button(intent: LiddNoChangeIntent(attackId: attackId)) {
-                Text("No change")
-                    .font(LiddFont.footnote(LiddFont.medium))
-                    .foregroundColor(.liddPrimary)
-                    .lineLimit(1)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-            }
-            .buttonStyle(.plain)
-            .background(Color.liddRaised, in: Capsule())
-            .overlay(Capsule().strokeBorder(Color.liddControlBorder, lineWidth: 1))
-        }
-    }
-}
-
 /// The app's mark, in the bottom-right corner.
 ///
 /// **Bottom-right, not top-right** (Sunny, 2026-09-01). The top-right is the
@@ -535,65 +472,27 @@ struct LiddWidgetView: View {
     @ViewBuilder
     private var content: some View {
         if family == .systemMedium, let dose = entry.snapshot?.dose {
-            // Two columns. The button sits under the dose block, which is
-            // three short lines and has the slack for it — where the state
-            // column is full to the bottom with the trajectory.
             HStack(alignment: .top, spacing: 14) {
                 StateBlock(snapshot: entry.snapshot, entryDate: entry.date)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Rectangle()
                     .fill(Color.liddSurface)
                     .frame(width: 1)
-                VStack(alignment: .leading, spacing: 0) {
-                    DoseBlock(dose: dose, now: entry.date)
-                    Spacer(minLength: 8)
-                    noChangeButton
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        } else if family == .systemMedium, entry.snapshot?.ongoing != nil {
-            // An attack with nothing taken for it. There is no dose column, so
-            // the button takes that side rather than stacking under the state
-            // block — **which is what was broken**. Stacked, the block and the
-            // button came to ~159pt against ~126pt of content height even
-            // un-enlarged (~183pt while it was still `prominent`), so the
-            // button was pushed off the bottom edge. Caught on device,
-            // 2026-09-01.
-            //
-            // **This is the one combination never seen while building it**: a
-            // medium widget only loses its dose column *during* an attack when
-            // nothing has been taken yet, so every earlier check had either a
-            // dose beside the block or no attack at all. A vertical budget
-            // that only holds for some of a layout's states holds for none of
-            // them.
-            //
-            // Centred rather than bottom-aligned, so it stays clear of the
-            // mark in the bottom-right corner.
-            HStack(alignment: .center, spacing: 14) {
-                StateBlock(snapshot: entry.snapshot, entryDate: entry.date)
+                DoseBlock(dose: dose, now: entry.date)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                noChangeButton
             }
         } else if family == .systemMedium {
-            // **No `Spacer` here, and that is the point.** Off an attack there
-            // is no button to anchor the bottom, so a top-aligned block left
-            // two thirds of the widget empty below it — the exact "layout that
-            // has failed" reading `prominent` exists to prevent, and a
-            // regression introduced with the button (caught on device,
-            // 2026-09-01). Bare, it inherits the container's vertical centring,
-            // the way `AttackFreeCard` centres its one figure in the hero.
-            StateBlock(snapshot: entry.snapshot, entryDate: entry.date, prominent: true)
+            // **`prominent` only off an attack.** It exists to let a lone
+            // figure fill a medium widget; an ongoing attack carries a label,
+            // a duration, a trajectory and a severity row, which at the
+            // enlarged sizes overflows the ~126pt of content height.
+            StateBlock(
+                snapshot: entry.snapshot,
+                entryDate: entry.date,
+                prominent: entry.snapshot?.ongoing == nil
+            )
         } else {
             StateBlock(snapshot: entry.snapshot, entryDate: entry.date)
-        }
-    }
-
-    /// Only while an attack is running — there is nothing for "no change" to
-    /// mean otherwise — and only where the OS can draw a widget button at all.
-    @ViewBuilder
-    private var noChangeButton: some View {
-        if #available(iOS 17.0, *), let ongoing = entry.snapshot?.ongoing {
-            NoChangeButton(attackId: ongoing.id, answered: entry.answered)
         }
     }
 }

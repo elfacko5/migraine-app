@@ -3,11 +3,11 @@ import { registerPlugin } from '@capacitor/core';
 /**
  * The native bridge to the widget extension.
  *
- * Its own module because two unrelated callers need it — `widgetSnapshot.ts`
- * publishes the payload, and `pendingActions.ts` drains answers given from the
- * widget's button — and the second should not have to pull in the first's
- * dependency on `stats` and the medication guardrails to reach one plugin
- * handle.
+ * Its own module rather than living in `widgetSnapshot.ts`: it briefly had a
+ * second caller (`pendingActions.ts`, draining answers from the widget's
+ * button) and keeping the handle separate meant that caller did not have to
+ * pull in a dependency on `stats` and the medication guardrails to reach one
+ * plugin. The button is gone; the split is still the tidier arrangement.
  *
  * It exists at all because `@capacitor/preferences` cannot serve a separate
  * process: it writes to `UserDefaults.standard`, which the extension cannot
@@ -20,8 +20,6 @@ import { registerPlugin } from '@capacitor/core';
 export interface LiddWidgetPlugin {
   /** Writes the payload into the App Group suite and reloads every timeline. */
   publish(options: { value: string }): Promise<void>;
-  /** Takes every answer given from the widget's button, and clears the queue. */
-  drainActions(): Promise<{ entries: unknown[] }>;
 }
 
 export const LiddWidget = registerPlugin<LiddWidgetPlugin>('LiddWidget');
