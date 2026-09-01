@@ -204,12 +204,10 @@ private struct LiddLabel: View {
             .foregroundColor(.liddSecondary)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
-            // **Room for the mark.** It is drawn as an `.overlay`, which takes
-            // no layout space, so nothing else reserves any — and at 15pt
-            // "Ongoing attack" runs straight under it on the square family.
-            // Found the moment the label grew from 12pt; "Attack-free for" is
-            // short enough that it never showed the problem.
-            .padding(.trailing, LiddMark.reservedWidth)
+            // No trailing inset any more: the mark moved to the bottom-right,
+            // which is empty in every state, so the label has its full width
+            // back. That inset existed because an `.overlay` takes no layout
+            // space and "Ongoing attack" ran straight under a top-right mark.
     }
 }
 
@@ -254,14 +252,14 @@ private struct TrajectoryLine: View {
                 }
                 .stroke(
                     Color.liddSeverity(peak),
-                    style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+                    style: StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
                 )
-                ForEach(Array(points.enumerated()), id: \.offset) { _, point in
-                    Circle()
-                        .fill(Color.liddSeverity(peak))
-                        .frame(width: 5, height: 5)
-                        .position(point)
-                }
+                // **No dots.** `SeveritySparkline` draws `dot={false}` and
+                // this should have matched it from the start — the dots came
+                // off the design canvas, where the mark sat alone on a bigger
+                // artboard. On a 158pt widget carrying a label, a duration, a
+                // line and two figures they were the fifth thing competing for
+                // the same square, and the line says everything they did.
             }
         }
         .frame(height: height)
@@ -301,7 +299,7 @@ private struct StateBlock: View {
                 // **No "since it started" line.** The label above already
                 // says an attack is ongoing, and a duration under it cannot
                 // mean anything else — the sentence restated its own heading.
-                Spacer(minLength: 6)
+                Spacer(minLength: 10)
                 severity(ongoing)
             } else if let ended = LiddDate.parse(snapshot?.lastEndedAt) {
                 // `AttackFreeCard`'s own label, to the hyphen. It read "Since
@@ -355,7 +353,7 @@ private struct StateBlock: View {
     /// figures still render, so the state never goes blank.
     @ViewBuilder
     private func severity(_ ongoing: LiddSnapshot.Ongoing) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             if ongoing.series.count > 1 {
                 TrajectoryLine(
                     series: ongoing.series,
@@ -365,7 +363,7 @@ private struct StateBlock: View {
                     // height had no slack left. The line is the one element
                     // here that reads the same a few points shorter — the
                     // figures and labels around it do not.
-                    height: prominent ? 46 : 32
+                    height: prominent ? 42 : 28
                 )
             }
             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -389,7 +387,10 @@ private struct StateBlock: View {
     /// so rather than printing the same number twice.
     private func peakLine(_ ongoing: LiddSnapshot.Ongoing) -> String {
         if ongoing.severityNow != ongoing.severityPeak { return "now · peak \(ongoing.severityPeak)" }
-        return ongoing.series.count > 1 ? "now · at its peak" : "now"
+        // "at its peak" already says the figure is current, so "now ·" in
+        // front of it was a word doing nothing on the most crowded surface in
+        // the app — and this is the commoner of the two cases.
+        return ongoing.series.count > 1 ? "at its peak" : "now"
     }
 }
 
@@ -404,9 +405,6 @@ private struct DoseBlock: View {
                     .font(LiddFont.footnote())
                     .foregroundColor(.liddSecondary)
                     .lineLimit(1)
-                    // On the wide family the mark sits over this column, not
-                    // over the state block, so this is the line it can reach.
-                    .padding(.trailing, LiddMark.reservedWidth)
             }
             Text(dose.name)
                 .font(.custom(LiddFont.medium, fixedSize: 18))
@@ -476,14 +474,20 @@ private struct NoChangeButton: View {
     }
 }
 
-/// The app's mark, in the top-right corner.
+/// The app's mark, in the bottom-right corner.
+///
+/// **Bottom-right, not top-right** (Sunny, 2026-09-01). The top-right is the
+/// one corner every state already has content in — the label, on its own
+/// first line — so a mark there was always competing for it, and once the
+/// label grew to 15pt the square family read as crowded. The bottom-right is
+/// empty in every state: the ongoing block ends with its severity figure on
+/// the left, and the attack-free block is centred. Nothing has to make room
+/// for it, so the label gets its full width back.
 ///
 /// It went inline ahead of the label for a day, which suited the artwork
-/// variant — the corner was the picture's brightest region with no gradient
-/// over it. With the artwork gone the corner is free again, and the corner is
-/// where it belongs: **inline, it had to shrink to sit on the label's line**,
-/// and the point of moving it was that it was too small. Here it can be 22pt
-/// and still be the quietest thing on the widget.
+/// variant — the corner was then the picture's brightest region with no
+/// gradient over it. Inline it had to shrink to sit on the label's line, and
+/// being too small was the reason for moving it in the first place.
 ///
 /// Rendered as a template — the artwork is a silhouette with a feathered alpha
 /// cut from `assets/icon.png`, so it takes a flat fill and cannot drag the
@@ -491,12 +495,13 @@ private struct NoChangeButton: View {
 /// sage because that is the brand's own colour and this is the brand's own
 /// mark; the "accent means action" rule governs controls, and this is not one.
 private struct LiddMark: View {
-    /// What a first line has to leave clear for it: the mark plus a gap. One
-    /// constant, so the mark's size and the space reserved for it cannot drift
-    /// apart — which is exactly how it came to overlap the label.
-    static let reservedWidth: CGFloat = 28
+    /// What a neighbouring element has to leave clear for it: the mark plus a
+    /// gap. One constant, so the mark's size and the space reserved for it
+    /// cannot drift apart — which is how it came to overlap the label while it
+    /// lived in the top-right.
+    static let reservedWidth: CGFloat = 26
 
-    var size: CGFloat = 22
+    var size: CGFloat = 19
     var body: some View {
         if let image = UIImage(named: "LiddMark") {
             Image(uiImage: image)
@@ -523,7 +528,7 @@ struct LiddWidgetView: View {
             // leaves two thirds of the widget visibly empty — the "layout that
             // has failed" reading `prominent` exists to prevent.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .overlay(alignment: .topTrailing) { LiddMark() }
+            .overlay(alignment: .bottomTrailing) { LiddMark() }
             .liddContainerBackground()
     }
 
@@ -556,6 +561,9 @@ struct LiddWidgetView: View {
                     Spacer()
                     noChangeButton
                 }
+                // The only layout whose own content reaches the bottom-right,
+                // so the only one that has to leave the mark room.
+                .padding(.trailing, LiddMark.reservedWidth)
             }
         } else if family == .systemMedium {
             // **No `Spacer` here, and that is the point.** Off an attack there
