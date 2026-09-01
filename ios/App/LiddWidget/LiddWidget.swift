@@ -188,12 +188,31 @@ private func timeOfDay(_ date: Date) -> String {
 }
 
 /// The label above the headline — the shape both Today hero cards use.
+/// The label above the headline — the shape both Today hero cards use, with
+/// the app's mark ahead of it.
+///
+/// **The mark moved out of the top-right corner and into this row** on Sunny's
+/// call, 2026-09-01. A corner mark is the platform's habit rather than a
+/// decision, and it cost the one thing this widget is short of: it reserved the
+/// top-right of every layout, and on the artwork variant it would have sat on
+/// the picture's brightest region with no gradient protecting it. Inline it
+/// reads as the app's byline on its own first line, and it lives in the same
+/// gradient-darkened column as the text it labels.
+///
+/// It is on **every** state, not just the artwork one — a mark that moves
+/// depending on what the widget is showing is the drift this file keeps having
+/// to fix.
 private struct LiddLabel: View {
     let text: String
     var body: some View {
-        Text(text)
-            .font(LiddFont.caption())
-            .foregroundColor(.liddSecondary)
+        HStack(spacing: 6) {
+            LiddMark(size: 13)
+            Text(text)
+                .font(LiddFont.caption())
+                .foregroundColor(.liddSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
     }
 }
 
@@ -445,7 +464,94 @@ private struct NoChangeButton: View {
     }
 }
 
-/// The app's mark, in the corner.
+/// The Today hero's artwork, ported to the widget's ground.
+///
+/// `HomeCard`'s recipe, and the parts of it that are load-bearing carry over
+/// unchanged because they are about the same problem — artwork that has to
+/// dissolve into the page rather than sit on it as a picture:
+///
+/// - **The image occupies the trailing 64%**, and the horizontal gradient's
+///   opaque stop sits at 40% — *past* the image's left edge at 36%. Anywhere
+///   the fade has already begun at that edge, the hard box edge shows as a
+///   seam down the widget. Move the band and the stop moves with it.
+/// - **Every gradient fades from `liddBase`, the ground colour itself**, and
+///   to `liddBase.opacity(0)` rather than `.clear`. In SwiftUI as in CSS,
+///   interpolating to a fully transparent *black* greys the mid-stops.
+/// - **Three fades, one per edge the image has.** The right needs none: the
+///   image reaches the widget's own edge there.
+/// - **`.leading` alignment on the crop**, matching `imageAnchor="left"` on
+///   `AttackFreeCard` — the moon sits left of centre in the square source, and
+///   keeping that edge is what carries it into the visible strip.
+///
+/// **Only the attack-free state gets it.** The ongoing state is full — label,
+/// duration, trajectory, figures, and on medium a dose column — and artwork
+/// behind a severity line would be two things competing for the same pixels.
+/// This is the state that had nothing to put in its lower two thirds, which is
+/// what makes a picture the right answer here and the wrong one there.
+private struct LiddArtwork: View {
+    /// Resolved once. `Bundle.main` inside an extension is the extension's
+    /// own bundle, which is where the file is copied.
+    private static let artwork: UIImage? = {
+        guard let url = Bundle.main.url(forResource: "LiddCardAttackFree", withExtension: "jpg") else { return nil }
+        return UIImage(contentsOfFile: url.path)
+    }()
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                Color.liddBase
+                // **Loaded by explicit bundle URL, not `UIImage(named:)`.**
+                // That call finds a loose `.png` without its extension — which
+                // is why `LiddMark` works — but not a loose `.jpg`, and it
+                // fails by returning nil, so the widget renders a flat ground
+                // and looks like a design decision rather than a missing file.
+                // Same class of silent miss as `Image("name")` resolving only
+                // against an asset catalog.
+                if let image = Self.artwork {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width * 0.64, height: geo.size.height, alignment: .leading)
+                        .clipped()
+                        .frame(width: geo.size.width, height: geo.size.height, alignment: .trailing)
+                }
+                LinearGradient(
+                    stops: [
+                        .init(color: .liddBase, location: 0.40),
+                        .init(color: Color.liddBase.opacity(0.55), location: 0.66),
+                        .init(color: Color.liddBase.opacity(0), location: 0.90),
+                    ],
+                    startPoint: .leading, endPoint: .trailing
+                )
+                VStack(spacing: 0) {
+                    LinearGradient(
+                        stops: [
+                            .init(color: .liddBase, location: 0),
+                            .init(color: Color.liddBase.opacity(0.45), location: 0.40),
+                            .init(color: Color.liddBase.opacity(0), location: 1),
+                        ],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                    .frame(height: geo.size.height * 0.30)
+                    Spacer(minLength: 0)
+                    LinearGradient(
+                        stops: [
+                            .init(color: Color.liddBase.opacity(0), location: 0),
+                            .init(color: Color.liddBase.opacity(0.55), location: 0.60),
+                            .init(color: .liddBase, location: 1),
+                        ],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                    .frame(height: geo.size.height * 0.40)
+                }
+            }
+        }
+        .ignoresSafeArea()
+        .accessibilityHidden(true)
+    }
+}
+
+/// The app's mark.
 ///
 /// Rendered as a template — the artwork is a silhouette with a feathered alpha
 /// cut from `assets/icon.png`, so it takes a flat fill and cannot drag the
@@ -453,13 +559,14 @@ private struct NoChangeButton: View {
 /// sage because that is the brand's own colour and this is the brand's own
 /// mark; the "accent means action" rule governs controls, and this is not one.
 private struct LiddMark: View {
+    var size: CGFloat = 17
     var body: some View {
         if let image = UIImage(named: "LiddMark") {
             Image(uiImage: image)
                 .renderingMode(.template)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 17, height: 17)
+                .frame(width: size, height: size)
                 .foregroundColor(.liddAccent)
                 .opacity(0.85)
                 .accessibilityHidden(true)
@@ -471,11 +578,16 @@ struct LiddWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: LiddEntry
 
+    /// Artwork only behind the attack-free state — see `LiddArtwork`. An
+    /// ongoing attack has a trajectory to draw and no pixels to spare.
+    private var showsArtwork: Bool {
+        entry.snapshot?.ongoing == nil && entry.snapshot?.lastEndedAt != nil
+    }
+
     var body: some View {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .overlay(alignment: .topTrailing) { LiddMark() }
-            .liddContainerBackground()
+            .liddContainerBackground(artwork: showsArtwork)
     }
 
     @ViewBuilder
@@ -538,11 +650,13 @@ private extension View {
     /// StandBy tint against. Below 17 the padding has to be drawn by hand,
     /// since the system supplied it only from 17 onward.
     @ViewBuilder
-    func liddContainerBackground() -> some View {
+    func liddContainerBackground(artwork: Bool) -> some View {
         if #available(iOS 17.0, *) {
-            self.containerBackground(Color.liddBase, for: .widget)
+            self.containerBackground(for: .widget) {
+                if artwork { LiddArtwork() } else { Color.liddBase }
+            }
         } else {
-            self.padding(16).background(Color.liddBase)
+            self.padding(16).background(artwork ? AnyView(LiddArtwork()) : AnyView(Color.liddBase))
         }
     }
 }
