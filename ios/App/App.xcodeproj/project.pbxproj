@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		0ACA454A89E0D0702F4C815C /* LiddWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 176ECAE76EF4AB338158062C /* LiddWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		16B13CF4FFAED63EBCED307A /* LiddMark@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 338B2A24A804357163524478 /* LiddMark@3x.png */; };
-		2BEEF3D9EAD6D32F35056C74 /* LiddCardAttackFree.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 66B6FC1192A6C01A8445FC41 /* LiddCardAttackFree.jpg */; };
 		2E753B219137532A11718AE7 /* LiddWidgetShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA2B7FBF43F1ED54006995B0 /* LiddWidgetShared.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -73,7 +72,6 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
-		66B6FC1192A6C01A8445FC41 /* LiddCardAttackFree.jpg */ = {isa = PBXFileReference; includeInIndex = 1; path = LiddCardAttackFree.jpg; sourceTree = "<group>"; };
 		73A6B20CAC441E686C972B66 /* LiddMark@2x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "LiddMark@2x.png"; sourceTree = "<group>"; };
 		92F54867932B4E01F10AA58E /* Lexend-Medium.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "Lexend-Medium.ttf"; sourceTree = "<group>"; };
 		A3A9A5EFF2F4A773694F7F62 /* Lexend-Regular.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "Lexend-Regular.ttf"; sourceTree = "<group>"; };
@@ -136,7 +134,6 @@
 				A3A9A5EFF2F4A773694F7F62 /* Lexend-Regular.ttf */,
 				92F54867932B4E01F10AA58E /* Lexend-Medium.ttf */,
 				BE55AA943B7B538A0A5EEB78 /* Lexend-SemiBold.ttf */,
-				66B6FC1192A6C01A8445FC41 /* LiddCardAttackFree.jpg */,
 			);
 			name = LiddWidget;
 			path = LiddWidget;
@@ -302,7 +299,6 @@
 				CB6C321871414D10EC3F417F /* Lexend-Regular.ttf in Resources */,
 				6F1ECC111F9C47985F6A0691 /* Lexend-Medium.ttf in Resources */,
 				F89699CE74407894A73C9FE0 /* Lexend-SemiBold.ttf in Resources */,
-				2BEEF3D9EAD6D32F35056C74 /* LiddCardAttackFree.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

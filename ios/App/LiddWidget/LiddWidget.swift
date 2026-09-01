@@ -188,31 +188,28 @@ private func timeOfDay(_ date: Date) -> String {
 }
 
 /// The label above the headline — the shape both Today hero cards use.
-/// The label above the headline — the shape both Today hero cards use, with
-/// the app's mark ahead of it.
+/// The label above the headline — the shape both Today hero cards use.
 ///
-/// **The mark moved out of the top-right corner and into this row** on Sunny's
-/// call, 2026-09-01. A corner mark is the platform's habit rather than a
-/// decision, and it cost the one thing this widget is short of: it reserved the
-/// top-right of every layout, and on the artwork variant it would have sat on
-/// the picture's brightest region with no gradient protecting it. Inline it
-/// reads as the app's byline on its own first line, and it lives in the same
-/// gradient-darkened column as the text it labels.
-///
-/// It is on **every** state, not just the artwork one — a mark that moves
-/// depending on what the widget is showing is the drift this file keeps having
-/// to fix.
+/// **15pt, not the 12pt caption it started at.** Beside a 26pt headline the
+/// caption size read as a footnote to the figure rather than as the thing
+/// naming it, and on the attack-free card — where these two lines are the
+/// entire widget — that was the whole composition (Sunny, 2026-09-01). It is
+/// the same size in every state, so the label and the headline keep one
+/// relationship wherever they appear.
 private struct LiddLabel: View {
     let text: String
     var body: some View {
-        HStack(spacing: 6) {
-            LiddMark(size: 13)
-            Text(text)
-                .font(LiddFont.caption())
-                .foregroundColor(.liddSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-        }
+        Text(text)
+            .font(LiddFont.subheadline())
+            .foregroundColor(.liddSecondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            // **Room for the mark.** It is drawn as an `.overlay`, which takes
+            // no layout space, so nothing else reserves any — and at 15pt
+            // "Ongoing attack" runs straight under it on the square family.
+            // Found the moment the label grew from 12pt; "Attack-free for" is
+            // short enough that it never showed the problem.
+            .padding(.trailing, LiddMark.reservedWidth)
     }
 }
 
@@ -363,7 +360,12 @@ private struct StateBlock: View {
                 TrajectoryLine(
                     series: ongoing.series,
                     peak: ongoing.severityPeak,
-                    height: prominent ? 46 : 38
+                    // 32 on the square family, not 38: the label went from
+                    // 12pt to 15pt and the small widget's ~126pt of content
+                    // height had no slack left. The line is the one element
+                    // here that reads the same a few points shorter — the
+                    // figures and labels around it do not.
+                    height: prominent ? 46 : 32
                 )
             }
             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -402,6 +404,9 @@ private struct DoseBlock: View {
                     .font(LiddFont.footnote())
                     .foregroundColor(.liddSecondary)
                     .lineLimit(1)
+                    // On the wide family the mark sits over this column, not
+                    // over the state block, so this is the line it can reach.
+                    .padding(.trailing, LiddMark.reservedWidth)
             }
             Text(dose.name)
                 .font(.custom(LiddFont.medium, fixedSize: 18))
@@ -471,135 +476,14 @@ private struct NoChangeButton: View {
     }
 }
 
-/// The Today hero's artwork, ported to the widget's ground.
+/// The app's mark, in the top-right corner.
 ///
-/// `HomeCard`'s recipe, and the parts of it that are load-bearing carry over
-/// unchanged because they are about the same problem — artwork that has to
-/// dissolve into the page rather than sit on it as a picture:
-///
-/// - **The image occupies the trailing 64%**, and the horizontal gradient's
-///   opaque stop sits at 40% — *past* the image's left edge at 36%. Anywhere
-///   the fade has already begun at that edge, the hard box edge shows as a
-///   seam down the widget. Move the band and the stop moves with it.
-/// - **Every gradient fades from `liddBase`, the ground colour itself**, and
-///   to `liddBase.opacity(0)` rather than `.clear`. In SwiftUI as in CSS,
-///   interpolating to a fully transparent *black* greys the mid-stops.
-/// - **Three fades, one per edge the image has.** The right needs none: the
-///   image reaches the widget's own edge there.
-/// - **`.leading` alignment on the crop**, matching `imageAnchor="left"` on
-///   `AttackFreeCard` — the moon sits left of centre in the square source, and
-///   keeping that edge is what carries it into the visible strip.
-///
-/// **Only the attack-free state gets it.** The ongoing state is full — label,
-/// duration, trajectory, figures, and on medium a dose column — and artwork
-/// behind a severity line would be two things competing for the same pixels.
-/// This is the state that had nothing to put in its lower two thirds, which is
-/// what makes a picture the right answer here and the wrong one there.
-private struct LiddArtwork: View {
-    /// Which way the text is protected — and therefore which way the artwork
-    /// is free to run.
-    ///
-    /// **Horizontal is `HomeCard`'s own arrangement** and belongs on the wide
-    /// family, where the text takes a column on the left and the picture takes
-    /// one on the right, exactly as the Today hero does.
-    ///
-    /// **Vertical is for the square family**, and the reason is the aspect
-    /// ratio rather than a change of mind: on a 158pt square a 64% band leaves
-    /// the artwork a strip, and the horizontal fade spends the other 40% of
-    /// the width on a dark wash with nothing in it. The text is top-anchored
-    /// there anyway, so darkening the top instead lets the picture have the
-    /// whole width below it. Same principle both ways — protect the text, let
-    /// the artwork have everything else.
-    enum Orientation { case horizontal, vertical }
-
-    var orientation: Orientation = .horizontal
-
-    /// Resolved once. `Bundle.main` inside an extension is the extension's
-    /// own bundle, which is where the file is copied.
-    private static let artwork: UIImage? = {
-        guard let url = Bundle.main.url(forResource: "LiddCardAttackFree", withExtension: "jpg") else { return nil }
-        return UIImage(contentsOfFile: url.path)
-    }()
-
-    var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                Color.liddBase
-                // **Loaded by explicit bundle URL, not `UIImage(named:)`.**
-                // That call finds a loose `.png` without its extension — which
-                // is why `LiddMark` works — but not a loose `.jpg`, and it
-                // fails by returning nil, so the widget renders a flat ground
-                // and looks like a design decision rather than a missing file.
-                // Same class of silent miss as `Image("name")` resolving only
-                // against an asset catalog.
-                if let image = Self.artwork {
-                    // Horizontal keeps the image's *leading* edge, matching
-                    // `imageAnchor="left"` on `AttackFreeCard` — the moon sits
-                    // left of centre in the square source. Vertical runs the
-                    // full width, where a square source on a square widget
-                    // barely crops at all.
-                    let bandWidth = orientation == .horizontal ? geo.size.width * 0.64 : geo.size.width
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: bandWidth, height: geo.size.height, alignment: .leading)
-                        .clipped()
-                        .frame(width: geo.size.width, height: geo.size.height, alignment: .trailing)
-                }
-                if orientation == .horizontal {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .liddBase, location: 0.40),
-                            .init(color: Color.liddBase.opacity(0.55), location: 0.66),
-                            .init(color: Color.liddBase.opacity(0), location: 0.90),
-                        ],
-                        startPoint: .leading, endPoint: .trailing
-                    )
-                    VStack(spacing: 0) {
-                        LinearGradient(
-                            stops: [
-                                .init(color: .liddBase, location: 0),
-                                .init(color: Color.liddBase.opacity(0.45), location: 0.40),
-                                .init(color: Color.liddBase.opacity(0), location: 1),
-                            ],
-                            startPoint: .top, endPoint: .bottom
-                        )
-                        .frame(height: geo.size.height * 0.30)
-                        Spacer(minLength: 0)
-                        LinearGradient(
-                            stops: [
-                                .init(color: Color.liddBase.opacity(0), location: 0),
-                                .init(color: Color.liddBase.opacity(0.55), location: 0.60),
-                                .init(color: .liddBase, location: 1),
-                            ],
-                            startPoint: .top, endPoint: .bottom
-                        )
-                        .frame(height: geo.size.height * 0.40)
-                    }
-                } else {
-                    // Opaque under the label and headline, then a long fade —
-                    // the text is top-anchored, so the solid stop has to clear
-                    // both lines before it starts giving way. No bottom fade:
-                    // the widget's own rounded edge is the boundary there,
-                    // where the Today hero has a page to bleed into.
-                    LinearGradient(
-                        stops: [
-                            .init(color: .liddBase, location: 0),
-                            .init(color: .liddBase, location: 0.30),
-                            .init(color: Color.liddBase.opacity(0.55), location: 0.50),
-                            .init(color: Color.liddBase.opacity(0), location: 0.80),
-                        ],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                }
-            }
-        }
-        .ignoresSafeArea()
-        .accessibilityHidden(true)
-    }
-}
-
-/// The app's mark.
+/// It went inline ahead of the label for a day, which suited the artwork
+/// variant — the corner was the picture's brightest region with no gradient
+/// over it. With the artwork gone the corner is free again, and the corner is
+/// where it belongs: **inline, it had to shrink to sit on the label's line**,
+/// and the point of moving it was that it was too small. Here it can be 22pt
+/// and still be the quietest thing on the widget.
 ///
 /// Rendered as a template — the artwork is a silhouette with a feathered alpha
 /// cut from `assets/icon.png`, so it takes a flat fill and cannot drag the
@@ -607,7 +491,12 @@ private struct LiddArtwork: View {
 /// sage because that is the brand's own colour and this is the brand's own
 /// mark; the "accent means action" rule governs controls, and this is not one.
 private struct LiddMark: View {
-    var size: CGFloat = 17
+    /// What a first line has to leave clear for it: the mark plus a gap. One
+    /// constant, so the mark's size and the space reserved for it cannot drift
+    /// apart — which is exactly how it came to overlap the label.
+    static let reservedWidth: CGFloat = 28
+
+    var size: CGFloat = 22
     var body: some View {
         if let image = UIImage(named: "LiddMark") {
             Image(uiImage: image)
@@ -626,32 +515,16 @@ struct LiddWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: LiddEntry
 
-    /// Artwork only behind the attack-free state — see `LiddArtwork`. An
-    /// ongoing attack has a trajectory to draw and no pixels to spare.
-    private var showsArtwork: Bool {
-        entry.snapshot?.ongoing == nil && entry.snapshot?.lastEndedAt != nil
-    }
-
     var body: some View {
         content
-            // **Top-anchored when there is artwork behind it, centred when
-            // there is not**, and the two are the same decision rather than
-            // an inconsistency. On a flat ground a top-anchored block left two
-            // thirds of the widget visibly empty — the "layout that has
-            // failed" reading. With the picture there, that space is doing
-            // something, and the text sitting above it lets more of the
-            // artwork show than centring does. Reinstated on Sunny's call,
-            // 2026-09-01, after the artwork made the void argument moot.
-            //
-            // The no-artwork prominent states — "Nothing ongoing" and the
-            // empty diary — keep the centring, since nothing fills the space
-            // for them either.
-            .frame(
-                maxWidth: .infinity,
-                maxHeight: .infinity,
-                alignment: showsArtwork ? .topLeading : .leading
-            )
-            .liddContainerBackground(artwork: showsArtwork, orientation: family == .systemMedium ? .horizontal : .vertical)
+            // Vertically centred in every state. It was top-anchored while the
+            // artwork was there, since the picture filled what would otherwise
+            // have been a void; with the flat ground back, a top-anchored block
+            // leaves two thirds of the widget visibly empty — the "layout that
+            // has failed" reading `prominent` exists to prevent.
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .overlay(alignment: .topTrailing) { LiddMark() }
+            .liddContainerBackground()
     }
 
     @ViewBuilder
@@ -714,15 +587,11 @@ private extension View {
     /// StandBy tint against. Below 17 the padding has to be drawn by hand,
     /// since the system supplied it only from 17 onward.
     @ViewBuilder
-    func liddContainerBackground(artwork: Bool, orientation: LiddArtwork.Orientation) -> some View {
+    func liddContainerBackground() -> some View {
         if #available(iOS 17.0, *) {
-            self.containerBackground(for: .widget) {
-                if artwork { LiddArtwork(orientation: orientation) } else { Color.liddBase }
-            }
+            self.containerBackground(Color.liddBase, for: .widget)
         } else {
-            self.padding(16).background(
-                artwork ? AnyView(LiddArtwork(orientation: orientation)) : AnyView(Color.liddBase)
-            )
+            self.padding(16).background(Color.liddBase)
         }
     }
 }
