@@ -465,18 +465,17 @@ struct LiddWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: LiddEntry
 
-    /// Where the mark sits, and it follows the content rather than the frame.
+    /// **One corner, every state: bottom-right** (Sunny, 2026-09-01, second
+    /// call the same day and this is the one that stands).
     ///
-    /// **The rule is that the mark lines up with the bottom-left content**
-    /// (Sunny, 2026-09-01). During an attack the block fills the widget and
-    /// ends on its severity row, so the bottom corner *is* that line. Off an
-    /// attack the block is vertically centred and the bottom corner is empty
-    /// space well below the text — the mark would be floating on its own with
-    /// nothing beside it. Centring it there puts it back on the block's own
-    /// line.
-    private var markAlignment: Alignment {
-        entry.snapshot?.ongoing == nil ? .trailing : .bottomTrailing
-    }
+    /// It was briefly state-dependent — centred on the trailing edge off an
+    /// attack, so it sat on the block's own line rather than floating below a
+    /// centred block. That bought alignment at the cost of the rule this file
+    /// keeps restating: a mark that moves with the content is drift, and it
+    /// put the mark straight into the attack-free headline. The block is
+    /// top-anchored now, so the bottom-right corner is empty in every state
+    /// and there is nothing to align to anyway.
+    private let markAlignment: Alignment = .bottomTrailing
 
     var body: some View {
         content
@@ -488,12 +487,17 @@ struct LiddWidgetView: View {
             // long string where "8 days" is short. Padding here rather than
             // per-block so one rule covers both families and every state.
             .padding(.trailing, LiddMark.reservedWidth)
-            // Vertically centred in every state. It was top-anchored while the
-            // artwork was there, since the picture filled what would otherwise
-            // have been a void; with the flat ground back, a top-anchored block
-            // leaves two thirds of the widget visibly empty — the "layout that
-            // has failed" reading `prominent` exists to prevent.
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            // **Top-left in every state** (Sunny, 2026-09-01). It was centred
+            // for a few hours on the reasoning that a block pushed to the top
+            // of a flat widget leaves two thirds of it visibly empty — the
+            // "layout that has failed" reading. On screen that was the wrong
+            // call: the label is the top line of a card and reads as one, and
+            // an ongoing attack's block fills the height regardless, so only
+            // the two-line attack-free state was ever centred and it was the
+            // odd one out. Paired with the mark now fixed bottom-right, the
+            // composition is a diagonal rather than a stack floating in the
+            // middle.
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .overlay(alignment: markAlignment) { LiddMark() }
             .liddContainerBackground()
     }
