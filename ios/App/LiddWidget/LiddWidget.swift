@@ -432,12 +432,6 @@ private struct DoseBlock: View {
 /// sage because that is the brand's own colour and this is the brand's own
 /// mark; the "accent means action" rule governs controls, and this is not one.
 private struct LiddMark: View {
-    /// What a neighbouring element has to leave clear for it: the mark plus a
-    /// gap. One constant, so the mark's size and the space reserved for it
-    /// cannot drift apart — which is how it came to overlap the label while it
-    /// lived in the top-right.
-    static let reservedWidth: CGFloat = 26
-
     var size: CGFloat = 19
     var body: some View {
         if let image = UIImage(named: "LiddMark") {
@@ -457,6 +451,19 @@ struct LiddWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: LiddEntry
 
+    /// Where the mark sits, and it follows the content rather than the frame.
+    ///
+    /// **The rule is that the mark lines up with the bottom-left content**
+    /// (Sunny, 2026-09-01). During an attack the block fills the widget and
+    /// ends on its severity row, so the bottom corner *is* that line. Off an
+    /// attack the block is vertically centred and the bottom corner is empty
+    /// space well below the text — the mark would be floating on its own with
+    /// nothing beside it. Centring it there puts it back on the block's own
+    /// line.
+    private var markAlignment: Alignment {
+        entry.snapshot?.ongoing == nil ? .trailing : .bottomTrailing
+    }
+
     var body: some View {
         content
             // Vertically centred in every state. It was top-anchored while the
@@ -465,7 +472,7 @@ struct LiddWidgetView: View {
             // leaves two thirds of the widget visibly empty — the "layout that
             // has failed" reading `prominent` exists to prevent.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .overlay(alignment: .bottomTrailing) { LiddMark() }
+            .overlay(alignment: markAlignment) { LiddMark() }
             .liddContainerBackground()
     }
 
