@@ -103,15 +103,38 @@ export function MedicationInsights({
                 </span>
               </div>
 
+              {/* **Three short sentences, not a run of dot-separated clauses**
+                  (Sunny, 2026-09-02, after two rounds of it still not being
+                  clear). Every phrase here had to name the thing it referred
+                  to: "3 points lower" never said lower *than what*, and
+                  "no reading to compare" never said compare *to what*. The
+                  register is §9's — the words someone would say out loud.
+
+                  "Median" became "usually". It is an honest reading of a
+                  median and it is the word a person uses; the exact statistic
+                  belongs in the caption, not on a line that is glanced at.
+
+                  **"doses", never "times"** — the figure above this counts
+                  days, and two numbers on one card that mean different things
+                  have to say which is which. */}
               {r && (
                 <p className="text-xs text-text-secondary">
-                  {r.measured === 0
-                    ? `No follow-up reading within 4 hours of ${r.unmeasured === 1 ? 'the dose' : 'any dose'} yet`
-                    // "doses", never "times": the number above counts days,
-                    // and two figures on one row that mean different things
-                    // have to say which is which.
-                    : `Helped ${r.helped} of ${r.measured} ${r.measured === 1 ? 'dose' : 'doses'} · median change at 2h ${r.medianChange !== null && r.medianChange > 0 ? '+' : ''}${r.medianChange}`}
-                  {r.measured > 0 && r.unmeasured > 0 && ` · ${r.unmeasured} more without a follow-up reading`}
+                  {r.measured > 0 && (
+                    <>
+                      {`Helped after ${r.helped} of the ${r.measured} ${r.measured === 1 ? 'dose' : 'doses'} that could be checked. `}
+                      {r.medianChange !== null && r.medianChange !== 0 &&
+                        `Severity was usually ${Math.abs(r.medianChange)} ${Math.abs(r.medianChange) === 1 ? 'point' : 'points'} ${r.medianChange < 0 ? 'lower' : 'higher'} two hours after taking it. `}
+                      {r.medianChange === 0 && 'Severity was usually the same two hours after taking it. '}
+                    </>
+                  )}
+                  {r.unmeasured > 0 && (
+                    // Never "you didn't log it" — the passive is the rule
+                    // (§9), and the point is that the reading is missing, not
+                    // that someone failed to make it.
+                    r.measured === 0
+                      ? `Nothing was logged in the hours after ${r.unmeasured === 1 ? 'this dose' : 'any of these doses'}, so there is no way to tell yet whether it helped.`
+                      : `${r.unmeasured} ${r.unmeasured === 1 ? 'dose' : 'doses'} had no reading in the hours after, so ${r.unmeasured === 1 ? 'it' : 'they'} could not be checked.`
+                  )}
                 </p>
               )}
             </div>
