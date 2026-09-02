@@ -226,7 +226,7 @@ export function StatsView({ attacks, medications = [], period }: Props) {
           2026-09-02 and removed the same day, because a heading at that level
           reads as owning everything below it — including the period-scoped
           blocks that follow, which is the opposite of what it claimed. */}
-      <MigraineDaysChart attacks={attacks} months={monthsShown} />
+      <MigraineDaysChart attacks={attacks} months={monthsShown} mode={period === '7d' ? 'week' : 'months'} />
       <MedicationInsights
         attacks={attacks}
         medications={medications}

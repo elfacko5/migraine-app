@@ -1712,3 +1712,31 @@ How each section was scoped, and the two places it could have gone wrong:
 the control scrolled away with the page; pinned in the top bar it states the
 window once, and repeating it per section was a line apiece saying what is
 already on screen.
+
+### The week view, and the attack/migraine rule (2026-09-02)
+
+Scoping the migraine-days section to the period exposed the next thing: whole
+calendar months are meaningless against a 7-day window. It now **draws the last
+seven days as a strip** under that period and titles itself for whichever it is
+showing — "per month" over a week would be a plain lie.
+
+**A strip, not a bar chart.** A day either had an attack on it or it did not,
+so every bar would be full or empty and length would carry no information. The
+15-day line goes with it: a threshold stated per month says nothing about a
+week, and the caption says to pick 30 days for it rather than leaving the
+absence unexplained.
+
+**The vocabulary rule, asked for and written down.** Sunny noticed the tiles say
+*attacks* while one says *migraine*, and asked what the rule was. There is one,
+it had been followed consistently, and it had never been recorded — which is
+why it read as arbitrary:
+
+> **An attack is one episode** — the thing with a start, an end, a duration and
+> a peak. **A migraine day is a calendar day**, the unit every ICHD threshold is
+> stated in. One attack can be two migraine days.
+
+That is the same distinction that made "7 attacks" and "11 days" look like a
+contradiction earlier in the day, so it is load-bearing rather than stylistic.
+The one place it is broken: the FAB's `addLabel` says "Log a migraine" while
+the sheet it opens is titled "Log an attack". Flagged, not changed — the spoken
+Siri phrase is deliberately "log a migraine" and the two decisions are adjacent.

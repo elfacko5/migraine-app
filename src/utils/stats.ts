@@ -348,6 +348,58 @@ function migraineDaysByMonthMap(attacks: Attack[], now: number): Map<string, Set
   return byMonth;
 }
 
+/**
+ * Every local calendar day with an attack on it, as `YYYY-MM-DD` keys.
+ *
+ * The same day set the monthly chart is built from, exposed for the week view
+ * it falls back to under a 7-day period — a chart of whole months makes no
+ * sense against a window that short (Sunny, 2026-09-02).
+ */
+export function migraineDaySet(attacks: Attack[], now: number = Date.now()): Set<string> {
+  const all = new Set<string>();
+  for (const days of migraineDaysByMonthMap(attacks, now).values()) {
+    for (const d of days) all.add(d);
+  }
+  return all;
+}
+
+export interface DayCell {
+  /** `YYYY-MM-DD`, local. */
+  key: string;
+  /** One-letter weekday, for the column head. */
+  initial: string;
+  /** Day of the month, shown in the cell. */
+  date: number;
+  /** Whether an attack covered this day. */
+  hit: boolean;
+  today: boolean;
+}
+
+/**
+ * The last seven local days, most recent last, flagged where an attack covered
+ * them. Backs the week view the migraine-days section falls back to under a
+ * 7-day period.
+ *
+ * **The clock is read here, not in the component** — the rule the medication
+ * guardrails and `greeting` already follow, so no component derives a value
+ * from `Date` during render.
+ */
+export function lastSevenDays(attacks: Attack[], now: number = Date.now()): DayCell[] {
+  const set = migraineDaySet(attacks, now);
+  const base = new Date(now);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - (6 - i));
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return {
+      key,
+      initial: d.toLocaleDateString(undefined, { weekday: 'narrow' }),
+      date: d.getDate(),
+      hit: set.has(key),
+      today: i === 6,
+    };
+  });
+}
+
 export function migraineDaysByMonth(attacks: Attack[], months = 6, now: number = Date.now()): MonthDays[] {
   const byMonth = migraineDaysByMonthMap(attacks, now);
 

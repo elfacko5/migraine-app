@@ -1,5 +1,5 @@
 import type { Attack } from '../types';
-import { migraineDaysByMonth, CHRONIC_DAYS_THRESHOLD } from '../utils/stats';
+import { migraineDaysByMonth, lastSevenDays, CHRONIC_DAYS_THRESHOLD } from '../utils/stats';
 import { InsightSection } from './InsightSection';
 
 // Days per month, not attacks per month. Every clinical threshold, trial
@@ -14,15 +14,26 @@ import { InsightSection } from './InsightSection';
 // So "7 days" shows the month or two the last week falls in, with those months
 // counted in full — which the caption has to keep saying, or a bar would read
 // as a count of the selected window.
+// **Under a 7-day period it draws the week instead** (Sunny, 2026-09-02).
+// Whole-month bars against a window that short were answering a question
+// nobody had asked — and the section is titled for whichever it is drawing,
+// since "per month" on a week strip would be a plain lie.
 interface Props {
   attacks: Attack[];
   /** How many calendar months to show, counting back from this one. */
   months: number;
+  /** `week` draws the last seven days instead. */
+  mode: 'week' | 'months';
 }
 
 const BAR_MAX = 20;
 
-export function MigraineDaysChart({ attacks, months: monthCount }: Props) {
+export function MigraineDaysChart({ attacks, months: monthCount, mode }: Props) {
+  if (mode === 'week') return <MigraineWeek attacks={attacks} />;
+  return <MigraineMonths attacks={attacks} monthCount={monthCount} />;
+}
+
+function MigraineMonths({ attacks, monthCount }: { attacks: Attack[]; monthCount: number }) {
   const months = migraineDaysByMonth(attacks, monthCount);
   const anyData = months.some((m) => m.days > 0);
   if (!anyData) return null;
@@ -77,6 +88,55 @@ export function MigraineDaysChart({ attacks, months: monthCount }: Props) {
         })}
       </div>
 
+    </InsightSection>
+  );
+}
+
+// The last seven days as a strip, one cell each, filled on a day with an
+// attack on it. A bar chart cannot express this: a day either had one or it
+// didn't, so every bar would be full or empty and the length would carry no
+// information. The 15-day line goes with it for the same reason — a threshold
+// stated per month says nothing about a week.
+function MigraineWeek({ attacks }: { attacks: Attack[] }) {
+  // The clock is read inside the util, not here — a component must never
+  // derive a value from `Date` during render. Each cell carries its own date
+  // as well as the weekday letter: two Tuesdays never appear in a seven-day
+  // strip, but the date is what makes it a record rather than a generic week.
+  const days = lastSevenDays(attacks);
+  const count = days.filter((d) => d.hit).length;
+
+  return (
+    <InsightSection
+      title="Migraine days this week"
+      note={
+        <>
+          The last seven days — a filled day is one with a logged attack on it, and an attack running
+          past midnight fills both. Guidelines count migraine days per month, so there is no threshold
+          to read a week against; pick 30 days or longer for that.
+        </>
+      }
+    >
+      <div className="space-y-2">
+        <div className="flex gap-1.5">
+          {days.map((d) => (
+            <div key={d.key} className="flex-1 space-y-1 text-center">
+              <span className="block text-[0.6875rem] uppercase text-text-secondary">{d.initial}</span>
+              <span
+                className={`flex h-8 items-center justify-center rounded-lg text-xs tabular-nums ${
+                  d.hit
+                    ? 'bg-accent/25 text-accent-light'
+                    : 'bg-bg-border/40 text-text-secondary'
+                } ${d.today ? 'ring-1 ring-inset ring-border-control' : ''}`}
+              >
+                {d.date}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-text-secondary">
+          {count === 0 ? 'No migraine days' : `${count} of the last 7 days`}
+        </p>
+      </div>
     </InsightSection>
   );
 }
