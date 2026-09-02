@@ -103,38 +103,33 @@ export function MedicationInsights({
                 </span>
               </div>
 
-              {/* **Three short sentences, not a run of dot-separated clauses**
-                  (Sunny, 2026-09-02, after two rounds of it still not being
-                  clear). Every phrase here had to name the thing it referred
-                  to: "3 points lower" never said lower *than what*, and
-                  "no reading to compare" never said compare *to what*. The
-                  register is §9's — the words someone would say out loud.
+              {/* **Shortened for the demo on 2026-09-02, and not settled.**
+                  The long form — three full sentences — was clear but ran to
+                  five lines a drug, which Sunny judged too heavy on the card.
+                  This is the middle draft: still names what is lower and what
+                  the missing readings cost, but back to dot-separated clauses.
+                  **Marked for discussion**, see the open item in
+                  `docs/decisions.md`; the trade is legibility against length
+                  and it has not been decided, only parked.
 
-                  "Median" became "usually". It is an honest reading of a
-                  median and it is the word a person uses; the exact statistic
-                  belongs in the caption, not on a line that is glanced at.
-
-                  **"doses", never "times"** — the figure above this counts
-                  days, and two numbers on one card that mean different things
-                  have to say which is which. */}
+                  "doses", never "times" — the figure above counts days, and
+                  two numbers on one card that mean different things have to
+                  say which is which. */}
               {r && (
                 <p className="text-xs text-text-secondary">
-                  {r.measured > 0 && (
-                    <>
-                      {`Helped after ${r.helped} of the ${r.measured} ${r.measured === 1 ? 'dose' : 'doses'} that could be checked. `}
-                      {r.medianChange !== null && r.medianChange !== 0 &&
-                        `Severity was usually ${Math.abs(r.medianChange)} ${Math.abs(r.medianChange) === 1 ? 'point' : 'points'} ${r.medianChange < 0 ? 'lower' : 'higher'} two hours after taking it. `}
-                      {r.medianChange === 0 && 'Severity was usually the same two hours after taking it. '}
-                    </>
-                  )}
-                  {r.unmeasured > 0 && (
-                    // Never "you didn't log it" — the passive is the rule
-                    // (§9), and the point is that the reading is missing, not
-                    // that someone failed to make it.
-                    r.measured === 0
-                      ? `Nothing was logged in the hours after ${r.unmeasured === 1 ? 'this dose' : 'any of these doses'}, so there is no way to tell yet whether it helped.`
-                      : `${r.unmeasured} ${r.unmeasured === 1 ? 'dose' : 'doses'} had no reading in the hours after, so ${r.unmeasured === 1 ? 'it' : 'they'} could not be checked.`
-                  )}
+                  {[
+                    r.measured > 0 &&
+                      `Helped after ${r.helped} of ${r.measured} ${r.measured === 1 ? 'dose' : 'doses'}`,
+                    r.measured > 0 && r.medianChange !== null && (
+                      r.medianChange === 0
+                        ? 'typically the same two hours on'
+                        : `typically ${Math.abs(r.medianChange)} ${Math.abs(r.medianChange) === 1 ? 'point' : 'points'} ${r.medianChange < 0 ? 'lower' : 'higher'} two hours on`
+                    ),
+                    // Passive, never "you didn't log it": a reading is absent,
+                    // which is not the same as someone having failed (§9).
+                    r.unmeasured > 0 &&
+                      `${r.unmeasured} ${r.unmeasured === 1 ? 'dose' : 'doses'} had no reading to compare`,
+                  ].filter(Boolean).join(' · ')}
                 </p>
               )}
             </div>

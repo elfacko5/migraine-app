@@ -1763,3 +1763,35 @@ borrowed by accident: **a control's visual vocabulary carries its
 interactivity.** Rounded filled cells in a row mean "choose one" in this app —
 the period control, the Front/Back toggle, the chips — so anything static that
 adopts them is making a promise it can't keep.
+
+## Open — the medication response line (2026-09-02)
+
+**Parked mid-decision, at Sunny's request, with a demo in the way.** The line
+under each drug in `MedicationInsights` has had three forms in one afternoon
+and none of them is agreed:
+
+1. `Helped 1 of 3 doses · median change at 2h -3 · 2 more without a follow-up
+   reading` — the original. Three statistician's clauses strung together with
+   dots. Reported as not understandable, twice, by the person who commissioned
+   the feature: "median change at 2h -3" never says *lower than what*, and
+   "without a follow-up reading" never says what those doses cost.
+2. Three full sentences, naming everything — *"Helped after 1 of the 3 doses
+   that could be checked. Severity was usually 3 points lower two hours after
+   taking it. 2 doses had no reading in the hours after, so they could not be
+   checked."* Clear, and five lines a drug, which is too heavy for a card
+   carrying two or three of them.
+3. **Shipped for the demo:** `Helped after 1 of 3 doses · typically 3 points
+   lower two hours on · 2 doses had no reading to compare`. The middle draft —
+   back to dots, but naming severity's direction and saying the unchecked doses
+   are unchecked.
+
+**What the discussion has to settle:** whether this belongs on the card at all
+at full length, or whether the card carries the headline ("helped after 1 of 3")
+and the detail moves into the section caption, which is already where this page
+puts anything read rather than glanced at. Nothing about the underlying figures
+is in question — only how much of them a card should say.
+
+Two things any replacement keeps: **"doses", never "times"** (the figure above
+counts days, and two numbers on one card that mean different things must say
+which is which), and the **passive** on the missing-reading clause — never "you
+didn't log it", because a reading being absent is not someone having failed.
