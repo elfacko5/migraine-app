@@ -87,17 +87,33 @@ export function longestPlateauMinutes(attack: Attack): number {
   return Math.round(longest);
 }
 
-// Total minutes per attack where max severity was at or above the threshold.
-export function minutesAboveSeverity(attack: Attack, threshold: number): number {
-  const snaps = attack.snapshots;
-  let total = 0;
-  for (let i = 0; i < snaps.length; i++) {
-    if (maxSeverity(snaps[i]) >= threshold) {
-      const nextTime = snaps[i + 1]?.time ?? attack.end ?? snaps[i].time;
-      total += msBetween(snaps[i].time, nextTime) / 60000;
-    }
-  }
-  return Math.round(total);
+/**
+ * Mean attack length in minutes, over attacks that have ended.
+ *
+ * **Ongoing attacks are excluded, not counted up to now.** An attack still
+ * running has no length yet — counting it would pull the mean toward whatever
+ * time of day the page happened to be opened, and it is the same call
+ * `AttackCard` already makes in showing no duration for an ongoing attack.
+ *
+ * This replaced a tile reading "avg time >= 5" (2026-09-02, on Sunny's
+ * suggestion). That threshold was never justified anywhere — not here, not in
+ * CLAUDE.md, not in the dossier — and matched neither anchor it could have
+ * used: ICHD-3 wants "moderate or severe", conventionally 4-6 and 7-10 on a
+ * 0-10 scale, and the app's own severity ramp bands at <=3 / <=7. Length needs
+ * no threshold to explain and is itself diagnostic: ICHD-3 1.1 defines
+ * migraine as attacks of **4-72 hours untreated**, which is why the Logs row
+ * already leads with duration.
+ *
+ * A mean, matching the other tiles rather than the median `medicationResponse`
+ * uses. Worth knowing it is skewed hard by a forgotten-to-end attack — a
+ * single 460-hour record moves it more than the rest of a month combined.
+ */
+export function avgAttackLength(attacks: Attack[]): number | null {
+  const lengths = attacks
+    .filter((a) => a.end !== null && a.snapshots.length > 0)
+    .map((a) => msBetween(a.snapshots[0].time, a.end!) / 60000);
+  if (lengths.length === 0) return null;
+  return Math.round(lengths.reduce((s, m) => s + m, 0) / lengths.length);
 }
 
 // True if 2+ consecutive no_change snapshots follow a medication snapshot.

@@ -7,7 +7,7 @@ import type { Attack, Medication } from '../types';
 import { formatDateShort } from '../utils/format';
 import {
   attackMaxSeverity, consecutiveMigraineDays, daysSinceLastMigraine,
-  areaFrequency, avgTimeToPeak, minutesAboveSeverity,
+  areaFrequency, avgTimeToPeak, avgAttackLength,
   triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
 } from '../utils/stats';
 import { HeadHeatmap } from './HeadHeatmap';
@@ -97,9 +97,7 @@ export function StatsView({ attacks, medications = [], period }: Props) {
       ? (filtered.reduce((s, a) => s + attackMaxSeverity(a), 0) / filtered.length).toFixed(1)
       : '—';
 
-    const avgAbove5 = filtered.length
-      ? Math.round(filtered.reduce((s, a) => s + minutesAboveSeverity(a, 5), 0) / filtered.length)
-      : null;
+    const avgLength = avgAttackLength(filtered);
 
     const timeToPeak = avgTimeToPeak(filtered);
 
@@ -117,7 +115,7 @@ export function StatsView({ attacks, medications = [], period }: Props) {
       avgSeverity,
       inARow: consecutiveMigraineDays(attacks),
       daysSince: daysSinceLastMigraine(attacks),
-      avgAbove5,
+      avgLength,
       timeToPeak,
       severityTrend,
       areas,
@@ -166,8 +164,13 @@ export function StatsView({ attacks, medications = [], period }: Props) {
             {stats.timeToPeak !== null && (
               <StatCard label="Avg time to peak" value={`${stats.timeToPeak}h`} sub="from start" />
             )}
-            {stats.avgAbove5 !== null && (
-              <StatCard label="Avg time ≥5" value={`${Math.floor(stats.avgAbove5 / 60)}h ${stats.avgAbove5 % 60}m`} sub="per attack" />
+            {/* Length, not "time at severity >= 5" — that threshold was never
+                justified and had to be decoded before the figure meant
+                anything. Duration needs no explaining and is the one ICHD-3
+                anchor this page was missing (4-72 hours untreated), which is
+                why the Logs row already leads with it. */}
+            {stats.avgLength !== null && (
+              <StatCard label="Avg length" value={`${Math.floor(stats.avgLength / 60)}h ${stats.avgLength % 60}m`} sub="per attack" />
             )}
           </div>
       )}

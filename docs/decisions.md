@@ -1611,3 +1611,35 @@ seed script ran against it and was refused by its own guard: the check reads
 `location.origin` and looks for an `sb-` key **in the same call as the write**.
 Nothing was created. This is the third entry in this file about that origin,
 and the guard is the only reason it is a footnote rather than another cleanup.
+
+### "Avg time ≥5" became "Avg length" (2026-09-02)
+
+Sunny asked why the tile said `AVG TIME ≥5` — why 5, and why is it not
+obvious. The answer was that **no reason was recorded anywhere**: not in
+`stats.ts`, not in `CLAUDE.md`, not in the dossier. It arrived in the initial
+commit and was never revisited. Every other number on the Insights page traces
+to something — 15 days is the episodic/chronic line, 10 and 15 are the MOH
+thresholds, 2 hours is the acute trial endpoint, 50% is the preventive one.
+That one traced to nothing, and it matched neither anchor it could have used:
+ICHD-3 criterion C wants "moderate or severe intensity", conventionally 4–6 and
+7–10 on a 0–10 scale, while the app's own severity ramp bands at ≤3 / ≤7. Five
+sits inside the moderate band and lands on no boundary in either system.
+
+**Replaced with average attack length**, which needs no threshold to explain
+and is the one ICHD-3 anchor the page was missing: 1.1 defines migraine as
+attacks of **4–72 hours untreated**, which is exactly why the Logs row already
+leads with duration. Two calls inside it: **ongoing attacks are excluded rather
+than counted up to now** (an attack still running has no length yet, and
+counting it would pull the mean toward whatever time the page was opened — the
+same call `AttackCard` makes in showing no duration for one), and it is a
+**mean**, matching the other tiles rather than the median `medicationResponse`
+uses. The mean is skewed hard by a forgotten-to-end attack; that is a known
+cost, and the 461-hour record already in this file is the worked example.
+
+`minutesAboveSeverity` was deleted rather than left dead — it had no other
+caller.
+
+**The general lesson is the label, not the number.** A tile label should name
+the thing being measured, not the arithmetic behind it. `AVG TIME ≥5` made the
+reader ask what 5 was before the figure meant anything, which is a question no
+glanceable figure should provoke.
