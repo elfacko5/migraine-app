@@ -1643,3 +1643,26 @@ caller.
 the thing being measured, not the arithmetic behind it. `AVG TIME ≥5` made the
 reader ask what 5 was before the figure meant anything, which is a question no
 glanceable figure should provoke.
+
+### The stat tiles' labels, in the same pass (2026-09-02)
+
+Following the tile above, Sunny asked whether "avg max severity" was per
+attack. **The question is the finding**: it is — the mean of each attack's own
+peak, which is a different figure from the mean of every reading — and nothing
+on the tile said so.
+
+Two changes, and the second was forced by measurement rather than chosen.
+**"Peak", not "max"**, because the Logs row already calls this figure the peak
+and one concept wants one word; that inconsistency surfaced while answering the
+question rather than being the question. And **the averaging moved into the
+sub** — `Avg peak severity` wrapped to two lines at 12px and took the whole top
+row from 104px to 122px, which is the wrapping trap already recorded against
+these labels at 14px, one step smaller. `Peak severity` / `avg per attack` fits
+and says more.
+
+`Days since` dropped "your" from its sub in the same pass.
+
+The six tiles now share one shape: **the label names the thing, the sub says
+what it is measured over** — *per attack*, *with a migraine*, *last attack*,
+*from start*, *per attack*. Only "Attacks" has no sub, which is correct; it is
+not per anything. That is the rule to apply to a seventh.
