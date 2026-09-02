@@ -534,6 +534,43 @@ function extractFromList(text: string, options: string[]): string[] {
   return options.filter((opt) => fuzzyIncludes(text, opt));
 }
 
+/**
+ * Blanks out literal occurrences of `phrases`, preserving length so every
+ * index the caller has already computed stays valid.
+ *
+ * Used on the **relief methods** before pain areas are read, and only on them.
+ * "Eye mask" is a stock relief, and `extractAreas` scans the whole transcript
+ * for the word "eye" — so saying "I used an eye mask" produced a second,
+ * side-less Eye mention, which by design selects *both* sides, which invented
+ * an `Eye left` at a severity nobody said. Reported twice from a real Siri
+ * entry before the cause was found (2026-09-02), and it reads as the parser
+ * hallucinating rather than as a collision, which is what made it puzzling.
+ *
+ * **Symptoms and triggers are deliberately not masked.** A relief is a thing
+ * you apply — an eye mask, a cold compress — and never how someone states
+ * where it hurts. A symptom can be exactly that: "neck pain seven" is both the
+ * symptom *and* the area with its severity, and masking it would delete the
+ * reading it was meant to protect.
+ *
+ * Only literal matches are masked. `fuzzyIncludes` also matches a phrase word
+ * by word with no span to point at, and a fuzzy hit is far less likely to sit
+ * on top of an area term anyway.
+ */
+function maskPhrases(text: string, phrases: string[]): string {
+  let out = text;
+  for (const phrase of phrases) {
+    const needle = phrase.toLowerCase();
+    if (!needle) continue;
+    for (let from = 0; ; ) {
+      const i = out.toLowerCase().indexOf(needle, from);
+      if (i < 0) break;
+      out = out.slice(0, i) + ' '.repeat(needle.length) + out.slice(i + needle.length);
+      from = i + needle.length;
+    }
+  }
+  return out;
+}
+
 export interface VoiceDose {
   name: string;
   dose: string;
@@ -796,9 +833,14 @@ function extractMedication(
  */
 export function parseVoiceEntry(rawText: string, opts: VoiceParseOptions, startedText = ''): VoiceDraft {
   const text = rawText.trim();
-  const { areas, heard } = extractAreas(text, opts.painAreas, extractSeverity(text));
   const symptoms = extractFromList(text, opts.symptoms);
   const reliefs = extractFromList(text, opts.reliefs);
+  // Areas are read from a copy with the matched reliefs blanked out — see
+  // `maskPhrases`. The sentence-wide severity still comes from the whole text:
+  // masking is about *where* a body part was named, not about the numbers.
+  const { areas, heard } = extractAreas(
+    maskPhrases(text, reliefs), opts.painAreas, extractSeverity(text),
+  );
   const triggers = extractFromList(text, opts.triggers);
   const medication = extractMedication(text, opts.recentMeds);
   // Parsed before the doses, which use it to disambiguate a bare hour: a dose

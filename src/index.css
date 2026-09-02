@@ -209,11 +209,20 @@
 
   /* A disabled primary is a *muted* button, never a faded accent one — the
      treatment the logging wizard spells out by hand at each call site. Here
-     it comes for free, so `disabled:opacity-40` is never the reach. */
+     it comes for free, so `disabled:opacity-40` is never the reach.
+
+     **The label is dimmed too** (2026-09-02). At plain `text-secondary` it
+     read as ordinary available text: on the voice review screen the disabled
+     "Finish now" sat beside a `btn-secondary` "Make changes" and the pair
+     looked equally pressable, which is exactly the moment it must not — the
+     screen is telling you a severity is missing. Blended toward the button's
+     own surface rather than given an alpha, so it stays a real colour on any
+     background; WCAG 1.4.3 exempts disabled controls from the contrast floor,
+     and looking unavailable is the entire job. */
   .btn-primary:disabled, .btn-secondary:disabled {
     background-color: var(--color-bg-raised);
     box-shadow: none;
-    color: var(--color-text-secondary);
+    color: color-mix(in srgb, var(--color-text-secondary) 55%, var(--color-bg-raised));
     cursor: not-allowed;
   }
 }

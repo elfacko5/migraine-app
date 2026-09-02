@@ -122,7 +122,7 @@ The Today hero (`OngoingAttackBanner`'s lone End attack) and the HIT-6 prompt bo
 
 **An outline on something you *press* uses `--color-border-control`; a hairline between things you *read* keeps `--color-bg-border`.** WCAG 1.4.11 wants 3:1 for the visual information that identifies a control, and every author-drawn edge in the app measured 1.15–1.8:1 (audit and per-mode values in [`docs/palette.md`](docs/palette.md)). It is a **second token rather than a brighter `bg-border`** because that one has 73 call sites and only ~17 are controls — the other 47 are dividers, info boxes and section cards, and raising them all would be the visible grid §8.1 exists to prevent. Chips, presets, form inputs, tappable menu rows, segmented tracks, `btn-secondary` and both toggle tracks take the control token; nothing else does. **Both switches share one treatment** — control-token track, `bg-bg-surface` thumb — after `ProfileView`'s light thumb was found at 1.70:1 against its own accent track when on.
 
-**A disabled `btn-primary`/`btn-secondary` is automatically the muted `bg-raised` treatment**, so `disabled:opacity-40` is never the reach.
+**A disabled `btn-primary`/`btn-secondary` is automatically the muted `bg-raised` treatment**, so `disabled:opacity-40` is never the reach — and **the label is dimmed with it** (2026-09-02): at plain `text-secondary` it read as ordinary available text, so the voice review screen's disabled *Finish now* looked as pressable as the `btn-secondary` *Make changes* beside it, at exactly the moment it must not. The dim is a `color-mix` toward the button's own surface rather than an alpha, so it stays a real colour; WCAG 1.4.3 exempts disabled controls, and looking unavailable is the whole job. **Call sites should use `btn-primary` and let `:disabled` do this** rather than spelling out a muted class pair — that review button did, and had drifted into being indistinguishable from a secondary.
 
 **`btn-secondary`'s outline is a ring (inset `box-shadow`), never a `border`** — fixed 2026-08-19. A border takes layout space, so a secondary button measured **46px against the primary's 44px** wherever the two sat side by side, which is most of the app: the Today hero card, every wizard footer, both dialogs. This is the same rule `chipStyles.ts` already followed, and the `LogForm` preset comment used to cite `btn-secondary` as the counter-example — it isn't one any more. All four buttons on Today now measure 44px.
 
@@ -325,6 +325,7 @@ Every rule below exists because a real transcript broke without it. The worked e
 - Every occurrence of an area term is its own reading, and each "left"/"right" belongs to the mention it is nearest.
 - "Nearest" is biased forward, because English puts the side word first (`BACKWARD_PENALTY` ≥ `SIDE_RANGE`, so any in-range forward candidate wins).
 - A side-less mention selects **both** sides rather than guessing.
+- **A matched relief phrase is blanked out of the text the areas are read from** (`maskPhrases`). "Eye mask" is a stock relief and `extractAreas` matches the bare word "eye", so saying you used one added a side-less Eye mention — which selects both sides — and invented an `Eye left` nobody said. **Reliefs only**: a symptom can legitimately be how a location is stated ("neck pain seven"), and masking those would delete the reading.
 
 *Times and doses*
 

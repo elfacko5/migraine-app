@@ -658,10 +658,12 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               type="button"
               onClick={submit}
               disabled={!canSaveFromReview}
-              className={`flex-1 rounded-xl py-3 text-sm font-medium transition-all ${
-                canSaveFromReview
-                  ? 'btn-primary active:scale-[.99]'
-                  : 'bg-bg-raised text-text-secondary cursor-not-allowed'
+              // Always `btn-primary`: its `:disabled` rule *is* the muted
+              // treatment, so spelling it out by hand here only risked drifting
+              // from it — which it had, ending up indistinguishable from the
+              // secondary button beside it.
+              className={`btn-primary flex-1 transition-all ${
+                canSaveFromReview ? 'active:scale-[.99]' : ''
               }`}
             >
               Finish now
