@@ -147,8 +147,10 @@ function MigraineWeek({ attacks }: { attacks: Attack[] }) {
             </div>
           ))}
         </div>
+        {/* Just the count. "of the last 7 days" restated the section title
+            directly above it (Sunny, 2026-09-02). */}
         <p className="text-xs text-text-secondary">
-          {count === 0 ? 'No migraine days' : `${count} of the last 7 days`}
+          {count === 0 ? 'No migraine days' : `${count} migraine day${count === 1 ? '' : 's'}`}
         </p>
       </div>
     </InsightSection>
