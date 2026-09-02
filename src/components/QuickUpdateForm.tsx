@@ -182,6 +182,20 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
     setStep((s) => s - 1);
   }
 
+  // **Pain areas are required here exactly as they are in `LogForm`** (Sunny,
+  // 2026-09-02). Without the gate you could fill in a medication, skip the
+  // areas and save — writing a reading with no areas at all, which
+  // `SeverityBreakdown` then has to render as "not recorded" for every one of
+  // them. That is the same bad record the blank-form dialog below exists to
+  // avoid; it only ever guarded the *fully* blank case, so the hole was any
+  // form with one other field filled in.
+  //
+  // It gates `Next` only. "Finish now" on a blank form still reaches the
+  // no-change path below, which is the documented way to say "same as last
+  // time" from inside the sheet — that saves the previous severities rather
+  // than an empty reading, so it never produces the record this prevents.
+  const nextDisabled = step === 2 && Object.keys(form.areas).length === 0;
+
   // Everything on this update is still blank. On step 1 that's always true —
   // there has been nothing to fill in yet — which is what makes "Finish now"
   // there mean something different from "Finish now" further in.
@@ -281,7 +295,11 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
             <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
               <div className="min-w-0">
                 <h2 className="text-xl font-medium text-text-primary">{STEP_LABELS[step - 1]}</h2>
-                <p className="mt-1 text-sm text-text-secondary">{STEP_SUBHEADS[step - 1]}</p>
+                <p className="mt-1 text-sm text-text-secondary">
+                  {STEP_SUBHEADS[step - 1]}
+                  {/* The required marker `LogForm` already uses on this step. */}
+                  {step === 2 && <span className="text-severity-high ml-0.5">*</span>}
+                </p>
               </div>
               <div className="shrink-0">
                 <TextScaleControl scale={textScale} onScale={onTextScale} />
@@ -393,6 +411,10 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
               </button>
             )}
             <button type="button" onClick={goNext}
+              disabled={nextDisabled}
+              // Says why, for a control whose disabled state is otherwise a
+              // dead end — the same title `LogForm` gives its own.
+              title={nextDisabled ? 'Select a pain area first' : undefined}
               className="btn-primary flex-1 rounded-xl py-3 text-sm font-medium transition-colors">
               {step === TOTAL_STEPS ? 'Save update' : 'Next'}
             </button>
