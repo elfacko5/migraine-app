@@ -372,7 +372,6 @@ export interface DayCell {
   date: number;
   /** Whether an attack covered this day. */
   hit: boolean;
-  today: boolean;
 }
 
 /**
@@ -395,7 +394,6 @@ export function lastSevenDays(attacks: Attack[], now: number = Date.now()): DayC
       initial: d.toLocaleDateString(undefined, { weekday: 'narrow' }),
       date: d.getDate(),
       hit: set.has(key),
-      today: i === 6,
     };
   });
 }

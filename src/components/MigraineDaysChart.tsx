@@ -36,6 +36,9 @@ export function MigraineDaysChart({ attacks, months: monthCount, mode }: Props) 
 function MigraineMonths({ attacks, monthCount }: { attacks: Attack[]; monthCount: number }) {
   const months = migraineDaysByMonth(attacks, monthCount);
   const anyData = months.some((m) => m.days > 0);
+  // Named rather than marked: the reader should not have to decode which bar
+  // is the partial one. Empty when the range is all complete months.
+  const inProgress = months.find((m) => !m.complete)?.label ?? null;
   if (!anyData) return null;
 
   return (
@@ -55,7 +58,8 @@ function MigraineMonths({ attacks, monthCount }: { attacks: Attack[]; monthCount
           </span>
           Days with a logged attack — an attack running past midnight counts as two. The line marks 15 days,
           where guidelines separate episodic from chronic migraine. This counts migraine days only; headaches
-          that weren't logged aren't included. The current month is still counting.
+          that weren't logged aren't included.
+          {inProgress && ` ${inProgress} is still counting, so its bar will grow.`}
         </>
       }
     >
@@ -79,10 +83,11 @@ function MigraineMonths({ attacks, monthCount }: { attacks: Attack[]; monthCount
                   style={{ left: `${(CHRONIC_DAYS_THRESHOLD / BAR_MAX) * 100}%` }}
                 />
               </span>
-              <span className="text-right text-xs tabular-nums text-text-primary">
-                {m.days}
-                {!m.complete && <span className="text-text-secondary">+</span>}
-              </span>
+              {/* No `+` on the month in progress. It meant "still counting"
+                  and was read as "1 or more" — which is true, and still the
+                  wrong thing to make someone work out from a glyph (Sunny,
+                  2026-09-02). The caption names the month instead. */}
+              <span className="text-right text-xs tabular-nums text-text-primary">{m.days}</span>
             </div>
           );
         })}
@@ -110,26 +115,35 @@ function MigraineWeek({ attacks }: { attacks: Attack[] }) {
       title="Migraine days this week"
       note={
         <>
-          The last seven days — a filled day is one with a logged attack on it, and an attack running
-          past midnight fills both. Guidelines count migraine days per month, so there is no threshold
-          to read a week against; pick 30 days or longer for that.
+          The last seven days — a dot marks a day with a logged attack on it, and an attack running past
+          midnight marks both. Guidelines count migraine days per month, so there is no threshold to
+          read a week against; pick 30 days or longer for that.
         </>
       }
     >
+      {/* **No cells and no fills.** Drawn as boxes it borrowed the segmented
+          control's shape and read as seven things you could tap, which none of
+          them are (Sunny, 2026-09-02). A dot under the date is an annotation
+          rather than a state, which is what this is. **Today is not marked at
+          all** — it was a ring, which is the same borrowed vocabulary one step
+          quieter, and the strip is labelled "the last seven days" already.
+
+          The dot's slot is always rendered, at `opacity-0` when there was no
+          attack, so a row of dates doesn't shift as the marks come and go —
+          the rule `ChipCheck` follows for the same reason. */}
       <div className="space-y-2">
         <div className="flex gap-1.5">
           {days.map((d) => (
             <div key={d.key} className="flex-1 space-y-1 text-center">
               <span className="block text-[0.6875rem] uppercase text-text-secondary">{d.initial}</span>
-              <span
-                className={`flex h-8 items-center justify-center rounded-lg text-xs tabular-nums ${
-                  d.hit
-                    ? 'bg-accent/25 text-accent-light'
-                    : 'bg-bg-border/40 text-text-secondary'
-                } ${d.today ? 'ring-1 ring-inset ring-border-control' : ''}`}
-              >
+              <span className={`block text-xs tabular-nums ${d.hit ? 'text-text-primary' : 'text-text-secondary'}`}>
                 {d.date}
               </span>
+              <span
+                aria-hidden="true"
+                className={`mx-auto block h-1.5 w-1.5 rounded-full bg-accent ${d.hit ? '' : 'opacity-0'}`}
+              />
+              {d.hit && <span className="sr-only">migraine day</span>}
             </div>
           ))}
         </div>

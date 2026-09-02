@@ -1740,3 +1740,26 @@ contradiction earlier in the day, so it is load-bearing rather than stylistic.
 The one place it is broken: the FAB's `addLabel` says "Log a migraine" while
 the sheet it opens is titled "Log an attack". Flagged, not changed — the spoken
 Siri phrase is deliberately "log a migraine" and the two decisions are adjacent.
+
+### Two reads on the week strip, same afternoon (2026-09-02)
+
+**`1+` on the month in progress.** The `+` meant "still counting"; it was read
+as "one or more", which is *also* true and is exactly the problem — a glyph
+carrying a distinction the reader has to reconstruct. It is gone, and the
+caption names the month instead ("September is still counting, so its bar will
+grow"). The protection it existed for — not comparing a part-month against
+whole ones — now rests on the caption alone, which is a weaker guard and an
+accepted trade for a figure that no longer looks wrong.
+
+**The week strip read as selectable.** Drawn as filled cells it had borrowed
+the segmented control's shape, and a row of rounded boxes with dates in them
+says "tap one" whatever the surrounding copy claims. The marker is now a dot
+under the date — an annotation rather than a state, which is what it is. Today
+lost its ring for the same reason one step quieter: a ring is the same borrowed
+vocabulary, and the strip is already labelled as the last seven days.
+
+Worth pulling out as a rule, because it is the second time this shape has been
+borrowed by accident: **a control's visual vocabulary carries its
+interactivity.** Rounded filled cells in a row mean "choose one" in this app —
+the period control, the Front/Back toggle, the chips — so anything static that
+adopts them is making a promise it can't keep.
