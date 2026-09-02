@@ -18,6 +18,12 @@ import { InsightSection } from './InsightSection';
 import { PERIOD_MS, type Period } from '../utils/logFilters';
 
 
+/** Calendar months touched by a window, inclusive of both ends. */
+function monthsBetween(fromMs: number, toMs: number): number {
+  const a = new Date(fromMs), b = new Date(toMs);
+  return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()) + 1;
+}
+
 const PERIOD_SUB: Record<Period, string> = {
   all:  'all time',
   '7d': 'last 7 days',
@@ -72,16 +78,46 @@ function FreqBars({ data, color }: { data: Freq[]; color: string }) {
   );
 }
 
-function FreqSection({ title, sub, data, color, note }: { title: string; sub: string; data: Freq[]; color: string; note?: string }) {
+// No period in the title. The control is pinned in the top bar now, so it says
+// which window every figure answers — repeating it on each section was a line
+// apiece saying what is already on screen (2026-09-02).
+function FreqSection({ title, data, color, note }: { title: string; data: Freq[]; color: string; note?: string }) {
   if (data.length === 0) return null;
   return (
-    <InsightSection title={`${title} · ${sub}`} note={note}>
+    <InsightSection title={title} note={note}>
       <FreqBars data={data} color={color} />
     </InsightSection>
   );
 }
 
 export function StatsView({ attacks, medications = [], period }: Props) {
+
+  // The window the whole page answers, derived once. `null` is all time.
+  //
+  // `monthsShown` is how many calendar months `MigraineDaysChart` renders: the
+  // months the window actually touches, so "7 days" shows one or two rather
+  // than six. All time is capped at 12 — the bars are one row each, but an
+  // unbounded chart is a different component.
+  //
+  // `monthScale` gates the overuse marker: the thresholds are stated per
+  // month, so a 3-month or all-time count would sail past 10 without meaning
+  // anything. Under a month it can only under-warn, which is the safe way to
+  // be wrong.
+  const { since, monthsShown, monthScale } = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
+    if (period === 'all') {
+      const first = attacks.reduce<number>(
+        (min, a) => Math.min(min, new Date(a.snapshots[0].time).getTime()), now);
+      return { since: null, monthsShown: Math.min(12, monthsBetween(first, now)), monthScale: false };
+    }
+    const cutoff = now - PERIOD_MS[period];
+    return {
+      since: cutoff,
+      monthsShown: monthsBetween(cutoff, now),
+      monthScale: PERIOD_MS[period] <= PERIOD_MS['30d'],
+    };
+  }, [period, attacks]);
 
   const filtered = useMemo(() => {
     if (period === 'all') return attacks;
@@ -190,15 +226,25 @@ export function StatsView({ attacks, medications = [], period }: Props) {
           2026-09-02 and removed the same day, because a heading at that level
           reads as owning everything below it — including the period-scoped
           blocks that follow, which is the opposite of what it claimed. */}
-      <MigraineDaysChart attacks={attacks} />
-      <MedicationInsights attacks={attacks} medications={medications} />
+      <MigraineDaysChart attacks={attacks} months={monthsShown} />
+      <MedicationInsights
+        attacks={attacks}
+        medications={medications}
+        since={since}
+        windowLabel={PERIOD_SUB[period]}
+        monthScale={monthScale}
+      />
+      {/* Preventives are the exception and stay whole-history: the figure is
+          up to 3 complete months before a start date against up to 3 since,
+          which a rolling window cannot express at all — it is not a view of
+          the diary, it is a before/after comparison with its own two windows. */}
       <PreventiveInsights attacks={attacks} medications={medications} />
 
       {filtered.length > 0 && (
         <>
           {/* Severity trend */}
           {stats.severityTrend.length >= 2 && (
-            <InsightSection title={`Severity trend · ${PERIOD_SUB[period]}`}>
+            <InsightSection title="Severity trend">
               <div>
                 <ResponsiveContainer width="100%" height={140}>
                   <LineChart data={stats.severityTrend} margin={{ top: 4, right: 8, bottom: 4, left: -20 }}>
@@ -231,13 +277,12 @@ export function StatsView({ attacks, medications = [], period }: Props) {
               reading "Top triggers" invites the stronger claim. */}
           <FreqSection
             title="Triggers you noted"
-            sub={PERIOD_SUB[period]}
             data={stats.triggers}
             color="#c39257"
             note="Recorded on attack days only — this is what you suspected at the time, not what's been shown to bring one on."
           />
-          <FreqSection title="Top symptoms"       sub={PERIOD_SUB[period]} data={stats.symptoms}    color="#c68880" />
-          <FreqSection title="Top reliefs"        sub={PERIOD_SUB[period]} data={stats.reliefs}     color="#7fa187" />
+          <FreqSection title="Top symptoms" data={stats.symptoms} color="#c68880" />
+          <FreqSection title="Top reliefs"  data={stats.reliefs}  color="#7fa187" />
         </>
       )}
     </div>

@@ -6,15 +6,24 @@ import { InsightSection } from './InsightSection';
 // endpoint and treatment decision is stated in days — an attack running past
 // midnight is two of them — and this is the number a doctor asks for first.
 //
-// It sits outside the period filter above it on purpose: "days per month" is
-// only meaningful per calendar month, and a rolling 7-day window can't
-// express it.
-interface Props { attacks: Attack[] }
+// **The period control chooses how many months are shown, not how the bars are
+// counted** (2026-09-02, on Sunny's instruction — a page where half the figures
+// ignore the control above them is confusing whatever each figure is doing on
+// its own). Each bar stays a whole calendar month, because that is the only
+// window the 15-day line means anything against; the period narrows the range.
+// So "7 days" shows the month or two the last week falls in, with those months
+// counted in full — which the caption has to keep saying, or a bar would read
+// as a count of the selected window.
+interface Props {
+  attacks: Attack[];
+  /** How many calendar months to show, counting back from this one. */
+  months: number;
+}
 
 const BAR_MAX = 20;
 
-export function MigraineDaysChart({ attacks }: Props) {
-  const months = migraineDaysByMonth(attacks, 6);
+export function MigraineDaysChart({ attacks, months: monthCount }: Props) {
+  const months = migraineDaysByMonth(attacks, monthCount);
   const anyData = months.some((m) => m.days > 0);
   if (!anyData) return null;
 
@@ -30,7 +39,8 @@ export function MigraineDaysChart({ attacks }: Props) {
               heading so the chart isn't pushed down the screen by three
               stacked lines of text before it. */}
           <span className="mb-2 block">
-            Whole calendar months — the selected period above doesn't change these.
+            Whole calendar months. The period above chooses which months are shown; each bar still
+            counts its whole month.
           </span>
           Days with a logged attack — an attack running past midnight counts as two. The line marks 15 days,
           where guidelines separate episodic from chronic migraine. This counts migraine days only; headaches

@@ -435,6 +435,45 @@ export function medicationDaysByMonth(attacks: Attack[], now: number = Date.now(
     .sort((a, b) => b.thisMonth - a.thisMonth || a.name.localeCompare(b.name));
 }
 
+/**
+ * Medication days and doses inside a rolling window, rather than per calendar
+ * month.
+ *
+ * Added 2026-09-02, when the Insights period control started governing this
+ * section: a page where half the figures ignore the control above them is
+ * confusing whatever each figure is doing individually (Sunny). `since` of
+ * `null` means all time.
+ *
+ * **It filters on the snapshot's own time, not the attack's start**, so a dose
+ * taken inside the window still counts when the attack began before it — the
+ * same reason `medicationDaysByMonth` reads snapshots rather than attacks.
+ * Days are distinct *local* calendar days, matching every other day count here.
+ */
+export interface MedWindow { name: string; days: number; doses: number }
+
+export function medicationDaysInWindow(
+  attacks: Attack[], since: number | null, now: number = Date.now(),
+): MedWindow[] {
+  const days = new Map<string, Set<string>>();
+  const doses = new Map<string, number>();
+  for (const a of attacks) {
+    for (const snap of a.snapshots) {
+      const name = snap.medication?.name?.trim();
+      if (!name || isRetired(name)) continue;
+      const t = new Date(snap.time).getTime();
+      if (t > now || (since !== null && t < since)) continue;
+      const d = new Date(snap.time);
+      const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (!days.has(name)) days.set(name, new Set());
+      days.get(name)!.add(day);
+      doses.set(name, (doses.get(name) ?? 0) + 1);
+    }
+  }
+  return [...days.entries()]
+    .map(([name, set]) => ({ name, days: set.size, doses: doses.get(name) ?? 0 }))
+    .sort((a, b) => b.days - a.days || a.name.localeCompare(b.name));
+}
+
 export interface MedResponse {
   name: string;
   /** Doses that have a follow-up reading in the window. */
@@ -457,7 +496,10 @@ const FOLLOW_UP_MIN_MS = 60 * 60 * 1000;
 export const FOLLOW_UP_MAX_MS = 4 * 60 * 60 * 1000;
 const TARGET_MS = 2 * 60 * 60 * 1000;
 
-export function medicationResponse(attacks: Attack[]): MedResponse[] {
+/** `since` scopes it to the same window as `medicationDaysInWindow`, and on
+ *  the same key — the dose's own time. Two figures in one block measured over
+ *  different windows is exactly the drift this page keeps correcting. */
+export function medicationResponse(attacks: Attack[], since: number | null = null): MedResponse[] {
   const acc = new Map<string, { changes: number[]; unmeasured: number; helped: number }>();
 
   for (const a of attacks) {
@@ -465,6 +507,7 @@ export function medicationResponse(attacks: Attack[]): MedResponse[] {
     for (let i = 0; i < snaps.length; i++) {
       const name = snaps[i].medication?.name?.trim();
       if (!name || isRetired(name)) continue;
+      if (since !== null && new Date(snaps[i].time).getTime() < since) continue;
       if (!acc.has(name)) acc.set(name, { changes: [], unmeasured: 0, helped: 0 });
       const entry = acc.get(name)!;
 

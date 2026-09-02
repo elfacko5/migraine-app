@@ -1,6 +1,6 @@
 import type { Attack, Medication } from '../types';
 import {
-  medicationDaysByMonth, medicationResponse,
+  medicationDaysInWindow, medicationResponse,
   MOH_DAYS_TRIPTAN, MOH_DAYS_SIMPLE,
 } from '../utils/stats';
 import { MedIcon } from './drawnIcons';
@@ -15,28 +15,45 @@ interface Props {
   /** The library, for each drug's class — which is the only thing that decides
    *  which of the two guideline numbers applies to it. */
   medications?: Medication[];
+  /** Start of the selected period, or `null` for all time. Both figures below
+   *  are measured over it, on the dose's own time. */
+  since: number | null;
+  /** How that period reads in a sentence — "the last 30 days". */
+  windowLabel: string;
+  /** Whether the window is close enough to a calendar month for the overuse
+   *  thresholds to mean anything against it. See the note on `nearing`. */
+  monthScale: boolean;
 }
 
-export function MedicationInsights({ attacks, medications = [] }: Props) {
-  const days = medicationDaysByMonth(attacks);
-  const response = medicationResponse(attacks);
+export function MedicationInsights({
+  attacks, medications = [], since, windowLabel, monthScale,
+}: Props) {
+  const days = medicationDaysInWindow(attacks, since);
+  const response = medicationResponse(attacks, since);
   if (days.length === 0) return null;
 
   const byName = new Map(response.map((r) => [r.name, r]));
 
   return (
     <InsightSection
-      title="Medication this month"
+      title="Medication"
       // Reference points, not a verdict. The app counts days and says what the
       // guideline numbers are; deciding what they mean is a conversation with
       // a doctor, and the wording must not pre-empt it.
       note={
         <>
-          Days you logged taking each medication this month. Guidelines put medication-overuse headache at
-          around {MOH_DAYS_TRIPTAN} days a month for triptans and {MOH_DAYS_SIMPLE} for simple painkillers,
-          sustained over three months — worth raising with your doctor rather than acting on alone.
-          Each drug is measured against the number for its own type, or the limit you entered for it in
-          My medications. Doses taken without logging an attack aren't counted.
+          Days you logged taking each medication — {windowLabel}. Guidelines put medication-overuse
+          headache at around {MOH_DAYS_TRIPTAN} days a month for triptans and {MOH_DAYS_SIMPLE} for
+          simple painkillers, sustained over three months — worth raising with your doctor rather than
+          acting on alone.
+          {/* The window has to be a month for a monthly threshold to apply. Say
+              so rather than marking against it anyway, and say where to look:
+              a caption that withholds a figure without explaining reads as the
+              app having lost it. */}
+          {monthScale
+            ? ' Each drug is measured against the number for its own type, or the limit you entered for it in My medications.'
+            : ' Those numbers are per month, and this period is longer than one — so nothing here is marked against them. Pick 30 days for that.'}
+          {' '}Doses taken without logging an attack aren't counted.
         </>
       }
     >
@@ -53,7 +70,12 @@ export function MedicationInsights({ attacks, medications = [] }: Props) {
           // label if one was entered, else the ICHD number for its class, else
           // 10. It used to be 10 for everything, because nothing knew a drug's
           // class — so a simple analgesic was flagged five days early.
-          const nearing = med.thisMonth >= mohDaysFor(med.name, medications);
+          // **Only when the window is month-scale.** The thresholds are stated
+          // per month; over 3 months or all time a count will sail past 10
+          // without meaning anything, and an amber figure that says "overuse"
+          // when it doesn't is the one direction this page must not fail in.
+          // Under a month it can only ever under-warn, which is safe.
+          const nearing = monthScale && med.days >= mohDaysFor(med.name, medications);
           return (
             <div
               key={med.name}
@@ -69,15 +91,15 @@ export function MedicationInsights({ attacks, medications = [] }: Props) {
                   {/* Only when they differ — with one dose a day, "11 days ·
                       11 doses" is noise. Two a day is a different exposure
                       from one and the day count alone can't show it. */}
-                  {med.dosesThisMonth > med.thisMonth && (
-                    <span className="text-xs text-text-secondary"> · {med.dosesThisMonth} doses</span>
+                  {med.doses > med.days && (
+                    <span className="text-xs text-text-secondary"> · {med.doses} doses</span>
                   )}
                 </span>
                 <span className={`text-sm tabular-nums ${nearing ? 'text-severity-high' : 'text-text-primary'}`}>
-                  {med.thisMonth}
+                  {med.days}
                 </span>
                 <span className="text-xs text-text-secondary">
-                  {med.thisMonth === 1 ? 'day' : 'days'}
+                  {med.days === 1 ? 'day' : 'days'}
                 </span>
               </div>
 

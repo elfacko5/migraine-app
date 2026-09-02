@@ -1666,3 +1666,49 @@ The six tiles now share one shape: **the label names the thing, the sub says
 what it is measured over** — *per attack*, *with a migraine*, *last attack*,
 *from start*, *per attack*. Only "Attacks" has no sub, which is correct; it is
 not per anything. That is the rule to apply to a seventh.
+
+### Every Insights section follows the period (2026-09-02) — third pass
+
+`MigraineDaysChart` and `MedicationInsights` had sat outside the period filter
+since they were built, on the reasoning recorded above: monthly thresholds
+cannot be expressed in a rolling window. Sunny's objection cuts under that
+argument rather than against it — **a page where half the figures ignore the
+control above them is confusing whatever each figure is doing on its own**, and
+that cost is paid on every visit, where the correctness of an unscoped bar is
+only noticed by someone who already understands the distinction.
+
+**This is the third attempt at the same problem**, and the first two are worth
+keeping as the shape of the mistake: both tried to *explain* the split (a "By
+month" group heading, then a sentence in the caption) rather than remove it.
+Explaining a confusing division is a weaker move than not having one.
+
+How each section was scoped, and the two places it could have gone wrong:
+
+- **The chart narrows which months are shown, not how a bar is counted.** A bar
+  is always its whole calendar month, because that is the only window the
+  15-day line means anything against — so "7 days" shows the month or two the
+  week falls in, counted in full. Counting only in-window days would have made
+  a "month" bar not a month and the chronic line meaningless. The caption now
+  has to say this, or a bar reads as a count of the selected window.
+- **The overuse marker is gated to month-scale windows only.** This is the real
+  hazard in the request and the reason it is not a one-line change: the MOH
+  thresholds are *per month*, so over 3 months or all time a count sails past
+  10 without meaning anything. Marking it amber would have the app telling
+  someone they are overusing medication when they are not — the one direction
+  this page must never fail in. Under a month the count can only under-warn,
+  which is the safe way to be wrong. The caption states the gap and says to
+  pick 30 days, because a figure silently withheld reads as one the app lost.
+- **`medicationDaysInWindow` filters on the snapshot's own time**, not the
+  attack's start, so a dose inside the window counts even when the attack began
+  before it. `medicationResponse` took the same `since` on the same key —
+  otherwise the two figures in one block would be measured over different
+  windows, which is precisely the drift this page keeps having to correct.
+- **`PreventiveInsights` stays whole-history**, and that is not an oversight:
+  it is up to three complete months before a start date against up to three
+  since. It is not a view of the diary but a before/after comparison carrying
+  its own two windows, and a rolling period cannot express it at all.
+
+**Section titles dropped the period** in the same pass. They carried it while
+the control scrolled away with the page; pinned in the top bar it states the
+window once, and repeating it per section was a line apiece saying what is
+already on screen.
