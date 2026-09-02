@@ -3,7 +3,7 @@ import type { Attack, Medication, NotificationConfig, Snapshot } from '../types'
 import type { TextScale } from '../hooks/useSettings';
 import type { VoiceDraft } from '../utils/voiceParse';
 import { isoToLocalInput, localInputToIso, formatDatetime } from '../utils/format';
-import { openPicker } from '../utils/openPicker';
+import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationInput } from './MedicationInput';
 import { ChipSelector } from './ChipSelector';
@@ -183,17 +183,19 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
     };
   });
 
-  // Open the native date/time picker the instant "Other" is chosen, so the
-  // user isn't required to tap the revealed input a second time.
-  const startInputRef = useRef<HTMLInputElement>(null);
-  const endInputRef = useRef<HTMLInputElement>(null);
+  // Open the native picker the instant "Other" is chosen, so the user isn't
+  // required to tap the revealed field a second time. **It opens the time
+  // half**, not the date: the day is nearly always the one already shown, and
+  // the time is what "Other" is reached for. The date sits beside it.
+  const startInputRef = useRef<DateTimeFieldHandle>(null);
+  const endInputRef = useRef<DateTimeFieldHandle>(null);
 
   useEffect(() => {
-    if (form.startMode === 'manual') openPicker(startInputRef.current);
+    if (form.startMode === 'manual') startInputRef.current?.open();
   }, [form.startMode]);
 
   useEffect(() => {
-    if (form.endMode === 'manual') openPicker(endInputRef.current);
+    if (form.endMode === 'manual') endInputRef.current?.open();
   }, [form.endMode]);
 
   // Step 8 (Reminders) only shown for ongoing attacks; past attacks go 1→7 then submit
@@ -528,9 +530,14 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                   </div>
                 </div>
                 {form.startMode === 'manual' && (
-                  <input ref={startInputRef} type="datetime-local" aria-label="Attack start time" value={form.startTime} max={isoToLocalInput()}
-                    onChange={(e) => set('startTime', e.target.value)}
-                    className="w-full rounded-lg bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
+                  <DateTimeField
+                    label="Attack start time"
+                    value={form.startTime}
+                    max={isoToLocalInput()}
+                    onChange={(v) => set('startTime', v)}
+                    surface="raised"
+                    openRef={startInputRef}
+                  />
                 )}
                 <button
                   type="button"
@@ -566,9 +573,14 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                   </div>
                 </div>
                 {form.endMode === 'manual' && (
-                  <input ref={endInputRef} type="datetime-local" aria-label="Attack end time" value={form.endTime} max={isoToLocalInput()}
-                    onChange={(e) => set('endTime', e.target.value)}
-                    className="w-full rounded-lg bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle" />
+                  <DateTimeField
+                    label="Attack end time"
+                    value={form.endTime}
+                    max={isoToLocalInput()}
+                    onChange={(v) => set('endTime', v)}
+                    surface="raised"
+                    openRef={endInputRef}
+                  />
                 )}
               </div>
             </div>

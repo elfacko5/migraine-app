@@ -40,8 +40,14 @@ export function MedicationInsights({ attacks, medications = [] }: Props) {
         </>
       }
     >
-      <div className="space-y-3">
-        {days.map((med) => {
+      {/* A hairline between drugs rather than a gap: with two or more the rows
+          ran together, since each is itself two lines. Drawn per row rather
+          than with `divide-y`, which resolved to nothing here — measured, not
+          assumed. Nothing is drawn above the first, so a single medication
+          gets no rule at all. `bg-border` is the divider token: a hairline
+          between things you read, not the outline of something you press. */}
+      <div>
+        {days.map((med, i) => {
           const r = byName.get(med.name);
           // Marked against *this* drug's reference point: the limit off its
           // label if one was entered, else the ICHD number for its class, else
@@ -49,8 +55,14 @@ export function MedicationInsights({ attacks, medications = [] }: Props) {
           // class — so a simple analgesic was flagged five days early.
           const nearing = med.thisMonth >= mohDaysFor(med.name, medications);
           return (
-            <div key={med.name} className="space-y-1">
-              <div className="flex items-baseline gap-2">
+            <div
+              key={med.name}
+              className={`space-y-2 ${i > 0 ? 'mt-3 border-t border-bg-border pt-3' : ''}`}
+            >
+              {/* `items-center`, not `items-baseline`. The mark is an 18px
+                  drawn icon with no text baseline of its own, so aligning the
+                  row on one sat it low against the name beside it. */}
+              <div className="flex items-center gap-2">
                 <MedIcon name={med.name} className="h-[1.125rem] w-[1.125rem] text-text-secondary" />
                 <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
                   {med.name}

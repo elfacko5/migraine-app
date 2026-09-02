@@ -1462,3 +1462,152 @@ a forgot-to-end-it record, and it is not cosmetic — it contributes 15 of July'
 chart crossing the 15-day chronic line it draws on every bar. Measured
 2026-09-01: Jun 7 · **Jul 23** · Aug 13 · Sep 1. `updateAttackDetails` can
 patch `end` on an ended attack, which is what that feature is for.
+
+## Splitting date from time, and the Insights header (2026-09-02)
+
+**One `DateTimeField`, two boxes.** Every moment in the app was picked with a
+bare `<input type="datetime-local">`, repeated at five call sites. iOS renders
+that as a date button *and* a time button, so changing only the time — the
+common case in a diary, where the day is nearly always today — cost two taps.
+The field is now a date box and a time box side by side. **The date box stays
+the combined control**: tapping it offers day and time together, which is what
+backdating an attack needs. Only the time was ever narrowed.
+
+Two things fell out of building it that are worth keeping:
+
+- **A `<input type="time">`'s `min`/`max` apply to every date**, where a
+  `datetime-local`'s clamp the pair as one value. So the time's bounds are set
+  only when the chosen date lands on the min or max day, with a `clamp` as the
+  backstop. The call sites still clamp on submit; that stays.
+- **`showPicker()` is not implemented in this WebView.** `openPicker` had been
+  called from `LogForm`'s "Other" and `EndAttackDialog`'s "Earlier" since those
+  features shipped, and on device it had always silently done nothing — it
+  falls back to `.focus()`, which doesn't present. Found only because the
+  native picker made it testable. The auto-open is now an imperative handle and
+  works on iOS for the first time.
+
+### The accessory-bar wrong turn, and the plugin that fixed it
+
+WebKit draws a **"Reset" button and a large blue checkmark** above its own
+date/time picker. The first diagnosis was that this is the keyboard's *input
+accessory bar*, which `@capacitor/keyboard` can nil out by swizzling
+`inputAccessoryView`. That was wrong: the controls live inside the picker's own
+popover, the swizzle does nothing to them, and it was only visible on device —
+the browser preview has no such chrome to hide. The dependency went in, was
+verified in the Simulator, and came straight back out.
+
+**Worth recording as a shape, not just an incident.** The mechanism was
+confirmed correct (the plugin's Objective-C really does nil that property) and
+the conclusion was still wrong, because the *premise* — which view draws those
+buttons — was never checked. A verified mechanism attached to an unverified
+premise reads exactly like a working fix right up until you look at the screen.
+
+The dependency was not free, either: `@capacitor/keyboard` takes over keyboard
+avoidance in its default `resize: 'native'` mode, which would have fought the
+`visualViewport` architecture that `docs/viewport-architecture.md` exists to
+protect. Pinning it to `resize: 'none'` was mandatory for a feature that turned
+out not to work.
+
+**`LiddDatePickerPlugin` is the answer.** The only route to a bare wheel is not
+to use a native input at all: on iOS each box is a button that presents a real
+`UIDatePicker`. Four decisions inside it, each of which had an obvious wrong
+alternative — hand registration via `registerPluginInstance` (the plugin lives
+in the app target, which auto-registration never sees, and `registerPluginType`
+compiles and registers nothing); a custom `.overFullScreen` container rather
+than a sheet (iOS 15 has no custom detents, so `.medium()` would be half a
+screen for a 216pt wheel); a tap-outside gesture filtered on the card's frame,
+or every spin of the wheel dismisses the thing being spun; and values crossing
+as `YYYY-MM-DDTHH:mm` local wall time, so neither side converts. If the plugin
+ever rejects, the field latches back to the HTML input for the session — a dead
+field is the documented symptom of that registration being lost, and it should
+degrade rather than stop working. **Verified on Sunny's phone.**
+
+### "The attack count doesn't match the chart" was not a bug
+
+Reported after deleting a batch of test logs: 7 attacks in the last 30 days,
+against 10 + 1 migraine days in the chart below. Three differences stack, and
+all three are by design — attacks against *days* (one attack past midnight is
+two), a rolling window against *calendar months*, and a filter on an attack's
+**start** against every day it touches, so an attack that began in July still
+puts days in the August bar.
+
+**A suspicion raised and withdrawn:** that a test attack left ongoing could be
+inflating the chart, since `attackDayKeys` counts an unended attack up to
+today. It cannot hide — the FAB gate at `App.tsx` means an ongoing attack makes
+every entry point say "Add update", so the state is the loudest possible
+failure, not a silent one. The check should have come before the suspicion.
+The one real hole is not reachable from the UI: a **sync merge can land a
+second `end: null` attack** from another device, and nothing reconciles two
+ongoing attacks. Not worth chasing; worth knowing.
+
+### Three attempts at saying which figures the period controls
+
+1. **A "By month" group heading** over the monthly sections, with the
+   period-scoped ones under their own. Removed the same day: a heading at that
+   level reads as owning everything below it, *including* the period-scoped
+   sections that follow — so it claimed the opposite of what it meant. Size
+   alone also failed to separate it from a section's own small-caps title;
+   uppercase tracking reads heavier than its point size, and a 3px step is not
+   a hierarchy.
+2. **Hiding the monthly sections under "7 days" and "30 days"**, proposed as
+   the more accurate representation. Rejected: the page opens on 30 days, so it
+   would hide the 15-day chronic-migraine line in the default state — the same
+   failure already recorded against putting those sections inside the period
+   branch. The figures are not less accurate under a short period; they answer
+   a different question.
+3. **A sentence leading the chart's own caption** — *"Whole calendar months —
+   the selected period above doesn't change these."* This is what shipped, on
+   Sunny's call, and it is where the page already keeps its explanations:
+   below the visual, not stacked above it.
+
+### The period control moved into the top bar
+
+The chip row scrolled away with the page, so half way down Insights nothing
+said which period the figures answered. It is now a `SegmentedControl` — the
+Front/Back shape, made shared — rendered **inside `TopBar`**. That placement is
+the load-bearing part: a second sticky element would have to be offset against
+the header's height, which varies with the safe-area inset *and* the text-size
+setting and so cannot be a constant.
+
+**The header collapses rather than dropping the title outright.** It was
+briefly title-less in every state, which reclaimed the space but meant the page
+never announced itself. At the top it is the `h1` with the control beneath
+(136px); scrolled away it is the control alone (64px), with the `h1` kept
+`sr-only`. `useScrolledFromTop` watches **position, not direction** — the
+existing `useScrollCollapse` gives its label back on any upward scroll, which a
+height-changing header cannot do without growing and shrinking under every
+flick — and carries two thresholds, because collapsing shortens the very scroll
+range it is measuring.
+
+**The labels are `7d / 30d / 3m / All`, measured rather than chosen.** The long
+forms fit at the default text size (83px a segment) and truncate at 150%, which
+would put "3 mont…" on the one control stating what every figure on the page
+counts.
+
+### Smaller calls, same session
+
+- **The Insights inner card is an outline, not a fill.** It was `bg-elevated`,
+  so a section with a note stacked three filled tones — page, card, content —
+  and read as a visibly layered box. A `bg-border` hairline separates them and
+  adds no tone. **Side effect worth knowing:** the chart's empty bar tracks were
+  invisible against `bg-elevated` and are now visible against the section card,
+  so a zero month shows an empty track. **This leaves `bg-elevated` with no
+  call site**; the token stays defined for a block that genuinely nests three
+  deep, and a third *fill* is the thing to justify before reaching for it.
+- **Section cards took the stat tiles' `p-4`.** At `p-3` the page's two kinds
+  of card held their content at different insets, which reads as two different
+  apps rather than as a deliberate difference.
+- **`MedicationInsights` rows are `items-center`,** not `items-baseline` — an
+  18px drawn icon has no text baseline of its own and sat low against the name.
+  Drugs after the first carry a hairline, drawn per row: `divide-y` measured as
+  no border at all here.
+
+### Working practice — the recycled tab, again
+
+Mid-session the browser tab that had genuinely been on `localhost:5174` was
+**recycled onto 5173**, the signed-in origin holding the real diary, while the
+scratch server had quietly died and the tooling still reported it as reused. A
+seed script ran against it and was refused by its own guard: the check reads
+`location.origin` and looks for an `sb-` key **in the same call as the write**.
+Nothing was created. This is the third entry in this file about that origin,
+and the guard is the only reason it is a footnote rather than another cleanup.

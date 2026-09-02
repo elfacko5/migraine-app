@@ -23,6 +23,15 @@ export function MigraineDaysChart({ attacks }: Props) {
       title="Migraine days per month"
       note={
         <>
+          {/* The scope leads the caption, because this is the section the
+              period pills visibly don't reach and the one whose figure was
+              read as contradicting the attack count above it — 7 attacks
+              against 11 days. It sits here rather than under the group
+              heading so the chart isn't pushed down the screen by three
+              stacked lines of text before it. */}
+          <span className="mb-2 block">
+            Whole calendar months — the selected period above doesn't change these.
+          </span>
           Days with a logged attack — an attack running past midnight counts as two. The line marks 15 days,
           where guidelines separate episodic from chronic migraine. This counts migraine days only; headaches
           that weren't logged aren't included. The current month is still counting.

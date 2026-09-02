@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer,
@@ -15,23 +15,8 @@ import { MigraineDaysChart } from './MigraineDaysChart';
 import { MedicationInsights } from './MedicationInsights';
 import { PreventiveInsights } from './PreventiveInsights';
 import { InsightSection } from './InsightSection';
-import { chipClass} from '../utils/chipStyles';
-import { ChipCheck } from './ChipCheck';
+import { PERIOD_MS, type Period } from '../utils/logFilters';
 
-type Period = 'all' | '7d' | '30d' | '3m';
-
-const PERIOD_OPTIONS: { value: Period; label: string }[] = [
-  { value: '7d',  label: '7 days' },
-  { value: '30d', label: '30 days' },
-  { value: '3m',  label: '3 months' },
-  { value: 'all', label: 'All' },
-];
-
-const PERIOD_MS: Record<Exclude<Period, 'all'>, number> = {
-  '7d':  7  * 24 * 60 * 60 * 1000,
-  '30d': 30 * 24 * 60 * 60 * 1000,
-  '3m':  90 * 24 * 60 * 60 * 1000,
-};
 
 const PERIOD_SUB: Record<Period, string> = {
   all:  'all time',
@@ -45,6 +30,12 @@ interface Props {
   /** Passed straight through to MedicationInsights, for each drug's own
    *  overuse reference point. */
   medications?: Medication[];
+  /** Owned by `App`, because the control that sets it is rendered in the top
+   *  bar rather than on this page. Defaults there to 30 days, not 7: every
+   *  clinical figure here is monthly — the overuse thresholds, the 15-day
+   *  episodic/chronic line — and a 7-day window in a quiet week showed an
+   *  empty page to someone with a perfectly normal number of attacks. */
+  period: Period;
 }
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -90,13 +81,7 @@ function FreqSection({ title, sub, data, color, note }: { title: string; sub: st
   );
 }
 
-export function StatsView({ attacks, medications = [] }: Props) {
-  // 30 days, not 7. Every clinical figure on this page is monthly — the
-  // overuse thresholds, the 15-day episodic/chronic line — and a 7-day window
-  // in a quiet week shows an empty page to someone with a perfectly normal
-  // number of attacks. The Logs list still opens on 7 days: "what happened
-  // recently" is a different question from "what does my month look like".
-  const [period, setPeriod] = useState<Period>('30d');
+export function StatsView({ attacks, medications = [], period }: Props) {
 
   const filtered = useMemo(() => {
     if (period === 'all') return attacks;
@@ -153,25 +138,14 @@ export function StatsView({ attacks, medications = [] }: Props) {
 
   return (
     <div className="space-y-8">
-      {/* Period filter chips */}
-      <div className="flex gap-2 flex-wrap">
-        {PERIOD_OPTIONS.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setPeriod(value)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-              chipClass(period === value)
-            }`}
-          >
-            {label}
-            <ChipCheck selected={period === value} />
-          </button>
-        ))}
-      </div>
+      {/* The period control is not here — it lives in the top bar, so it stays
+          on screen while the page scrolls (2026-09-02). As a chip row at the
+          top of the content it scrolled away, and half way down the page
+          nothing said which period the figures answered. `period` is owned by
+          `App` for the same reason. */}
 
-      {/* The tiles answer the period the pills just set, so they stay
-          directly under them. */}
+      {/* The tiles answer the period the control sets, so they stay at the
+          top, directly under it. */}
       {filtered.length === 0 ? (
         <div className="py-12 text-center text-text-secondary text-sm">
           No attacks in this period.
@@ -198,11 +172,16 @@ export function StatsView({ attacks, medications = [] }: Props) {
           </div>
       )}
 
-      {/* These two ignore the period filter — "days per month" and the overuse
+      {/* These ignore the period filter — "days per month" and the overuse
           thresholds are monthly figures, and a rolling 7-day window can't
           express either. They also sit outside the empty-period branch above:
           picking "7 days" in a quiet week must not hide the month's
-          medication count, which is the number someone would be checking. */}
+          medication count, which is the number someone would be checking.
+          **The section that says so is the caption under the chart**, not a
+          heading above it: a "By month" group heading was tried on
+          2026-09-02 and removed the same day, because a heading at that level
+          reads as owning everything below it — including the period-scoped
+          blocks that follow, which is the opposite of what it claimed. */}
       <MigraineDaysChart attacks={attacks} />
       <MedicationInsights attacks={attacks} medications={medications} />
       <PreventiveInsights attacks={attacks} medications={medications} />

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { Attack } from '../types';
 import { formatDate, formatTime, formatDuration, isoToLocalInput, localInputToIso } from '../utils/format';
 import { attackMaxSeverity } from '../utils/stats';
@@ -13,7 +13,7 @@ import { isRetired } from '../utils/retired';
 import { ChipSelector } from './ChipSelector';
 import { chipClass} from '../utils/chipStyles';
 import { ChipCheck } from './ChipCheck';
-import { openPicker } from '../utils/openPicker';
+import { DateTimeField } from './DateTimeField';
 
 interface Props {
   attack: Attack;
@@ -303,7 +303,6 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
   const [triggers, setTriggers] = useState<string[]>(attack.triggers);
   const [woke, setWoke] = useState<boolean>(attack.wokeWithMigraine ?? false);
   const [end, setEnd] = useState<string>(() => isoToLocalInput(attack.end ?? undefined));
-  const endRef = useRef<HTMLInputElement>(null);
 
   // An end time can never precede the last reading. Same clamp EndAttackDialog
   // applies, and for the same reason: the picker is minute-precision while
@@ -372,15 +371,12 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
         {attack.end !== null && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-text-primary">Ended</h3>
-            <input
-              ref={endRef}
-              type="datetime-local"
+            <DateTimeField
+              label="End time"
               value={end}
               min={isoToLocalInput(minTime)}
               max={isoToLocalInput()}
-              onChange={(e) => setEnd(e.target.value)}
-              onClick={() => openPicker(endRef.current)}
-              className="w-full min-w-0 rounded-xl border border-border-control bg-bg-raised px-3 py-3 text-sm text-text-primary"
+              onChange={setEnd}
             />
             <p className="text-xs text-text-secondary">
               It can't be set before the last reading at {formatTime(minTime)}.

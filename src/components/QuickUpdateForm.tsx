@@ -5,6 +5,7 @@ import type { VoiceDraft } from '../utils/voiceParse';
 import { isoToLocalInput, localInputToIso, formatTime, formatDatetime } from '../utils/format';
 import { maxSeverity } from '../utils/stats';
 import { findMedication } from '../utils/medGuardrails';
+import { DateTimeField } from './DateTimeField';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { ChipSelector } from './ChipSelector';
 import { SymptomIcon, ReliefIcon } from './drawnIcons';
@@ -304,14 +305,12 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
             {/* ── Step 1: Update time — bounded to after the last reading and,
                 for a past attack, no later than when it ended ── */}
             {step === 1 && (
-              <input
-                type="datetime-local"
-                aria-label="Time of this update"
+              <DateTimeField
+                label="Time of this update"
                 value={form.time}
                 min={isoToLocalInput(minTime)}
                 max={isoToLocalInput(maxTime)}
-                onChange={(e) => set('time', e.target.value)}
-                className="w-full rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+                onChange={(v) => set('time', v)}
               />
             )}
 

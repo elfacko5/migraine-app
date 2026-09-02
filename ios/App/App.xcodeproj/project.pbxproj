@@ -17,6 +17,7 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		65972C3CF8AF3D6BFAE23B5E /* LiddDatePickerPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E353B78B483C5D63E57C62 /* LiddDatePickerPlugin.swift */; };
 		6F1ECC111F9C47985F6A0691 /* Lexend-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 92F54867932B4E01F10AA58E /* Lexend-Medium.ttf */; };
 		708C611B1A22C5418379E58F /* LiddWidgetPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC993669704F9E63A6EEBC9E /* LiddWidgetPlugin.swift */; };
 		90CF370EF999EA6353709853 /* LiddBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 278C1C4280D3E6C13CAEEAA7 /* LiddBridgeViewController.swift */; };
@@ -74,6 +75,7 @@
 		73A6B20CAC441E686C972B66 /* LiddMark@2x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "LiddMark@2x.png"; sourceTree = "<group>"; };
 		92F54867932B4E01F10AA58E /* Lexend-Medium.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "Lexend-Medium.ttf"; sourceTree = "<group>"; };
 		A3A9A5EFF2F4A773694F7F62 /* Lexend-Regular.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "Lexend-Regular.ttf"; sourceTree = "<group>"; };
+		A4E353B78B483C5D63E57C62 /* LiddDatePickerPlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LiddDatePickerPlugin.swift; sourceTree = "<group>"; };
 		A8AF1026D4CCB388282A1408 /* LiddWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiddWidget.swift; path = LiddWidget.swift; sourceTree = "<group>"; };
 		AD7C9F5AE54B155E6D7A1FE3 /* reminder.wav */ = {isa = PBXFileReference; includeInIndex = 1; path = reminder.wav; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -182,6 +184,7 @@
 				AD7C9F5AE54B155E6D7A1FE3 /* reminder.wav */,
 				FC993669704F9E63A6EEBC9E /* LiddWidgetPlugin.swift */,
 				278C1C4280D3E6C13CAEEAA7 /* LiddBridgeViewController.swift */,
+				A4E353B78B483C5D63E57C62 /* LiddDatePickerPlugin.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -368,6 +371,7 @@
 				708C611B1A22C5418379E58F /* LiddWidgetPlugin.swift in Sources */,
 				B619A6FC7419E7085033EAA4 /* LiddWidgetShared.swift in Sources */,
 				90CF370EF999EA6353709853 /* LiddBridgeViewController.swift in Sources */,
+				65972C3CF8AF3D6BFAE23B5E /* LiddDatePickerPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

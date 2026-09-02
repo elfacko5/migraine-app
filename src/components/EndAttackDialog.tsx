@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatDatetime, isoToLocalInput, localInputToIso } from '../utils/format';
-import { openPicker } from '../utils/openPicker';
+import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 
 // One question: when did it end. This dialog used to also ask for `impact`,
 // and carrying both made it a form in an alert's shell — see the note further
@@ -25,7 +25,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
   const [mode, setMode] = useState<Mode>('now');
   const [manualTime, setManualTime] = useState(isoToLocalInput());
   const confirmRef = useRef<HTMLButtonElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<DateTimeFieldHandle>(null);
 
   // Reset every time the dialog opens, so a previous session's "Earlier" and
   // its half-picked time never greet the next one. Deliberately keyed on
@@ -40,7 +40,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
   }, [open]);
 
   useEffect(() => {
-    if (mode === 'manual') openPicker(inputRef.current);
+    if (mode === 'manual') inputRef.current?.open();
   }, [mode]);
 
   useEffect(() => {
@@ -115,15 +115,14 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
             </button>
           </div>
           {mode === 'manual' && (
-            <input
-              ref={inputRef}
-              type="datetime-local"
-            aria-label="End time"
+            <DateTimeField
+              label="End time"
               value={manualTime}
               min={minLocal}
               max={maxLocal}
-              onChange={(e) => setManualTime(e.target.value)}
-              className="mt-1.5 w-full rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+              onChange={setManualTime}
+              openRef={inputRef}
+              className="mt-1.5"
             />
           )}
           {mode === 'manual' && (

@@ -9,6 +9,7 @@ import { useSettings } from './hooks/useSettings';
 import { useAuth } from './hooks/useAuth';
 import { useViewportHeight } from './hooks/useViewportHeight';
 import { useScrollCollapse } from './hooks/useScrollCollapse';
+import { useScrolledFromTop } from './hooks/useScrolledFromTop';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { isRetired } from './utils/retired';
 import { parseVoiceEntry, type VoiceDraft } from './utils/voiceParse';
@@ -41,9 +42,10 @@ import { hit6Due } from './utils/hit6';
 import { TodaySummary } from './components/TodaySummary';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
+import { SegmentedControl } from './components/SegmentedControl';
 import { HistoryView } from './components/HistoryView';
 import { LogsFilterPanel, LogsFilterReset } from './components/LogsFilterPanel';
-import { DEFAULT_FILTERS, type LogFilters, type SortOrder } from './utils/logFilters';
+import { DEFAULT_FILTERS, PERIOD_SEGMENTS, type LogFilters, type SortOrder, type Period } from './utils/logFilters';
 import { ProfileView, AccessibilityPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
 import { Hit6View } from './components/Hit6View';
@@ -54,6 +56,12 @@ import { BrightnessOverlay } from './components/BrightnessOverlay';
 export default function App() {
   useViewportHeight();
   const [tab, setTab] = useState<Tab>('log');
+  // Owned here, not in `StatsView`, because the control that sets it is
+  // rendered in `TopBar` — see the comment on that control below. 30 days and
+  // not 7: every clinical figure on Insights is monthly, and a 7-day window in
+  // a quiet week showed an empty page to someone with a perfectly normal
+  // number of attacks.
+  const [statsPeriod, setStatsPeriod] = useState<Period>('30d');
   const [logSheetOpen, setLogSheetOpen] = useState(false);
   // The attack an "Add update" sheet targets — the ongoing one (via the FAB
   // or its Today-tab banner) or any past attack (via its detail sheet).
@@ -119,6 +127,7 @@ export default function App() {
   // up. Nothing else may scroll at page level for this to be the whole story.
   const scrollRef = useRef<HTMLDivElement>(null);
   const pillCollapsed = useScrollCollapse(scrollRef);
+  const insightsScrolled = useScrolledFromTop(scrollRef);
 
   // Combine the independent sync hooks into one status for Profile: an error
   // in any takes priority, then in-flight, then the most recent successful
@@ -447,7 +456,37 @@ export default function App() {
             meant to start at the top. The hero's own label and headline are
             the page's heading in that state. Every other tab, and Today's
             first-run state (which has no hero), keep the bar. */}
-        {!heroOnToday && <TopBar title={TAB_TITLES[tab]} />}
+        {!heroOnToday && (
+          <TopBar
+            title={TAB_TITLES[tab]}
+            // The Insights period rides in the sticky header so it stays on
+            // screen while the page scrolls — as a chip row at the top of the
+            // content it scrolled away, and half way down there was nothing
+            // saying which period the figures answered.
+            //
+            // Rendered here rather than in `StatsView` because `TopBar` is
+            // here; a second sticky element inside the page would have to be
+            // offset against this header's height, which varies with the
+            // safe-area inset and the text-size setting and so cannot be a
+            // constant.
+            control={tab === 'stats' && attacks.length > 0 ? (
+              <SegmentedControl
+                options={PERIOD_SEGMENTS}
+                value={statsPeriod}
+                onChange={setStatsPeriod}
+                label="Period"
+                fill
+              />
+            ) : undefined}
+            // The page opens with its title, and gives it up only once you
+            // have scrolled away from the top — where the control alone is
+            // what you need, and a 34px headline pinned above it is chrome on
+            // every screen of a long page. It comes back at the top and only
+            // there: see `useScrolledFromTop` for why this watches position
+            // rather than direction the way the floating pill does.
+            titleHidden={insightsScrolled}
+          />
+        )}
         <div
           className="mx-auto max-w-2xl px-4 pt-5 sm:px-6"
           // The reserve has to clear the floating pill, not just the nav —
@@ -552,7 +591,7 @@ export default function App() {
         {/* ── Insights tab ─────────────────────────── */}
         {tab === 'stats' && (
           <section className="space-y-4">
-            <StatsView attacks={attacks} medications={medications} />
+            <StatsView attacks={attacks} medications={medications} period={statsPeriod} />
           </section>
         )}
 

@@ -52,6 +52,26 @@ export const PERIOD_OPTIONS: { value: Period; label: string }[] = [
   { value: '3m', label: 'Last 3 months' },
 ];
 
+// The same four periods, abbreviated for a segmented control where all four
+// share one 375px row. The sheet's own rows keep the long form — there each
+// label owns a line, and "Last" is the word that says the window is rolling.
+//
+// **Measured, not guessed.** "7 days" / "30 days" / "3 months" fit at the
+// default text size (83px a segment) and truncate at 150% — "3 mont…" on the
+// one control that has to state what every figure on the page is counting.
+// The abbreviations hold at every step of the scale with room to spare, and
+// `formatSince` already established "14d" as this app's dense-row idiom.
+//
+// A third copy of these four values is the thing to avoid: `StatsView` had
+// one, with its own labels and its own `PERIOD_MS`, until the Insights
+// control moved into the top bar (2026-09-02).
+export const PERIOD_SEGMENTS: { value: Period; label: string }[] = [
+  { value: '7d', label: '7d' },
+  { value: '30d', label: '30d' },
+  { value: '3m', label: '3m' },
+  { value: 'all', label: 'All' },
+];
+
 export const PERIOD_MS: Record<Exclude<Period, 'all'>, number> = {
   '7d': 7 * 24 * 60 * 60 * 1000,
   '30d': 30 * 24 * 60 * 60 * 1000,

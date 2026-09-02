@@ -24,5 +24,6 @@ class LiddBridgeViewController: CAPBridgeViewController {
         // which it is by default — so it compiles, runs, registers nothing,
         // and every call still comes back `UNIMPLEMENTED`. Cost an hour.
         bridge?.registerPluginInstance(LiddWidgetPlugin())
+        bridge?.registerPluginInstance(LiddDatePickerPlugin())
     }
 }
