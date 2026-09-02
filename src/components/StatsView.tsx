@@ -154,13 +154,18 @@ export function StatsView({ attacks, medications = [], period }: Props) {
                 and repeating it on every card cost a line each. The cards
                 below keep theirs, which say what the number *is*. */}
             <StatCard label="Attacks" value={stats.count} />
-            <StatCard label="Avg max severity" value={stats.avgSeverity} />
+            {/* "Peak", not "max" — the Logs row already calls this figure the
+                peak, and one concept wants one word. The averaging moved into
+                the sub: "Avg peak severity" wrapped to two lines at 12px and
+                took the whole row with it, and the unit needed saying anyway —
+                this is the mean of each attack's own peak, not of every reading. */}
+            <StatCard label="Peak severity" value={stats.avgSeverity} sub="avg per attack" />
             {/* Plain observations, not streaks — see the note on
                 `consecutiveMigraineDays`. Neither is a run to protect or
                 break; one says what is happening now, the other when it last
                 happened. */}
             <StatCard label="Days in a row" value={stats.inARow} sub="with a migraine" />
-            <StatCard label="Days since" value={stats.daysSince} sub="your last attack" />
+            <StatCard label="Days since" value={stats.daysSince} sub="last attack" />
             {stats.timeToPeak !== null && (
               <StatCard label="Avg time to peak" value={`${stats.timeToPeak}h`} sub="from start" />
             )}
