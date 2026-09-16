@@ -10,7 +10,7 @@ import type { Attack } from '../types';
 // That's why the Logs row reports a side rather than a list of zones or a
 // tally of them.
 //
-// The 17 zones aren't lost: they're still recorded on every snapshot, drawn
+// The 20 zones aren't lost: they're still recorded on every snapshot, drawn
 // per-area in `SeverityBreakdown` on the detail sheet, and aggregated in the
 // Insights heatmap. Those are the places with room to tell them apart, and
 // the places where telling them apart is the question being asked. A row you
@@ -37,10 +37,12 @@ export const SIDE_SHORT: Record<Side, string> = {
 /**
  * The side an attack was on, or `null` when nothing recorded says.
  *
- * `null` is a real answer and must not render as anything else: `Nose` is the
- * only sideless zone in `PAIN_AREAS`, so an attack recorded solely there
- * genuinely carries no laterality. Saying "both" there would invent half a
- * diagnostic criterion out of a zone that has no sides to speak of.
+ * `null` is a real answer and must not render as anything else: `Nose` and
+ * `Top of head` are sideless zones in `PAIN_AREAS`, so an attack recorded
+ * solely in them genuinely carries no laterality. Saying "both" there would
+ * invent half a diagnostic criterion out of zones that have no sides to speak
+ * of. (`Top of head` joined `Nose` with the redrawn artwork, which draws the
+ * vertex as one region crossing the midline.)
  */
 export function attackSide(attack: Attack): Side | null {
   let left = false;

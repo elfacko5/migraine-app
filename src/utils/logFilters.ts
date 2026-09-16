@@ -176,8 +176,8 @@ export function applyFilters(attacks: Attack[], f: LogFilters, now: number = Dat
       if (!f.impact.includes(a.impact)) return false;
     }
 
-    // An attack with no laterality recorded (only `Nose`, the one sideless
-    // zone) matches no side filter — the same rule as an unanswered impact:
+    // An attack with no laterality recorded (only the sideless zones, `Nose`
+    // and `Top of head`) matches no side filter — the same rule as an unanswered impact:
     // absent is not a value, and must not be matched by one.
     if (f.side && attackSide(a) !== f.side) return false;
 

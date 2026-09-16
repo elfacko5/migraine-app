@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { SideLabel } from './SideLabel';
 import {
   VIEWS, type DiagramView,
-  HEAD_FILL, LINE_COLOR, DIVIDER_COLOR, DISABLED_FILL, HOVER_FILL,
+  HEAD_FILL, LINE_COLOR, DIVIDER_COLOR, DETAIL_COLOR, DISABLED_FILL, DISABLED_HATCH,
+  DISABLED_LINE, HOVER_FILL,
   sevText, sevFill, sevStroke,
 } from './headDiagram';
 
@@ -153,15 +155,17 @@ interface DiagramProps {
 
 function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: DiagramProps) {
   const clip = `clip-${view.id}`;
+  const hatch = `hatch-${view.id}`;
 
   return (
     // Side labels sit beside the head rather than above it: the head is
     // narrow and the space either side was empty. The view's own name is gone
     // from here — the Front/Back control above already says which is showing.
     <div className="flex w-full items-center justify-center gap-2">
-      <span className="shrink-0 text-[0.65rem] font-medium uppercase tracking-wider text-text-secondary">
-        {view.sideLabels.left}
-      </span>
+      {/* Equal-width sides — `SideLabel` exists for this and its note says why
+          the obvious fixes aren't enough. */}
+      <SideLabel labels={view.sideLabels} side="left"
+        className="text-[0.65rem] font-medium uppercase tracking-wider text-text-secondary"/>
 
       <svg viewBox={view.viewBox} className="block w-full max-w-[230px]"
         aria-label={`${view.label} of head — tap a region to select it`}>
@@ -169,12 +173,35 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           <clipPath id={clip}>
             {view.base.map((d, i) => <path key={i} d={d}/>)}
           </clipPath>
+          <pattern id={hatch} width="10" height="10" patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="10" stroke={DISABLED_HATCH} strokeWidth={2}/>
+          </pattern>
         </defs>
 
-        {/* Head base */}
-        <g>
-          {view.base.map((d, i) => <path key={i} d={d} fill={HEAD_FILL}/>)}
-        </g>
+        {/* **The ground is the disabled treatment, and the zones are painted
+            back over it.** Non-selectable areas used to be an explicit list of
+            paths, which meant every one had to be noticed and drawn: the back's
+            jawline never was, and the front's neck needed a path computed along
+            the jaw's curve so its fill didn't cover the chin. Inverted, "not
+            selectable" is whatever no zone covers — true by construction, for
+            this artwork and for the next one. */}
+        {view.base.concat(view.inert).map((d, i) => (
+          <g key={`g-${i}`}>
+            <path d={d} fill={DISABLED_FILL}/>
+            <path d={d} fill={`url(#${hatch})`}/>
+          </g>
+        ))}
+
+        {/* The selectable body, painted back in the head colour. Stroked in
+            that colour for the same reason the selected fills are — adjacent
+            zone paths don't meet exactly, and the hatch would show through the
+            gap as a seam. */}
+        {view.zones.map((z) => (
+          <path key={`b-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
+            fill={HEAD_FILL} stroke={HEAD_FILL} strokeWidth={1.5}
+            pointerEvents="none"/>
+        ))}
 
         {/* Hover highlight (selectable zones only) */}
         {view.zones.map((z) =>
@@ -184,18 +211,9 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           )
         )}
 
-        {/* Disabled regions (non-interactive). Painted before the dividers:
-            filled after them it covered the dashed lines crossing the jaw, so
-            the front view lost the boundaries that say where the disabled
-            region actually starts. */}
-        {view.disabled.map((d, i) => (
-          <path key={`d-${i}`} d={d} fill={DISABLED_FILL} pointerEvents="none"/>
-        ))}
-
-        {/* Dividers sit **above the disabled fill and below the selected
-            fills**. Above, so the jaw's boundaries stay visible; below, so a
-            selected zone covers the dashes along its own edge and reads as
-            solid rather than as a translucent overlay on a grid. */}
+        {/* Dividers sit **below the selected fills**, so a selected zone covers
+            the dashes along its own edge and reads as solid rather than as a
+            translucent overlay on a grid. */}
         {view.dividers.map((d, i) => (
           <path key={`v-${i}`} d={d} clipPath={`url(#${clip})`}
             fill="none" stroke={DIVIDER_COLOR} strokeWidth={2.4}
@@ -208,14 +226,20 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
             sub-pixel gap along every shared edge. It was invisible while the
             dashed dividers painted on top of the fills, and became a ragged
             dotted seam between two selected zones the moment they moved
-            underneath — the divider showing through the crack. A 1px stroke of
-            the fill colour closes it, and costs nothing where there's no
-            neighbour, since the head clip trims the outer edge anyway. */}
+            underneath — the divider showing through the crack. A stroke of the
+            fill colour closes it, and costs nothing where there's no
+            neighbour, since the head clip trims the outer edge anyway.
+            **It is 3, not the 1 the first artwork needed.** In that artwork
+            the dividers were their own sparse set of lines; in this one the
+            zone outlines *are* the section lines, so every dash a selected
+            zone has to cover sits exactly on its own edge rather than near it,
+            and a hairline left the dotted boundary visible straight through
+            the fill. 3 is the divider's 2.4 plus the seam. */}
         {view.zones.map((z) =>
           !(z.name in value) ? null : (
             <path key={`f-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
               fill={sevFill(value[z.name])} stroke={sevFill(value[z.name])}
-              strokeWidth={1} pointerEvents="none"/>
+              strokeWidth={3} strokeLinejoin="round" pointerEvents="none"/>
           )
         )}
 
@@ -232,17 +256,32 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
         )}
 
 
-        {/* The mouth is no longer drawn. It was the only facial feature in a
-            diagram that is otherwise a set of selectable regions, so it read
-            as decoration on a control — and it sat inside the disabled jaw,
-            drawing attention to the one part of the head you can't tap. The
-            path data stays in `details` for the heatmap and in case it's ever
-            wanted back. */}
+        {/* Features — the nostrils and the two closed eyelids.
+            **Painted above the fills, so a selected zone doesn't swallow
+            them.** The old artwork's one feature was a mouth, and it wasn't
+            drawn at all: it was decoration on a control, sitting inside the
+            one region you can't tap. These earn their place instead — the
+            eyelid says which oval is the Eye, and the nose names the region
+            it sits in, which is otherwise a large blank area of face. */}
+        {view.details.map((d, i) => (
+          <path key={`x-${i}`} d={d} clipPath={`url(#${clip})`}
+            fill="none" stroke={DETAIL_COLOR} strokeWidth={2}
+            strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
+        ))}
 
-        {/* Silhouette outline */}
+        {/* Inert edges, dimmer and thinner than the silhouette. The fill alone
+            wasn't enough: at full LINE_COLOR the ears and the neck still read
+            as parts of the same drawn object as the head. */}
+        {view.inert.map((d, i) => (
+          <path key={`i-${i}`} d={d} fill="none" stroke={DISABLED_LINE}
+            strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"
+            pointerEvents="none"/>
+        ))}
+
+        {/* Silhouette of the selectable body */}
         {view.outline.map((d, i) => (
           <path key={`o-${i}`} d={d} fill="none" stroke={LINE_COLOR}
-            strokeWidth={4} strokeLinecap="round" strokeLinejoin="round"
+            strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round"
             pointerEvents="none"/>
         ))}
 
@@ -287,9 +326,8 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
         })}
       </svg>
 
-      <span className="shrink-0 text-[0.65rem] font-medium uppercase tracking-wider text-text-secondary">
-        {view.sideLabels.right}
-      </span>
+      <SideLabel labels={view.sideLabels} side="right"
+        className="text-[0.65rem] font-medium uppercase tracking-wider text-text-secondary"/>
     </div>
   );
 }

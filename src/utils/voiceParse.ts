@@ -87,9 +87,17 @@ const NUMBER_WORDS: Record<string, number> = {
   six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
 };
 
-// The sided PAIN_AREAS base terms (see useUserPrefs.ts) — 'Nose' has no side
-// and is handled separately.
-const AREA_TERMS = ['Forehead', 'Temple', 'Eye', 'Cheek', 'Jaw', 'Crown', 'Occiput', 'Nape'];
+// The sided PAIN_AREAS base terms (see useUserPrefs.ts). 'Nose' and
+// 'Top of head' have no side and are handled separately.
+const AREA_TERMS = ['Forehead', 'Temple', 'Eye', 'Cheek', 'Jaw', 'Crown', 'Occiput', 'Nape', 'Neck'];
+
+// The zones with no left/right. A mention of one names that zone directly
+// rather than expanding into a left and a right, and `attackSide` reports no
+// laterality for an attack recorded solely in them.
+const SIDELESS_AREAS = ['Nose', 'Top of head'];
+
+// Every area term as it is actually said, for the soundex guard below.
+const AREA_WORDS = new Set([...AREA_TERMS, 'Nose'].map((t) => t.toLowerCase()));
 
 // Nobody says "occiput". The zone names are anatomical because they have to be
 // stable (see the pain-areas section), but people describe where it hurts in
@@ -101,8 +109,11 @@ const AREA_TERMS = ['Forehead', 'Temple', 'Eye', 'Cheek', 'Jaw', 'Crown', 'Occip
 // Hedegård" (a name, not even a near-miss for "head" the way "Joe" is for
 // "jaw" — soundex wouldn't have rescued it), and the phrase was dropped
 // entirely, taking its severity with it. In a migraine transcript, "top of
-// my ___" only ever means the crown of the head, whatever ___ came out as —
-// there's no other "top of my X" anyone would say here. "back of my ___" is
+// my ___" only ever means the top of the head, whatever ___ came out as —
+// there's no other "top of my X" anyone would say here. It maps to the
+// sideless 'Top of head' rather than to Crown left+right: the artwork draws
+// the vertex as one region crossing the midline, so saying it selects that
+// zone instead of inventing a side the user didn't give. "back of my ___" is
 // genuinely ambiguous between head and neck, so `exclude` rules out the one
 // case that means something else (a literal, correctly-heard "neck") and
 // treats every other trailing word as "head" — the more likely of the two,
@@ -117,9 +128,8 @@ const AREA_TERMS = ['Forehead', 'Temple', 'Eye', 'Cheek', 'Jaw', 'Crown', 'Occip
 const AREA_SYNONYMS: Array<{ pattern: RegExp; term: string; exclude?: string }> = [
   { pattern: /\bback of (?:my |the )?(\S+)/g, term: 'Occiput', exclude: 'neck' },
   { pattern: /\bbase of (?:my |the )?skull\b/g, term: 'Occiput' },
-  { pattern: /\btop of (?:my |the )?(\S+)/g, term: 'Crown' },
+  { pattern: /\btop of (?:my |the )?(\S+)/g, term: 'Top of head' },
   { pattern: /\bback of (?:my |the )?neck\b/g, term: 'Nape' },
-  { pattern: /\bneck\b/g, term: 'Nape' },
   { pattern: /\bbrow\b/g, term: 'Forehead' },
   { pattern: /\bcheekbones?\b/g, term: 'Cheek' },
   { pattern: /\bsinus(?:es)?\b/g, term: 'Nose' },
@@ -361,12 +371,34 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
   const collect = (term: string) => {
     const t = term.toLowerCase();
     let from = 0;
+    // The word was found but belongs to a phrase another zone claimed. It is
+    // not "missing", so neither rescue below may run for it — see the return
+    // after this loop.
+    let claimedElsewhere = false;
     for (;;) {
       const i = lower.indexOf(t, from);
       if (i < 0) break;
-      mentions.push({ term, start: i, end: i + t.length });
       from = i + t.length;
+      // A span an everyday phrasing already claimed is not looked at again.
+      // The synonyms run first precisely so a phrase is read whole, and the
+      // word inside one is part of that phrase, not a second mention of
+      // something else: "the back of my neck" is the nape, and left to itself
+      // this loop added a Neck reading beside it at the same severity.
+      // ("cheekbones" did the same to Cheek, harmlessly, for as long as the
+      // synonym and the term agreed.)
+      if (mentions.some((x) => i < x.end && from > x.start)) {
+        claimedElsewhere = true;
+        continue;
+      }
+      mentions.push({ term, start: i, end: from });
     }
+    // Both rescues below exist for a term whose word never appeared — a
+    // mis-transcription ("Joe" for jaw) or a variant ("occipital"). A word that
+    // *did* appear inside another zone's phrase is neither, and letting it fall
+    // through put the sentence-wide fallback severity on it: "the back of my
+    // neck three" came back as Nape 3 **and** Neck 3, which is the exact bug
+    // the span guard above was added to stop, arriving one branch later.
+    if (claimedElsewhere) return;
     if (mentions.some((m) => m.term === term)) return;
 
     // Nothing literal: try what it sounds like, word by word, so a
@@ -390,7 +422,17 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
       // which exists for "Joe six" and can't tell the two cases apart. A word
       // sitting inside an existing mention was heard correctly; it needs no
       // rescue, and the synonyms run before this so the span is already there.
+      // (The N200 pair is now guarded twice: see AREA_WORDS below, which
+      // covers the bare "neck seven" the synonyms no longer claim.)
       if (mentions.some((x) => m.index < x.end && end > x.start)) continue;
+      // Nor sound-match a word that is *itself* another area's name. "Neck"
+      // and "Nose" are both N200, and since the neck became a zone of its own
+      // the pair is mutually confusable in a way the overlap guard above can't
+      // settle: whichever is collected first claims the other's word, so "neck
+      // seven" reported a nose and "nose seven" a neck, depending only on the
+      // order of AREA_TERMS. A word spelled exactly like a zone was heard
+      // correctly and needs no rescue.
+      if (m[0] !== t && AREA_WORDS.has(m[0])) continue;
       mentions.push({ term, start: m.index, end });
     }
     if (mentions.some((m) => m.term === term)) return;
@@ -514,8 +556,8 @@ function extractAreas(text: string, painAreas: string[], fallback: number | null
   mentions.forEach((mention, i) => {
     const own = ownSeverities[i] ?? (anyStatedPerArea ? null : fallback);
 
-    const names = mention.term === 'Nose'
-      ? ['Nose']
+    const names = SIDELESS_AREAS.includes(mention.term)
+      ? [mention.term]
       : sidesFor(i).map((s) => `${mention.term} ${s}`);
 
     for (const name of names.filter((n) => painAreas.includes(n))) {

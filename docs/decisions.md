@@ -771,6 +771,155 @@ eight Lexend text styles and foundations pages.
   inverts the usual "disabled is greyed out". Parked pending a possible redraw
   of the head.
 
+## The head, redrawn (2026-09-02)
+
+Sunny redrew the head and supplied `New head.svg` — four artboards: front,
+back, and the laterality glyph in all three states. It replaced
+`Face front - 1.svg`, `Head back - 1.svg` and `Face.svg` in one pass.
+
+- **The zone set changed, and it was the only part worth stopping to ask
+  about.** `snapshot.areas` stores the zone strings literally, so a partition
+  that doesn't line up with `PAIN_AREAS` is a rename, and a rename orphans
+  readings — see the 2026-07-01 entry, which cost two months and a missing
+  glyph to notice. Three of the new regions cross the midline where the list
+  has a left and a right, and the neck — inert before — is drawn as two
+  fillable zones. Those were put to Sunny rather than guessed.
+- **What she decided:** the chin splits into `Jaw left`/`Jaw right`; the low
+  occipital band splits into `Nape left`/`Nape right`; the vertex does *not*
+  split and becomes a sideless `Top of head`; `Neck left`/`Neck right` are
+  added, on the back view only. So: 20 zones, three of them new, and **no name
+  retired — nothing in the diary was orphaned.**
+- **Splitting a path beat renaming a zone, and that is the transferable part.**
+  The two midline regions are cut in `headDiagram.ts` at the drawn midline,
+  subdividing the crossing beziers exactly rather than re-tracing them, so the
+  halves are the artwork. The alternative — renaming `Jaw left`/`Jaw right` to
+  a sideless `Chin` to match what was drawn — would have been a smaller diff
+  and a much larger cost. **Reach for the split first.**
+- **`Nose` is now a large region.** It keeps the name and the continuity of its
+  readings, but the shape it names is the whole central mid-face, not a nose.
+  Flagged to Sunny rather than renamed, for the reason above.
+- **The dividers are the zone outlines.** This artwork has no separate set of
+  section lines, so `dividers` is `zones.map((z) => z.path)` — 20 paths that
+  cannot drift out of step with the shapes they border, where a hand-derived
+  set would. One consequence, found on screen: every dash a selected zone must
+  cover now sits exactly on its own edge, so the fill's own stroke went from 1
+  to 3. At 1 the dotted boundary showed straight through the fill.
+- **Facial features are drawn now, reversing the mouth decision above.** That
+  decision described a mouth: the only feature in a set of selectable regions,
+  sitting inside the one region you can't tap. These are different — the eyelid
+  says which oval is the `Eye`, and the nostrils name the region they sit in,
+  which is otherwise a large blank stretch of face. `details` had been carried
+  unrendered since; it is rendered in both diagrams now.
+- **The front neck's disabled region is cut along the jaw's own curve**, not
+  straight across the top of the neck path. The disabled fill is painted before
+  the zone fills, so the obvious closed trapezoid covered the bottom 50 units
+  of the jaw — which then read as non-selectable until you tapped it.
+- **The back view lost its zone labels** (`showLabels: false`). It had them at
+  6 zones; at 10 it is as dense as the front, which has never had them, and the
+  rule the flag encodes is "off when too many zones".
+- **The artwork is drawn far more consistently than the last.** Both skulls
+  measure 291.30 wide to two decimal places and the two silhouettes run within
+  0.4 of each other below the crown, so the crown-alignment rule above cost
+  nothing to satisfy this time. Its width is set by the **ears** — they reach
+  161.9 from the skull's centre — not by the skull. **The box was re-measured
+  on 2026-09-03**, when Sunny shortened the neck: `332 × 544` → `332 × 513`,
+  and nothing else moved, which is the rule working — the skulls and the ears
+  were untouched, so only the depth below the crown changed. The aspect landed
+  at 0.647, within a thousandth of the original artwork's, so the diagram sits
+  at about the height it did before the redraw.
+- **The glyph and the diagram are now literally the same head.** `SideGlyph`'s
+  two halves are lifted out of the third artboard's shaded states, and measure
+  the same 291.3 × 436.8 skull the picker draws. They were only approximately
+  the same object before.
+- **The disabled fill was left alone in this pass and immediately turned out
+  to be the problem** — see the entry below, the next day.
+
+## Disabled regions, told apart by texture (2026-09-03)
+
+Sunny, on the redrawn head: it isn't apparent which areas are disabled — the
+ears, the neck on the front, the ears and jawline on the back. The 2026-08-18
+entry had parked exactly this ("dark reads as inert but inverts the usual
+'disabled is greyed out'... pending a possible redraw of the head"). The
+redraw happened, the fill was left alone, and it was wrong within a day.
+
+- **Tone cannot carry this, and that is the finding worth keeping.** The
+  palette's dark end is compressed: `HEAD_FILL` `#2b2823` against the page
+  `#1b1a18` is 1.18:1 before anything is added. Four fills were mocked and
+  measured — the shipped `#26241f`, the page tone, a lifted body fill, and a
+  lighter grey. Darker was invisible; lighter is the `#a39d92` mistake the
+  first entry already recorded. There is no value left in the range.
+- **So the signal is texture — a 45° hatch.** Categorical rather than tonal,
+  which is what a compressed range needs, and it adds no brightness, so it
+  doesn't break the rule that the parts you *cannot* touch must not draw the
+  eye first. It also sits next to the vocabulary already here: the dividers
+  are dotted, so a hatched region is a variation on a mark the diagram uses
+  rather than a foreign one.
+- **Two supporting changes, neither sufficient alone.** The fill drops to
+  `#1b1a18`, a step below every surface the diagram sits on, so the region
+  reads as a recess; and the inert outline is dimmed and thinned, because at
+  full `LINE_COLOR` the ears and the neck still read as the same drawn object
+  as the head. Mocked side by side, fill-only was clearly weaker than
+  fill-plus-hatch — the back's jawline in particular was easy to miss.
+- **Verified in both themes.** In attack mode the fill is *lighter* than that
+  theme's page (`#14140f`) rather than darker, and still reads correctly,
+  because the hatch is what carries it — which is the argument for texture
+  restated: it survives a palette change that a tone would not.
+- **Then the opposite note, the same day:** with the disabled regions finally
+  reading, the outline, nose and eyes were contrasting too strongly (Sunny).
+  Both notes are the same problem seen from either end — the diagram had one
+  weight for nearly every mark, so nothing was ranked. It has an explicit
+  order now: features quietest, then inert edges, then the silhouette, then
+  the zone boundaries, then the reading. **`DIVIDER_COLOR` was held back from
+  the reduction on purpose** — at 3.15:1 against the head it is sitting on the
+  WCAG 1.4.11 floor for the visual information that identifies a control, and
+  the zone boundaries are exactly that. The silhouette could drop without
+  losing anything because every edge zone's outer boundary is drawn as a
+  divider along the same line.
+- **The structural half is the better half.** `disabled: string[]` is gone.
+  The ground is now painted with the disabled treatment and the zones are
+  painted back over it, so *"not selectable" is whatever no zone covers*. The
+  explicit list had already failed twice in one day: the back's jawline was
+  never added to it, and the front's neck needed a path computed along the
+  jaw's curve so its fill wouldn't cover the chin. Both problems disappear —
+  neither region has a path any more. **A list that has to be kept in step
+  with artwork will fall out of step with it.**
+
+## The head moved when you flipped the view (2026-09-03)
+
+Sunny: the head seems to move on the horizontal axis when flipping between
+front and back. It did — 9.6px — and **nothing was wrong with the artwork or
+the viewBoxes**, which is the part worth keeping.
+
+- **It was the side labels.** The row is `label · svg · label`, centred; the
+  labels are `RIGHT`/`LEFT` on the front and `LEFT`/`RIGHT` on the back, and
+  "RIGHT" is 9.63px wider than "LEFT". A centred row centres its children as a
+  *group*, so the wider word pushed the head away from it — and since the words
+  swap between views, the push reversed. The measured shift was 9.63px, exactly
+  the difference in label width.
+- **The first fix passed and was still wrong.** `flex-1` on both labels gave a
+  0px shift at the default text size. At 150% it was back at 14.45px: `flex-1`
+  floors each item at its own min-content, so once the row is tight enough that
+  the labels stop sharing slack, the wider word takes more room again. **A
+  layout fix verified at one text scale is verified at no text scales** — this
+  app has five.
+- **`SideLabel` reserves both words and shows one.** Each side renders the two
+  labels into a single grid cell, which sizes to the wider, with the visible
+  one on top aligned toward the head. The sides are then identical by
+  construction at every scale, with nothing measured or hardcoded — and
+  deliberately no "which word is longer" comparison, which would be a guess
+  about the font rather than a fact about it.
+- **Measured with `getScreenCTM`, not by eye.** Each view's own skull edges
+  (18.42/309.72 front, 409.69/700.98 back, in user units) mapped to screen px
+  and compared across the flip, at 87.5% / 100% / 150%: 0.01px at all three.
+  Screenshots would not have separated a real 9.6px shift from the two heads
+  simply being different shapes, which is why the first instinct — re-check
+  the crown alignment — would have wasted the afternoon on geometry that was
+  already correct to a hundredth of a unit.
+- **The heatmap had the same bug in a form nobody had reported**, because
+  there the two views are stacked and on screen together: it read as one head
+  sitting off-centre from the other rather than as a jump. Both call sites go
+  through `SideLabel` now.
+
 ## Code health (2026-08-18)
 
 - **The lint baseline of 9 is gone; `npm run lint` reports zero.** A standing

@@ -494,9 +494,13 @@ export function DataIcon({ className = 'h-5 w-5' }: IconProps) {
 /**
  * A face seen from the front, with the affected side filled.
  *
- * Inlined from `Face.svg` at the repo root — Sunny's artwork, which arrives
- * already split into one path per half, so the fill is a per-path opacity and
- * there is no clipping to do.
+ * Inlined from `New head.svg` at the repo root — Sunny's artwork, whose third
+ * artboard draws this glyph in all three states. It arrives already split into
+ * one path per half, so the fill is a per-path opacity and there is no
+ * clipping to do; the two halves are lifted out of the states that shade each
+ * one. The silhouette is the same 291.3 × 436.8 skull the diagram uses, so the
+ * glyph and the picker are the same head. It replaced the `Face.svg` version
+ * when the head was redrawn (2026-09-02).
  *
  * **Mirrored, like the picker.** `AreaSeverityPicker`'s front view shows the
  * subject facing you, so the subject's *left* is on the screen's *right*, and
@@ -512,11 +516,11 @@ export function DataIcon({ className = 'h-5 w-5' }: IconProps) {
 
 /** Screen-right half — the subject's LEFT. */
 const FACE_SCREEN_RIGHT =
-  'M159.881 429.876C210.074 433.554 260.325 354.348 277.172 330.135C294.018 305.921 284.179 283.969 301.951 269.821C319.724 255.673 323.468 198.862 316.766 188.201C313.655 183.252 305.646 186.775 304.773 171.87C301.613 117.931 315.734 0.352052 159.881 0V429.876Z';
+  'M146.219 0.078C302.169 3.032 293.339 120.421 289.919 174.595C288.979 189.588 279.609 243.698 277.099 274.325C275.199 297.605 267.029 318.835 260.249 334.332C249.269 359.431 195.449 435.073 145.039 436.818C146.219 361.567 146.219 26.686 146.219 0.078Z';
 
 /** Screen-left half — the subject's RIGHT. */
 const FACE_SCREEN_LEFT =
-  'M159.881 429.876C109.726 433.554 59.5119 354.348 42.6781 330.135C25.8442 305.921 35.6756 283.969 17.9167 269.821C0.156952 255.673 -3.58347 198.862 3.11322 188.201C6.22189 183.252 14.2246 186.775 15.0975 171.87C18.2553 117.931 4.1443 0.352052 159.881 0V429.876Z';
+  'M3.269 185.043C-1.261 152.665 -21.571 -0.358 139.899 0C141.629 0.004 143.339 0.021 145.029 0.052C144.999 131.127 144.999 349.554 145.119 436.818C94.709 438.563 37.139 363.736 27.949 338.379C7.319 281.493 8.179 220.115 3.269 185.043Z';
 
 export function SideGlyph({ side, className = 'h-9 w-auto' }: {
   side: 'left' | 'right' | 'both';
@@ -525,7 +529,7 @@ export function SideGlyph({ side, className = 'h-9 w-auto' }: {
   const subjectLeft = side === 'left' || side === 'both';
   const subjectRight = side === 'right' || side === 'both';
   return (
-    <svg viewBox="0 0 320 430" className={className} aria-hidden="true">
+    <svg viewBox="0 0 291.3 436.84" className={className} aria-hidden="true">
       {/* Screen-left is the subject's right, and vice versa — see above. */}
       <path d={FACE_SCREEN_LEFT} fill="currentColor" fillOpacity={subjectRight ? 0.85 : 0.16} />
       <path d={FACE_SCREEN_RIGHT} fill="currentColor" fillOpacity={subjectLeft ? 0.85 : 0.16} />

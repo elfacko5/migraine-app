@@ -201,7 +201,9 @@ carry literal hex. A light mode needs a second set of every one of them.
 | Constant | Light | Dark (shipping) |
 |---|---|---|
 | `HEAD_FILL` | `#e7e1d5` | `#2b2823` |
-| `DISABLED_FILL` | `#efeae0` | `#26241f` |
+| `DISABLED_FILL` | `#efeae0` | `#1b1a18` |
+| `DISABLED_HATCH` / `DISABLED_LINE` | — | `rgba(208,216,230,0.11)` / `0.28` |
+| `LINE_COLOR` / `DIVIDER_COLOR` / `DETAIL_COLOR` | — | `rgba(208,216,230,0.4)` / `0.45` / `0.26` |
 | `SEVERITY_LOW/MID/HIGH` | `#3f6249` / `#7b5020` / `#82423b` | `#8fb096` / `#c39257` / `#c68880` |
 | `SEVERITY_*_EDGE` (`sevStroke`) | `#1b3325` / `#3d2609` / `#441d19` | `#5c7a63` / `#7d5c35` / `#7d554f` |
 | zone badge fill / text | `#f5f2ec` / `#3a3733` | `#1b1a18` / `#e4dfd6` |
@@ -210,7 +212,9 @@ carry literal hex. A light mode needs a second set of every one of them.
 
 `DISABLED_FILL` inverts its relationship along with the surfaces. The dark rule is "darker than the
 head, so the two regions you cannot tap aren't the first thing the eye lands on"; in light the same
-rule means **lighter** than the head. The edge strokes were tuned to ~2.0:1 against their own fill,
+rule means **lighter** than the head.
+
+**Tone alone no longer carries it in dark** (2026-09-03): at `#26241f` the disabled regions measured 1.06:1 against the head and Sunny couldn't tell which parts were disabled. The fill dropped to `#1b1a18` (1.18:1) and a 45° hatch plus a dimmed outline do the real work — texture, because this end of the range has no tonal step left to give. The light column has not been redone for this and would need the same treatment. The edge strokes were tuned to ~2.0:1 against their own fill,
 matching dark's 2.00 / 2.19 / 2.20, so the focus ring reads at the same strength in both.
 
 ## Accessibility audit
@@ -268,7 +272,7 @@ a control sits on, and applied only to controls.
 | `MigraineDaysChart` bar vs its track | 4.21 | 4.68 | 3.79 |
 | 15-day threshold line vs track | *2.23* | *2.01* | *2.00* |
 | Diagram zone fill vs head fill | 6.16 | 6.16 | 5.28 |
-| Diagram disabled region vs head fill | *1.06* | *1.06* | *1.09* |
+| Diagram disabled region vs head fill (+ hatch) | *1.18* | *1.18* | *1.09* |
 | Diagram head vs page | *1.18* | *1.26* | *1.17* |
 
 The italicised rows are **exempt, not outstanding** — see "Deliberately left"
@@ -315,7 +319,7 @@ all eight.
 
 Each has a WCAG exemption, and claiming otherwise would be worse than the gap:
 
-- **Diagram disabled regions** (1.06) — 1.4.11 exempts inactive components.
+- **Diagram disabled regions** (1.18, and carried by a hatch rather than the fill) — 1.4.11 exempts inactive components.
 - **The 15-day threshold line** (2.23) — every row prints its day count as
   text, and the line is already `aria-hidden`; information available in text is
   exempt.

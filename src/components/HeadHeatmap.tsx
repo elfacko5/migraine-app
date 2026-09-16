@@ -1,6 +1,8 @@
+import { SideLabel } from './SideLabel';
 import {
   VIEWS, type DiagramView,
-  HEAD_FILL, LINE_COLOR, DIVIDER_COLOR, DISABLED_FILL,
+  HEAD_FILL, LINE_COLOR, DIVIDER_COLOR, DETAIL_COLOR, DISABLED_FILL, DISABLED_HATCH,
+  DISABLED_LINE,
 } from './headDiagram';
 
 export interface AreaStat {
@@ -63,6 +65,7 @@ interface HeatViewProps {
 
 function HeatView({ view, byArea, maxVal }: HeatViewProps) {
   const clip = `hm-clip-${view.id}`;
+  const hatch = `hm-hatch-${view.id}`;
   const t = (area: string) => (byArea[area] ?? 0) / maxVal;
 
   return (
@@ -70,9 +73,11 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
     // matching note in AreaSeverityPicker. Here the view is named by the
     // heading over the whole section instead of a control.
     <div className="flex w-full items-center justify-center gap-2">
-      <span className="shrink-0 text-[0.6rem] font-medium uppercase tracking-wider text-text-secondary">
-        {view.sideLabels.left}
-      </span>
+      {/* Equal-width sides — see `SideLabel`. Here the two heads are stacked
+          and visible at once, so the mismatch showed as one sitting off-centre
+          from the other rather than as a jump. */}
+      <SideLabel labels={view.sideLabels} side="left"
+        className="text-[0.6rem] font-medium uppercase tracking-wider text-text-secondary"/>
 
       <svg viewBox={view.viewBox} className="block w-full max-w-[190px]"
         aria-label={`${view.label} pain area heatmap`}>
@@ -80,9 +85,26 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
           <clipPath id={clip}>
             {view.base.map((d, i) => <path key={i} d={d}/>)}
           </clipPath>
+          <pattern id={hatch} width="10" height="10" patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="10" stroke={DISABLED_HATCH} strokeWidth={2}/>
+          </pattern>
         </defs>
 
-        {view.base.map((d, i) => <path key={`base-${i}`} d={d} fill={HEAD_FILL}/>)}
+        {/* Disabled ground, then the selectable body painted back over it —
+            the same inversion as the picker, and it has to match: the two
+            diagrams share geometry and must read as the same head. */}
+        {view.base.concat(view.inert).map((d, i) => (
+          <g key={`g-${i}`}>
+            <path d={d} fill={DISABLED_FILL}/>
+            <path d={d} fill={`url(#${hatch})`}/>
+          </g>
+        ))}
+        {view.zones.map((z) => (
+          <path key={`b-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
+            fill={HEAD_FILL} stroke={HEAD_FILL} strokeWidth={1.5}
+            pointerEvents="none"/>
+        ))}
 
         {/* Heat fills */}
         {view.zones.map((z) => {
@@ -94,13 +116,13 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
           );
         })}
 
-        {/* Disabled regions */}
-        {view.disabled.map((d, i) => (
-          <path key={`d-${i}`} d={d} fill={DISABLED_FILL} pointerEvents="none"/>
-        ))}
-
-        {/* The mouth isn't drawn here either — the two diagrams share geometry
+        {/* Features, above the heat fills — the two diagrams share geometry
             and have to look like the same head. See AreaSeverityPicker. */}
+        {view.details.map((d, i) => (
+          <path key={`x-${i}`} d={d} clipPath={`url(#${clip})`}
+            fill="none" stroke={DETAIL_COLOR} strokeWidth={1.8}
+            strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
+        ))}
 
         {/* Dividers */}
         {view.dividers.map((d, i) => (
@@ -109,10 +131,14 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
             strokeDasharray="1 9" strokeLinecap="round" pointerEvents="none"/>
         ))}
 
-        {/* Outline */}
+        {/* Inert edges, then the selectable body's silhouette */}
+        {view.inert.map((d, i) => (
+          <path key={`i-${i}`} d={d} fill="none" stroke={DISABLED_LINE}
+            strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
+        ))}
         {view.outline.map((d, i) => (
           <path key={`o-${i}`} d={d} fill="none" stroke={LINE_COLOR}
-            strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
+            strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
         ))}
 
         {/* Counts — show labels only on the sparse (back) view; otherwise just counts */}
@@ -148,9 +174,8 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
         })}
       </svg>
 
-      <span className="shrink-0 text-[0.6rem] font-medium uppercase tracking-wider text-text-secondary">
-        {view.sideLabels.right}
-      </span>
+      <SideLabel labels={view.sideLabels} side="right"
+        className="text-[0.6rem] font-medium uppercase tracking-wider text-text-secondary"/>
     </div>
   );
 }

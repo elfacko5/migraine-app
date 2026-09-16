@@ -31,9 +31,11 @@ export const PAIN_AREAS = [
   'Cheek left', 'Cheek right',
   'Jaw left', 'Jaw right',
   // Back
+  'Top of head',
   'Crown left', 'Crown right',
   'Occiput left', 'Occiput right',
   'Nape left', 'Nape right',
+  'Neck left', 'Neck right',
 ];
 
 /**
