@@ -1223,9 +1223,17 @@ The canonical list. It was previously spread over three sections and had to
 be reassembled each time anyone asked, so it lives here now and the sections
 below hold the *reasoning* rather than the ordering.
 
-**Session paused 2026-08-19.** Everything below is committed and pushed;
-nothing is half-built in the working tree. The list is the state to resume
-from.
+**Resume here (2026-09-21).** Everything is committed and pushed, and
+`main` is level with `widget` again — `widget` had become the main line of
+work (33 commits: the widget, the head redraw, the Insights period work, the
+date picker) and was fast-forwarded into `main`. **Work from `main` from here
+on**; `widget` is kept but nothing new goes on it. Nothing is half-built in
+the working tree. Suggested order: item 13 (a one-line fix whose decision is
+already made), then the first line of item 12 next time the app goes on the
+phone.
+
+*(Item numbers are identifiers, not ranks — new items take the next number
+and sit in the tier they belong to.)*
 
 **Open right now — needs Sunny, not code**
 
@@ -1372,6 +1380,13 @@ device end to end.
    ones were, not inverted.
 8. **Preventive adherence and daily reminders** — parked together; `kind`
    already ships so neither needs a migration.
+
+13. **The FAB says "Log a migraine"; the sheet it opens says "Log an
+    attack".** Same action, two nouns — the one place the attack/migraine
+    rule in CLAUDE.md's Tone section is broken. The fix is decided: the FAB's
+    `addLabel` becomes `Log an attack`. The spoken Siri phrase stays "log a
+    migraine", which is a different register and fine. Check the label in
+    `App.tsx` where `addLabel` is passed, and nowhere else.
 
 **P3 — open by choice, needs Sunny's eye**
 
