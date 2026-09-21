@@ -19,7 +19,7 @@ Built 2026-08-25, as a read-only widget first.
 
 - **The widget shows attack state and the dose position, and deliberately not the monthly figures.** Migraine days a month is the number a clinician asks for, and it is exactly the wrong thing to pin to a home screen: seen thirty times a day it becomes a score for a health outcome, which §9.2 rules out. The same reasoning that keeps streaks out of Insights keeps the day count off the widget. *If it is ever wanted*, it should be an alternate configuration the user opts into, never the default face.
 - **The extension is handed a computed payload, not the diary.** It could have been given the attacks and left to derive its own figures — that is one fewer moving part — but a widget that computes is a widget that can disagree with the app, and nothing about a wrong widget is visible from inside the app. Deriving on the web side means the severity pair, the overuse reference point and the dose position each have exactly one implementation.
-- **Summing the 24-hour dose window is the one thing the extension does compute, because a total decays.** A dose ages out of the window while the app is closed, so a frozen number over-reports precisely when it matters. Handing over the individual doses with units already resolved keeps the parsing (`doseUnits`' narrow read, the retired-entry filter) on one side and gives the extension arithmetic it can safely own — plus a timeline entry at each expiry, so it is right in between refreshes.
+- **Summing the 24-hour dose window is the one thing the extension does compute, because a total decays.** A dose ages out of the window while the app is closed, so a frozen number over-reports precisely when it matters. Handing over the individual doses with units already resolved keeps the parsing (`doseUnits`' narrow read, the retired-entry filter) on one side and gives the extension arithmetic it can safely own — plus a timeline entry at each expiry, so it is right in between refreshes. **No longer live (2026-09-01):** the count this served was dropped from the medication column, so the extension now sums nothing and the expiry entries are gone. The reasoning stands for when it returns.
 - **A separate native plugin rather than `@capacitor/preferences`.** The two existing handoffs ride Preferences, and reusing it was the obvious move — but Preferences writes to `UserDefaults.standard`, which a separate process cannot read, and its group option switches the store *globally*, which would move `pendingNotificationActions` and `pendingVoiceEntry` out from under the paths the Swift notification handler and the Siri intent write to by hand. Silently, and on a code path nobody would connect to a widget change. One key through its own plugin is the smaller change.
 - **Elapsed times were built on `Text(_:style:.relative)` and that was the wrong call** (reversed on device, 2026-09-01). The reasoning was that WidgetKit's refresh budget could not buy a per-minute rewrite, so the choice looked like one between the app's phrasing and being correct. It wasn't: under an hour that style renders seconds, so the widget put a counter ticking once a second on the home screen — in an app whose palette exists to avoid drawing the eye and which cuts every animation in attack mode. The premise was also wrong. Entries inside a single timeline are pre-rendered and don't each cost a refresh, so a minute-accurate string is affordable after all, and once the figure is in days it changes daily. **The general lesson is the one worth keeping: "the platform gives it to you free" is a claim about cost, not about whether the result is the right thing to show.**
 - **Two hours were lost to Capacitor's plugin registration, twice over.** A plugin in the app target is never auto-registered (only npm packages listed in the generated `capacitor.config.json` are), and then `registerPluginType` — the API that looks right — returns immediately while auto-registration is on. Both failures present identically: the bridge is up, the call crosses, and the web side gets `UNIMPLEMENTED`. `registerPluginInstance` from a `CAPBridgeViewController` subclass is the working route.
@@ -1375,11 +1375,10 @@ device end to end.
 
 **P3 — open by choice, needs Sunny's eye**
 
-9. **Redraw the head diagram's disabled areas.** **Wanted for v1 if there is
-   time** (2026-08-19) — previously parked pending a possible redraw, now the
-   redraw is the intent. The drawing is Sunny's; the code side is re-inlining
-   the path data into `headDiagram.ts` and re-measuring crown alignment, which
-   the diagram section of CLAUDE.md spells out.
+9. ~~**Redraw the head diagram's disabled areas.**~~ **Done 2026-09-02/03.**
+   Sunny redrew the whole head, not just the disabled areas, and the
+   disabled regions are now told apart by a hatch rather than by tone. See
+   "The head, redrawn" and "Disabled regions, told apart by texture" above.
 10. ~~**The medication icons read flat and small.**~~ **Done 2026-08-19.**
     All six redrawn to use roughly the full 24-unit box, plus a `MED_STROKE`
     of 1.75 for that family alone — at 16px a 1.5 stroke is one pixel, which
@@ -1391,6 +1390,24 @@ device end to end.
     generic; generic was never the problem.)
 11. `--color-text-primary` (`#cdc7bb` vs `#d7d1c6`) — only settleable on a
     real screen mid-attack.
+12. **Home-screen widget follow-ups** (added 2026-09-21). The widget shipped
+    and is verified on device; everything here is optional, and none of it
+    is half-built. In rough order of value:
+    - **Look at the mark on the phone.** Its final bottom-right placement
+      landed after the last on-device check. A glance, not a task.
+    - **Deep links.** Tapping the widget only opens the app on whatever tab
+      it was on. Opening straight to Add update during an attack is the
+      obvious gain, and it needs `@capacitor/app`, which isn't installed.
+    - **The 24-hour dose count**, dropped from the medication column by
+      choice. It is the only figure anywhere that answers "how much is
+      already in me" without opening the app. `windowDoses` is still in the
+      payload, so bringing it back is a view change, not a contract change.
+    - **The "No change" button** — built, worked on device, removed the same
+      day (code at `0d785c2`). Only worth rebuilding if its confirmation
+      state is designed *first*; that was the real fault, not the intent or
+      the queue.
+    - **Direction B** (severity as the hero on a 10-step scale) was never
+      built and needs nothing new in the payload, so it stays cheap to try.
 
 **P4 — before any public release**
 

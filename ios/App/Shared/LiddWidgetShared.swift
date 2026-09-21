@@ -10,10 +10,11 @@ import Foundation
 //
 // **Nothing here derives anything.** Every figure the widget draws was
 // computed in `src/utils/widgetSnapshot.ts` by the same functions Today uses.
-// The one exception is summing `windowDoses`, and that is deliberate: the
-// total decays on its own as doses age out of the rolling 24 hours, so a
-// frozen number would over-report exactly when it matters. Resolving units
-// from free text, and excluding retired entries, both stay on the web side.
+// `windowDoses` is carried but not currently read: the 24-hour count it feeds
+// was dropped from the design. If that count returns, summing it belongs
+// here — the total decays on its own as doses age out, so a frozen number
+// would over-report exactly when it matters. Resolving units from free text,
+// and excluding retired entries, stay on the web side either way.
 enum LiddWidgetShared {
     /// Must match the App Group on both targets' entitlements.
     static let appGroup = "group.com.sunny.migrainetracker2"
