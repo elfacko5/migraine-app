@@ -30,7 +30,7 @@ export function TopBar({ title, action, control, titleHidden = false }: Props) {
   const collapsed = titleHidden && !!control;
   return (
     <header
-      className="sticky top-0 z-30 bg-bg-base/90 backdrop-blur-md"
+      className="sticky top-0 z-30 bg-bg-base/90 backdrop-blur-md transition-[padding-top] duration-300 ease-out"
       // 2rem (32px at the default text size) *on top of* the safe-area inset,
       // never instead of it: the inset is what keeps the title clear of the
       // status bar and notch, and it reads as 0 in the browser preview — so a
@@ -42,11 +42,19 @@ export function TopBar({ title, action, control, titleHidden = false }: Props) {
       style={{ paddingTop: `calc(${collapsed ? '1rem' : '2rem'} + env(safe-area-inset-top))` }}
     >
       {/* min-h rather than a fixed height: the title is large enough now that
-          a 3.5rem row would clip it at the bigger text-size settings. */}
-      {/* No `min-h-14` when a control replaces the title — that floor exists
-          so a 34px headline isn't clipped at the larger text sizes, and around
-          a 32px control it is just dead space. */}
-      <div className={`mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-2 sm:px-6 ${collapsed ? '' : 'min-h-14'}`}>
+          a 3.5rem row would clip it at the bigger text-size settings.
+
+          **Both states now carry an explicit `min-h`, and the swap between
+          them transitions** (2026-09-24, Sunny's call — the collapse was an
+          instant snap, which read as harsh against a control appearing at the
+          very top of the page where the least scrolling gesture reaches it).
+          `min-h-8` isn't a "no floor" state the way an absent class was — a
+          browser can't animate to/from `auto`, only between two real values,
+          so the collapsed row needs its own explicit floor for
+          `transition-[min-height]` to have anything to interpolate. It still
+          matches the 32px control's own height, so nothing changes about the
+          resting layout, only how the *change* between the two now reads. */}
+      <div className={`mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-2 sm:px-6 transition-[min-height] duration-300 ease-out ${collapsed ? 'min-h-8' : 'min-h-14'}`}>
         {collapsed ? (
           <>
             <h1 className="sr-only">{title}</h1>
