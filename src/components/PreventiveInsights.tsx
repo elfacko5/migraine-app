@@ -38,7 +38,9 @@ export function PreventiveInsights({ attacks, medications = [] }: Props) {
   return (
     <InsightSection
       title="Preventives"
-      note={
+      // Behind a "More info" icon, like every other section on the page
+      // (2026-09-24, Sunny's call).
+      info={
         <>
           Migraine days a month before each preventive started, against the months since. Trials count a
           preventive as working at around a {PREVENTIVE_RESPONSE_PCT}% reduction in monthly migraine days —

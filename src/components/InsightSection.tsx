@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { ConfirmDialog } from './ConfirmDialog';
+
 // One card per topic on the Insights page: heading, the note that explains
 // it, and the content all sit inside the same surface, so a caption clearly
 // belongs to the chart it describes rather than floating between two blocks.
@@ -21,14 +24,30 @@
 // as well and adds no tone, which is the quieter answer §8.1 asks for. It is
 // `bg-border`, the divider token and deliberately not `border-control`: this
 // is an edge around something you read, not something you press.
+//
+// **`info` is the second way to carry the explanation, for the two sections
+// whose note ran long enough to become the problem itself** (2026-09-23,
+// Sunny's call — Migraine days per month and Medication, both five-plus
+// lines). It's a "More info" icon beside the heading — the same
+// icon-opens-a-dialog shape `MedicationEditor`'s fields already use — rather
+// than a third position for `note` to sit in. A section takes `note` or
+// `info`, never both: `info` replaces the always-visible paragraph outright,
+// so it also skips the inner outline that exists to separate content from a
+// caption sitting right underneath it — with the caption behind a tap there's
+// nothing there to separate, same as a section with no note at all.
 interface Props {
   title: string;
   children: React.ReactNode;
   /** Explanatory line under the content — what the number means, or doesn't. */
   note?: React.ReactNode;
+  /** The same explanation, gated behind a "More info" icon instead of always
+   *  showing. Use this instead of `note` when the caption itself is what's
+   *  crowding the section. */
+  info?: React.ReactNode;
 }
 
-export function InsightSection({ title, children, note }: Props) {
+export function InsightSection({ title, children, note, info }: Props) {
+  const [showInfo, setShowInfo] = useState(false);
   return (
     <section className="space-y-2">
       {/* Title sits above the card, on the page. Inside, it read as part of
@@ -54,7 +73,30 @@ export function InsightSection({ title, children, note }: Props) {
           user navigating by heading discovers a page's structure. It was
           briefly an `h3` under a group heading; that grouping is gone (see
           `StatsView`). The size is set by the class, not the tag. */}
-      <h2 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{title}</h2>
+      {/* `px-2` (2026-09-23, Sunny's call) — the row sat flush with the
+          section's own edges, unlike the card below it which insets its
+          content by `p-4`; on a phone the info icon read as crowded against
+          the right edge. 8px each side, not matched to the card's 16px: the
+          title still has to line up closely with "MIGRAINE DAYS PER MONTH"
+          reading as the section's own label, not as indented content. */}
+      <div className="flex items-center justify-between gap-2 px-2">
+        <h2 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{title}</h2>
+        {info && (
+          <button
+            type="button"
+            onClick={() => setShowInfo(true)}
+            aria-label={`More info about ${title}`}
+            className="tap-44 -my-2 shrink-0 text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+              strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+          </button>
+        )}
+      </div>
 
       {/* `p-4`, matching the stat tiles at the top of the page (Sunny,
           2026-09-02). It was `p-3`, so the two kinds of card on one screen
@@ -72,6 +114,18 @@ export function InsightSection({ title, children, note }: Props) {
           children
         )}
       </div>
+
+      {info && (
+        <ConfirmDialog
+          open={showInfo}
+          dismissOnly
+          title={title}
+          message={info}
+          confirmLabel="Got it"
+          onConfirm={() => setShowInfo(false)}
+          onCancel={() => setShowInfo(false)}
+        />
+      )}
     </section>
   );
 }

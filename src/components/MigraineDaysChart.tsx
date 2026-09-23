@@ -44,19 +44,16 @@ function MigraineMonths({ attacks, monthCount }: { attacks: Attack[]; monthCount
   return (
     <InsightSection
       title="Migraine days per month"
-      note={
+      // Behind a "More info" icon rather than the always-visible caption this
+      // used to be (2026-09-23, Sunny's call) — on a phone screen the
+      // paragraph itself was the crowded thing, not the chart it explains.
+      // The scope sentence leads for the same reason it always did: it's the
+      // fact most likely to be needed, so it comes first inside the panel too.
+      info={
         <>
-          {/* The scope leads the caption, because this is the section the
-              period pills visibly don't reach and the one whose figure was
-              read as contradicting the attack count above it — 7 attacks
-              against 11 days. It sits here rather than under the group
-              heading so the chart isn't pushed down the screen by three
-              stacked lines of text before it. */}
-          <span className="mb-2 block">
-            Whole calendar months. The period above chooses which months are shown; each bar still
-            counts its whole month.
-          </span>
-          Days with a logged attack — an attack running past midnight counts as two. The line marks 15 days,
+          Whole calendar months. The period above chooses which months are shown; each bar still
+          counts its whole month.
+          {' '}Days with a logged attack — an attack running past midnight counts as two. The line marks 15 days,
           where guidelines separate episodic from chronic migraine. This counts migraine days only; headaches
           that weren't logged aren't included.
           {inProgress && ` ${inProgress} is still counting, so its bar will grow.`}
@@ -113,7 +110,9 @@ function MigraineWeek({ attacks }: { attacks: Attack[] }) {
   return (
     <InsightSection
       title="Migraine days this week"
-      note={
+      // Behind a "More info" icon, like every other section on the page
+      // (2026-09-24, Sunny's call).
+      info={
         <>
           The last seven days — a dot marks a day with a logged attack on it, and an attack running past
           midnight marks both. Guidelines count migraine days per month, so there is no threshold to

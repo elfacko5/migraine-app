@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 interface Props {
   open: boolean;
   title: string;
-  message?: string;
+  message?: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;

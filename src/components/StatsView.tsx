@@ -81,10 +81,15 @@ function FreqBars({ data, color }: { data: Freq[]; color: string }) {
 // No period in the title. The control is pinned in the top bar now, so it says
 // which window every figure answers — repeating it on each section was a line
 // apiece saying what is already on screen (2026-09-02).
-function FreqSection({ title, data, color, note }: { title: string; data: Freq[]; color: string; note?: string }) {
+//
+// `info`, not `note` (2026-09-24, Sunny's call — every section on the page
+// now carries its explanation behind the "More info" icon rather than some
+// behind it and some not, which read as an inconsistency once a few sections
+// had it and the rest didn't).
+function FreqSection({ title, data, color, info }: { title: string; data: Freq[]; color: string; info?: React.ReactNode }) {
   if (data.length === 0) return null;
   return (
-    <InsightSection title={title} note={note}>
+    <InsightSection title={title} info={info}>
       <FreqBars data={data} color={color} />
     </InsightSection>
   );
@@ -137,7 +142,15 @@ export function StatsView({ attacks, medications = [], period }: Props) {
 
     const timeToPeak = avgTimeToPeak(filtered);
 
-    const severityTrend = [...filtered].reverse().slice(0, 12).map((a) => ({
+    // `filtered` is newest-first (see `useAttacks`), so the most recent 12
+    // are the *first* 12 — take those, then reverse for left-to-right
+    // chronological reading. Found while writing this section's caption
+    // (2026-09-24): it used to reverse first and slice second, which took
+    // the *oldest* 12 in the period whenever there were more than 12 —
+    // silently wrong for anyone logging more than a dozen attacks inside a
+    // 3-month or all-time window, which chronic migraine is exactly the case
+    // for.
+    const severityTrend = [...filtered].slice(0, 12).reverse().map((a) => ({
       // No weekday: a dozen of these sit along one axis and "Fri " on each
       // is three characters of noise per label.
       date: formatDateShort(a.snapshots[0].time),
@@ -244,11 +257,22 @@ export function StatsView({ attacks, medications = [], period }: Props) {
         <>
           {/* Severity trend */}
           {stats.severityTrend.length >= 2 && (
-            <InsightSection title="Severity trend">
+            <InsightSection title="Severity trend"
+              info="Peak severity for the most recent attacks in this period, oldest to newest. Up to 12 shown."
+            >
               <div>
+                {/* left/right and top/bottom were lopsided — measured, not
+                    eyeballed (2026-09-23, Sunny's call): the plot area sat
+                    40px in from the card's left edge against 8px on the
+                    right, and XAxis's default 30px band left ~16px of dead
+                    air under a single 10px line of date labels. `left` is
+                    pulled in further to match the y-axis labels' own width
+                    rather than Recharts' default reservation, and `height`
+                    on XAxis is set to what one line of its own tick text
+                    actually needs. */}
                 <ResponsiveContainer width="100%" height={140}>
-                  <LineChart data={stats.severityTrend} margin={{ top: 4, right: 8, bottom: 4, left: -20 }}>
-                    <XAxis dataKey="date" tick={{ fill: '#a39d92', fontSize: '0.625rem' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                  <LineChart data={stats.severityTrend} margin={{ top: 4, right: 8, bottom: 0, left: -38 }}>
+                    <XAxis dataKey="date" tick={{ fill: '#a39d92', fontSize: '0.625rem' }} axisLine={false} tickLine={false} interval="preserveStartEnd" height={20} tickMargin={4} />
                     <YAxis domain={[0, 10]} ticks={[0, 5, 10]} tick={{ fill: '#a39d92', fontSize: '0.625rem' }} axisLine={false} tickLine={false} />
                     <Tooltip
                       contentStyle={{ background: '#302d29', border: '1px solid #3a3733', borderRadius: 8, fontSize: '0.75rem' }}
@@ -264,8 +288,10 @@ export function StatsView({ attacks, medications = [], period }: Props) {
 
           {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
-            <InsightSection title="Pain area frequency">
-              <HeadHeatmap data={stats.areas.map((a) => ({ area: a.area, value: a.count }))} label="attacks" />
+            <InsightSection title="Pain area frequency"
+              info="Attacks that touched each area, not readings — an area counts once per attack no matter how many times it was logged."
+            >
+              <HeadHeatmap data={stats.areas.map((a) => ({ area: a.area, value: a.count }))} />
             </InsightSection>
           )}
 
@@ -279,10 +305,14 @@ export function StatsView({ attacks, medications = [], period }: Props) {
             title="Triggers you noted"
             data={stats.triggers}
             color="#c39257"
-            note="Recorded on attack days only — this is what you suspected at the time, not what's been shown to bring one on."
+            info="Recorded on attack days only — this is what you suspected at the time, not what's been shown to bring one on."
           />
-          <FreqSection title="Top symptoms" data={stats.symptoms} color="#c68880" />
-          <FreqSection title="Top reliefs"  data={stats.reliefs}  color="#7fa187" />
+          <FreqSection title="Top symptoms" data={stats.symptoms} color="#c68880"
+            info="Attacks that included each symptom, not readings — one count per attack no matter how many times it was logged."
+          />
+          <FreqSection title="Top reliefs"  data={stats.reliefs}  color="#7fa187"
+            info="Attacks in which each relief was tried at least once. This counts use, not whether it helped."
+          />
         </>
       )}
     </div>
