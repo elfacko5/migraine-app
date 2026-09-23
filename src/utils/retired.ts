@@ -34,6 +34,9 @@ const RETIRED_ENTRIES = [
   // union merge would hand it straight back on the next sync. Never logged
   // here, so nothing leaves the Insights tallies with it.
   'stretching',
+  // A custom symptom Sunny added at some point, not a DEFAULT_SYMPTOMS entry
+  // (2026-09-23, Sunny's call).
+  'wobbly legs',
 ];
 
 export function isRetired(name: string | null | undefined): boolean {
