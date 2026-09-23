@@ -40,7 +40,11 @@ export function MedicationInsights({
       // Reference points, not a verdict. The app counts days and says what the
       // guideline numbers are; deciding what they mean is a conversation with
       // a doctor, and the wording must not pre-empt it.
-      note={
+      //
+      // Behind a "More info" icon, like Migraine days per month above
+      // (2026-09-23, Sunny's call) — the same five-line-caption problem, on
+      // the same page.
+      info={
         <>
           Days you logged taking each medication — {windowLabel}. Guidelines put medication-overuse
           headache at around {MOH_DAYS_TRIPTAN} days a month for triptans and {MOH_DAYS_SIMPLE} for
@@ -83,19 +87,27 @@ export function MedicationInsights({
             >
               {/* `items-center`, not `items-baseline`. The mark is an 18px
                   drawn icon with no text baseline of its own, so aligning the
-                  row on one sat it low against the name beside it. */}
+                  row on one sat it low against the name beside it.
+
+                  **`text-base`, not `text-sm`** (2026-09-24, Sunny's call) —
+                  matching the weight `MedRow` on Today now carries, so the
+                  headline reads clearly heavier than the response line below
+                  it. The "doses" caveat and the day/days unit stay `text-xs`
+                  on purpose: they're modifiers on the headline, not the
+                  headline itself, the same way Today's dose amount stays
+                  de-emphasised next to the drug name. */}
               <div className="flex items-center gap-2">
                 <MedIcon name={med.name} className="h-[1.125rem] w-[1.125rem] text-text-secondary" />
-                <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
+                <span className="min-w-0 flex-1 truncate text-base font-medium text-text-primary">
                   {med.name}
                   {/* Only when they differ — with one dose a day, "11 days ·
                       11 doses" is noise. Two a day is a different exposure
                       from one and the day count alone can't show it. */}
                   {med.doses > med.days && (
-                    <span className="text-xs text-text-secondary"> · {med.doses} doses</span>
+                    <span className="text-xs font-normal text-text-secondary"> · {med.doses} doses</span>
                   )}
                 </span>
-                <span className={`text-sm tabular-nums ${nearing ? 'text-severity-high' : 'text-text-primary'}`}>
+                <span className={`text-base tabular-nums ${nearing ? 'text-severity-high' : 'text-text-primary'}`}>
                   {med.days}
                 </span>
                 <span className="text-xs text-text-secondary">

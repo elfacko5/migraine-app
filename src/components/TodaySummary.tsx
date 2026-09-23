@@ -4,7 +4,7 @@ import { migraineDaysByMonth, medicationDaysByMonth } from '../utils/stats';
 import { formatTime } from '../utils/format';
 import { MedIcon } from './drawnIcons';
 import {
-  checkDose, doseUnits, findMedication, lastDoseSnapshot, mohDaysFor, unitsInWindow,
+  checkDose, doseUnits, findMedication, lastDoseSnapshot, mohDaysFor, unitsInWindow, unitsLabel,
 } from '../utils/medGuardrails';
 
 // What belongs under the hero card on Today: figures that need no
@@ -37,25 +37,45 @@ const warnAt = (threshold: number) => Math.ceil(threshold * 0.7);
 // one of them is a warning, so that is the only difference left: an amber ring
 // and tint. Everything else — the icon column, the name's weight, the figure
 // on the headline, the detail underneath — is shared.
+//
+// **The headline is `text-base`, not `text-sm`** (2026-09-24, Sunny's call —
+// line 1 and line 2 read as the same weight of information when they carry
+// different ones: what was taken, versus the supporting facts about it).
+// `detail` is `React.ReactNode` rather than a bare string for the same
+// reason: the last-dose row now has two things to say below the headline —
+// the 24h position and when it was taken, then optionally the next-dose
+// gap — and forcing both into one joined string was what pushed everything
+// onto line 1 in the first place.
+//
+// **The resting state now carries the same border as the two tiles below it**
+// (2026-09-23, Sunny's call) — `bg-bg-raised/60 border border-bg-border/60`,
+// not the flat borderless `bg-bg-surface` it shipped with. Before the tiles
+// picked up their own border (see the note on them below), the row and the
+// tiles matched by accident; once they diverged, this row was the one thing
+// on the page that still looked like the old flat style. It also does what
+// the comment above already claimed and the code didn't: warning and
+// resting differed by more than colour — only the warning state had a
+// border at all — so a border was the one structural difference hiding
+// behind "everything else is shared".
 function MedRow({ name, icon, figure, detail, warning = false }: {
   name: string;
   icon: React.ReactNode;
   figure: string;
-  detail?: string | null;
+  detail?: React.ReactNode;
   warning?: boolean;
 }) {
   return (
     <div
-      className={`flex items-start gap-2 rounded-xl px-4 py-3 ${
-        warning ? 'border border-severity-mid/40 bg-severity-mid/10' : 'bg-bg-surface'
+      className={`flex items-start gap-2 rounded-xl border px-4 py-3 ${
+        warning ? 'border-severity-mid/40 bg-severity-mid/10' : 'border-bg-border/60 bg-bg-raised/60'
       }`}
     >
       <span className="mt-0.5 shrink-0 text-text-secondary">{icon}</span>
       <div className="min-w-0">
-        <p className="text-sm text-text-primary">
+        <p className="text-base text-text-primary">
           <span className="font-medium">{name}</span> {figure}
         </p>
-        {detail && <p className="mt-0.5 text-xs text-text-secondary">{detail}</p>}
+        {detail && <div className="mt-0.5 space-y-0.5 text-xs text-text-secondary">{detail}</div>}
       </div>
     </div>
   );
@@ -145,22 +165,34 @@ export function TodaySummary({ attacks, ongoing, medications = [], attackMode = 
         <MedRow
           name={lastDose.medication.name}
           icon={<MedIcon name={lastDose.medication.name} dose={lastDose.medication.dose} className="h-4 w-4" />}
-          // "Treo at 20:51" reads as a label with a timestamp — it could as
-          // easily mean a reminder due then, or when it was logged. The verb
-          // is what makes it a statement about a dose that was taken, and it
-          // stays in the line however much else joins it.
-          figure={[
-            lastLibrary?.maxPerDay ? `${takenIn24h} of ${lastLibrary.maxPerDay} in the last 24h` : null,
-            `${takenIn24h > doseUnits(lastDose.medication) ? 'last taken' : 'taken'} at ${formatTime(lastDose.time)}`,
-            // Leading separator: the warning row's figure continues its name
-            // as a sentence ("Treo on 8 days this month"), where this one is a
-            // list of facts about it.
-          ].filter(Boolean).map((part) => `· ${part}`).join(' ')}
-          // Only when a minimum gap was entered and it hasn't elapsed. A
-          // statement of the user's own number, never an instruction.
-          detail={position?.tooSoon && position.nextAllowedAt
-            ? `Next dose from ${formatTime(position.nextAllowedAt)}, by the gap you entered.`
-            : null}
+          // **Line 1 is just the dose's own amount now** (2026-09-24, Sunny's
+          // call) — "Sumatriptan 2 tablets", matching how a chip in the
+          // wizard's own medication step reads. Everything else it used to
+          // carry on one line — the 24h position and the clock time — moved
+          // to `detail`, which is why that prop had to stop being a single
+          // string. `unitsLabel` is the same helper the wizard's quantity
+          // picker uses, so "tablet"/"spray"/... always matches the
+          // medication's own `unitLabel`.
+          figure={unitsLabel(doseUnits(lastDose.medication), lastLibrary)}
+          detail={
+            <>
+              {/* "Treo at 20:51" reads as a label with a timestamp — it could
+                  as easily mean a reminder due then, or when it was logged.
+                  The verb is what makes it a statement about a dose that was
+                  taken. */}
+              <p>
+                {[
+                  lastLibrary?.maxPerDay ? `${takenIn24h} of ${lastLibrary.maxPerDay} in the last 24h` : null,
+                  `${takenIn24h > doseUnits(lastDose.medication) ? 'last taken' : 'taken'} at ${formatTime(lastDose.time)}`,
+                ].filter(Boolean).join(' · ')}
+              </p>
+              {/* Only when a minimum gap was entered and it hasn't elapsed. A
+                  statement of the user's own number, never an instruction. */}
+              {position?.tooSoon && position.nextAllowedAt && (
+                <p>Next dose from {formatTime(position.nextAllowedAt)}, by the gap you entered.</p>
+              )}
+            </>
+          }
         />
       )}
 
@@ -170,39 +202,52 @@ export function TodaySummary({ attacks, ongoing, medications = [], attackMode = 
             period.** The left one used to label the *period* ("This month")
             and put the subject in the value ("9 migraine days"), so two tiles
             side by side were built the opposite way round from each other and
-            neither could be read against the other. Now it's Migraine · 9 days
-            this month, Medication · 5 days this month.
+            neither could be read against the other. Now it's Migraine days ·
+            8 · this month, Medication days · 0 · this month.
 
-            "Migraine" rather than "Migraine days": the word "days" already
-            follows in the value, and the pair still reads as *migraine days* —
-            which is the term that has to survive, since the app counts migraine
-            days and has no way to log a plain headache day (see
-            MigraineDaysChart in CLAUDE.md).
+            **The label carries "days", not the unit line** (2026-09-23,
+            Sunny's call) — matching the stat tiles just above it on Insights
+            ("Days in a row" / 0 / "with a migraine", "Days since" / 27 /
+            "last attack"), which lead with the countable unit and leave the
+            sub-line for context. It used to be the other way round — bare
+            "Migraine"/"Medication" as the label, "days this month" as the
+            unit — on the reasoning that "days" shouldn't appear twice; moving
+            it to the label keeps that (it still only appears once) and gets
+            the term the app actually uses, "migraine days" (see
+            MigraineDaysChart in CLAUDE.md), onto one line instead of split
+            across two. No more singular/plural on the unit line either — like
+            "Days in a row", the label doesn't bend to the count.
 
-            Figure and unit stay on one line. Three lines to a tile made each
-            one taller than its content needed and put the unit far enough from
-            the number to read as a separate fact. `items-baseline` so the 24px
-            figure and the 12px unit sit on the same line rather than the unit
-            floating mid-height, and the unit takes `whitespace-nowrap` so it
-            wraps as a whole phrase if a larger text scale runs it out of
-            room. */}
-        <div className="rounded-xl bg-bg-surface px-4 py-3">
-          <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">Migraine</p>
-          <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-text-primary">
-            <span className="text-2xl font-bold leading-none">{migraineDays}</span>
-            <span className="text-[0.75rem] whitespace-nowrap text-text-secondary">
-              {migraineDays === 1 ? 'day' : 'days'} this month
-            </span>
-          </p>
+            **Now the same shape as Insights' `StatCard`** — border, value on
+            its own line with the unit stacked beneath (2026-09-23, Sunny's
+            call). The figure was already `text-2xl` (28px) in both places,
+            identical to Insights' tiles — but on Today the number shared a
+            baseline row with its unit and sat in a borderless `bg-bg-surface`
+            card, which cost it definition it didn't need to lose. That reads
+            fine on Insights, packed between charts and captions with plenty
+            else to set the scale against; on Today, alone under the hero
+            with a page's worth of empty space around it, the same tile read
+            as small.
+
+            **The unit line and the tile's own height needed a second pass,
+            found on device** (2026-09-23): "days this month" is
+            `text-[0.75rem]` — 12px, under this app's own 14px caption floor.
+            The label above it (MIGRAINE/MEDICATION) is the one documented
+            exception to that floor, because it's a name for a 28px figure
+            that carries the tile on its own — the unit line is body text
+            someone actually has to read, so it doesn't get the same pass and
+            goes to `text-xs` (14px, the floor). The tile also went from
+            `p-4` to `px-4 py-5` with a bit more space between its three
+            lines, for the "more air" Sunny asked for alongside it. */}
+        <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 px-4 py-5">
+          <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">Migraine days</p>
+          <p className="mt-1.5 text-2xl font-bold text-text-primary leading-none">{migraineDays}</p>
+          <p className="mt-1 text-xs text-text-secondary">this month</p>
         </div>
-        <div className="rounded-xl bg-bg-surface px-4 py-3">
-          <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">Medication</p>
-          <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-text-primary">
-            <span className="text-2xl font-bold leading-none">{totalMedDays}</span>
-            <span className="text-[0.75rem] whitespace-nowrap text-text-secondary">
-              {totalMedDays === 1 ? 'day' : 'days'} this month
-            </span>
-          </p>
+        <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 px-4 py-5">
+          <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">Medication days</p>
+          <p className="mt-1.5 text-2xl font-bold text-text-primary leading-none">{totalMedDays}</p>
+          <p className="mt-1 text-xs text-text-secondary">this month</p>
         </div>
       </div>
       )}
