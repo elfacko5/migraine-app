@@ -214,10 +214,12 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           only "End attack" is exclusive to one that's still running.
 
           "Edit details" takes the primary slot on a past attack, as the
-          design always called for, now that there is something behind it —
-          and "Add update" steps down to secondary there. On an attack still
-          running the order is the other way round: adding a reading is what
-          you came for, and editing metadata is not.
+          design always called for, and "Add update" steps down to secondary
+          there. **It is hidden entirely while the attack is ongoing** (see
+          docs/decisions.md's backlog, item 6) — Options 2/3 of the editing
+          scope are still undecided, so on a live attack it read as an
+          unfinished feature, and it made three buttons stack in the footer
+          alongside Add update and End attack.
 
           What it edits is deliberately narrow — see
           docs/editing-assessment.md. Snapshots are the record of what was
@@ -242,15 +244,6 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
             type="button"
             onClick={() => setEditing(true)}
             className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors order-first"
-          >
-            Edit details
-          </button>
-        )}
-        {onSaveDetails && ongoing && (
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="btn-secondary w-full rounded-xl py-3 text-sm font-medium transition-colors"
           >
             Edit details
           </button>

@@ -1371,6 +1371,14 @@ device end to end.
    metadata-only first, correcting a reading second, deleting one only if
    double-logging proves real; voice editing is an entry point that cannot be
    scoped until editing exists.
+   **"Edit details" pulled off an ongoing attack (2026-09-23, Sunny's call).**
+   With Options 2/3 still unscoped, the button on a live attack read as an
+   unfinished feature rather than a deliberate one — and mid-attack it also
+   made the footer stack three buttons (Add update, Edit details, End
+   attack), which is bad UX regardless of scope. It stays offered on a past
+   attack, where it's two. Re-offering it on an ongoing attack is really
+   the same open question as Options 2/3: it doesn't want a separate
+   decision.
 7. **A warm light theme.** Specified, and **wanted — moved out of "parked" on
    2026-08-19.** The cost is the reason it sat still: ~44 tokens in
    `@theme`, plus every value hand-mirrored outside CSS (`headDiagram.ts`,
