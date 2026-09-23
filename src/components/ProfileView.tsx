@@ -87,115 +87,145 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
       <div className="space-y-8">
 
       {/* Attack mode — also one tap from the floating pill on every screen;
-          it lives here too so it's discoverable when nothing hurts yet. */}
+          it lives here too so it's discoverable when nothing hurts yet.
+
+          **Each group is now its own `bg-bg-surface` card** (2026-09-23,
+          Sunny's call) — the three used to be nothing but a heading and
+          `space-y-8`, which read as one long list rather than three separate
+          settings once the page had more than a line or two per group. The
+          control inside stays `bg-bg-raised`, which is now correctly "card on
+          card" per the surface hierarchy rather than raised sitting directly
+          on the page.
+
+          **Vertical padding only** (2026-09-24, Sunny's call) — `p-4` gave
+          the card's content a 16px inset the heading above it doesn't share,
+          so the button and caption sat visibly to the right of "Attack mode".
+          Every control inside already carries its own horizontal spacing
+          (the button's `px-4`, the picker's own padding), so dropping the
+          card's own left/right inset lines everything up with the heading
+          without costing any of them their breathing room. */}
       <div className="space-y-3">
         <p className="text-sm font-medium text-text-primary">Attack mode</p>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={attackMode}
-          onClick={() => onAttackMode(!attackMode)}
-          className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5 shrink-0 text-text-secondary" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
-          </svg>
-          <span className="min-w-0 flex-1 text-sm text-text-primary">
-            {attackMode ? 'On' : 'Off'}
-          </span>
-          <span
-            aria-hidden="true"
-            /* Matches NotificationSettings' switch, which is the other one in
-               the app — the off track takes the control-outline token (1.4.11
-               wants 3:1 for a component's own boundary; bg-bg-border measured
-               1.47:1 against the page) and the thumb is bg-bg-surface, not
-               text-primary. A light thumb measured 1.70:1 against the accent
-               track when ON, so the switch's own indicator was the least
-               visible thing on it in the state that matters. bg-bg-surface
-               reads 3.44 off / 5.42 on. */
-            className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${attackMode ? 'bg-accent' : 'bg-border-control'}`}
+        <div className="space-y-3 rounded-2xl bg-bg-surface py-4">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={attackMode}
+            onClick={() => onAttackMode(!attackMode)}
+            className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
           >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5 shrink-0 text-text-secondary" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+            </svg>
+            <span className="min-w-0 flex-1 text-sm text-text-primary">
+              {attackMode ? 'On' : 'Off'}
+            </span>
             <span
-              className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-bg-surface transition-transform ${attackMode ? 'translate-x-5' : ''}`}
-            />
-          </span>
-        </button>
-        <p className="text-xs text-text-secondary">
-          Dims the screen, warms and lowers the contrast, enlarges body text and stops all animation.
-          Everything you logged stays exactly as it is.
-        </p>
+              aria-hidden="true"
+              /* Matches NotificationSettings' switch, which is the other one in
+                 the app — the off track takes the control-outline token (1.4.11
+                 wants 3:1 for a component's own boundary; bg-bg-border measured
+                 1.47:1 against the page) and the thumb is bg-bg-surface, not
+                 text-primary. A light thumb measured 1.70:1 against the accent
+                 track when ON, so the switch's own indicator was the least
+                 visible thing on it in the state that matters. bg-bg-surface
+                 reads 3.44 off / 5.42 on. */
+              className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${attackMode ? 'bg-accent' : 'bg-border-control'}`}
+            >
+              <span
+                className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-bg-surface transition-transform ${attackMode ? 'translate-x-5' : ''}`}
+              />
+            </span>
+          </button>
+          <p className="text-xs text-text-secondary">
+            Dims the screen, warms and lowers the contrast, enlarges body text and stops all animation.
+            Everything you logged stays exactly as it is.
+          </p>
+        </div>
       </div>
       {/* Accessibility — text size and brightness were two sibling sections;
           they're one group now, since both answer "make this easier to look
           at" and neither means much on its own. */}
 
       <div className="space-y-4">
-        <p className="text-sm font-medium text-text-primary">Text size</p>
+        {/* "Default text size" (2026-09-23, Sunny's call) — it was "Text
+            size", which read as though it set the size everywhere, when what
+            it actually sets is the *floor* attack mode still enlarges from.
+            "Default" is the accurate word — see attack mode's own 20px body
+            floor in CLAUDE.md, which this picker doesn't override. */}
+        <p className="text-sm font-medium text-text-primary">Default text size</p>
+        <div className="space-y-4 rounded-2xl bg-bg-surface py-4">
+          {/* Moved above the picker (2026-09-23, Sunny's call) — it used to
+              sit under the preview card, after the thing it explains had
+              already been used. One line, so unlike the long Insights
+              captions this doesn't cost the fold; it just has to be read
+              before the control, the same reasoning `InsightSection`'s note
+              originally shipped with. */}
+          <p className="text-xs text-text-secondary">
+            Changes apply instantly across the app, and every screen reflows rather than clipping — XL is 50% larger than the default.
+          </p>
 
-        {/* Five-segment picker */}
-        <div className="flex rounded-xl overflow-hidden border border-border-control">
-          {SCALES.map((s, i) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => onTextScale(s)}
-              aria-pressed={textScale === s}
-              className={`flex-1 flex flex-col items-center justify-center py-3 gap-1.5 transition-colors ${
-                textScale === s
-                  ? 'bg-accent/20 text-accent-light'
-                  : 'bg-bg-raised text-text-secondary hover:bg-bg-border'
-              } ${i > 0 ? 'border-l border-bg-border' : ''}`}
-            >
-              {/* A shown at the absolute size that scale produces — intentional px exception */}
-              <span aria-hidden="true" style={{ fontSize: `${SCALE_PX[s]}px`, lineHeight: 1 }}>A</span>
-              <span style={{ fontSize: '0.625rem', letterSpacing: '0.05em' }} className="font-medium uppercase">
-                {SCALE_LABELS[s]}
-              </span>
-            </button>
-          ))}
-        </div>
+          {/* Five-segment picker */}
+          <div className="flex rounded-xl overflow-hidden border border-border-control">
+            {SCALES.map((s, i) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => onTextScale(s)}
+                aria-pressed={textScale === s}
+                className={`flex-1 flex flex-col items-center justify-center py-3 gap-1.5 transition-colors ${
+                  textScale === s
+                    ? 'bg-accent/20 text-accent-light'
+                    : 'bg-bg-raised text-text-secondary hover:bg-bg-border'
+                } ${i > 0 ? 'border-l border-bg-border' : ''}`}
+              >
+                {/* A shown at the absolute size that scale produces — intentional px exception */}
+                <span aria-hidden="true" style={{ fontSize: `${SCALE_PX[s]}px`, lineHeight: 1 }}>A</span>
+                <span style={{ fontSize: '0.625rem', letterSpacing: '0.05em' }} className="font-medium uppercase">
+                  {SCALE_LABELS[s]}
+                </span>
+              </button>
+            ))}
+          </div>
 
-        {/* Live preview card — inherits root font size so it updates instantly */}
-        <div className="rounded-xl border border-bg-border/60 bg-bg-raised/40 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1 min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium text-text-primary">Mon, Jun 24</span>
-                <span className="text-xs text-text-secondary">9:15 AM</span>
+          {/* Live preview card — inherits root font size so it updates instantly */}
+          <div className="rounded-xl border border-bg-border/60 bg-bg-raised/40 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-text-primary">Mon, Jun 24</span>
+                  <span className="text-xs text-text-secondary">9:15 AM</span>
+                </div>
+                <p className="text-xs text-text-secondary">2h 30m · 3 readings</p>
+                <p className="text-xs text-text-secondary">Right temple, Forehead</p>
+                {/* Mirrors AttackCard by hand, so it has to track it: the chips
+                    are symptoms, not triggers, and the line above says
+                    "readings". A preview that shows a card the app no longer
+                    renders is worse than no preview — it's the one place a user
+                    is invited to study the layout closely. */}
+                <p className="text-xs text-text-secondary">
+                  Impact: <span className="text-text-primary">a lot</span>
+                </p>
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Nausea</span>
+                  <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Light sensitivity</span>
+                </div>
               </div>
-              <p className="text-xs text-text-secondary">2h 30m · 3 readings</p>
-              <p className="text-xs text-text-secondary">Right temple, Forehead</p>
-              {/* Mirrors AttackCard by hand, so it has to track it: the chips
-                  are symptoms, not triggers, and the line above says
-                  "readings". A preview that shows a card the app no longer
-                  renders is worse than no preview — it's the one place a user
-                  is invited to study the layout closely. */}
-              <p className="text-xs text-text-secondary">
-                Impact: <span className="text-text-primary">a lot</span>
-              </p>
-              <div className="flex flex-wrap gap-1 pt-0.5">
-                <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Nausea</span>
-                <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Light sensitivity</span>
+              <div className="shrink-0">
+                <span className="rounded-lg border border-severity-mid/30 bg-severity-mid/20 px-2 py-1 text-lg font-bold tabular-nums text-severity-mid">
+                  7
+                </span>
               </div>
-            </div>
-            <div className="shrink-0">
-              <span className="rounded-lg border border-severity-mid/30 bg-severity-mid/20 px-2 py-1 text-lg font-bold tabular-nums text-severity-mid">
-                7
-              </span>
             </div>
           </div>
         </div>
-
-        <p className="text-xs text-text-secondary">
-          Changes apply instantly across the app, and every screen reflows rather than clipping — XL is 50% larger than the default.
-        </p>
       </div>
 
       <div className="space-y-4">
         <p className="text-sm font-medium text-text-primary">Screen brightness</p>
 
-        <div className="space-y-3">
+        <div className="space-y-3 rounded-2xl bg-bg-surface py-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-text-primary">Overlay</span>
             <span className="text-sm font-medium text-text-secondary tabular-nums">
@@ -214,6 +244,25 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
             onChange={(e) => onBrightness(Number(e.target.value) / 100)}
             className="w-full"
           />
+          {/* **A live swatch, not just the slider's own %.** (2026-09-23,
+              Sunny's call — she saw no immediate feedback while dragging.)
+              The real dim lives on `BrightnessOverlay`, `absolute` on the app
+              root at z-35, which this sub-page's own `Sheet` paints straight
+              over — so the actual effect is invisible from inside the very
+              panel that controls it. Rather than touch that layering (the
+              viewport architecture's z-order is deliberately fragile — see
+              docs/viewport-architecture.md), this mirrors its exact recipe,
+              `rgba(20,20,15,brightness)`, on a small swatch that lives inside
+              the panel and updates on every drag. */}
+          <div className="relative overflow-hidden rounded-xl border border-bg-border/60 bg-bg-raised/40 p-4">
+            <p className="text-sm font-medium text-text-primary">Preview</p>
+            <p className="text-xs text-text-secondary">How the dim looks during an attack.</p>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{ background: `rgba(20,20,15,${brightness})` }}
+            />
+          </div>
           <p className="text-xs text-text-secondary">
             Dims the screen during attacks without changing your phone's system brightness
           </p>
