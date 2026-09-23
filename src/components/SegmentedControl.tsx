@@ -19,6 +19,17 @@
 //   draws the boundary, and a ring on top of that reads as a box in a box.
 // - **The track's border is `border-control`**, not `bg-border`: this is the
 //   outline of something you press, which WCAG 1.4.11 wants at 3:1.
+// - **The track's own fill is `bg-bg-raised/15`, not `/40`** (2026-09-23,
+//   Sunny's call — it read as too strong on Insights, where it's the first
+//   thing under the title on a page with little else that dark yet). The
+//   border alone still carries the WCAG floor this needs as a control, so the
+//   fill was free to come down; it isn't dropped to nothing, because a track
+//   with a border and no fill at all reads as an unfinished box rather than a
+//   quiet one. This palette's dark end is compressed (the same reason the
+//   head diagram's disabled regions need a hatch, not a tone, to read as a
+//   different surface) — don't chase this lower expecting a cleaner look; the
+//   lever that actually worked here was opacity, not a search for a better
+//   hex.
 //
 // `fill` makes the segments share the width equally instead of hugging their
 // labels — for a control that owns its row, where hugging leaves it floating.
@@ -38,7 +49,7 @@ export function SegmentedControl<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className={`${fill ? 'flex w-full' : 'inline-flex'} h-8 items-center gap-0.5 rounded-lg border border-border-control bg-bg-raised/40 p-0.5`}
+      className={`${fill ? 'flex w-full' : 'inline-flex'} h-8 items-center gap-0.5 rounded-lg border border-border-control bg-bg-raised/15 p-0.5`}
     >
       {options.map((o) => {
         const isActive = o.value === value;

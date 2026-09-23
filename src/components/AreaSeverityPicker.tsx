@@ -61,9 +61,10 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
           wizard's primary/secondary actions and read as something to press
           to continue, rather than as a switch between two views of the same
           step. Everything here is scaled to fit that 32px — 2px of track
-          padding around a 28px segment. */}
+          padding around a 28px segment. `bg-bg-raised/15`, matching
+          `SegmentedControl` — same shape, same fill, see the note there. */}
       <div className="flex justify-center">
-        <div className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-border-control bg-bg-raised/40 p-0.5">
+        <div className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-border-control bg-bg-raised/15 p-0.5">
           {VIEWS.map((v) => {
             const isActive = v.id === activeViewId;
             const n = selectedCount(v);
