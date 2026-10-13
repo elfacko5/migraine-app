@@ -116,7 +116,7 @@ export default function App() {
     syncStatus: hit6SyncStatus, lastSyncedAt: hit6LastSyncedAt,
   } = useHit6(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
-  const { textScale, setTextScale, brightness, setBrightness, attackMode, setAttackMode } = useSettings();
+  const { textScale, setTextScale, brightness, setBrightness, theme, setTheme, attackMode, setAttackMode } = useSettings();
 
   // Mirrors what the home-screen widget shows out to the App Group. Watches
   // the data rather than the writers, so no future save path can forget it.
@@ -444,7 +444,7 @@ export default function App() {
         transform: 'translateY(var(--app-offset, 0px))',
       }}
     >
-      <BrightnessOverlay brightness={brightness} attackMode={attackMode} onOpenProfile={() => setTab('profile')} />
+      <BrightnessOverlay brightness={brightness} attackMode={attackMode} />
 
       {/* The app's only scroll region (the document itself never scrolls —
           see docs/viewport-architecture.md), so it's also the only place a
@@ -535,6 +535,16 @@ export default function App() {
               />
             )}
 
+            {/* Below the hero card: the month's two figures, and — only when
+                they apply — an overuse warning and the last dose taken.
+                Ranked above the HIT-6 prompt (2026-09-25, Sunny's call): the
+                last dose is the "next hour" question Today exists to answer,
+                where HIT-6 is a four-week retrospective that's never urgent —
+                so the actionable figure outranks the one that can wait. */}
+            {(ongoingAttack || lastAttackEnd) && (
+              <TodaySummary attacks={attacks} ongoing={ongoingAttack} medications={medications} attackMode={attackMode} />
+            )}
+
             {/* Offered on Today when it's due, on Sunny's instruction — see
                 Hit6Prompt for why that reverses the original "Profile row
                 only" call, and for the two things that keep it from nagging.
@@ -546,12 +556,6 @@ export default function App() {
                 onStart={() => { setTab('profile'); setProfileSheet('hit6'); }}
                 onDismiss={dismissHit6}
               />
-            )}
-
-            {/* Below the hero card: the month's two figures, and — only when
-                they apply — an overuse warning and the last dose taken. */}
-            {(ongoingAttack || lastAttackEnd) && (
-              <TodaySummary attacks={attacks} ongoing={ongoingAttack} medications={medications} attackMode={attackMode} />
             )}
 
             {!ongoingAttack && !lastAttackEnd && (
@@ -701,6 +705,8 @@ export default function App() {
             onTextScale={setTextScale}
             brightness={brightness}
             onBrightness={setBrightness}
+            theme={theme}
+            onTheme={setTheme}
             attackMode={attackMode}
             onAttackMode={setAttackMode}
             onClose={() => setProfileSheet(null)}

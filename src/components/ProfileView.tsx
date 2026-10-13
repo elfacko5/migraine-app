@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { TextScale } from '../hooks/useSettings';
+import type { TextScale, Theme } from '../hooks/useSettings';
 import type { useAuth } from '../hooks/useAuth';
 import type { SyncStatus } from '../types';
 import { formatSince, formatDatetime, formatTime } from '../utils/format';
@@ -9,6 +9,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon } from './drawnIcons';
+import { BrightnessIcon } from './icons';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
@@ -76,15 +77,61 @@ interface AccessibilityProps {
   onTextScale: (s: TextScale) => void;
   brightness: number;
   onBrightness: (v: number) => void;
+  theme: Theme;
+  onTheme: (t: Theme) => void;
   attackMode: boolean;
   onAttackMode: (on: boolean) => void;
   onClose: () => void;
 }
 
-export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrightness, attackMode, onAttackMode, onClose }: AccessibilityProps) {
+export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrightness, theme, onTheme, attackMode, onAttackMode, onClose }: AccessibilityProps) {
   return (
     <ProfileSubPage title="Accessibility" onClose={onClose}>
       <div className="space-y-8">
+
+      {/* Appearance — manual only, no prefers-color-scheme detection
+          (2026-09-25, Sunny's call): this is a single-user app and she wanted
+          an explicit choice, not one the OS makes for her. Above Attack mode
+          because that group is the temporary override; this is the resting
+          state it overrides. Same switch shape as Attack mode's own toggle,
+          for the reason every switch in the app shares one treatment — see
+          the note on that one below.
+
+          **`BrightnessIcon` (a sun, from icons.tsx), not a new mark.** It's a
+          generic UI affordance, not a domain one, so it's Lucide-sourced per
+          the icon rule — and it's free to reuse now: it was the brightness
+          pill's own icon until that floating button was removed, and
+          CLAUDE.md's "sun means brightness" constraint on AttackModeIcon's
+          own shape was specifically about not colliding with that button.
+          With the button gone, the sun has no meaning left to collide with. */}
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-text-primary">Appearance</p>
+        <div className="space-y-3 rounded-2xl bg-bg-surface py-4">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={theme === 'light'}
+            onClick={() => onTheme(theme === 'light' ? 'dark' : 'light')}
+            className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
+          >
+            <BrightnessIcon className="h-5 w-5 shrink-0 text-text-secondary" />
+            <span className="min-w-0 flex-1 text-sm text-text-primary">
+              {theme === 'light' ? 'Light' : 'Dark'}
+            </span>
+            <span
+              aria-hidden="true"
+              className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${theme === 'light' ? 'bg-accent' : 'bg-border-control'}`}
+            >
+              <span
+                className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-bg-surface transition-transform ${theme === 'light' ? 'translate-x-5' : ''}`}
+              />
+            </span>
+          </button>
+          <p className="text-xs text-text-secondary">
+            The app is dark by default. Light swaps every surface and colour for a warm, low-contrast light palette built to the same rules.
+          </p>
+        </div>
+      </div>
 
       {/* Attack mode — also one tap from the floating pill on every screen;
           it lives here too so it's discoverable when nothing hurts yet.

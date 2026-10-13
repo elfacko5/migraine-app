@@ -2,12 +2,14 @@ import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import type { Attack } from '../types';
 import { attackMaxSeverity } from '../utils/stats';
 import { sevFill } from './headDiagram';
+import { useUiTheme } from '../hooks/useUiTheme';
 
 // Tiny trend line for the Logs list rows. The full multi-line chart that used
 // to live here is gone — see SeverityBreakdown for what replaced it and why.
 // This one is a single series (max severity per reading), so it never had the
 // categorical-colour problem.
 export function SeveritySparkline({ attack }: { attack: Attack }) {
+  const theme = useUiTheme();
   const data = attack.snapshots.map((s) => {
     const maxSev = Math.max(0, ...Object.values(s.areas));
     return { time: new Date(s.time).getTime(), v: maxSev };
@@ -38,7 +40,7 @@ export function SeveritySparkline({ attack }: { attack: Attack }) {
             // few points, so a peak-10 attack drew a red badge beside a green
             // line and the row contradicted itself. The line plots the same
             // figure the badge shows, so it takes the same colour.
-            stroke={sevFill(attackMaxSeverity(attack))}
+            stroke={sevFill(attackMaxSeverity(attack), theme)}
             strokeWidth={1.5}
             dot={false}
             isAnimationActive={false}

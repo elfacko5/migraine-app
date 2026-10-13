@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { SideLabel } from './SideLabel';
+import { useUiTheme } from '../hooks/useUiTheme';
 import {
   VIEWS, type DiagramView,
-  HEAD_FILL, LINE_COLOR, DIVIDER_COLOR, DETAIL_COLOR, DISABLED_FILL, DISABLED_HATCH,
-  DISABLED_LINE, HOVER_FILL,
+  headFill, lineColor, dividerColor, detailColor, disabledFill, disabledHatch,
+  disabledLine, hoverFill, badgeFill, badgeText,
   sevText, sevFill, sevStroke,
 } from './headDiagram';
 
@@ -155,6 +156,7 @@ interface DiagramProps {
 }
 
 function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: DiagramProps) {
+  const theme = useUiTheme();
   const clip = `clip-${view.id}`;
   const hatch = `hatch-${view.id}`;
 
@@ -176,7 +178,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           </clipPath>
           <pattern id={hatch} width="10" height="10" patternUnits="userSpaceOnUse"
             patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="10" stroke={DISABLED_HATCH} strokeWidth={2}/>
+            <line x1="0" y1="0" x2="0" y2="10" stroke={disabledHatch(theme)} strokeWidth={2}/>
           </pattern>
         </defs>
 
@@ -189,7 +191,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
             this artwork and for the next one. */}
         {view.base.concat(view.inert).map((d, i) => (
           <g key={`g-${i}`}>
-            <path d={d} fill={DISABLED_FILL}/>
+            <path d={d} fill={disabledFill(theme)}/>
             <path d={d} fill={`url(#${hatch})`}/>
           </g>
         ))}
@@ -200,7 +202,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
             gap as a seam. */}
         {view.zones.map((z) => (
           <path key={`b-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-            fill={HEAD_FILL} stroke={HEAD_FILL} strokeWidth={1.5}
+            fill={headFill(theme)} stroke={headFill(theme)} strokeWidth={1.5}
             pointerEvents="none"/>
         ))}
 
@@ -208,7 +210,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
         {view.zones.map((z) =>
           (z.name in value || hovered !== z.name) ? null : (
             <path key={`h-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-              fill={HOVER_FILL} pointerEvents="none"/>
+              fill={hoverFill(theme)} pointerEvents="none"/>
           )
         )}
 
@@ -217,7 +219,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
             translucent overlay on a grid. */}
         {view.dividers.map((d, i) => (
           <path key={`v-${i}`} d={d} clipPath={`url(#${clip})`}
-            fill="none" stroke={DIVIDER_COLOR} strokeWidth={2.4}
+            fill="none" stroke={dividerColor(theme)} strokeWidth={2.4}
             strokeDasharray="1 9" strokeLinecap="round" pointerEvents="none"/>
         ))}
 
@@ -239,7 +241,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
         {view.zones.map((z) =>
           !(z.name in value) ? null : (
             <path key={`f-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-              fill={sevFill(value[z.name])} stroke={sevFill(value[z.name])}
+              fill={sevFill(value[z.name], theme)} stroke={sevFill(value[z.name], theme)}
               strokeWidth={3} strokeLinejoin="round" pointerEvents="none"/>
           )
         )}
@@ -251,7 +253,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
         {view.zones.map((z) =>
           z.name === active && z.name in value ? (
             <path key={`a-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-              fill="none" stroke={sevStroke(value[z.name])} strokeWidth={4}
+              fill="none" stroke={sevStroke(value[z.name], theme)} strokeWidth={4}
               strokeLinejoin="round" pointerEvents="none"/>
           ) : null
         )}
@@ -266,22 +268,22 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
             it sits in, which is otherwise a large blank area of face. */}
         {view.details.map((d, i) => (
           <path key={`x-${i}`} d={d} clipPath={`url(#${clip})`}
-            fill="none" stroke={DETAIL_COLOR} strokeWidth={2}
+            fill="none" stroke={detailColor(theme)} strokeWidth={2}
             strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
         ))}
 
         {/* Inert edges, dimmer and thinner than the silhouette. The fill alone
-            wasn't enough: at full LINE_COLOR the ears and the neck still read
+            wasn't enough: at full lineColor the ears and the neck still read
             as parts of the same drawn object as the head. */}
         {view.inert.map((d, i) => (
-          <path key={`i-${i}`} d={d} fill="none" stroke={DISABLED_LINE}
+          <path key={`i-${i}`} d={d} fill="none" stroke={disabledLine(theme)}
             strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"
             pointerEvents="none"/>
         ))}
 
         {/* Silhouette of the selectable body */}
         {view.outline.map((d, i) => (
-          <path key={`o-${i}`} d={d} fill="none" stroke={LINE_COLOR}
+          <path key={`o-${i}`} d={d} fill="none" stroke={lineColor(theme)}
             strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round"
             pointerEvents="none"/>
         ))}
@@ -302,7 +304,7 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           return (
             <text key={`l-${z.name}`} x={cx} y={cy} textAnchor="middle"
               fontSize={20} fontFamily="Lexend, system-ui, sans-serif"
-              fill="rgba(225,233,244,0.75)" pointerEvents="none">
+              fill={badgeText(theme)} pointerEvents="none">
               {z.label}
             </text>
           );
@@ -317,11 +319,11 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           return (
             <g key={`b-${z.name}`} pointerEvents="none">
               <circle cx={cx} cy={cy} r={isActive ? 18 : 16}
-                fill="#1b1a18" stroke={sevFill(s)}
+                fill={badgeFill(theme)} stroke={sevFill(s, theme)}
                 strokeWidth={isActive ? 3.5 : 2.5}/>
               <text x={cx} y={cy + 6} textAnchor="middle"
                 fontSize={18} fontFamily="Lexend, system-ui, sans-serif" fontWeight="700"
-                fill="#cdc7bb">{s}</text>
+                fill={badgeText(theme)}>{s}</text>
             </g>
           );
         })}

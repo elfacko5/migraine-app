@@ -1,7 +1,10 @@
 # The three palettes
 
-The app ships **dark** (default) and **attack** (`data-theme="attack"`). A **light** palette is
-specified here and is **not wired up** — see "What shipping light mode would take" at the bottom.
+The app ships **dark** (default), **attack** (`data-theme="attack"`), and, since 2026-09-25,
+**light** (`data-theme="light"`) — reached only through a manual toggle in Profile → Accessibility,
+above Attack mode. There is no `prefers-color-scheme` detection: this is a single-user app and Sunny
+wanted an explicit choice, not one the OS makes for her. See "What shipping light mode took" at the
+bottom for what that involved and what's still open.
 
 Every value below is measured, not transcribed. The dossier's §10 tokens are *starting values it
 tells you to tune on real screens*, and the dark palette already diverges from them in three places
@@ -195,24 +198,38 @@ required.
 ## The hand-mirrored constants
 
 An SVG presentation attribute and a Recharts prop can't read `var()`, so `headDiagram.ts`,
-`SeverityChart.tsx`, `HeadHeatmap.tsx`, `StatsView.tsx`, `medDisplay.ts` and `AreaSeverityPicker.tsx`
-carry literal hex. A light mode needs a second set of every one of them.
+`SeverityChart.tsx`, `SeverityBreakdown.tsx`, `HeadHeatmap.tsx`, `StatsView.tsx` and
+`AreaSeverityPicker.tsx` carry literal hex, and each of these is now a theme-parameterised function
+(`headFill(theme)`, `sevFill(s, theme)`, …) rather than a constant — see "What shipping light mode
+took" below. `medDisplay.ts` is off this list; the per-name colour it's credited with elsewhere
+was removed before light mode existed.
 
 | Constant | Light | Dark (shipping) |
 |---|---|---|
-| `HEAD_FILL` | `#e7e1d5` | `#2b2823` |
-| `DISABLED_FILL` | `#efeae0` | `#1b1a18` |
-| `DISABLED_HATCH` / `DISABLED_LINE` | — | `rgba(208,216,230,0.11)` / `0.28` |
-| `LINE_COLOR` / `DIVIDER_COLOR` / `DETAIL_COLOR` | — | `rgba(208,216,230,0.4)` / `0.45` / `0.26` |
-| `SEVERITY_LOW/MID/HIGH` | `#3f6249` / `#7b5020` / `#82423b` | `#8fb096` / `#c39257` / `#c68880` |
-| `SEVERITY_*_EDGE` (`sevStroke`) | `#1b3325` / `#3d2609` / `#441d19` | `#5c7a63` / `#7d5c35` / `#7d554f` |
-| zone badge fill / text | `#f5f2ec` / `#3a3733` | `#1b1a18` / `#e4dfd6` |
+| `headFill` | `#e7e1d5` | `#2b2823` |
+| `disabledFill` | `#efeae0` | `#1b1a18` |
+| `disabledHatch` / `disabledLine` | `rgba(58,55,51,0.15)` / `0.40` | `rgba(208,216,230,0.11)` / `0.28` |
+| `lineColor` / `dividerColor` / `detailColor` | `rgba(58,55,51,0.55)` / `0.61` / `0.38` | `rgba(208,216,230,0.4)` / `0.45` / `0.26` |
+| `hoverFill` | `rgba(58,55,51,0.21)` | `rgba(208,216,230,0.14)` |
+| severity low/mid/high | `#3f6249` / `#7b5020` / `#82423b` | `#8fb096` / `#c39257` / `#c68880` |
+| severity `*Edge` (`sevStroke`) | `#1b3325` / `#3d2609` / `#441d19` | `#5c7a63` / `#7d5c35` / `#7d554f` |
+| zone badge fill / text | `#f5f2ec` / `#3a3733` | `#1b1a18` / `#cdc7bb` |
 | Recharts tick + label | `#5a554c` | `#a39d92` |
 | Recharts tooltip bg / border | `#e2dcd0` / `#d5cec0` | `#302d29` / `#3a3733` |
 
-`DISABLED_FILL` inverts its relationship along with the surfaces. The dark rule is "darker than the
+`disabledFill` inverts its relationship along with the surfaces. The dark rule is "darker than the
 head, so the two regions you cannot tap aren't the first thing the eye lands on"; in light the same
 rule means **lighter** than the head.
+
+**The six `rgba(58,55,51,α)` values are not dark's alphas reused with a new colour** — that was the
+first pass, and it under-shot every one of them, `dividerColor` worst: dark's is tuned to 3.28:1
+against `headFill` (1.4.11's 3:1 floor, since it's the line marking a tappable region's edge — see
+"Deliberately left failing" below for why the others are allowed to sit lower), and reusing its 0.45
+alpha with light's darker ink measured only 2.30:1 against `headFill` light. **Found on a physical
+device, not in the browser preview** (2026-09-25) — the preview looked plausible, which is the
+reminder that a rendered screenshot isn't the same check as a contrast number. Each alpha above is
+instead solved to reproduce dark's own ratio against its own background, using the same
+relative-luminance formula as the audits below.
 
 **Tone alone no longer carries it in dark** (2026-09-03): at `#26241f` the disabled regions measured 1.06:1 against the head and Sunny couldn't tell which parts were disabled. The fill dropped to `#1b1a18` (1.18:1) and a 45° hatch plus a dimmed outline do the real work — texture, because this end of the range has no tonal step left to give. The light column has not been redone for this and would need the same treatment. The edge strokes were tuned to ~2.0:1 against their own fill,
 matching dark's 2.00 / 2.19 / 2.20, so the focus ring reads at the same strength in both.
@@ -350,4 +367,82 @@ large bright fields and saturated hues. The trap was the *token*, not the
 requirement: one value doing both jobs meant fixing controls would have meant
 brightening 47 decorative lines. Splitting it made the fix cost nothing the
 palette cares about.
+
+## What shipping light mode took
+
+This section used to be titled "What shipping light mode would take" — it laid out the plan before
+any of it existed, was accidentally dropped from this file in `754c83a` (an unrelated head-diagram
+commit, never a deliberate call), and is restored here with the boxes actually checked, 2026-09-25.
+
+1. **A `[data-theme="light"]` block in `src/index.css`** — the token table above, mechanical.
+   Done. `color-scheme: light` is set inside the same block, which is why it doesn't need a
+   separate rule: the attribute selector already outranks the base `html { color-scheme: dark }`
+   on specificity regardless of source order.
+2. **A second copy of every hand-mirrored constant, read through a function rather than a module
+   constant.** Done, and it was the real work as predicted. `headDiagram.ts`'s palette constants
+   became `headFill(theme)` / `sevFill(s, theme)` / etc., each theme's values held in a
+   `DiagramPalette` object rather than scattered exports. `HeadHeatmap.tsx`, `SeverityChart.tsx`,
+   `SeverityBreakdown.tsx` and `AreaSeverityPicker.tsx` all take the theme from a new
+   `useUiTheme()` hook (`src/hooks/useUiTheme.ts`), which watches `data-theme` on `<html>` with a
+   `MutationObserver` rather than threading the value down as a prop through every intermediate
+   component — the DOM attribute is already the single thing `useSettings.ts`'s `applyTheme`
+   writes to, so a hook that reads it directly needed no new prop on `LogForm`, `QuickUpdateForm`,
+   `AttackCard`, `AttackDetail`, `HistoryView`, or `StatsView`'s own callers.
+
+   **Six of these values had no light figure in the table above** — `lineColor`, `dividerColor`,
+   `detailColor`, `disabledHatch`, `disabledLine`, `hoverFill` — because dark's versions are
+   all `rgba(208,216,230,α)` at the same six alphas regardless of which line they draw, and nobody
+   had picked a light equivalent yet. **First shipped as the same six alphas against light mode's
+   own `--color-text-primary` RGB (58,55,51)** instead of the dark near-white triple — which kept
+   the "warm-neutral throughout" rule and matched the direction `headFill`/`disabledFill` already
+   took, but was wrong in a way that only showed up on a real screen: reusing dark's *alpha* with a
+   darker ink under-shoots every one of the six, `dividerColor` worst — it's the value with a hard
+   3:1 floor (1.4.11, the edge of a tappable region), and the same-alpha light version measured
+   2.30:1. **Found on a physical device (2026-09-25) and fixed by re-solving each alpha** to
+   reproduce dark's own contrast ratio rather than reusing its number — see the hand-mirrored
+   constants table above for the corrected values and the method.
+3. **`StatsView.tsx`'s Recharts chrome** (axis ticks, tooltip, the severity-trend line) and the
+   frequency-bar colours needed the same treatment, and weren't on the original list — they were
+   found by grepping for hex literals across `src/` rather than trusting the four-file list above,
+   which had also gone stale (`medDisplay.ts` no longer carries any colour — the per-name
+   deterministic chip tint it's credited with here was removed later — and is out of this list now).
+4. **The Today hero artwork.** The gradients needed nothing — `from-bg-base` / `via-bg-base` are
+   ordinary CSS custom properties (unlike an SVG presentation attribute or a Recharts prop, these
+   *do* resolve through `var()`), so they already repaint correctly under `[data-theme="light"]`.
+   **The photographs themselves are the real gap, confirmed on device (2026-09-25):** both were
+   composed for a dark page — night-toned, low-key — and sitting behind a light gradient they read
+   as a dark rectangle dropped into an otherwise light screen, exactly the failure this bullet
+   predicted before any code existed. The gradient masking was never the problem; the source images
+   are dark-mode-specific content with no light equivalent yet. **Stopgapped, not redesigned**
+   (Sunny's call, 2026-09-25): a light-mode-only CSS filter on `.hero-artwork` in `src/index.css`
+   rather than new source images. **`brightness()` alone barely moved it** — it's multiplicative, so
+   a near-black source pixel times 1.3 is still near-black, and both images are dominated by a
+   near-black night sky, exactly the part that needed to lift. `contrast()` is what does the real
+   work, since it pulls values toward mid-grey rather than scaling them: `contrast(0.55)` alone maps
+   pure black to ~22% grey. Shipped as `brightness(1.4) saturate(0.55) contrast(0.55)` — verified in
+   the browser preview (not yet on device) that the near-black regions now read as a warm grey
+   dissolving into the page rather than a dark rectangle, with the moon/orbs/leaves still legible. If
+   it isn't enough on device the next step is new or hand-treated artwork, not a stronger filter.
+   Same photographs both themes; only the rendering changes, and only under `[data-theme="light"]`.
+5. **A third state on the theme control.** Simpler than planned, because of a decision taken before
+   any code was written (2026-09-25, Sunny's call): attack mode always wins. Turning it on sets
+   `data-theme="attack"` regardless of the light/dark choice underneath, exactly as it already did —
+   so light and dark are a *second*, independent boolean (`hd_theme`), not a third position on
+   attack mode's own switch, and `useSettings.ts`'s `applyTheme(attackMode, theme)` resolves the two
+   into the one DOM attribute CSS reads. This also closed the `BrightnessOverlay` question the
+   original plan raised: a "light attack mode" was the scenario that would have needed the scrim to
+   invert into a lightening wash, and it can't happen, so the scrim stays the warm dark
+   `rgba(20,20,15,·)` it always was — dimming a screen with a dark overlay is the ordinary case
+   whichever theme sits underneath it, the same as a phone's own brightness slider.
+6. **Re-verification on device.** Started, and it already earned its keep: the first real-device
+   pass (2026-09-25, on Sunny's own phone) is what caught both the point 2 contrast miss and the
+   point 4 artwork mismatch — neither showed up in the browser preview or on paper. §8.1's actual
+   photophobia claim — judged in a dark room, at phone brightness — is still outstanding; what's
+   done so far is functional/contrast verification, which is a narrower check.
+
+**Whether to ship it *by default*, or beyond this app, is still a separate question from whether it
+exists.** It exists now, behind an explicit opt-in a single user can reach and back out of in one
+tap — which is a different claim from "the app is dark-first," which CLAUDE.md still is and this
+doesn't change. §8.1 asks for warm light *and* true dark *and* attack mode as three peers; this is
+that plan, wired up and waiting on the device check the other two already had.
 

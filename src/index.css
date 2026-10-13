@@ -147,6 +147,66 @@
   --color-button-secondary-border: #736d5a;
 }
 
+/* ── Light mode ─────────────────────────────────────────
+   Specified in docs/palette.md (measured, not transcribed — same rules as
+   dark: no pure white, no saturated blue, contrast checked against the
+   tightest surface). Reached only through the manual toggle in Profile →
+   Accessibility (`data-theme="light"` on <html>) — there is no
+   prefers-color-scheme detection, on Sunny's call (2026-09-25): this is a
+   single-user app and she wanted an explicit choice, not one the OS makes
+   for her.
+
+   **Attack mode always wins over this.** Turning attack mode on sets
+   `data-theme="attack"` regardless of the light/dark choice underneath it —
+   see useSettings.ts's `applyTheme`. Attack mode's own palette is
+   deliberately the one built for a mid-attack, low-light read; a "light
+   attack mode" isn't in scope and isn't specified anywhere in the dossier.
+
+   **Surfaces invert direction**, per docs/palette.md's "Surface direction,
+   and why light inverts it": dark raises by getting lighter, light raises by
+   getting darker — the light page is already a warm off-white one step below
+   white, so "raise toward white" runs out of room immediately. */
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg-base:        #f5f2ec;
+  --color-bg-surface:     #ece7dd;
+  --color-bg-raised:      #e2dcd0;
+  --color-bg-elevated:    #d8d1c3;
+  --color-bg-border:      #d5cec0;
+  --color-border-subtle:  #bfb7a6;
+  --color-border-control: #827966;
+  --color-text-primary:   #3a3733;
+  --color-text-secondary: #5a554c;
+  --color-accent:         #4f6b57;
+  /* Darker than --color-accent, not lighter — a wart inherited from the dark
+     palette, where "accent as text, and the primary button's hover" both
+     wanted *more* contrast against their background, which in dark means
+     lighter and in light means darker. Don't swap these as a "fix". */
+  --color-accent-light:   #3c5544;
+  --color-button-secondary-bg:     #ece7dd;
+  --color-button-secondary-border: #827966;
+  --color-severity-low:   #3f6249;
+  --color-severity-mid:   #7b5020;
+  --color-severity-high:  #82423b;
+  --color-warning:        #7b5020;
+  --color-positive:       #4f6b57;
+}
+
+/* The Today hero photographs (`HomeCard`'s `.hero-artwork`) are night-toned,
+   composed against the dark page — there's no light-mode version of them yet.
+   Left alone under `[data-theme="light"]` they read as a dark rectangle
+   dropped into an otherwise light screen rather than as art dissolving into
+   the page, which is what the surrounding `from-bg-base` gradients (already
+   theme-correct, since those are real CSS custom properties) are built to do.
+   This is a stopgap softening, not a redesign of the images: raise brightness
+   and pull saturation/contrast down so the existing artwork sits closer to
+   the page's own low-key register instead of contradicting it. If it isn't
+   enough on device, the fix is new or treated source images, not a stronger
+   filter — see docs/palette.md's light-mode section. */
+[data-theme="light"] .hero-artwork {
+  filter: brightness(1.4) saturate(0.55) contrast(0.55);
+}
+
 /* ── Three-tier button hierarchy ───────────────────────
    primary: one per screen (main action) · secondary: companion actions
    · tertiary: low-emphasis / inline.

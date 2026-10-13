@@ -1,5 +1,6 @@
 import type { Attack } from '../types';
 import { sevFill } from './headDiagram';
+import { useUiTheme, type UiTheme } from '../hooks/useUiTheme';
 
 // One row per pain area: a sparkline for shape, then peak and now for
 // precision. It replaced a multi-line chart with one categorical colour per
@@ -34,6 +35,7 @@ interface Row {
 }
 
 export function SeverityBreakdown({ attack }: Props) {
+  const theme = useUiTheme();
   const snaps = attack.snapshots;
   const times = snaps.map((s) => new Date(s.time).getTime());
   const t0 = times[0];
@@ -96,7 +98,7 @@ export function SeverityBreakdown({ attack }: Props) {
                 below gives the exact time. */}
             <span className="min-w-0 truncate text-xs text-text-primary">{row.area}</span>
 
-            <Sparkline row={row} snapshotCount={snaps.length} />
+            <Sparkline row={row} snapshotCount={snaps.length} theme={theme} />
 
             <span className={`rounded-md py-1 text-center text-xs ${peak.bg} ${peak.text}`}>{row.peak}</span>
             {now ? (
@@ -122,7 +124,7 @@ export function SeverityBreakdown({ attack }: Props) {
 // mention and after the last. A solid line straight through a gap is what
 // the old chart drew (`connectNulls`), and it read as a flat severity that
 // nobody had actually reported.
-function Sparkline({ row, snapshotCount }: { row: Row; snapshotCount: number }) {
+function Sparkline({ row, snapshotCount, theme }: { row: Row; snapshotCount: number; theme: UiTheme }) {
   const segments: { d: string; gap: boolean; color?: string }[] = [];
   const first = row.points[0];
   const last = row.points[row.points.length - 1];
@@ -135,7 +137,7 @@ function Sparkline({ row, snapshotCount }: { row: Row; snapshotCount: number }) 
     // runs into its dot in the same colour. Dashed spans stay neutral —
     // they represent no reading, and colouring them would imply a severity.
     const gap = b.i !== a.i + 1;
-    segments.push({ d: `M${a.x},${a.y} L${b.x},${b.y}`, gap, color: gap ? undefined : sevFill(b.v) });
+    segments.push({ d: `M${a.x},${a.y} L${b.x},${b.y}`, gap, color: gap ? undefined : sevFill(b.v, theme) });
   }
   if (last.i < snapshotCount - 1) segments.push({ d: `M${last.x},${last.y} L${W - PAD},${last.y}`, gap: true });
 
@@ -162,7 +164,7 @@ function Sparkline({ row, snapshotCount }: { row: Row; snapshotCount: number }) 
       {row.points.length === 1 ? (
         <path
           d={`M${row.points[0].x - 5},${row.points[0].y} L${row.points[0].x + 5},${row.points[0].y}`}
-          stroke={sevFill(row.points[0].v)}
+          stroke={sevFill(row.points[0].v, theme)}
           strokeWidth={2.5}
           strokeLinecap="round"
           fill="none"
@@ -170,7 +172,7 @@ function Sparkline({ row, snapshotCount }: { row: Row; snapshotCount: number }) 
       ) : (
         // Every reading is one reading: the last one is not a bigger event
         // than the rest, so it doesn't get a bigger dot.
-        row.points.map((p) => <circle key={p.i} cx={p.x} cy={p.y} r={2} fill={sevFill(p.v)} />)
+        row.points.map((p) => <circle key={p.i} cx={p.x} cy={p.y} r={2} fill={sevFill(p.v, theme)} />)
       )}
     </svg>
   );

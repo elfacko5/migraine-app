@@ -16,6 +16,37 @@ import { MedicationInsights } from './MedicationInsights';
 import { PreventiveInsights } from './PreventiveInsights';
 import { InsightSection } from './InsightSection';
 import { PERIOD_MS, type Period } from '../utils/logFilters';
+import { useUiTheme, type UiTheme } from '../hooks/useUiTheme';
+
+// Recharts takes its colours as literal style/prop values, not CSS custom
+// properties — same limitation as an SVG presentation attribute, see
+// headDiagram.ts. So the chart chrome (axis ticks, tooltip, the trend line)
+// and the frequency-bar colours are mirrored here per theme rather than
+// read off index.css. Attack mode gets its own tick/tooltip/text values
+// (they're genuinely different tokens — --color-text-secondary etc. differ
+// between dark and attack) but shares dark's severity/accent colours, the
+// same reuse the diagram palette in headDiagram.ts makes, since those three
+// are literally the same values for both themes in index.css.
+const CHART_COLORS: Record<UiTheme, {
+  tick: string; tooltipBg: string; tooltipBorder: string; label: string; item: string; line: string;
+  severityMid: string; severityHigh: string; accent: string;
+}> = {
+  dark: {
+    tick: '#a39d92', tooltipBg: '#302d29', tooltipBorder: '#3a3733',
+    label: '#a39d92', item: '#cdc7bb', line: '#9bb9a1',
+    severityMid: '#c39257', severityHigh: '#c68880', accent: '#7fa187',
+  },
+  attack: {
+    tick: '#9a9689', tooltipBg: '#262218', tooltipBorder: '#34322a',
+    label: '#9a9689', item: '#c9c4b8', line: '#93ae99',
+    severityMid: '#c39257', severityHigh: '#c68880', accent: '#7fa187',
+  },
+  light: {
+    tick: '#5a554c', tooltipBg: '#e2dcd0', tooltipBorder: '#d5cec0',
+    label: '#5a554c', item: '#3a3733', line: '#3c5544',
+    severityMid: '#7b5020', severityHigh: '#82423b', accent: '#4f6b57',
+  },
+};
 
 
 /** Calendar months touched by a window, inclusive of both ends. */
@@ -52,8 +83,8 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
           card, the label only has to name it — and at 14px a two-word label
           wrapped to two lines and made every tile taller. */}
       <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-text-primary leading-none">{value}</p>
-      {sub && <p className="mt-0.5 text-[0.75rem] text-text-secondary">{sub}</p>}
+      <p className="mt-2 text-2xl font-bold text-text-primary leading-none">{value}</p>
+      {sub && <p className="mt-1 text-[0.75rem] text-text-secondary">{sub}</p>}
     </div>
   );
 }
@@ -96,6 +127,8 @@ function FreqSection({ title, data, color, info }: { title: string; data: Freq[]
 }
 
 export function StatsView({ attacks, medications = [], period }: Props) {
+  const theme = useUiTheme();
+  const chartColors = CHART_COLORS[theme];
 
   // The window the whole page answers, derived once. `null` is all time.
   //
@@ -272,14 +305,14 @@ export function StatsView({ attacks, medications = [], period }: Props) {
                     actually needs. */}
                 <ResponsiveContainer width="100%" height={140}>
                   <LineChart data={stats.severityTrend} margin={{ top: 4, right: 8, bottom: 0, left: -38 }}>
-                    <XAxis dataKey="date" tick={{ fill: '#a39d92', fontSize: '0.625rem' }} axisLine={false} tickLine={false} interval="preserveStartEnd" height={20} tickMargin={4} />
-                    <YAxis domain={[0, 10]} ticks={[0, 5, 10]} tick={{ fill: '#a39d92', fontSize: '0.625rem' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="date" tick={{ fill: chartColors.tick, fontSize: '0.625rem' }} axisLine={false} tickLine={false} interval="preserveStartEnd" height={20} tickMargin={4} />
+                    <YAxis domain={[0, 10]} ticks={[0, 5, 10]} tick={{ fill: chartColors.tick, fontSize: '0.625rem' }} axisLine={false} tickLine={false} />
                     <Tooltip
-                      contentStyle={{ background: '#302d29', border: '1px solid #3a3733', borderRadius: 8, fontSize: '0.75rem' }}
-                      labelStyle={{ color: '#a39d92' }}
-                      itemStyle={{ color: '#cdc7bb' }}
+                      contentStyle={{ background: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: 8, fontSize: '0.75rem' }}
+                      labelStyle={{ color: chartColors.label }}
+                      itemStyle={{ color: chartColors.item }}
                     />
-                    <Line type="monotone" dataKey="severity" stroke="#9bb9a1" strokeWidth={2} dot={{ r: 3, fill: '#9bb9a1' }} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="severity" stroke={chartColors.line} strokeWidth={2} dot={{ r: 3, fill: chartColors.line }} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -304,13 +337,13 @@ export function StatsView({ attacks, medications = [], period }: Props) {
           <FreqSection
             title="Triggers you noted"
             data={stats.triggers}
-            color="#c39257"
+            color={chartColors.severityMid}
             info="Recorded on attack days only — this is what you suspected at the time, not what's been shown to bring one on."
           />
-          <FreqSection title="Top symptoms" data={stats.symptoms} color="#c68880"
+          <FreqSection title="Top symptoms" data={stats.symptoms} color={chartColors.severityHigh}
             info="Attacks that included each symptom, not readings — one count per attack no matter how many times it was logged."
           />
-          <FreqSection title="Top reliefs"  data={stats.reliefs}  color="#7fa187"
+          <FreqSection title="Top reliefs"  data={stats.reliefs}  color={chartColors.accent}
             info="Attacks in which each relief was tried at least once. This counts use, not whether it helped."
           />
         </>

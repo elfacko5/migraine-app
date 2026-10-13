@@ -1,7 +1,8 @@
 import { SideLabel } from './SideLabel';
+import { useUiTheme, type UiTheme } from '../hooks/useUiTheme';
 import {
   VIEWS, type DiagramView,
-  HEAD_FILL, LINE_COLOR, DETAIL_COLOR, DISABLED_LINE,
+  headFill, lineColor, detailColor, disabledLine,
 } from './headDiagram';
 
 export interface AreaStat {
@@ -24,8 +25,24 @@ interface Props {
 // meaning. It also drops the "Less…More attacks" legend below the heads —
 // that existed to explain the gradient, and a fill with only one hue needs no
 // explaining once the numbers are already exact.
-const HEAT_RGB: [number, number, number] = [205, 199, 187]; // --color-text-primary
-const HEAD_RGB: [number, number, number] = [43, 40, 35]; // HEAD_FILL, as an rgb triple
+//
+// **Both ends are theme-aware, and light doesn't reuse dark's RGB triples.**
+// The tint is `--color-text-primary` blended toward `headFill` — in dark that
+// text is near-white, so a hotter zone gets *lighter*; in light the same
+// token is near-black, so a hotter zone gets *darker*, which is the same
+// "raise by getting darker" rule the surface tokens follow in light mode
+// (docs/palette.md). Reusing dark's RGB in light mode would have hot zones
+// fading toward white on an already-light head — the opposite of raising.
+const HEAT_RGB: Record<UiTheme, [number, number, number]> = {
+  dark:   [205, 199, 187], // --color-text-primary, dark
+  attack: [205, 199, 187], // attack reuses dark's diagram palette
+  light:  [58, 55, 51],    // --color-text-primary, light
+};
+const HEAD_RGB: Record<UiTheme, [number, number, number]> = {
+  dark:   [43, 40, 35],    // headFill('dark'), as an rgb triple
+  attack: [43, 40, 35],
+  light:  [231, 225, 213], // headFill('light')
+};
 
 function tileOpacity(t: number): number {
   return 0.2 + t * 0.5;
@@ -36,12 +53,14 @@ function tileOpacity(t: number): number {
 // `tileFillColor` (the count's knockout patch, see `CountLabel`) and
 // `countTextFill` below, so the two can never disagree about what a tile
 // actually looks like.
-function tileBgRgb(t: number): [number, number, number] {
+function tileBgRgb(t: number, theme: UiTheme): [number, number, number] {
   const a = tileOpacity(t);
-  return HEAD_RGB.map((c, i) => Math.round(c + (HEAT_RGB[i] - c) * a)) as [number, number, number];
+  const head = HEAD_RGB[theme];
+  const heat = HEAT_RGB[theme];
+  return head.map((c, i) => Math.round(c + (heat[i] - c) * a)) as [number, number, number];
 }
-function tileFillColor(t: number): string {
-  const [r, g, b] = tileBgRgb(t);
+function tileFillColor(t: number, theme: UiTheme): string {
+  const [r, g, b] = tileBgRgb(t, theme);
   return `rgb(${r},${g},${b})`;
 }
 
@@ -69,18 +88,28 @@ function contrastRatio(l1: number, l2: number): number {
 // favours dark text by a hair, and a fixed guess landed on the wrong side of
 // that). So it's measured per tile instead — whichever of the two contrasts
 // higher against that tile's own blended colour wins.
-const COUNT_TEXT_LIGHT = '#cdc7bb';
-const COUNT_TEXT_LIGHT_RGB: [number, number, number] = [205, 199, 187];
-const COUNT_TEXT_DARK = '#1b1a18';
-const COUNT_TEXT_DARK_RGB: [number, number, number] = [27, 26, 24];
-function countTextFill(t: number): string {
-  const bgLum = relLuminance(tileBgRgb(t));
-  const lightContrast = contrastRatio(bgLum, relLuminance(COUNT_TEXT_LIGHT_RGB));
-  const darkContrast = contrastRatio(bgLum, relLuminance(COUNT_TEXT_DARK_RGB));
-  return darkContrast > lightContrast ? COUNT_TEXT_DARK : COUNT_TEXT_LIGHT;
+//
+// **The two candidates are each theme's own near-white/near-black token**,
+// not a literal white/black — `--color-bg-base` and `--color-text-primary`,
+// whichever of the pair is lighter vs. darker for that theme. In dark mode
+// that's text-primary (light) and bg-base (dark); in light mode the same two
+// tokens swap which one is which, since light's bg-base is the near-white end
+// and its text-primary is the near-black end.
+const COUNT_TEXT: Record<UiTheme, { light: string; lightRgb: [number, number, number]; dark: string; darkRgb: [number, number, number] }> = {
+  dark:   { light: '#cdc7bb', lightRgb: [205, 199, 187], dark: '#1b1a18', darkRgb: [27, 26, 24] },
+  attack: { light: '#cdc7bb', lightRgb: [205, 199, 187], dark: '#1b1a18', darkRgb: [27, 26, 24] },
+  light:  { light: '#f5f2ec', lightRgb: [245, 242, 236], dark: '#3a3733', darkRgb: [58, 55, 51] },
+};
+function countTextFill(t: number, theme: UiTheme): string {
+  const candidates = COUNT_TEXT[theme];
+  const bgLum = relLuminance(tileBgRgb(t, theme));
+  const lightContrast = contrastRatio(bgLum, relLuminance(candidates.lightRgb));
+  const darkContrast = contrastRatio(bgLum, relLuminance(candidates.darkRgb));
+  return darkContrast > lightContrast ? candidates.dark : candidates.light;
 }
 
 export function HeadHeatmap({ data }: Props) {
+  const theme = useUiTheme();
   const maxVal = Math.max(1, ...data.map((d) => d.value));
   const byArea = Object.fromEntries(data.map((d) => [d.area, d.value]));
   // Skip a whole view (front or back) when nothing in the selected period
@@ -90,7 +119,7 @@ export function HeadHeatmap({ data }: Props) {
   return (
     <div className="flex flex-col items-center gap-5">
       {visibleViews.map((view) => (
-        <HeatView key={view.id} view={view} byArea={byArea} maxVal={maxVal} />
+        <HeatView key={view.id} view={view} byArea={byArea} maxVal={maxVal} theme={theme} />
       ))}
     </div>
   );
@@ -100,9 +129,10 @@ interface HeatViewProps {
   view: DiagramView;
   byArea: Record<string, number>;
   maxVal: number;
+  theme: UiTheme;
 }
 
-function HeatView({ view, byArea, maxVal }: HeatViewProps) {
+function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
   const clip = `hm-clip-${view.id}`;
   const t = (area: string) => (byArea[area] ?? 0) / maxVal;
 
@@ -129,16 +159,16 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
             (2026-09-23, Sunny's call, same reasoning as dropping the
             dividers). The recessed texture exists there to say "you can't
             tap this" — a distinction that means nothing on a diagram with no
-            tap targets at all. Flat `HEAD_FILL`, the same ground every
+            tap targets at all. Flat `headFill`, the same ground every
             zone with nothing to report already sits on, so the ears and neck
             read as ordinary head rather than a separately-textured region
             nobody's asked to interpret. */}
         {view.base.concat(view.inert).map((d, i) => (
-          <path key={`g-${i}`} d={d} fill={HEAD_FILL}/>
+          <path key={`g-${i}`} d={d} fill={headFill(theme)}/>
         ))}
         {view.zones.map((z) => (
           <path key={`b-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-            fill={HEAD_FILL} stroke={HEAD_FILL} strokeWidth={1.5}
+            fill={headFill(theme)} stroke={headFill(theme)} strokeWidth={1.5}
             pointerEvents="none"/>
         ))}
 
@@ -148,7 +178,7 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
           if (tv === 0) return null;
           return (
             <path key={`f-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-              fill={`rgb(${HEAT_RGB.join(',')})`} fillOpacity={tileOpacity(tv)} pointerEvents="none"/>
+              fill={`rgb(${HEAT_RGB[theme].join(',')})`} fillOpacity={tileOpacity(tv)} pointerEvents="none"/>
           );
         })}
 
@@ -156,13 +186,13 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
             and have to look like the same head. See AreaSeverityPicker. */}
         {view.details.map((d, i) => (
           <path key={`x-${i}`} d={d} clipPath={`url(#${clip})`}
-            fill="none" stroke={DETAIL_COLOR} strokeWidth={1.8}
+            fill="none" stroke={detailColor(theme)} strokeWidth={1.8}
             strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
         ))}
 
         {/* **No dividers here, unlike the picker** (2026-09-23, Sunny's
             call — she caught them crossing straight over a filled tile and
-            competing with its count). `DIVIDER_COLOR` is protected in
+            competing with its count). `dividerColor` is protected in
             `headDiagram.ts` at 3.15:1 specifically because it's the line
             that says where one *tappable* region ends and the next begins —
             a WCAG 1.4.11 requirement for a control. This diagram has no
@@ -173,11 +203,11 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
 
         {/* Inert edges, then the selectable body's silhouette */}
         {view.inert.map((d, i) => (
-          <path key={`i-${i}`} d={d} fill="none" stroke={DISABLED_LINE}
+          <path key={`i-${i}`} d={d} fill="none" stroke={disabledLine(theme)}
             strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
         ))}
         {view.outline.map((d, i) => (
-          <path key={`o-${i}`} d={d} fill="none" stroke={LINE_COLOR}
+          <path key={`o-${i}`} d={d} fill="none" stroke={lineColor(theme)}
             strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
         ))}
 
@@ -188,16 +218,16 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
           const tv = t(z.name);
           if (!view.showLabels) {
             if (count === 0) return null;
-            return <CountLabel key={`c-${z.name}`} cx={cx} cy={cy + 7} t={tv} count={count} fontSize={20}/>;
+            return <CountLabel key={`c-${z.name}`} cx={cx} cy={cy + 7} t={tv} count={count} fontSize={20} theme={theme}/>;
           }
           return (
             <g key={`c-${z.name}`} pointerEvents="none">
               <text x={cx} y={cy} textAnchor="middle" fontSize={18}
                 fontFamily="Lexend, system-ui, sans-serif"
-                fill={countTextFill(tv)}>
+                fill={countTextFill(tv, theme)}>
                 {z.label}
               </text>
-              {count > 0 && <CountLabel cx={cx} cy={cy + 22} t={tv} count={count} fontSize={22}/>}
+              {count > 0 && <CountLabel cx={cx} cy={cy + 22} t={tv} count={count} fontSize={22} theme={theme}/>}
             </g>
           );
         })}
@@ -217,8 +247,8 @@ function HeatView({ view, byArea, maxVal }: HeatViewProps) {
 // `tileFillColor`, the exact blend the fill path underneath already paints at
 // that opacity, so it reads as part of the tile rather than as a new shape
 // arriving on top of it.
-function CountLabel({ cx, cy, t, count, fontSize }: {
-  cx: number; cy: number; t: number; count: number; fontSize: number;
+function CountLabel({ cx, cy, t, count, fontSize, theme }: {
+  cx: number; cy: number; t: number; count: number; fontSize: number; theme: UiTheme;
 }) {
   const text = `${count}×`;
   const w = text.length * fontSize * 0.62 + 8;
@@ -226,9 +256,9 @@ function CountLabel({ cx, cy, t, count, fontSize }: {
   return (
     <g pointerEvents="none">
       <rect x={cx - w / 2} y={cy - h * 0.7} width={w} height={h} rx={h / 2}
-        fill={tileFillColor(t)}/>
+        fill={tileFillColor(t, theme)}/>
       <text x={cx} y={cy} textAnchor="middle" fontSize={fontSize}
-        fontFamily="Lexend, system-ui, sans-serif" fontWeight="700" fill={countTextFill(t)}>
+        fontFamily="Lexend, system-ui, sans-serif" fontWeight="700" fill={countTextFill(t, theme)}>
         {text}
       </text>
     </g>

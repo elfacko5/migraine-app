@@ -39,11 +39,12 @@ interface Props {
 // when hunting through a settings page is hardest. One tap, always in the
 // same place, reversible by tapping again.
 export function AttackModePill({ active, onToggle, collapsed = false }: Props) {
-  // Never collapses while attack mode is *on*. This is then the control that
-  // turns it off, reached mid-attack by someone who is not reading carefully,
-  // and a bare half-circle glyph doesn't say what it does. It's the same
-  // reason the pill sits above the dim scrim instead of under it.
-  const compact = collapsed && !active;
+  // Collapses on scroll-down like any other state, including while attack
+  // mode is on (2026-09-25, Sunny's call, reversing the earlier "never while
+  // active" rule — the tint (`bg-accent/20`) still tells the on state apart
+  // from off even with the label gone, and it gets its label back on any
+  // upward scroll or near the top, same as every other state).
+  const compact = collapsed;
 
   return (
     <button

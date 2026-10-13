@@ -122,7 +122,16 @@ export function HomeCard({ image, imageAnchor, greeting, label, headline, detail
           // Note the counter-intuitive part: keeping the *left* edge is what
           // pushes a centred subject *right*, because the trimming comes off
           // the other side.
-          className={`pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-[64%] object-cover ${
+          //
+          // `hero-artwork` carries a light-mode-only filter (see index.css) —
+          // both source images are night-toned, composed for the dark page
+          // they were designed against, and side by side with a light one
+          // they read as a dark rectangle dropped into the screen rather than
+          // as art dissolving into it (found on device, 2026-09-25). The
+          // gradients need no equivalent treatment: they're `from-bg-base`,
+          // which already repaints correctly. This is a stopgap, not a fix —
+          // see docs/palette.md's light-mode section.
+          className={`hero-artwork pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-[64%] object-cover ${
             imageAnchor === 'right' ? 'object-right' : 'object-left'
           }`}
         />

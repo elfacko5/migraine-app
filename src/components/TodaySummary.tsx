@@ -66,17 +66,29 @@ function MedRow({ name, icon, figure, detail, warning = false }: {
 }) {
   return (
     <div
-      className={`flex items-start gap-2 rounded-xl border px-4 py-3 ${
+      className={`rounded-xl border px-4 py-3 ${
         warning ? 'border-severity-mid/40 bg-severity-mid/10' : 'border-bg-border/60 bg-bg-raised/60'
       }`}
     >
-      <span className="mt-0.5 shrink-0 text-text-secondary">{icon}</span>
-      <div className="min-w-0">
-        <p className="text-base text-text-primary">
-          <span className="font-medium">{name}</span> {figure}
+      {/* `items-center` on the headline row alone, not on the whole card —
+          centering against the full multi-line block (name + detail) is what
+          sat the icon high; centering against just this line is what matches
+          it to the text beside it, the same fix `MedicationInsights` already
+          made. `figure` de-emphasised to `text-xs`/secondary/normal-weight so
+          it reads as a modifier on the name, not a second headline — matching
+          the "· N doses" caveat on the Insights row.
+
+          `detail` is flush with the icon's own left edge, not indented under
+          the name — it's supporting text about the row, not a continuation
+          of what the name says, so there's nothing for it to nest under. */}
+      <div className="flex items-center gap-2">
+        <span className="shrink-0 text-text-secondary">{icon}</span>
+        <p className="min-w-0 text-base text-text-primary">
+          <span className="font-medium">{name}</span>{' '}
+          <span className="text-xs font-normal text-text-secondary">{figure}</span>
         </p>
-        {detail && <div className="mt-0.5 space-y-0.5 text-xs text-text-secondary">{detail}</div>}
       </div>
+      {detail && <div className="mt-0.5 space-y-0.5 text-xs text-text-secondary">{detail}</div>}
     </div>
   );
 }
@@ -241,12 +253,12 @@ export function TodaySummary({ attacks, ongoing, medications = [], attackMode = 
             lines, for the "more air" Sunny asked for alongside it. */}
         <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 px-4 py-5">
           <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">Migraine days</p>
-          <p className="mt-1.5 text-2xl font-bold text-text-primary leading-none">{migraineDays}</p>
+          <p className="mt-2 text-2xl font-bold text-text-primary leading-none">{migraineDays}</p>
           <p className="mt-1 text-xs text-text-secondary">this month</p>
         </div>
         <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 px-4 py-5">
           <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">Medication days</p>
-          <p className="mt-1.5 text-2xl font-bold text-text-primary leading-none">{totalMedDays}</p>
+          <p className="mt-2 text-2xl font-bold text-text-primary leading-none">{totalMedDays}</p>
           <p className="mt-1 text-xs text-text-secondary">this month</p>
         </div>
       </div>

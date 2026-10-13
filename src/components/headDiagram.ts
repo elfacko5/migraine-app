@@ -33,78 +33,149 @@ export interface DiagramView {
 }
 
 // ── Palette ─────────────────────────────────────────────────────────────
-export const HEAD_FILL = '#2b2823';
-// The head's silhouette. Dropped from 0.55 (and 4 wide) on 2026-09-03 — it was
-// the loudest mark in a diagram whose loudest mark should be the reading, and
-// on a screen the palette works to keep quiet. It can afford to go quiet
-// without losing anything: the outer edge of every edge zone is *also* drawn as
-// a divider, clipped to the same line, so the boundary information survives at
-// divider strength whatever the silhouette does.
-export const LINE_COLOR = 'rgba(208,216,230,0.4)';
-// The zone boundaries. **Do not take these down with the rest.** They measure
-// 3.15:1 against the head, which is the floor WCAG 1.4.11 asks of the visual
-// information that identifies a control, and here they are exactly that — the
-// lines that say where one tappable region ends and the next begins.
-export const DIVIDER_COLOR = 'rgba(208,216,230,0.45)';
-// The nostrils and eyelids. The quietest mark in the diagram, and deliberately
-// below the dividers: they identify nothing and record nothing, they only help
-// you find your bearings on the face. They shipped at LINE_COLOR, which put a
-// drawn eyelid at the same weight as the head's own edge.
-export const DETAIL_COLOR = 'rgba(208,216,230,0.26)';
-// Non-selectable regions — the ears, the front neck, and the jawline either
-// side of the back's neck.
+// An SVG presentation attribute can't read a CSS custom property, so every
+// value below is duplicated per theme rather than pulled from index.css —
+// and read through a function that takes the theme as an argument, rather
+// than a module constant, because this file is evaluated once at import and
+// a constant can't respond to `data-theme` changing later. `UiTheme` is
+// 'dark' | 'light' | 'attack'; attack mode reuses dark's diagram palette
+// unchanged (it re-hues surfaces and dims, not this — see docs/palette.md).
 //
-// **They are not a fifth surface tone, and that is the point.** They were
-// `#26241f`, one step darker than the head: correct in direction (at the
-// original `#a39d92` they were the *lightest* thing in the diagram, so the two
-// areas you cannot touch drew the eye first) but far too quiet to read as a
-// different class of thing — Sunny couldn't tell which parts were disabled
-// (2026-09-03). Tone cannot fix it: this palette's dark end is compressed, and
-// head-against-page is only 1.18:1 to begin with, so every candidate fill was
-// either invisible or brighter than the thing it sits beside.
-//
-// So the signal is **texture, not lightness** — a categorical difference where
-// the tonal range has none left to give. Three things together, and the hatch
-// is the one doing the work (the other two were tried alone and weren't
-// enough): the fill drops a step below every surface the diagram sits on, so
-// the region reads as a recess rather than as more head; it carries a 45°
-// hatch; and its outline is dimmed to `DISABLED_LINE`, because at full
-// `LINE_COLOR` the ears and neck still read as parts of the same drawn object.
-// Measured alternatives are in `docs/decisions.md`.
-export const DISABLED_FILL = '#1b1a18';
-export const DISABLED_HATCH = 'rgba(208,216,230,0.11)';
-export const DISABLED_LINE = 'rgba(208,216,230,0.28)';
-export const SELECTED_FILL = '#8fb096';
-export const HOVER_FILL = 'rgba(208,216,230,0.14)';
+// The light values are docs/palette.md's own table where it specifies one
+// (HEAD_FILL, DISABLED_FILL, the severity ramp and its edge shade, the badge
+// fill/text). Where that doc left a cell as "—" (LINE_COLOR, DIVIDER_COLOR,
+// DETAIL_COLOR, DISABLED_HATCH, DISABLED_LINE, HOVER_FILL), it's derived here
+// instead of guessed blind: the dark versions are all
+// `rgba(<near-white>, alpha)` at the same alphas regardless of which line
+// they're drawing, so the light versions use the same alphas against
+// light-mode's own `--color-text-primary` RGB (58,55,51) rather than
+// inventing a new hue — consistent with the "warm-neutral throughout" rule
+// and with HEAD_FILL/DISABLED_FILL already following the surface tokens.
+// **Not yet verified on a device** — docs/palette.md is explicit that this
+// palette as a whole hasn't had the photophobia check dark and attack mode
+// did, and these six values are the least-measured corner of it.
+import type { UiTheme } from '../hooks/useUiTheme';
 
-// Same low/mid/high thresholds and colours as the severity-* CSS tokens
-// (index.css) — used to tint each selected zone by its own severity.
-const SEVERITY_LOW = '#8fb096';
-const SEVERITY_MID = '#c39257';
-const SEVERITY_HIGH = '#c68880';
-
-export function sevFill(s: number): string {
-  if (s <= 3) return SEVERITY_LOW;
-  if (s <= 7) return SEVERITY_MID;
-  return SEVERITY_HIGH;
+interface DiagramPalette {
+  headFill: string;
+  lineColor: string;
+  dividerColor: string;
+  detailColor: string;
+  disabledFill: string;
+  disabledHatch: string;
+  disabledLine: string;
+  hoverFill: string;
+  severityLow: string;
+  severityMid: string;
+  severityHigh: string;
+  severityLowEdge: string;
+  severityMidEdge: string;
+  severityHighEdge: string;
+  badgeFill: string;
+  badgeText: string;
 }
 
-// A darker shade of each severity colour, for the outline on the zone the
-// slider is currently controlling.
-//
-// That outline used to be accent green, which meant a focused zone showed two
-// unrelated colours at once — its severity as fill, and "this one is focused"
-// as a bright ring — and the ring was the louder of the two on a screen the
-// palette works to keep quiet. Same hue, darker, reads as an edge of the shape
-// rather than a second signal competing with it.
-const SEVERITY_LOW_EDGE = '#5c7a63';
-const SEVERITY_MID_EDGE = '#7d5c35';
-const SEVERITY_HIGH_EDGE = '#7d554f';
+const DARK_PALETTE: DiagramPalette = {
+  headFill: '#2b2823',
+  // The head's silhouette. Dropped from 0.55 (and 4 wide) on 2026-09-03 — it
+  // was the loudest mark in a diagram whose loudest mark should be the
+  // reading. It can afford to go quiet without losing anything: the outer
+  // edge of every edge zone is *also* drawn as a divider, clipped to the same
+  // line, so the boundary survives at divider strength regardless.
+  lineColor: 'rgba(208,216,230,0.4)',
+  // The zone boundaries. **Do not take these down with the rest.** They
+  // measure 3.15:1 against the head, the floor WCAG 1.4.11 asks of the visual
+  // information that identifies a control, and here they are exactly that.
+  dividerColor: 'rgba(208,216,230,0.45)',
+  // The nostrils and eyelids — the quietest mark, deliberately below the
+  // dividers: they identify nothing and record nothing, they only help you
+  // find your bearings on the face.
+  detailColor: 'rgba(208,216,230,0.26)',
+  // Non-selectable regions — the ears, the front neck, the jawline either
+  // side of the back's neck. Not a fifth surface tone: this end of the
+  // palette has no tonal step left to give (head-against-page is 1.18:1), so
+  // the signal is texture — a step below every surface plus a 45° hatch —
+  // rather than lightness. Full reasoning in docs/decisions.md.
+  disabledFill: '#1b1a18',
+  disabledHatch: 'rgba(208,216,230,0.11)',
+  disabledLine: 'rgba(208,216,230,0.28)',
+  hoverFill: 'rgba(208,216,230,0.14)',
+  // Same low/mid/high thresholds and colours as the severity-* CSS tokens.
+  severityLow: '#8fb096',
+  severityMid: '#c39257',
+  severityHigh: '#c68880',
+  // A darker shade of each severity colour, for the outline on the zone the
+  // slider is currently controlling — same hue as the fill, darker, so focus
+  // reads as an edge of the shape rather than a second signal competing with
+  // the severity colour (which a green accent ring used to be).
+  severityLowEdge: '#5c7a63',
+  severityMidEdge: '#7d5c35',
+  severityHighEdge: '#7d554f',
+  badgeFill: '#1b1a18',
+  badgeText: '#cdc7bb',
+};
 
-export function sevStroke(s: number): string {
-  if (s <= 3) return SEVERITY_LOW_EDGE;
-  if (s <= 7) return SEVERITY_MID_EDGE;
-  return SEVERITY_HIGH_EDGE;
+const LIGHT_PALETTE: DiagramPalette = {
+  headFill: '#e7e1d5',
+  // **Alphas re-solved, not reused from dark.** The first pass kept dark's
+  // six alphas and only swapped the ink colour — which looked consistent on
+  // paper but isn't: dark's ink (208,216,230) is near-white against a
+  // near-black head, while light's ink (text-primary, 58,55,51) is only
+  // mid-dark against a much lighter head, so the same alpha produces a
+  // visibly fainter line. Measured (relative-luminance contrast against
+  // headFill/disabledFill): dark's dividerColor is 3.28:1, the one value
+  // in this set with a hard floor (WCAG 1.4.11, "do not take this down with
+  // the rest" — it's the line marking a tappable region's edge), and the
+  // same-alpha light version came out at 2.30:1, under the floor. Each alpha
+  // below is solved to reproduce dark's own contrast ratio against its own
+  // background instead, using the formula in docs/palette.md's contrast
+  // audits. Found on a physical device (2026-09-25) — not caught in the
+  // browser preview, which is the reminder to actually check contrast
+  // numbers rather than eyeball a screenshot.
+  lineColor: 'rgba(58,55,51,0.55)',
+  dividerColor: 'rgba(58,55,51,0.61)',
+  detailColor: 'rgba(58,55,51,0.38)',
+  disabledFill: '#efeae0',
+  disabledHatch: 'rgba(58,55,51,0.15)',
+  disabledLine: 'rgba(58,55,51,0.40)',
+  hoverFill: 'rgba(58,55,51,0.21)',
+  severityLow: '#3f6249',
+  severityMid: '#7b5020',
+  severityHigh: '#82423b',
+  severityLowEdge: '#1b3325',
+  severityMidEdge: '#3d2609',
+  severityHighEdge: '#441d19',
+  badgeFill: '#f5f2ec',
+  badgeText: '#3a3733',
+};
+
+function paletteFor(theme: UiTheme): DiagramPalette {
+  return theme === 'light' ? LIGHT_PALETTE : DARK_PALETTE;
+}
+
+export function headFill(theme: UiTheme = 'dark'): string { return paletteFor(theme).headFill; }
+export function lineColor(theme: UiTheme = 'dark'): string { return paletteFor(theme).lineColor; }
+export function dividerColor(theme: UiTheme = 'dark'): string { return paletteFor(theme).dividerColor; }
+export function detailColor(theme: UiTheme = 'dark'): string { return paletteFor(theme).detailColor; }
+export function disabledFill(theme: UiTheme = 'dark'): string { return paletteFor(theme).disabledFill; }
+export function disabledHatch(theme: UiTheme = 'dark'): string { return paletteFor(theme).disabledHatch; }
+export function disabledLine(theme: UiTheme = 'dark'): string { return paletteFor(theme).disabledLine; }
+export function hoverFill(theme: UiTheme = 'dark'): string { return paletteFor(theme).hoverFill; }
+export function badgeFill(theme: UiTheme = 'dark'): string { return paletteFor(theme).badgeFill; }
+export function badgeText(theme: UiTheme = 'dark'): string { return paletteFor(theme).badgeText; }
+
+export function sevFill(s: number, theme: UiTheme = 'dark'): string {
+  const p = paletteFor(theme);
+  if (s <= 3) return p.severityLow;
+  if (s <= 7) return p.severityMid;
+  return p.severityHigh;
+}
+
+export function sevStroke(s: number, theme: UiTheme = 'dark'): string {
+  const p = paletteFor(theme);
+  if (s <= 3) return p.severityLowEdge;
+  if (s <= 7) return p.severityMidEdge;
+  return p.severityHighEdge;
 }
 
 // ── FRONT ────────────────────────────────────────────────────────────────
