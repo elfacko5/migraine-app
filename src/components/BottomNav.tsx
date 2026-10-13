@@ -50,7 +50,7 @@ interface Props {
   onChange: (tab: Tab) => void;
   onAdd: () => void;
   /**
-   * What the FAB does right now — "Log a migraine", or "Add update" while an
+   * What the FAB does right now — "Log an attack", or "Add update" while an
    * attack is ongoing. It is a bare plus with no visible label, so this is the
    * only thing a screen reader has to go on, and the action genuinely changes.
    */

@@ -619,7 +619,7 @@ export default function App() {
         // say which one it is. It was hardcoded "Log a migraine" while opening
         // Add update whenever an attack was ongoing, which announced the wrong
         // action to a screen reader.
-        addLabel={ongoingAttack ? 'Add update' : 'Log a migraine'}
+        addLabel={ongoingAttack ? 'Add update' : 'Log an attack'}
       />
 
       {/* Log attack sheet */}
