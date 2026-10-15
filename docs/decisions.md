@@ -1396,6 +1396,20 @@ device end to end.
     migraine", which is a different register and fine. Check the label in
     `App.tsx` where `addLabel` is passed, and nowhere else.
 
+17. **The keyboard covers the field you just tapped, inside a Sheet**
+    (found 2026-10-15, on device, during the CODE Design System's Base UI
+    test). Tap a text field in the lower half of a sheet and the keyboard
+    opens over the bottom of it. Reproduced in **Add medication** and in the
+    spike's test sheet, so it belongs to `Sheet` and the viewport handling,
+    not to any one form. **Not diagnosed.** The likely area: the shell
+    shrinks to `visualViewport.height` and shifts by `offsetTop` (see
+    `docs/viewport-architecture.md`), but nothing then scrolls the sheet's
+    own scroll region to keep the focused field clear of the keyboard.
+    Measure it on the phone with Safari's Web Inspector before changing
+    anything; that doc records two wrong fixes made from screenshots. Fix on
+    `main`. The design system's Sheet is extracted from this one, so it
+    inherits the fix.
+
 **P3 — open by choice, needs Sunny's eye**
 
 9. ~~**Redraw the head diagram's disabled areas.**~~ **Done 2026-09-02/03.**
