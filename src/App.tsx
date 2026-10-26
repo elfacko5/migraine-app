@@ -517,8 +517,14 @@ export default function App() {
           style={{ paddingBottom: `calc(${tab === 'log' ? '7rem' : '10rem'} + env(safe-area-inset-bottom))` }}
         >
         {/* ── Today tab ───────────────────────────── */}
+        {/* Order, top to bottom (v3, 2026-10-26): hero → impact question →
+            week card → two-hour check-in → the ongoing dose → overuse
+            warnings → the two tiles → the medication card → HIT-6. Roughly
+            "what bears on the next hour" first and "what can wait" last. In
+            attack mode only the hero, impact, check-in and dose survive.
+            14px between blocks, to the v3 spec — the other tabs keep 16. */}
         {tab === 'log' && (
-          <section className="space-y-4">
+          <section className="space-y-3.5">
             {ongoingAttack && (
               <OngoingAttackBanner
                 attack={ongoingAttack}
