@@ -2033,3 +2033,15 @@ Built after Today v3 from the v3.1 prototype (`Lidd redesign explorations/lidd-v
 - **The medication editor follows** (same day): Quantity and Unit are radio chips rather than dropdowns, since six quantities and seven units fit on screen and a visible choice is one tap where a picker is three. Type is four badge tiles (T / C / P / –) where tapping the chosen one again clears it, the "not set" answer a radio group can't otherwise give. Inputs use a control ring, not a border. Required fields, More info and the guideline-only-as-placeholder rule are unchanged. Verified on 5175 in dark and light: adding an acute and a preventive medication, editing one, and clearing a type.
 
 **Verified** at 375px on 5175, signed out: the menu, the Display page in dark and light, Atkinson loading and taking over the body face, the system-size switch falling back to 16px on desktop Chromium and restoring the chosen step when turned off, and auto attack mode turning on after logging an ongoing attack through the real wizard. **Not verified:** the text size against real Dynamic Type on a device, and Atkinson's look on device.
+
+## Logs and attack detail, v3 (2026-10-26)
+
+Rebuilt from the v3.1 artboards' Logs and Attack detail frames on Sunny's ask: "logs: length, peak, side, did it help".
+
+- **The row carries exactly those four**, each in one place: length in the title, peak as the badge, side as the head (and in words), did it help as the subtitle. It reverses the 2026-08 row (duration plus time-weighted average as the headline, medication and symptom chips, impact, a sparkline). That row was being read rather than scanned, and it never said whether the treatment worked, which is the most actionable fact about acute treatment.
+- **"Did it help" uses the one two-hour rule.** `followUpReading` and `doseHelped` were lifted out of `medicationResponse` so Insights, Today's check-in and the row can't disagree. It takes the first dose of each drug, because the trial endpoint is about that dose; a later dose is usually the answer to the first not working. A missing reading is said as missing, never as "didn't help", which would be a claim about the drug the diary can't support.
+- **The badge is neutral, not severity-coloured**, as in the design; the number carries the value. This departs from the shared-ramp rule on the old row.
+- **Date headers only while the sort is by date.** Under severity, length or impact, headers would scatter, so the row carries its own date instead.
+- **Attack detail keeps Delete in the top bar and its X**, though the v3.1 frame has a back arrow and a Delete button in the body. The X is the bottom-sheet contrast this app keeps, and Delete away from the footer is the mis-tap rule. The breakdown and timeline stay below the new cards, since the design's frame has no equivalent and dropping them would hide the readings.
+
+**Verified** at 375px on 5175, signed out: all four verdicts on seeded attacks, date headers (Today, Yesterday, dates), and the detail sheet's cards. **Not verified:** on a device; a medication's class badge on the detail sheet (5175 had no library at the time, so it showed the form icon).
