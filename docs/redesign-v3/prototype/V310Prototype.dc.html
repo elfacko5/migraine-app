@@ -1,0 +1,1677 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd v3.10 prototype</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&amp;family=Inter:wght@400;600&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.root{--ts:1;--tsh:1;--ff:Lexend,Inter,sans-serif;width:390px;height:844px;position:relative;overflow:hidden;background:var(--bg);color:var(--tx);font-family:var(--ff);line-height:1.4}
+.t-light{--bg:#F5F2EC;--sf:#ECE7DD;--sf2:#E2DCD0;--tx:#2A2724;--mu:#6B655C;--ac:#6E8B74;--acs:#56705C;--acx:#F5F2EC;--acsoft:#DCE4DA;--acline:#6E8B74;--bd:#D8D2C6;--warn:#B07A3C;--warnbg:#EFE4D3;--danger:#A65A52;--tab:#EFEBE4;--dim:rgba(42,39,36,.45);--sheet:#F5F2EC;--ill1:#C9A98A;--ill2:#A9BFAD}
+.t-dark{--bg:#1B1A18;--sf:#262421;--sf2:#302D29;--tx:#E4DFD6;--mu:#A39D92;--ac:#7FA187;--acs:#7FA187;--acx:#1B1A18;--acsoft:#2E3A31;--acline:#7FA187;--bd:#3A3733;--warn:#C29A62;--warnbg:#2E2820;--danger:#C98B82;--tab:#211F1C;--dim:rgba(0,0,0,.55);--sheet:#232120;--ill1:#8C735E;--ill2:#5E7363}
+.f-atk{--ff:'Atkinson Hyperlegible',Lexend,sans-serif}
+.am{--bg:#14140F;--sf:#1E1E17;--sf2:#26261E;--tx:#C9C4B8;--mu:#9A958A;--ac:#7FA187;--acs:#2B3A2E;--acx:#D2DCCF;--acsoft:#25301F;--acline:#6F8F76;--bd:#2E2E25;--sheet:#1A1A14;background:#14140F;color:#C9C4B8}
+.root button,.root input,.root textarea{font-family:inherit;line-height:1.25}
+.scr{position:absolute;left:0;right:0;top:0;bottom:0;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;padding:56px 16px 140px;background:var(--bg)}
+.scr.tb{bottom:88px;padding-bottom:28px}
+.col{display:flex;flex-direction:column;gap:14px}
+.hdr{display:flex;align-items:center;justify-content:space-between;min-height:44px;margin:-8px -12px 6px}
+.ht{margin:0;font-size:calc(var(--f17,17px)*var(--ts));font-weight:600}
+.icb{width:44px;height:44px;border-radius:22px;border:0;background:transparent;color:var(--tx);display:flex;align-items:center;justify-content:center;flex:none}
+.big{margin:0;font-size:calc(30px*var(--tsh));font-weight:600;line-height:1.15}
+.h2{margin:0;font-size:calc(var(--f19,19px)*var(--ts));font-weight:600}
+.sub{margin:0;font-size:calc(var(--f14,14px)*var(--ts));color:var(--mu)}
+.lbl{margin:0;font-size:calc(var(--f14,14px)*var(--ts));font-weight:500;color:var(--mu)}
+.card{background:var(--sf);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tiles.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tiles.four{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tile{position:relative;min-height:86px;border-radius:20px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:calc(var(--f15,15px)*var(--ts));padding:8px 4px;text-align:center}
+.tile svg{width:28px;height:28px;flex:none}
+.tiles.two .tile{min-height:120px;font-size:calc(var(--f18,18px)*var(--ts));gap:10px}
+.tiles.two .tile svg{width:36px;height:36px}
+.tiles.four .tile{min-height:76px;font-size:calc(var(--f14,14px)*var(--ts))}
+.tiles.four .tile svg{width:24px;height:24px}
+.tile.on{background:var(--acsoft);border:2px solid var(--acline);font-weight:600}
+.tile.multi.on::after{content:"✓";position:absolute;top:6px;right:10px;font-size:calc(var(--f14,14px)*var(--ts));font-weight:700;color:var(--acs)}
+.tile.single::before{content:"";position:absolute;top:9px;right:9px;width:14px;height:14px;border-radius:7px;border:2px solid var(--mu);box-sizing:border-box}
+.tile.single.on::before{border:5px solid var(--acs)}
+.mb{width:36px;height:36px;border-radius:10px;background:var(--bg);border:1.5px solid var(--acline);display:flex;align-items:center;justify-content:center;font-size:calc(var(--f16,16px)*var(--ts));font-weight:700}
+.segs{display:flex;gap:4px;padding:4px;background:var(--sf);border-radius:14px}
+.seg{flex:1;min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--tx);font-size:calc(var(--f15,15px)*var(--ts))}
+.seg.on{background:var(--acsoft);font-weight:600;box-shadow:inset 0 0 0 1.5px var(--acline)}
+.bp{flex:1;width:100%;min-height:56px;border-radius:16px;border:0;background:var(--acs);color:var(--acx);font-size:calc(var(--f17,17px)*var(--ts));font-weight:600;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px}
+.bp.off{opacity:.45}
+.bs{flex:1;width:100%;min-height:56px;border-radius:16px;border:1px solid var(--bd);background:transparent;color:var(--tx);font-size:calc(var(--f17,17px)*var(--ts));font-weight:500}
+.bd{flex:1;width:100%;min-height:56px;border-radius:16px;border:1px solid var(--danger);background:transparent;color:var(--danger);font-size:calc(var(--f17,17px)*var(--ts));font-weight:500}
+.bt{min-height:44px;border:0;background:none;color:var(--acs);font-size:calc(var(--f16,16px)*var(--ts));font-weight:500;padding:0 6px}
+.bar{position:absolute;left:0;right:0;bottom:0;padding:10px 16px 30px;background:var(--bg);display:flex;flex-direction:column;gap:6px;z-index:3}
+.why{margin:0;text-align:center;font-size:calc(var(--f14,14px)*var(--ts));color:var(--mu)}
+.grp{background:var(--sf);border-radius:16px;overflow:hidden}
+.r{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 14px;box-sizing:border-box;border:0;border-top:1px solid var(--bd);background:none;color:var(--tx);text-align:left;font-size:calc(var(--f16,16px)*var(--ts))}
+.r:first-child{border-top:0}
+.r .tx{flex:1;min-width:0}
+.r .v{font-size:calc(var(--f14,14px)*var(--ts));color:var(--mu)}
+.tg{position:relative;width:51px;height:31px;border-radius:16px;border:0;background:var(--sf2);box-shadow:inset 0 0 0 1px var(--bd);flex:none;padding:0}
+.tg .k{position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:14px;background:#F5F2EC;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.tg.on{background:var(--acs)}
+.tg.on .k{left:22px}
+.scale{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.pn{height:52px;border-radius:14px;border:1px solid var(--bd);color:var(--tx);font-size:calc(var(--f19,19px)*var(--ts));font-weight:600}
+.pn.on{outline:3px solid var(--tx);outline-offset:1px}
+.pn.was{border:2px dashed var(--tx)}
+.dock{display:flex;flex-direction:column;gap:8px;margin:-10px -16px 4px;padding:12px 16px 4px;border-top:1px solid var(--bd);border-radius:20px 20px 0 0;background:var(--sf)}
+.stp{width:52px;height:52px;border-radius:26px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:calc(22px*var(--ts))}
+.track{display:block;height:8px;border-radius:4px;background:var(--sf2);overflow:hidden;position:relative}
+.fill{display:block;height:8px;border-radius:4px;background:var(--ac)}
+.fill.hi{background:var(--warn)}
+.tabs{position:absolute;left:0;right:0;bottom:0;height:88px;background:var(--tab);border-top:1px solid var(--bd);display:flex;align-items:flex-start;padding:6px 8px 0;box-sizing:border-box;z-index:4}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;color:var(--mu);font-size:14px;min-height:50px;justify-content:center}
+.tab.on{color:var(--acs);font-weight:600}
+.plus{width:58px;height:58px;border-radius:29px;border:0;background:var(--acs);color:var(--acx);margin:-4px 6px 0;display:flex;align-items:center;justify-content:center;flex:none}
+.dim{position:absolute;left:0;top:0;right:0;bottom:0;background:var(--dim);z-index:5;border:0;width:100%;padding:0}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--sheet);border-radius:28px 28px 0 0;padding:10px 16px 30px;display:flex;flex-direction:column;gap:12px;z-index:6;box-sizing:border-box}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--bd);align-self:center;flex:none}
+.pill{min-height:44px;padding:0 14px;border-radius:22px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:calc(var(--f15,15px)*var(--ts));font-weight:500;display:flex;align-items:center;gap:8px}
+.dots{display:flex;gap:8px;justify-content:center}
+.dots span{width:8px;height:8px;border-radius:4px;background:var(--sf2)}
+.dots span.on{background:var(--tx);width:22px}
+.warn{display:flex;gap:10px;align-items:center;background:var(--warnbg);border-radius:14px;padding:12px;color:var(--tx);font-size:calc(var(--f15,15px)*var(--ts))}
+.badge{width:44px;height:44px;border-radius:12px;background:var(--sf2);color:var(--tx);display:flex;align-items:center;justify-content:center;font-size:calc(var(--f18,18px)*var(--ts));font-weight:600;flex:none}
+.head{position:relative;height:262px;margin:0 -4px}
+.zh{position:absolute;border:0;background:transparent;color:var(--tx);font-size:calc(var(--f19,19px)*var(--ts));font-weight:700;padding:0;border-radius:14px}
+.zh.act{box-shadow:0 0 0 3px var(--tx)}
+.flag{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid var(--warn);background:transparent;color:var(--tx);font-size:calc(var(--f16,16px)*var(--ts));font-weight:500}
+.wk{display:flex;justify-content:space-between}
+.wd{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:calc(var(--f14,14px)*var(--ts));color:var(--mu);width:40px}
+.wd i{display:block;width:30px;height:30px;border-radius:15px;border:1.5px solid var(--bd);box-sizing:border-box;position:relative}
+.wd i.ck,.wd i.mg{background:var(--ac);border-color:var(--ac)}
+.wd i.mg::after{content:"";position:absolute;left:9px;top:9px;width:9px;height:9px;border-radius:2px;background:var(--bg);transform:rotate(45deg)}
+.wd i.td{border:2px solid var(--tx)}
+.wd i.hd{border:2px solid var(--ac)}
+.wd i.hd::after{content:"";position:absolute;left:9px;top:9px;width:8px;height:8px;border-radius:4px;background:var(--ac)}
+.lg{display:block;position:relative;width:16px;height:16px;border-radius:8px;box-sizing:border-box}
+.lg.mg{background:var(--ac)}
+.lg.mg::after{content:"";position:absolute;left:5px;top:5px;width:6px;height:6px;border-radius:1px;background:var(--sf);transform:rotate(45deg)}
+.lg.hd{border:2px solid var(--ac)}
+.lg.hd::after{content:"";position:absolute;left:4px;top:4px;width:4px;height:4px;border-radius:2px;background:var(--ac)}
+.info{width:44px;height:44px;border-radius:22px;border:1px solid var(--bd);background:transparent;color:var(--mu);font-size:calc(var(--f16,16px)*var(--ts));font-weight:600;flex:none}
+.amtop{display:flex;align-items:center;justify-content:space-between}
+.amx{min-height:52px;padding:0 20px;border-radius:26px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:calc(var(--f18,18px)*var(--ts));font-weight:500}
+.amp{width:100%;min-height:84px;border-radius:24px;border:0;background:var(--acs);color:var(--acx);font-size:calc(24px*var(--ts));font-weight:600}
+.ams{width:100%;min-height:68px;border-radius:24px;border:1px solid var(--bd);background:transparent;color:var(--tx);font-size:calc(22px*var(--ts));font-weight:500}
+.amg{height:72px;border-radius:20px;border:1px solid var(--bd);color:var(--tx);font-size:calc(26px*var(--tsh));font-weight:600}
+.amg.on{outline:3px solid var(--tx);outline-offset:1px}
+.toast{position:absolute;left:16px;right:16px;top:56px;z-index:7;background:var(--tx);color:var(--bg);border-radius:16px;padding:6px 6px 6px 16px;font-size:calc(var(--f16,16px)*var(--ts));display:flex;justify-content:space-between;align-items:center;gap:8px}
+.toast button{min-height:44px;padding:0 14px;border:0;border-radius:12px;background:transparent;color:var(--bg);font-size:calc(var(--f16,16px)*var(--ts));font-weight:600;text-decoration:underline}
+.ring{width:64px;height:64px;flex:none}
+.mini{display:flex;gap:6px;align-items:center;color:var(--mu)}
+.mini svg{width:22px;height:22px}
+.dotrow{display:flex;gap:6px}
+.dotrow i{width:18px;height:18px;border-radius:9px;border:2px solid var(--mu);box-sizing:border-box;display:block}
+.dotrow i.y{background:var(--ac);border-color:var(--ac)}
+/* ===== v3.3 · Today hero: one object in every state; the page around it is what changes ===== */
+.hero{position:relative;margin:0 -16px;min-height:320px;display:flex;align-items:center;overflow:hidden}
+.hero .art{position:absolute;right:0;top:40px;width:64%;height:calc(100% - 40px)}
+.hero .hfade{position:absolute;left:0;top:0;right:0;bottom:0;background:linear-gradient(90deg,var(--bg) 40%,color-mix(in srgb,var(--bg),transparent 100%) 85%),linear-gradient(0deg,var(--bg) 0%,color-mix(in srgb,var(--bg),transparent 100%) 30%),linear-gradient(180deg,var(--bg) 10%,color-mix(in srgb,var(--bg),transparent 100%) 32%)}
+.hero .htop{position:absolute;left:16px;right:16px;top:54px;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hero .htxt{position:relative;z-index:2;padding:110px 24px 24px;max-width:64%;display:flex;flex-direction:column}
+.hk{margin:0 0 4px;font-size:calc(var(--f16,16px)*var(--ts));font-weight:500;color:var(--mu)}
+.hh{margin:0;font-size:calc(44px*var(--tsh));font-weight:600;line-height:1.05;white-space:nowrap}
+.hd{margin:16px 0 0;font-size:calc(var(--f17,17px)*var(--ts))}
+.spark{display:block;width:200px;height:48px;margin-top:14px}
+.spark + .hd{margin-top:8px}
+.hact{margin-top:24px;display:flex;gap:10px}
+.bcomp{min-height:48px;padding:0 20px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:calc(var(--f16,16px)*var(--ts));font-weight:500}
+.am .hero{min-height:300px}
+.am .hero .art{opacity:.35}
+.am .hh{font-size:calc(60px*var(--tsh))}
+.am .hd{font-size:calc(22px*var(--ts))}
+.am .spark{width:220px;height:56px}
+.ovline{display:flex;gap:10px;align-items:flex-start;background:var(--warnbg);border-radius:12px;padding:10px 12px;font-size:calc(var(--f15,15px)*var(--ts))}
+.am .ovx{display:none}
+/* ===== v3.9 · form fields: control outline at 3:1 against the page (#8E877B on #F5F2EC = 3.18) ===== */
+.t-light{--ctl:#8E877B}
+.t-dark{--ctl:#6E685F}
+.in{width:100%;box-sizing:border-box;min-height:52px;border-radius:14px;border:1.5px solid var(--ctl);background:var(--bg);color:var(--tx);font-family:inherit;font-size:calc(var(--f17,17px)*var(--ts));padding:0 14px}
+.in::placeholder{color:var(--mu)}
+.fl{display:flex;flex-direction:column;gap:8px;margin:0}
+/* ===== v3.10 · logs ===== */
+.lrow{border:0;color:inherit;font:inherit;text-align:left;gap:6px;padding:14px 16px}
+.lr1{display:flex;align-items:center;gap:8px}
+.lh{font-size:calc(24px*var(--ts));font-weight:600;line-height:1.1}
+.pk{min-width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;border:1px solid var(--bd);box-sizing:border-box;margin-left:6px}
+.lr3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:30px}
+.mchip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 2px;border-radius:10px;background:var(--bg)}
+.mb.ms{width:26px;height:26px;border-radius:8px;font-size:calc(var(--f14,14px)*var(--ts))}
+.symi{color:var(--mu);display:inline-flex}
+.stt{align-items:center;gap:2px;padding:14px 8px;text-align:center}
+.stn{font-size:calc(26px*var(--tsh));font-weight:600;line-height:1.15}
+.res{display:flex;align-items:center;gap:8px;font-size:calc(var(--f15,15px)*var(--ts));padding:8px 10px;border-radius:10px;background:var(--bg)}
+.res.ok{box-shadow:inset 0 0 0 1.5px var(--acline)}
+/* ===== v3.2 ===== */
+.root :focus-visible{outline:3px solid var(--acline);outline-offset:2px}
+.t-light{--dangerfill:#964D46;--dangertx:#F5F2EC}
+.t-dark{--dangerfill:#C98B82;--dangertx:#1B1A18}
+/* Attack-mode type floor, dossier 8.3: nothing under 20px. Every size below 20 reads var(--fN), so one rule lifts them all. */
+.am{--f14:20px;--f15:20px;--f16:20px;--f17:20px;--f18:20px;--f19:22px}
+.am .bp,.am .bs,.am .bd{font-size:calc(22px*var(--ts));min-height:64px}
+.am .tiles,.am .tiles.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.am .tiles.four .tile{min-height:88px}
+.am .tile svg,.am .tiles.four .tile svg{width:32px;height:32px}
+.am .tile.multi.on::after{font-size:18px}
+.am .tile.single::before{width:18px;height:18px;border-radius:9px}
+.am .tile.single.on::before{border-width:6px}
+.am .scale{grid-template-columns:repeat(4,minmax(0,1fr))}
+.am .pn{height:60px}
+.am .head text{font-size:18px}
+.amtop .grpb{display:flex;gap:8px;align-items:center}
+.dimpill{min-height:52px;padding:0 16px;border-radius:26px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:calc(20px*var(--ts));font-weight:500;display:flex;align-items:center;gap:8px}
+/* Screen comfort: brightness is the phone's backlight on device (contrast-neutral). Simulated here with a scrim. Warmth is an in-app multiply that cuts blue. */
+.ovl{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:20}
+.ovl.warm{mix-blend-mode:multiply;background:rgb(255,186,120)}
+.ovl.bright{background:rgb(20,20,15)}
+.wm.t-light{--mu:#5E584F}
+.sw{display:block;width:30px;height:30px;border-radius:15px;border:1.5px solid var(--bd)}
+.sun{width:36px;height:36px}
+.sim{position:absolute;left:12px;bottom:6px;margin:0;z-index:21;font-size:14px;color:#9A958A;pointer-events:none;font-family:Lexend,sans-serif}
+/* Year of birth */
+.yr{min-height:64px;border-radius:14px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:calc(var(--f16,16px)*var(--ts));font-weight:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px 2px}
+.yr::before{content:"";width:14px;height:14px;border-radius:7px;border:2px solid var(--mu);box-sizing:border-box;flex:none}
+.yr.on{background:var(--acsoft);border:2px solid var(--acline);font-weight:600}
+.yr.on::before{border:5px solid var(--acs)}
+.yrs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.yrs.dec{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ax2 .yrs,.ax2 .yrs.dec{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ax3 .yrs,.ax3 .yrs.dec,.ax5 .yrs,.ax5 .yrs.dec{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tiles.three,.am .tiles.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+/* Red-flag tiers */
+.tier{border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.tier.now{background:var(--warnbg);box-shadow:inset 0 0 0 2px var(--danger)}
+.tier.soon{background:var(--warnbg)}
+.tier p{margin:0}
+.tier .tt{display:flex;gap:10px;align-items:flex-start;font-size:calc(var(--f16,16px)*var(--ts));font-weight:600}
+.b112{flex:none;width:100%;min-height:60px;border-radius:16px;border:0;background:var(--dangerfill);color:var(--dangertx);font-size:calc(var(--f18,18px)*var(--ts));font-weight:600;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px}
+.lnk{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;flex:none}
+/* List view: picker opens inside the row */
+.rv{min-width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--tx);border:1px solid var(--bd);box-sizing:border-box;padding:0 6px}
+.r.open{background:var(--acsoft)}
+.rowpick{padding:4px 14px 14px;display:flex;flex-direction:column;gap:8px;background:var(--acsoft)}
+/* Dynamic Type. iOS body: Large 17pt, AX2 33 (194%), AX3 40 (235%), AX5 53 (312%). Headings scale less, as iOS does. */
+.ax2{--ts:1.94;--tsh:1.5}
+.ax3{--ts:2.35;--tsh:1.7}
+.ax5{--ts:3.12;--tsh:2.07}
+.ax2 .scr,.ax3 .scr,.ax5 .scr{padding-bottom:calc(150px + 60px*var(--ts))}
+.ax2 .scr.tb,.ax3 .scr.tb,.ax5 .scr.tb{padding-bottom:28px}
+.ax2 .ht,.ax3 .ht,.ax5 .ht{text-align:center;padding:0 4px}
+.ax2 .hdr,.ax3 .hdr,.ax5 .hdr{align-items:flex-start}
+.ax2 .segs,.ax3 .segs,.ax5 .segs{flex-wrap:wrap}
+.ax2 .seg,.ax3 .seg,.ax5 .seg{flex:1 1 40%;padding:8px}
+.ax2 .r,.ax3 .r,.ax5 .r{padding:12px 16px}
+.ax2 .rv,.ax3 .rv,.ax5 .rv{min-width:calc(36px*var(--tsh));height:calc(36px*var(--tsh))}
+.ax2 .mb,.ax3 .mb,.ax5 .mb{width:auto;min-width:calc(36px*var(--tsh));height:calc(36px*var(--tsh))}
+.ax2 .flag,.ax3 .flag,.ax5 .flag{padding:10px 14px;text-align:left}
+.ax2 .tiles,.ax2 .tiles.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ax2 .tiles .tile,.ax2 .tiles.four .tile{min-height:132px;padding:14px 8px}
+.ax2 .tile svg,.ax2 .tiles.four .tile svg{width:44px;height:44px}
+.ax2 .tile.multi.on::after{top:8px;right:12px}
+.ax2 .scale{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ax2 .pn{height:auto;min-height:72px}
+.ax3 .tiles,.ax3 .tiles.two,.ax3 .tiles.four,.ax5 .tiles,.ax5 .tiles.two,.ax5 .tiles.four{grid-template-columns:minmax(0,1fr)}
+.ax3 .tiles .tile,.ax3 .tiles.two .tile,.ax3 .tiles.four .tile,.ax5 .tiles .tile,.ax5 .tiles.two .tile,.ax5 .tiles.four .tile{flex-direction:row;justify-content:flex-start;text-align:left;min-height:80px;padding:14px 64px 14px 18px;gap:16px}
+.ax3 .tile svg,.ax3 .tiles.two .tile svg,.ax3 .tiles.four .tile svg,.ax5 .tile svg,.ax5 .tiles.two .tile svg,.ax5 .tiles.four .tile svg{width:calc(24px*var(--tsh));height:calc(24px*var(--tsh))}
+.ax3 .tile.multi.on::after,.ax5 .tile.multi.on::after{top:50%;right:20px;transform:translateY(-50%);font-size:calc(20px*var(--tsh))}
+.ax3 .tile.single::before,.ax5 .tile.single::before{top:50%;right:20px;transform:translateY(-50%);width:28px;height:28px;border-radius:14px}
+.ax3 .scale,.ax5 .scale{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ax3 .pn,.ax5 .pn{height:auto;min-height:84px}
+</style>
+</helmet>
+<div class="root {{ v.themeCls }} {{ v.fontCls }} {{ v.tsCls }} {{ v.wmCls }}">
+
+<!-- ============ ONBOARDING ============ -->
+<sc-if value="{{ is.onb1 }}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="padding-top: 0">
+<svg width="390" height="330" viewBox="0 0 390 330" aria-hidden="true" style="display: block; margin: 0 -16px">
+<circle cx="240" cy="140" r="80" fill="var(--ill1)" fill-opacity="0.25"></circle>
+<circle cx="240" cy="140" r="48" fill="var(--ill1)" fill-opacity="0.85"></circle>
+<path d="M300 60c40-14 72 14 68 54-4 34-34 44-58 30-20-14-34-68-10-84z" fill="var(--ill2)"></path>
+<path d="M90 330c22-84 130-130 300-114v114z" fill="var(--ill1)" fill-opacity="0.5"></path>
+<path d="M40 290c34-48 80-104 160-150" stroke="var(--ac)" stroke-width="1.5" fill="none"></path>
+<ellipse cx="84" cy="236" rx="13" ry="24" transform="rotate(35 84 236)" fill="var(--ill2)"></ellipse>
+</svg>
+<div style="padding: 10px 8px 0" class="col"><p class="big" style="font-size: calc(32px*var(--tsh))">A calm diary for your migraines</p><p class="sub" style="font-size: calc(var(--f16,16px)*var(--ts))">Log in a few taps. See your own patterns.</p></div>
+</div>
+<div class="bar"><button class="bp" onClick="{{ go.onb2 }}">Get started</button><button class="bt" style="color: var(--tx)" onClick="{{ go.today }}">Skip setup</button></div>
+</sc-if>
+
+<sc-if value="{{ is.onb2 }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.onb1 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 1 of 5"><span class="on"></span><span></span><span></span><span></span><span></span></div><button class="bt" style="color: var(--tx)" onClick="{{ a.toOnbDose }}">Skip</button></div>
+<p class="big">What do you take for an attack?</p>
+<div class="tiles"><sc-for list="{{ sets.onbMeds }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><span class="mb">{{ it.badge }}</span>{{ it.l }}</button></sc-for></div>
+<p class="sub">T triptan · C combination · P painkiller · G gepant</p>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ a.toOnbDose }}">Next</button></div>
+</sc-if>
+
+<!-- v3.9 · one dose of each picked medication -->
+<sc-if value="{{ is.onbDose }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.onb2 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 2 of 5"><span></span><span class="on"></span><span></span><span></span><span></span></div><button class="bt" style="color: var(--tx)" onClick="{{ go.onb3 }}">Skip</button></div>
+<p class="big">How much is one dose?</p>
+<p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts)); margin-top: -8px">As on your label or prescription. You can change it later in Settings.</p>
+<sc-for list="{{ onbDoseRows }}" as="m" hint-placeholder-count="2">
+<div class="card" style="gap: 10px">
+<div style="display: flex; align-items: center; gap: 10px"><span class="mb">{{ m.badge }}</span><span style="font-size: calc(var(--f17,17px)*var(--ts)); font-weight: 600">{{ m.name }}</span></div>
+<div style="display: flex; align-items: center; gap: 8px"><input class="in" style="flex: 1; min-width: 0" aria-label="{{ m.name }} strength" placeholder="Strength, e.g. 50 mg" value="{{ m.strength }}" onChange="{{ m.setStrength }}"><button class="stp" aria-label="One fewer" onClick="{{ m.down }}">−</button><span style="min-width: 64px; text-align: center; font-weight: 600; font-size: calc(var(--f15,15px)*var(--ts))">{{ m.qtyText }}</span><button class="stp" aria-label="One more" onClick="{{ m.up }}">+</button></div>
+</div>
+</sc-for>
+<sc-if value="{{ is.noOnbMeds }}" hint-placeholder-val="{{ false }}"><div class="card"><p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts))">No medication picked. You can add it any time in Settings.</p></div></sc-if>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ go.onb3 }}">Next</button></div>
+</sc-if>
+
+<sc-if value="{{ is.onb3 }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.onbDose }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 3 of 5"><span></span><span></span><span class="on"></span><span></span><span></span></div><button class="bt" style="color: var(--tx)" onClick="{{ go.onbAge }}">Skip</button></div>
+<p class="big">What usually comes with it?</p>
+<div class="tiles"><sc-for list="{{ sets.onbSym }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ go.onbAge }}">Next</button></div>
+</sc-if>
+
+<!-- v3.2 · year of birth, for the SNOOP "new headache after 50" check -->
+<sc-if value="{{ is.onbAge }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.onb3 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 4 of 5"><span></span><span></span><span></span><span class="on"></span><span></span></div><button class="bt" style="color: var(--tx)" onClick="{{ go.onb4 }}">Skip</button></div>
+<p class="big">When were you born?</p>
+<div class="card" style="flex-direction: row; align-items: flex-start; gap: 12px; padding: 12px 14px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg><p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts))">Headaches that first start after 50 are worth a doctor's check. Lidd only uses your age for that. It stays on this phone.</p></div>
+<div class="yrs dec" role="radiogroup" aria-label="Decade you were born"><sc-for list="{{ decades }}" as="it" hint-placeholder-count="8"><button class="yr {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}">{{ it.l }}</button></sc-for></div>
+<sc-if value="{{ is.decadePicked }}" hint-placeholder-val="{{ false }}">
+<p class="h2">Which year?</p>
+<div class="yrs" role="radiogroup" aria-label="Year you were born"><sc-for list="{{ years }}" as="it" hint-placeholder-count="10"><button class="yr {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}">{{ it.l }}</button></sc-for></div>
+</sc-if>
+</div></div>
+<div class="bar"><sc-if value="{{ is.noYear }}" hint-placeholder-val="{{ true }}"><p class="why">Optional. Skip if you'd rather not say.</p></sc-if><button class="bp" onClick="{{ go.onb4 }}">{{ v.ageNext }}</button></div>
+</sc-if>
+
+<sc-if value="{{ is.onb4 }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.onbAge }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 5 of 5"><span></span><span></span><span></span><span></span><span class="on"></span></div><span style="width: 44px"></span></div>
+<p class="big">A few helpers</p>
+<div class="card" style="flex-direction: row; align-items: center; gap: 14px; background: var(--am-preview, #1E1E17); color: #C9C4B8">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9A958A" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+<span style="flex: 1"><span style="display: block; font-size: calc(var(--f17,17px)*var(--ts)); font-weight: 600">Attack mode</span><span style="display: block; font-size: calc(var(--f14,14px)*var(--ts)); color: #9A958A">Dimmer, bigger, only the essentials</span></span>
+<button class="tg {{ c.amAuto }}" role="switch" aria-checked="{{ p.amAuto }}" aria-label="Switch on attack mode when I log" onClick="{{ t.amAuto }}"><span class="k"></span></button>
+</div>
+<div class="grp">
+<div class="r"><span class="tx">Read sleep from Apple Health</span><button class="tg {{ c.oHealth }}" role="switch" aria-checked="{{ p.oHealth }}" aria-label="Read sleep from Apple Health" onClick="{{ t.oHealth }}"><span class="k"></span></button></div>
+<div class="r"><span class="tx">2-hour check-in after a dose</span><button class="tg {{ c.oNotif }}" role="switch" aria-checked="{{ p.oNotif }}" aria-label="2-hour check-in" onClick="{{ t.oNotif }}"><span class="k"></span></button></div>
+<div class="r"><span class="tx">Track my cycle</span><button class="tg {{ c.onbCycle }}" role="switch" aria-checked="{{ p.onbCycle }}" aria-label="Track my cycle" onClick="{{ t.onbCycle }}"><span class="k"></span></button></div>
+</div>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ go.today }}">Done</button></div>
+</sc-if>
+
+<!-- ============ TODAY ============ -->
+<sc-if value="{{ is.todayNormal }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb" style="padding-top: 0"><div class="col" style="gap: 14px">
+<!-- v3.3 · the hero: one object, the same in every Today state -->
+<div class="hero">
+<svg class="art" viewBox="0 0 250 268" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><circle cx="140" cy="128" r="74" fill="var(--ill1)" fill-opacity="0.22"></circle><circle cx="140" cy="128" r="42" fill="var(--ill1)" fill-opacity="0.85"></circle><path d="M196 48c26-8 48 10 44 35-3 22-24 27-37 17-13-10-22-43-7-52z" fill="var(--ill2)"></path><path d="M30 268c14-46 80-74 220-64v64z" fill="var(--ill1)" fill-opacity="0.45"></path></svg>
+<div class="hfade" aria-hidden="true"></div>
+<div class="htop"><button class="pill" aria-pressed="false" onClick="{{ a.amodeToggle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>Attack mode</button></div>
+<div class="htxt"><p class="hk">{{ v.greeting }}</p><p class="hh">{{ v.sinceLast }}</p><p class="hd">since your last attack</p></div>
+</div>
+<sc-if value="{{ is.postdromeCard }}" hint-placeholder-val="{{ false }}">
+<div class="card"><p class="h2">How do you feel now?</p><div class="tiles four"><sc-for list="{{ sets.post }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div></div>
+</sc-if>
+<!-- v3.4 · the week only appears when it says something: 2+ migraines in the last 7 days -->
+<sc-if value="{{ is.weekCluster }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="gap: 12px">
+<p class="h2">{{ v.weekTitle }}</p>
+<div class="wk" role="img" aria-label="{{ v.weekAria }}"><sc-for list="{{ week }}" as="d" hint-placeholder-count="7"><span class="wd"><i class="{{ d.cls }}"></i>{{ d.l }}</span></sc-for></div>
+<div class="mini" style="justify-content: center; gap: 16px; font-size: calc(var(--f14,14px)*var(--ts))"><span style="display: flex; align-items: center; gap: 6px"><i class="lg mg" aria-hidden="true"></i>Migraine</span><span style="display: flex; align-items: center; gap: 6px"><i class="lg hd" aria-hidden="true"></i>Headache</span></div>
+</div>
+</sc-if>
+<sc-if value="{{ is.overuse }}" hint-placeholder-val="{{ false }}">
+<div class="warn" role="status" style="align-items: flex-start"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span><b>{{ v.triptanDays }} of 10 triptan days this month.</b> Frequent use can sometimes lead to more headaches. Maybe worth a chat with your doctor.</span></div>
+</sc-if>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<button class="card" style="border: 0; color: inherit; font: inherit; text-align: left; gap: 2px" onClick="{{ go.insights }}"><span style="font-size: calc(34px*var(--tsh)); font-weight: 600; line-height: 1.1">{{ v.headacheDays }}</span><span class="sub">headache days · Oct</span></button>
+<button class="card" style="border: 0; color: inherit; font: inherit; text-align: left; gap: 2px" onClick="{{ go.insights }}"><span style="font-size: calc(34px*var(--tsh)); font-weight: 600; line-height: 1.1">{{ v.migraineDays }}</span><span class="sub">migraine days · Oct</span></button>
+</div>
+<button class="card" style="border: 0; color: inherit; font: inherit; text-align: left; gap: 10px" onClick="{{ go.insights }}">
+<span style="display: flex; align-items: center; gap: 10px"><span class="mb" style="width: 30px; height: 30px; font-size: calc(var(--f14,14px)*var(--ts))">T</span><span style="flex: 1">Triptan days</span><span class="sub">{{ v.triptanDays }} of 10</span></span>
+<span class="track"><span class="fill {{ v.triptanHi }}" style="width: {{ v.triptanPct }}"></span></span>
+<span style="display: flex; align-items: center; gap: 10px"><span class="mb" style="width: 30px; height: 30px; font-size: calc(var(--f14,14px)*var(--ts))">C</span><span style="flex: 1">Combination days</span><span class="sub">{{ v.comboDays }} of 10</span></span>
+<span class="track"><span class="fill" style="width: {{ v.comboPct }}"></span></span>
+</button>
+</div></div>
+</sc-if>
+
+<!-- ============ TODAY · attack ============ -->
+<sc-if value="{{ is.todayAttack }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb" style="padding-top: 0"><div class="col" style="gap: 14px">
+<div class="hero">
+<svg class="art" viewBox="0 0 250 268" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><circle cx="150" cy="134" r="112" fill="none" stroke="var(--ill1)" stroke-opacity="0.18" stroke-width="14"></circle><circle cx="150" cy="134" r="80" fill="none" stroke="var(--ill1)" stroke-opacity="0.32" stroke-width="12"></circle><circle cx="150" cy="134" r="50" fill="none" stroke="var(--ill1)" stroke-opacity="0.5" stroke-width="10"></circle><circle cx="150" cy="134" r="24" fill="var(--ill1)" fill-opacity="0.85"></circle><path d="M150 22a112 112 0 0 1 104 70" fill="none" stroke="var(--ill2)" stroke-width="14" stroke-linecap="round"></path></svg>
+<div class="hfade" aria-hidden="true"></div>
+<div class="htop"><button class="pill" aria-pressed="false" onClick="{{ a.amodeToggle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>Attack mode</button></div>
+<div class="htxt">
+<p class="hk">Ongoing attack</p>
+<p class="hh">{{ v.elapsed }}</p>
+<sc-if value="{{ is.heroTrend }}" hint-placeholder-val="{{ false }}"><svg class="spark" viewBox="0 0 200 48" role="img" aria-label="{{ v.sparkAria }}"><line x1="0" y1="45" x2="200" y2="45" stroke="var(--bd)" stroke-width="1.5"></line><path d="{{ v.sparkD }}" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="{{ v.sparkX }}" cy="{{ v.sparkY }}" r="5" fill="var(--ac)"></circle></svg><p class="hd">{{ v.trendText }}</p></sc-if>
+<sc-if value="{{ is.heroDur }}" hint-placeholder-val="{{ true }}"><p class="hd">{{ v.durText }}</p></sc-if>
+<div class="hact"><button class="bcomp" onClick="{{ go.end1 }}">End attack</button></div>
+</div>
+</div>
+<sc-if value="{{ is.checkinAsk }}" hint-placeholder-val="{{ false }}">
+<button class="card" style="border: 2px solid var(--acline); background: var(--acsoft); color: inherit; font: inherit; flex-direction: row; align-items: center; gap: 14px; text-align: left" onClick="{{ go.checkin }}"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--acs)" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span style="flex: 1"><span style="display: block; font-size: calc(var(--f18,18px)*var(--ts)); font-weight: 600">2-hour check-in</span><span class="sub" style="display: block">How is it after {{ v.checkMed }}?</span></span></button>
+</sc-if>
+<sc-if value="{{ is.checkinDone }}" hint-placeholder-val="{{ false }}"><div class="mini" style="font-size: calc(var(--f15,15px)*var(--ts)); padding: 0 4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg>At 2 hours: {{ v.checkinLabel }}</div></sc-if>
+<sc-if value="{{ is.medRow }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="gap: 10px">
+<div style="display: flex; align-items: center; gap: 12px"><span class="mb">{{ v.medBadge }}</span><span style="flex: 1; min-width: 0"><span style="display: block; font-size: calc(var(--f17,17px)*var(--ts)); font-weight: 600">{{ v.medName }}</span><span class="sub" style="display: block">{{ v.medWhen }}</span></span></div>
+<sc-if value="{{ is.overuse }}" hint-placeholder-val="{{ false }}"><div class="ovline" role="status"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span><b>{{ v.triptanDays }} of 10 triptan days this month.</b><span class="ovx"> Frequent use can sometimes lead to more headaches. Maybe worth a chat with your doctor.</span></span></div></sc-if>
+</div>
+</sc-if>
+<button class="bt" style="align-self: flex-start" onClick="{{ go.details }}">+ Add details</button>
+</div></div>
+</sc-if>
+
+<!-- ============ ATTACK MODE · same Today, same hero, less around it ============ -->
+<sc-if value="{{ is.amToday }}" hint-placeholder-val="{{ false }}">
+<div class="scr am" style="padding: 0 16px 230px"><div class="col" style="gap: 14px">
+<div class="hero">
+<svg class="art" viewBox="0 0 250 268" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><circle cx="150" cy="134" r="112" fill="none" stroke="var(--ill1)" stroke-opacity="0.18" stroke-width="14"></circle><circle cx="150" cy="134" r="80" fill="none" stroke="var(--ill1)" stroke-opacity="0.32" stroke-width="12"></circle><circle cx="150" cy="134" r="50" fill="none" stroke="var(--ill1)" stroke-opacity="0.5" stroke-width="10"></circle><circle cx="150" cy="134" r="24" fill="var(--ill1)" fill-opacity="0.85"></circle><path d="M150 22a112 112 0 0 1 104 70" fill="none" stroke="var(--ill2)" stroke-width="14" stroke-linecap="round"></path></svg>
+<div class="hfade" aria-hidden="true"></div>
+<div class="htop"><p style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: calc(var(--f18,18px)*var(--ts)); color: var(--mu)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>Attack mode</p><span class="grpb"><button class="dimpill" aria-haspopup="dialog" onClick="{{ a.openScreen }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 4v1M12 19v1M4 12h1M19 12h1M6.3 6.3l.7.7M17 17l.7.7M6.3 17.7l.7-.7M17 7l.7-.7"></path></svg>Dim</button><button class="amx" aria-pressed="true" onClick="{{ a.amodeToggle }}">Exit</button></span></div>
+<div class="htxt">
+<p class="hk">Ongoing attack</p>
+<p class="hh">{{ v.elapsed }}</p>
+<sc-if value="{{ is.heroTrend }}" hint-placeholder-val="{{ false }}"><svg class="spark" viewBox="0 0 200 48" role="img" aria-label="{{ v.sparkAria }}"><line x1="0" y1="45" x2="200" y2="45" stroke="var(--bd)" stroke-width="1.5"></line><path d="{{ v.sparkD }}" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="{{ v.sparkX }}" cy="{{ v.sparkY }}" r="5" fill="var(--ac)"></circle></svg><p class="hd">{{ v.trendText }}</p></sc-if>
+<sc-if value="{{ is.heroDur }}" hint-placeholder-val="{{ true }}"><p class="hd">{{ v.durText }}</p></sc-if>
+</div>
+</div>
+<sc-if value="{{ is.checkinAsk }}" hint-placeholder-val="{{ false }}"><button class="ams" style="min-height: 84px; border: 2px solid var(--acline); background: var(--acsoft)" onClick="{{ go.checkin }}">2-hour check-in</button></sc-if>
+<sc-if value="{{ is.medRow }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="gap: 10px">
+<div style="display: flex; align-items: center; gap: 12px"><span class="mb">{{ v.medBadge }}</span><span style="flex: 1; min-width: 0"><span style="display: block; font-size: calc(var(--f17,17px)*var(--ts)); font-weight: 600">{{ v.medName }}</span><span class="sub" style="display: block">{{ v.medWhen }}</span></span></div>
+<sc-if value="{{ is.overuse }}" hint-placeholder-val="{{ false }}"><div class="ovline" role="status"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span><b>{{ v.triptanDays }} of 10 triptan days this month.</b><span class="ovx"> Frequent use can sometimes lead to more headaches. Maybe worth a chat with your doctor.</span></span></div></sc-if>
+</div>
+</sc-if>
+</div></div>
+<div class="bar am" style="gap: 12px"><button class="amp" onClick="{{ a.amUpdate }}">Update pain</button><button class="ams" onClick="{{ go.end1 }}">End attack</button></div>
+</sc-if>
+
+<sc-if value="{{ is.amIdle }}" hint-placeholder-val="{{ false }}">
+<div class="scr am" style="padding: 0 16px 260px"><div class="col">
+<div class="hero">
+<svg class="art" viewBox="0 0 250 268" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><circle cx="140" cy="128" r="74" fill="var(--ill1)" fill-opacity="0.22"></circle><circle cx="140" cy="128" r="42" fill="var(--ill1)" fill-opacity="0.85"></circle><path d="M196 48c26-8 48 10 44 35-3 22-24 27-37 17-13-10-22-43-7-52z" fill="var(--ill2)"></path><path d="M30 268c14-46 80-74 220-64v64z" fill="var(--ill1)" fill-opacity="0.45"></path></svg>
+<div class="hfade" aria-hidden="true"></div>
+<div class="htop"><p style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: calc(var(--f18,18px)*var(--ts)); color: var(--mu)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>Attack mode</p><span class="grpb"><button class="dimpill" aria-haspopup="dialog" onClick="{{ a.openScreen }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 4v1M12 19v1M4 12h1M19 12h1M6.3 6.3l.7.7M17 17l.7.7M6.3 17.7l.7-.7M17 7l.7-.7"></path></svg>Dim</button><button class="amx" aria-pressed="true" onClick="{{ a.amodeToggle }}">Exit</button></span></div>
+<div class="htxt"><p class="hk">{{ v.greeting }}</p><p class="hh">{{ v.sinceLast }}</p><p class="hd">since your last attack</p></div>
+</div>
+</div></div>
+<div class="bar am" style="gap: 12px"><button class="amp" style="min-height: 120px; font-size: calc(28px*var(--tsh)); border-radius: 28px" onClick="{{ go.same }}">Log like last time</button><button class="ams" onClick="{{ go.w1 }}">Something's different</button></div>
+</sc-if>
+
+<!-- v3.5 · Update: every place from the last reading carries over. Change only what changed, mark what's gone, add new places. -->
+<sc-if value="{{ is.update }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}" style="padding-bottom: {{ v.updPad }}"><div class="col" style="gap: 14px">
+<div class="hdr"><button class="bt" style="color: var(--tx); padding: 0 12px" onClick="{{ go.today }}">Cancel</button><p class="ht">{{ v.elapsed }} in</p><span style="width: 72px"></span></div>
+<p class="big">How is it now?</p>
+<p class="sub">Tap a place to change it. The others stay as they were.</p>
+<div class="grp"><sc-for list="{{ updRows }}" as="z" hint-placeholder-count="2"><button class="r {{ z.openCls }}" aria-pressed="{{ z.expanded }}" aria-label="{{ z.aria }}" onClick="{{ z.tap }}"><span class="tx"><span style="display: block">{{ z.name }}</span><span class="v" style="display: block">{{ z.status }}</span></span><span class="rv" style="background: {{ z.bg }}">{{ z.num }}</span></button></sc-for></div>
+<button class="flag" style="border-color: var(--acline)" aria-haspopup="dialog" onClick="{{ a.updSheetOpen }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--acs)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>It also hurts somewhere else</button>
+<!-- v3.8 · medication and symptoms belong to the same reading; each opens its own sheet -->
+<p class="lbl" style="margin-top: 6px">Since {{ v.lastClock }}</p>
+<div class="grp">
+<button class="r" aria-haspopup="dialog" onClick="{{ a.uMedOpen }}"><span class="mb" style="width: 36px; height: 36px; border-color: var(--bd)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7zM8.5 8.5l7 7"></path></svg></span><span class="tx"><span style="display: block">Medication</span><span class="v" style="display: block">{{ v.uMedText }}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="r" aria-haspopup="dialog" onClick="{{ a.uSymOpen }}"><span class="mb" style="width: 36px; height: 36px; border-color: var(--bd)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 15c1.5-1 2.5-1 4 0s2.5 1 4 0M9 9h.01M15 9h.01"></path></svg></span><span class="tx"><span style="display: block">Symptoms</span><span class="v" style="display: block">{{ v.uSymText }}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+</div>
+</div></div>
+<!-- v3.6 · the picker is docked above Save, so it is in view whichever place was tapped: a row or the map -->
+<div class="bar {{ v.amCls }}">
+<sc-if value="{{ is.updPicking }}" hint-placeholder-val="{{ false }}">
+<div class="dock" role="group" aria-label="{{ v.updPickName }}, pain now">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><p class="h2">{{ v.updPickName }} · how bad?</p><button class="bt" onClick="{{ a.updPickDone }}">Done</button></div>
+<div role="radiogroup" aria-label="{{ v.updPickName }}, pain now from 0 to 10" class="scale"><sc-for list="{{ updGrid }}" as="it" hint-placeholder-count="11"><button class="pn {{ it.cls }}" style="background: {{ it.bg }}" role="radio" aria-checked="{{ it.on }}" aria-label="{{ it.aria }}" onClick="{{ it.pick }}">{{ it.n }}</button></sc-for></div>
+<p class="sub">0 = gone · dashed = before</p>
+</div>
+</sc-if>
+<sc-if value="{{ is.updPending }}" hint-placeholder-val="{{ false }}"><p class="why">Choose how bad the new place is</p></sc-if><button class="bp {{ v.updOff }}" aria-disabled="{{ v.updDisabled }}" onClick="{{ a.updSave }}">{{ v.updSave }}</button></div>
+</sc-if>
+
+<!-- v3.8 · medication taken since the last reading -->
+<sc-if value="{{ is.sheetMed }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.uSheetClose }}"></button>
+<div class="sheet" role="dialog" aria-label="Medication since the last reading" style="gap: 12px; max-height: calc(100% - 44px); overflow-y: auto">
+<div class="grab" aria-hidden="true"></div>
+<p style="margin: 0; font-size: calc(22px*var(--ts)); font-weight: 600">Taken anything since {{ v.lastClock }}?</p>
+<div class="tiles four"><sc-for list="{{ updMedTiles }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><span class="mb">{{ it.badge }}</span>{{ it.l }}</button></sc-for></div>
+<sc-for list="{{ updMedRows }}" as="m" hint-placeholder-count="1"><div class="card" style="flex-direction: row; align-items: center; gap: 10px; padding: 12px"><span style="flex: 1; font-size: calc(var(--f16,16px)*var(--ts))">{{ m.l }}</span><button class="stp" aria-label="One fewer" onClick="{{ m.down }}">−</button><span style="font-size: calc(20px*var(--ts)); font-weight: 600; min-width: 28px; text-align: center">{{ m.n }}</span><button class="stp" aria-label="One more" onClick="{{ m.up }}">+</button></div></sc-for>
+<sc-if value="{{ is.uMedAny }}" hint-placeholder-val="{{ false }}">
+<p class="lbl">When?</p>
+<div class="segs" role="radiogroup" aria-label="When"><button class="seg {{ g.uMedWhen_now }}" role="radio" aria-checked="{{ v.uWhenNowP }}" onClick="{{ gs.uMedWhen_now }}">Just now</button><button class="seg {{ g.uMedWhen_30m }}" role="radio" aria-checked="{{ v.uWhen30P }}" onClick="{{ gs.uMedWhen_30m }}">30 min ago</button><button class="seg {{ g.uMedWhen_1h }}" role="radio" aria-checked="{{ v.uWhen1hP }}" onClick="{{ gs.uMedWhen_1h }}">1 h ago</button></div>
+<sc-if value="{{ is.uMedWarn }}" hint-placeholder-val="{{ false }}"><div class="warn" role="status"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span>{{ v.uMedWarn }}</span></div></sc-if>
+<sc-if value="{{ is.uGap }}" hint-placeholder-val="{{ false }}"><p class="sub">{{ v.uGapText }}</p></sc-if>
+<div class="mini" style="font-size: calc(var(--f15,15px)*var(--ts))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>{{ v.uCheckText }}</div>
+</sc-if>
+<button class="bp" style="flex: none" onClick="{{ a.uSheetClose }}">Done</button>
+</div>
+</sc-if>
+
+<!-- v3.8 · symptoms now: ticked ones carry over from the last reading; untick what's gone; "bothers you most" captures worse -->
+<sc-if value="{{ is.sheetSym }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.uSheetClose }}"></button>
+<div class="sheet" role="dialog" aria-label="Symptoms now" style="gap: 12px; max-height: calc(100% - 44px); overflow-y: auto">
+<div class="grab" aria-hidden="true"></div>
+<p style="margin: 0; font-size: calc(22px*var(--ts)); font-weight: 600">Symptoms now</p>
+<p class="sub" style="margin-top: -6px">Ticked ones were there at {{ v.lastClock }}. Untick what's gone.</p>
+<div class="tiles"><sc-for list="{{ updSymTiles }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<sc-if value="{{ is.uSymChanged }}" hint-placeholder-val="{{ false }}"><p class="sub">{{ v.uSymText }}</p></sc-if>
+<p class="h2" style="margin-top: 4px">What bothers you most now?</p>
+<div class="tiles four" role="radiogroup" aria-label="What bothers you most now"><sc-for list="{{ updMbsTiles }}" as="it" hint-placeholder-count="4"><button class="tile single {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<button class="bp" style="flex: none" onClick="{{ a.uSheetClose }}">Done</button>
+</div>
+</sc-if>
+
+<!-- v3.7 · "It also hurts somewhere else" is a sheet: map on top, its own 0–10 picker below, all in view at once -->
+<sc-if value="{{ is.sheetAddPlace }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.updSheetClose }}"></button>
+<div class="sheet {{ v.amCls }}" role="dialog" aria-label="Where else does it hurt?" style="gap: 10px; max-height: calc(100% - 44px); overflow-y: auto">
+<div class="grab" aria-hidden="true"></div>
+<p style="margin: 0; font-size: calc(22px*var(--ts)); font-weight: 600">Where else does it hurt?</p>
+<div class="head">
+<svg width="366" height="262" viewBox="0 0 366 262" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+<ellipse cx="183" cy="124" rx="108" ry="116" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse>
+<ellipse cx="72" cy="136" rx="10" ry="22" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse>
+<ellipse cx="294" cy="136" rx="10" ry="22" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse>
+<sc-for list="{{ updZoneList }}" as="z" hint-placeholder-count="7"><path d="{{ z.d }}" fill="{{ z.fill }}" stroke="{{ z.stroke }}" stroke-width="1.5" stroke-dasharray="{{ z.dash }}"></path></sc-for>
+<path d="M164 186 Q183 196 202 186" stroke="var(--mu)" stroke-width="1.5" fill="none"></path>
+<g font-size="14" font-weight="600" fill="var(--mu)" font-family="Lexend, sans-serif"><text x="2" y="256">YOUR RIGHT</text><text x="364" y="256" text-anchor="end">YOUR LEFT</text></g>
+</svg>
+<sc-for list="{{ updZoneList }}" as="z" hint-placeholder-count="7"><button class="zh {{ z.act }}" style="left: {{ z.bx }}px; top: {{ z.by }}px; width: {{ z.bw }}px; height: {{ z.bh }}px" aria-label="{{ z.aria }}" onClick="{{ z.tap }}">{{ z.num }}</button></sc-for>
+</div>
+<div class="tiles three"><sc-for list="{{ updZoneExtra }}" as="z" hint-placeholder-count="3"><button class="tile multi {{ z.chip }}" style="min-height: 56px" aria-pressed="{{ z.pressed }}" onClick="{{ z.tap }}">{{ z.text }}</button></sc-for></div>
+<sc-if value="{{ is.sheetPicking }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="gap: 8px; padding: 12px" role="group" aria-label="{{ v.updPickName }}, pain now">
+<p class="h2">{{ v.updPickName }} · how bad?</p>
+<div role="radiogroup" aria-label="{{ v.updPickName }}, pain now from 0 to 10" class="scale"><sc-for list="{{ updGrid }}" as="it" hint-placeholder-count="11"><button class="pn {{ it.cls }}" style="background: {{ it.bg }}" role="radio" aria-checked="{{ it.on }}" aria-label="{{ it.aria }}" onClick="{{ it.pick }}">{{ it.n }}</button></sc-for></div>
+<p class="sub">0 = remove · dashed = before</p>
+</div>
+</sc-if>
+<sc-if value="{{ is.sheetHint }}" hint-placeholder-val="{{ true }}"><p class="sub" style="text-align: center">Tap a place on the head</p></sc-if>
+<sc-if value="{{ is.updPending }}" hint-placeholder-val="{{ false }}"><p class="why">Choose how bad it is, or 0 to remove it</p></sc-if>
+<button class="bp {{ v.updOff }}" style="flex: none" aria-disabled="{{ v.updDisabled }}" onClick="{{ a.updSheetDone }}">Done</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.amUpdate }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}" style="padding: 52px 16px 34px; display: flex; flex-direction: column">
+<div class="amtop"><button class="amx" style="border: 0; background: none; padding: 0 4px" onClick="{{ go.today }}">Cancel</button></div>
+<p style="margin: 20px 4px 4px; font-size: calc(32px*var(--tsh)); font-weight: 600">Pain now?</p>
+<p style="margin: 0 4px 16px; font-size: calc(var(--f18,18px)*var(--ts)); color: var(--mu)">0 none · 10 worst</p>
+<div role="radiogroup" aria-label="Pain from 0 to 10" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px"><sc-for list="{{ amGrid }}" as="it" hint-placeholder-count="11"><button class="amg {{ it.cls }}" style="background: {{ it.bg }}" role="radio" aria-checked="{{ it.on }}" onClick="{{ it.pick }}">{{ it.n }}</button></sc-for></div>
+<button class="amp" style="margin-top: auto" onClick="{{ a.amSave }}">Save</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.checkin }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}" style="padding: 52px 16px 34px; display: flex; flex-direction: column">
+<div class="amtop"><button class="amx" style="border: 0; background: none; padding: 0 4px" onClick="{{ go.today }}">Later</button></div>
+<p style="margin: 16px 4px 4px; font-size: calc(30px*var(--tsh)); font-weight: 600">Pain now?</p>
+<p style="margin: 0 4px 14px; font-size: calc(var(--f17,17px)*var(--ts)); color: var(--mu)">2 hours after {{ v.checkMed }} · 0 none · 10 worst</p>
+<div role="radiogroup" aria-label="Pain from 0 to 10" class="scale" style="grid-template-columns: repeat(4, minmax(0, 1fr))"><sc-for list="{{ ciGrid }}" as="it" hint-placeholder-count="11"><button class="amg {{ it.cls }}" style="height: 60px; font-size: calc(22px*var(--ts)); background: {{ it.bg }}" role="radio" aria-checked="{{ it.on }}" onClick="{{ it.pick }}">{{ it.n }}</button></sc-for></div>
+<sc-if value="{{ is.mbsNotPain }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 22px 4px 10px; font-size: calc(22px*var(--ts)); font-weight: 600">Is the {{ v.mbsLabel }} better?</p>
+<div class="tiles two" role="radiogroup" aria-label="Is it better"><button class="tile single {{ g.ciMbs_yes }}" style="min-height: 68px" role="radio" aria-checked="{{ v.ciYesP }}" onClick="{{ gs.ciMbs_yes }}">Yes</button><button class="tile single {{ g.ciMbs_no }}" style="min-height: 68px" role="radio" aria-checked="{{ v.ciNoP }}" onClick="{{ gs.ciMbs_no }}">No</button></div>
+</sc-if>
+<button class="amp" style="margin-top: auto; min-height: 72px" onClick="{{ a.ciSave }}">Save</button>
+</div>
+</sc-if>
+
+<!-- ============ SAME AS LAST TIME (confirm) ============ -->
+<sc-if value="{{ is.same }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Close" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><p class="ht">Like last time</p><span style="width: 44px"></span></div>
+<div class="card" style="flex-direction: row; align-items: center; gap: 16px">
+<svg width="74" height="84" viewBox="0 0 74 84" role="img" aria-label="Left side"><ellipse cx="37" cy="44" rx="32" ry="38" fill="var(--bg)" stroke="var(--mu)" stroke-width="1.5"></ellipse><path d="M37 6 A32 38 0 0 1 37 82 Z" fill="var(--ac)"></path></svg>
+<div style="flex: 1"><p style="margin: 0; font-size: calc(var(--f18,18px)*var(--ts)); font-weight: 600">Left eye, left forehead</p><p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts))">Throbbing · light bothers you most</p></div>
+<button class="bt" onClick="{{ go.w1 }}">Edit</button>
+</div>
+<div class="card" style="flex-direction: row; align-items: center; gap: 12px"><span style="flex: 1; font-size: calc(var(--f17,17px)*var(--ts))">Pain now</span><button class="stp" aria-label="Lower pain" onClick="{{ a.samePainDown }}">−</button><span style="font-size: calc(26px*var(--tsh)); font-weight: 600; min-width: 34px; text-align: center">{{ v.samePain }}</span><button class="stp" aria-label="Raise pain" onClick="{{ a.samePainUp }}">+</button></div>
+<p class="h2">Taken Sumatriptan yet?</p>
+<div class="tiles two" role="radiogroup" aria-label="Taken Sumatriptan yet"><button class="tile single {{ g.sameMed_yes }}" style="min-height: 84px" role="radio" aria-checked="{{ v.sameYesP }}" onClick="{{ gs.sameMed_yes }}"><span class="mb">T</span>Yes, just now</button><button class="tile single {{ g.sameMed_no }}" style="min-height: 84px" role="radio" aria-checked="{{ v.sameNoP }}" onClick="{{ gs.sameMed_no }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg>Not yet</button></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><sc-if value="{{ is.sameNoPick }}" hint-placeholder-val="{{ true }}"><p class="why">Choose yes or not yet to start</p></sc-if><button class="bp {{ v.sameOff }}" onClick="{{ a.sameStart }}">Start attack</button></div>
+</sc-if>
+
+<!-- ============ WIZARD ============ -->
+<sc-if value="{{ is.w1 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 14px">
+<div class="hdr"><button class="icb" aria-label="Close" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><div class="dots" aria-label="Step 1 of 4"><span class="on"></span><span></span><span></span><span></span></div><span style="width: 44px"></span></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px"><p class="big">Where does it hurt?</p></div>
+<div class="segs" role="tablist" aria-label="View"><button class="seg {{ g.mapView_map }}" role="tab" aria-selected="{{ v.mapP }}" onClick="{{ gs.mapView_map }}">Head</button><button class="seg {{ g.mapView_list }}" role="tab" aria-selected="{{ v.listP }}" onClick="{{ gs.mapView_list }}">List</button></div>
+<sc-if value="{{ is.mapView }}" hint-placeholder-val="{{ true }}">
+<div class="head">
+<svg width="366" height="262" viewBox="0 0 366 262" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+<ellipse cx="183" cy="124" rx="108" ry="116" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse>
+<ellipse cx="72" cy="136" rx="10" ry="22" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse>
+<ellipse cx="294" cy="136" rx="10" ry="22" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse>
+<sc-for list="{{ zoneList }}" as="z" hint-placeholder-count="7"><path d="{{ z.d }}" fill="{{ z.fill }}" stroke="{{ z.stroke }}" stroke-width="1.5" stroke-dasharray="{{ z.dash }}"></path></sc-for>
+<path d="M164 186 Q183 196 202 186" stroke="var(--mu)" stroke-width="1.5" fill="none"></path>
+<g font-size="14" font-weight="600" fill="var(--mu)" font-family="Lexend, sans-serif"><text x="2" y="256">YOUR RIGHT</text><text x="364" y="256" text-anchor="end">YOUR LEFT</text></g>
+</svg>
+<sc-for list="{{ zoneList }}" as="z" hint-placeholder-count="7"><button class="zh {{ z.act }}" style="left: {{ z.bx }}px; top: {{ z.by }}px; width: {{ z.bw }}px; height: {{ z.bh }}px" aria-label="{{ z.aria }}" aria-pressed="{{ z.pressed }}" onClick="{{ z.tap }}">{{ z.num }}</button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ is.listView }}" hint-placeholder-val="{{ false }}">
+<div class="grp"><sc-for list="{{ zoneRows }}" as="z" hint-placeholder-count="10"><button class="r {{ z.openCls }}" aria-pressed="{{ z.pressed }}" aria-expanded="{{ z.expanded }}" aria-label="{{ z.aria }}" onClick="{{ z.tap }}"><span class="tx">{{ z.name }}</span><span class="rv" style="background: {{ z.bg }}">{{ z.num }}</span></button><sc-if value="{{ z.open }}" hint-placeholder-val="{{ false }}"><div class="rowpick"><div role="radiogroup" aria-label="{{ z.name }}, pain from 0 to 10" class="scale"><sc-for list="{{ zoneGrid }}" as="it" hint-placeholder-count="11"><button class="pn {{ it.cls }}" style="background: {{ it.bg }}" role="radio" aria-checked="{{ it.on }}" onClick="{{ it.pick }}">{{ it.n }}</button></sc-for></div><div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px"><p class="sub">0 none · 10 worst</p><button class="bt" style="color: var(--danger)" onClick="{{ a.zoneRemove }}">Remove</button></div></div></sc-if></sc-for></div>
+</sc-if>
+<sc-if value="{{ is.mapView }}" hint-placeholder-val="{{ true }}"><div class="tiles"><sc-for list="{{ zoneExtra }}" as="z" hint-placeholder-count="3"><button class="tile multi {{ z.chip }}" style="min-height: 56px" aria-pressed="{{ z.pressed }}" onClick="{{ z.tap }}">{{ z.text }}</button></sc-for></div></sc-if>
+<sc-if value="{{ is.zoneActiveMap }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="padding: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center"><p style="margin: 0; font-size: calc(var(--f17,17px)*var(--ts)); font-weight: 600">{{ v.activeLabel }} · how bad?</p><button class="bt" style="color: var(--danger)" onClick="{{ a.zoneRemove }}">Remove</button></div>
+<div role="radiogroup" aria-label="Pain from 0 to 10" class="scale"><sc-for list="{{ zoneGrid }}" as="it" hint-placeholder-count="11"><button class="pn {{ it.cls }}" style="background: {{ it.bg }}" role="radio" aria-checked="{{ it.on }}" onClick="{{ it.pick }}">{{ it.n }}</button></sc-for></div>
+<p class="sub">0 none · 10 worst</p>
+</div>
+</sc-if>
+<button class="flag" onClick="{{ a.redflag }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg>Feels different from usual?</button>
+</div></div>
+<div class="bar {{ v.amCls }}"><sc-if value="{{ is.noZone }}" hint-placeholder-val="{{ true }}"><p class="why">Tap where it hurts to continue</p></sc-if><button class="bp {{ v.startOff }}" aria-disabled="{{ v.w1Disabled }}" onClick="{{ a.w1Next }}">Next</button></div>
+</sc-if>
+
+<sc-if value="{{ is.w2 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 22px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.w1 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 2 of 4"><span></span><span class="on"></span><span></span><span></span></div><span style="width: 44px"></span></div>
+<p class="big">Worse when you move?</p>
+<div class="tiles two" role="radiogroup" aria-label="Worse when you move"><sc-for list="{{ sets.worse }}" as="it" hint-placeholder-count="2"><button class="tile single {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ go.w3 }}">{{ v.w2Label }}</button></div>
+</sc-if>
+
+<sc-if value="{{ is.w3 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 22px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.w2 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 3 of 4"><span></span><span></span><span class="on"></span><span></span></div><span style="width: 44px"></span></div>
+<p class="big">What bothers you most?</p>
+<div class="tiles two" role="radiogroup" aria-label="What bothers you most"><sc-for list="{{ sets.mbs }}" as="it" hint-placeholder-count="4"><button class="tile single {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ go.w4 }}">{{ v.w3Label }}</button></div>
+</sc-if>
+
+<sc-if value="{{ is.w4 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.w3 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 4 of 4"><span></span><span></span><span></span><span class="on"></span></div><span style="width: 44px"></span></div>
+<p class="big">Taken anything?</p>
+<div class="tiles"><sc-for list="{{ sets.meds }}" as="it" hint-placeholder-count="3"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><span class="mb">{{ it.badge }}</span>{{ it.l }}</button></sc-for></div>
+<sc-if value="{{ is.sumaOn }}" hint-placeholder-val="{{ false }}"><div class="card" style="flex-direction: row; align-items: center; gap: 10px; padding: 12px"><span style="flex: 1; font-size: calc(var(--f16,16px)*var(--ts))">Sumatriptan tablets</span><button class="stp" aria-label="One fewer" onClick="{{ a.qtyDown }}">−</button><span style="font-size: calc(20px*var(--ts)); font-weight: 600; min-width: 28px; text-align: center">{{ v.sumaQty }}</span><button class="stp" aria-label="One more" onClick="{{ a.qtyUp }}">+</button></div></sc-if>
+<sc-if value="{{ is.sumaWarn }}" hint-placeholder-val="{{ false }}"><div class="warn" role="status"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span>{{ v.sumaQty }} in 24 hours. Your limit is {{ v.sumaMax }}.</span></div></sc-if>
+<p class="h2">When did it start?</p>
+<div class="segs"><button class="seg {{ g.startChip_now }}" onClick="{{ gs.startChip_now }}">Now</button><button class="seg {{ g.startChip_1h }}" onClick="{{ gs.startChip_1h }}">1 h ago</button><button class="seg {{ g.startChip_2h }}" onClick="{{ gs.startChip_2h }}">2 h ago</button><button class="seg {{ g.startChip_woke }}" onClick="{{ gs.startChip_woke }}">Woke up</button></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ a.start }}">Start attack</button></div>
+</sc-if>
+
+<!-- ============ DETAILS ============ -->
+<sc-if value="{{ is.details }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">Details · optional</p><span style="width: 44px"></span></div>
+<p class="h2">Feels like</p>
+<div class="tiles four"><sc-for list="{{ sets.feel }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<p class="h2">Symptoms</p>
+<div class="tiles"><sc-for list="{{ sets.sym }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<sc-if value="{{ is.auraOn }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="gap: 10px">
+<p class="h2">About the aura</p>
+<div class="tiles"><sc-for list="{{ sets.aura }}" as="it" hint-placeholder-count="3"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<p class="lbl">How long?</p>
+<div class="segs" style="background: var(--bg)"><button class="seg {{ g.auLen_short }}" onClick="{{ gs.auLen_short }}">Under 5 min</button><button class="seg {{ g.auLen_mid }}" onClick="{{ gs.auLen_mid }}">5–60 min</button><button class="seg {{ g.auLen_long }}" onClick="{{ gs.auLen_long }}">Over 1 h</button></div>
+<p class="lbl">Headache within an hour?</p>
+<div class="segs" style="background: var(--bg)"><button class="seg {{ g.auHour_yes }}" onClick="{{ gs.auHour_yes }}">Yes</button><button class="seg {{ g.auHour_no }}" onClick="{{ gs.auHour_no }}">No</button></div>
+<sc-if value="{{ is.auraFlag }}" hint-placeholder-val="{{ false }}"><div class="warn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span>An aura over an hour is worth checking with a doctor.</span></div></sc-if>
+</div>
+</sc-if>
+<p class="h2">What you've tried</p>
+<div class="tiles"><sc-for list="{{ sets.tried }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<p class="h2">Early warning signs</p>
+<div class="tiles four"><sc-for list="{{ sets.early }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ a.detailsSave }}">Save details</button></div>
+</sc-if>
+
+<!-- ============ END ============ -->
+<sc-if value="{{ is.end1 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Keep the attack going" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><div class="dots" aria-label="Step 1 of 2"><span class="on"></span><span></span></div><span style="width: 44px"></span></div>
+<p class="big">When did it end?</p>
+<div class="segs"><button class="seg {{ g.endChip_now }}" onClick="{{ gs.endChip_now }}">Just now</button><button class="seg {{ g.endChip_1h }}" onClick="{{ gs.endChip_1h }}">1 h ago</button><button class="seg {{ g.endChip_pick }}" onClick="{{ gs.endChip_pick }}">Pick time</button></div>
+<p class="h2">How do you feel now?</p>
+<div class="tiles two"><sc-for list="{{ sets.post }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" style="min-height: 96px" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ go.end2 }}">Next</button></div>
+</sc-if>
+
+<sc-if value="{{ is.end2 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.end1 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 2 of 2"><span></span><span class="on"></span></div><span style="width: 44px"></span></div>
+<div style="display: flex; align-items: flex-start; gap: 10px"><p class="big" style="flex: 1">Anything different the day before?</p><button class="info" aria-label="Why we ask" aria-expanded="{{ p.infoFactors }}" onClick="{{ t.infoFactors }}">i</button></div>
+<sc-if value="{{ is.infoFactors }}" hint-placeholder-val="{{ false }}"><p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts)); margin-top: -6px">For your own patterns over time. Not a cause.</p></sc-if>
+<div class="tiles"><sc-for list="{{ sets.factors }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<div class="mini" style="font-size: calc(var(--f14,14px)*var(--ts))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"></path></svg>Sleep last night: [5h 10m]</div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ a.endSave }}">Save attack</button><button class="bt" style="color: var(--tx)" onClick="{{ a.endSave }}">Skip and save</button></div>
+</sc-if>
+
+<sc-if value="{{ is.saved }}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-bottom: 150px">
+<svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+<p class="big" style="margin-top: 18px">Saved. Rest up.</p>
+<p class="sub" style="font-size: calc(var(--f16,16px)*var(--ts)); margin-top: 8px">{{ v.endLabel }} · highest pain {{ v.peak }}</p>
+</div>
+<div class="bar"><button class="bp" onClick="{{ go.today }}">Done</button></div>
+</sc-if>
+
+<!-- ============ LOGS ============ -->
+<!-- v3.10 · Logs: duration first, then peak and side, then what was taken and whether it helped, then the ICHD symptoms. No average, no triggers. -->
+<sc-if value="{{ is.logs }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb"><div class="col" style="gap: 10px">
+<p class="big" style="font-size: calc(32px*var(--tsh))">Logs</p>
+<sc-if value="{{ is.notMerged }}" hint-placeholder-val="{{ true }}"><button class="warn" style="border: 0; text-align: left" onClick="{{ go.merge }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span style="flex: 1">2 entries overlap on 19–20 Aug</span><span style="font-weight: 600">Review</span></button></sc-if>
+<sc-for list="{{ logList }}" as="row" hint-placeholder-count="4">
+<sc-if value="{{ row.isHead }}" hint-placeholder-val="{{ false }}"><p class="lbl" style="margin-top: 8px">{{ row.title }}</p></sc-if>
+<sc-if value="{{ row.isRow }}" hint-placeholder-val="{{ true }}">
+<button class="card lrow" aria-label="{{ row.aria }}" onClick="{{ row.open }}">
+<span class="lr1"><span class="lh">{{ row.dur }}</span><span class="pk" style="background: {{ row.pkBg }}">{{ row.peak }}</span><span class="sub">peak</span><span style="flex: 1"></span><svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><ellipse cx="15" cy="17" rx="13" ry="15" fill="var(--bg)" stroke="var(--mu)" stroke-width="1.2"></ellipse><path d="M15 2 A13 15 0 0 0 15 32 Z" fill="{{ row.r }}"></path><path d="M15 2 A13 15 0 0 1 15 32 Z" fill="{{ row.l }}"></path></svg></span>
+<span class="sub" style="display: block">{{ row.when }}</span>
+<span class="lr3"><sc-for list="{{ row.meds }}" as="m" hint-placeholder-count="1"><span class="mchip"><span class="mb ms">{{ m.badge }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ m.res }}"></path></svg></span></sc-for><sc-if value="{{ row.noMed }}" hint-placeholder-val="{{ false }}"><span class="sub">No medication</span></sc-if><span style="flex: 1"></span><sc-for list="{{ row.sym }}" as="d" hint-placeholder-count="2"><span class="symi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ d }}"></path></svg></span></sc-for></span>
+</button>
+</sc-if>
+</sc-for>
+<div class="mini" style="justify-content: center; gap: 14px; font-size: calc(var(--f14,14px)*var(--ts)); flex-wrap: wrap; margin-top: 6px"><span style="display: flex; align-items: center; gap: 4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width: 16px; height: 16px"><path d="M5 12l5 5 9-10"></path></svg>helped</span><span style="display: flex; align-items: center; gap: 4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width: 16px; height: 16px"><path d="M6 12h12"></path></svg>didn't help</span><span style="display: flex; align-items: center; gap: 4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width: 16px; height: 16px"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01"></path></svg>no 2-hour reading</span></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.logDetail }}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="padding-bottom: 170px"><div class="col" style="gap: 14px">
+<div class="hdr"><button class="icb" aria-label="Back to logs" onClick="{{ go.logs }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">{{ ld.date }}</p><button class="icb" aria-label="Delete attack" onClick="{{ a.askDelete }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<div class="card stt"><span class="stn">{{ ld.dur }}</span><span class="sub">long</span></div>
+<div class="card stt"><span class="stn">{{ ld.peak }}</span><span class="sub">peak pain</span></div>
+<div class="card stt"><svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><ellipse cx="15" cy="17" rx="13" ry="15" fill="var(--bg)" stroke="var(--mu)" stroke-width="1.2"></ellipse><path d="M15 2 A13 15 0 0 0 15 32 Z" fill="{{ ld.r }}"></path><path d="M15 2 A13 15 0 0 1 15 32 Z" fill="{{ ld.l }}"></path></svg><span class="sub">{{ ld.sideText }}</span></div>
+</div>
+<p class="sub" style="margin-top: -4px; text-align: center">{{ ld.span }}</p>
+<div class="card" style="gap: 6px">
+<p class="h2" style="font-size: calc(var(--f17,17px)*var(--ts))">Pain over time</p>
+<svg width="326" height="132" viewBox="0 0 326 132" role="img" aria-label="{{ ld.chartAria }}" style="display: block; max-width: 100%">
+<g font-family="Lexend, sans-serif" font-size="14" fill="var(--mu)"><text x="0" y="16">10</text><text x="8" y="104">0</text></g>
+<line x1="26" y1="100" x2="326" y2="100" stroke="var(--bd)" stroke-width="1.5"></line>
+<path d="{{ ld.path }}" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<sc-for list="{{ ld.marks }}" as="mk" hint-placeholder-count="2"><line x1="{{ mk.x }}" y1="8" x2="{{ mk.x }}" y2="100" stroke="var(--mu)" stroke-width="1.2" stroke-dasharray="3 3"></line><rect x="{{ mk.bx }}" y="106" width="22" height="22" rx="6" fill="var(--bg)" stroke="var(--acline)" stroke-width="1.5"></rect><text x="{{ mk.x }}" y="122" text-anchor="middle" font-size="13" font-weight="700" fill="var(--tx)" font-family="Lexend, sans-serif">{{ mk.badge }}</text></sc-for>
+</svg>
+<p class="sub">Highest place at each update · lettered lines are doses</p>
+</div>
+<p class="h2">Medication</p>
+<sc-for list="{{ ld.meds }}" as="m" hint-placeholder-count="2"><div class="card" style="gap: 8px"><div style="display: flex; align-items: center; gap: 12px"><span class="mb">{{ m.badge }}</span><span style="flex: 1"><span style="display: block; font-weight: 600">{{ m.name }}</span><span class="sub" style="display: block">{{ m.when }}</span></span></div><div class="res {{ m.cls }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="{{ m.res }}"></path></svg><span>{{ m.text }}</span></div></div></sc-for>
+<sc-if value="{{ ld.noMed }}" hint-placeholder-val="{{ false }}"><div class="card"><p class="sub">Nothing taken for this attack.</p></div></sc-if>
+<p class="h2">Where it hurt</p>
+<div class="grp"><div class="r" style="min-height: 40px; font-size: calc(var(--f14,14px)*var(--ts)); color: var(--mu)"><span class="tx"></span><span style="width: 44px; text-align: center">peak</span><span style="width: 44px; text-align: center">end</span></div><sc-for list="{{ ld.areas }}" as="z" hint-placeholder-count="2"><div class="r"><span class="tx">{{ z.name }}</span><span class="rv" style="width: 44px; background: {{ z.pkBg }}">{{ z.peak }}</span><span class="rv" style="width: 44px; background: {{ z.nowBg }}">{{ z.now }}</span></div></sc-for></div>
+<p class="h2">Symptoms</p>
+<div class="tiles four"><sc-for list="{{ ld.sym }}" as="it" hint-placeholder-count="3"><div class="tile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</div></sc-for></div>
+<p class="h2">Updates</p>
+<div class="grp"><sc-for list="{{ ld.updates }}" as="u" hint-placeholder-count="3"><div class="r" style="align-items: flex-start; padding-top: 12px; padding-bottom: 12px"><span class="sub" style="width: 48px; font-size: calc(var(--f15,15px)*var(--ts))">{{ u.time }}</span><span class="tx"><span style="display: block; font-weight: 500">{{ u.pain }}</span><span class="v" style="display: block">{{ u.more }}</span></span></div></sc-for></div>
+<sc-if value="{{ ld.moreUpdates }}" hint-placeholder-val="{{ true }}"><button class="bt" style="align-self: flex-start" onClick="{{ t.allUpdates }}">{{ ld.moreLabel }}</button></sc-if>
+<div class="grp"><div class="r"><span class="tx">Impact on your day</span><span class="v">{{ ld.impact }}</span></div><div class="r"><span class="tx">Different the day before</span><span class="v">{{ ld.factors }}</span></div></div>
+</div></div>
+<div class="bar" style="flex-direction: row"><button class="bs" onClick="{{ a.editAttack }}">Edit</button><button class="bp" onClick="{{ a.logAddUpdate }}">Add update</button></div>
+</sc-if>
+
+<sc-if value="{{ is.merge }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col">
+<div class="hdr"><button class="icb" aria-label="Close" onClick="{{ go.logs }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><p class="ht">Overlapping entries</p><span style="width: 44px"></span></div>
+<p class="big" style="font-size: calc(26px*var(--tsh))">Merge into one attack?</p>
+<svg width="358" height="120" viewBox="0 0 358 120" role="img" aria-label="Four entries overlap between Wednesday 08:17 and Thursday 13:02">
+<g font-family="Lexend, sans-serif" font-size="14" fill="var(--mu)">
+<rect x="3" y="4" width="315" height="16" rx="5" fill="var(--ac)"></rect><rect x="131" y="28" width="187" height="16" rx="5" fill="var(--ac)" fill-opacity="0.8"></rect><rect x="216" y="52" width="130" height="16" rx="5" fill="var(--ac)" fill-opacity="0.6"></rect><rect x="317" y="76" width="8" height="16" rx="3" fill="var(--ac)" fill-opacity="0.5"></rect>
+<text x="0" y="116">Wed 08:00</text><text x="358" y="116" text-anchor="end">Thu 14:00</text>
+</g></svg>
+<div class="card" style="background: var(--acsoft); flex-direction: row; align-items: center; gap: 12px"><span class="badge" style="background: var(--bg)">9</span><span style="font-size: calc(var(--f17,17px)*var(--ts)); font-weight: 500">1 attack · 28 h 45 m · nothing is lost</span></div>
+</div></div>
+<div class="bar" style="flex-direction: row"><button class="bs" onClick="{{ go.logs }}">Keep separate</button><button class="bp" style="flex: 1.4" onClick="{{ a.merge }}">Merge</button></div>
+</sc-if>
+
+<!-- ============ INSIGHTS ============ -->
+<sc-if value="{{ is.insights }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb"><div class="col">
+<div style="display: flex; align-items: center; justify-content: space-between"><p class="big" style="font-size: calc(32px*var(--tsh))">Insights</p><button class="icb" style="background: var(--sf)" aria-label="Share report with your doctor" onClick="{{ go.report }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="M7 8l5-5 5 5"></path><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg></button></div>
+<div class="segs"><button class="seg {{ g.range_30d }}" onClick="{{ gs.range_30d }}">30 days</button><button class="seg {{ g.range_3m }}" onClick="{{ gs.range_3m }}">3 months</button><button class="seg {{ g.range_all }}" onClick="{{ gs.range_all }}">All</button></div>
+<div class="warn" role="status" style="align-items: flex-start"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span><b>8 of 10 triptan days in August.</b> Frequent use can sometimes lead to more headaches. Maybe worth a chat with your doctor.</span></div>
+<div class="card">
+<div style="display: flex; align-items: center; justify-content: space-between"><p class="h2">Headache days</p><button class="info" aria-label="About this chart" aria-expanded="{{ p.infoDays }}" onClick="{{ t.infoDays }}">i</button></div>
+<sc-if value="{{ is.infoDays }}" hint-placeholder-val="{{ false }}"><p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts))">15 or more headache days a month is the chronic range.</p></sc-if>
+<svg width="326" height="180" viewBox="0 0 326 180" role="img" aria-label="Headache days: July 8 of which 6 migraine, August 11 of which 9 migraine, September 4 of which 3 migraine. Line at 15.">
+<g font-family="Lexend, sans-serif" font-size="14" fill="var(--mu)">
+<line x1="10" y1="20" x2="326" y2="20" stroke="var(--danger)" stroke-dasharray="5 4"></line><text x="326" y="14" text-anchor="end" fill="var(--danger)">15</text>
+<line x1="10" y1="150" x2="326" y2="150" stroke="var(--mu)"></line>
+<rect x="40" y="81" width="60" height="69" rx="8" fill="var(--sf2)"></rect><rect x="40" y="98" width="60" height="52" rx="8" fill="var(--ac)"></rect>
+<rect x="133" y="55" width="60" height="95" rx="8" fill="var(--sf2)"></rect><rect x="133" y="72" width="60" height="78" rx="8" fill="var(--ac)"></rect>
+<rect x="226" y="115" width="60" height="35" rx="8" fill="var(--sf2)"></rect><rect x="226" y="124" width="60" height="26" rx="8" fill="var(--ac)"></rect>
+<text x="70" y="74" text-anchor="middle" fill="var(--tx)" font-weight="600">8</text><text x="163" y="48" text-anchor="middle" fill="var(--tx)" font-weight="600">11</text><text x="256" y="108" text-anchor="middle" fill="var(--tx)" font-weight="600">4</text>
+<text x="70" y="172" text-anchor="middle">Jul</text><text x="163" y="172" text-anchor="middle">Aug</text><text x="256" y="172" text-anchor="middle">Sep</text>
+</g></svg>
+<div class="mini" style="gap: 14px; font-size: calc(var(--f14,14px)*var(--ts))"><span style="display: flex; align-items: center; gap: 6px"><i style="width: 12px; height: 12px; border-radius: 3px; background: var(--ac); display: block"></i>Migraine</span><span style="display: flex; align-items: center; gap: 6px"><i style="width: 12px; height: 12px; border-radius: 3px; background: var(--sf2); border: 1px solid var(--bd); display: block"></i>Other headache</span><span>[example values]</span></div>
+</div>
+<div class="card" style="gap: 12px">
+<p class="h2">2 hours after a dose</p>
+<div style="display: flex; align-items: center; gap: 12px"><span class="mb" style="width: 30px; height: 30px; font-size: calc(var(--f14,14px)*var(--ts))">T</span><span style="width: 136px; font-size: calc(var(--f15,15px)*var(--ts))">Pain-free</span><span class="dotrow" role="img" aria-label="0 of 6"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+<div style="display: flex; align-items: center; gap: 12px"><span class="mb" style="width: 30px; height: 30px; font-size: calc(var(--f14,14px)*var(--ts))">T</span><span style="width: 136px; font-size: calc(var(--f15,15px)*var(--ts))">Worst part better</span><span class="dotrow" role="img" aria-label="2 of 6"><i class="y"></i><i class="y"></i><i></i><i></i><i></i><i></i></span></div>
+<div style="display: flex; align-items: center; gap: 12px"><span class="mb" style="width: 30px; height: 30px; font-size: calc(var(--f14,14px)*var(--ts))">C</span><span style="width: 136px; font-size: calc(var(--f15,15px)*var(--ts))">Pain-free</span><span class="dotrow" role="img" aria-label="1 of 4"><i class="y"></i><i></i><i></i><i></i></span></div>
+<div class="mini" style="gap: 14px; font-size: calc(var(--f14,14px)*var(--ts))"><span style="display: flex; align-items: center; gap: 6px"><i style="width: 12px; height: 12px; border-radius: 6px; background: var(--ac); display: block"></i>yes</span><span style="display: flex; align-items: center; gap: 6px"><i style="width: 12px; height: 12px; border-radius: 6px; border: 2px solid var(--mu); box-sizing: border-box; display: block"></i>no</span><span>· each dot is one checked dose</span></div>
+</div>
+<!-- v3.4 · patterns only from data collected every day (Apple Health); what the user notes before attacks is shown as counts, never as a pattern -->
+<sc-if value="{{ is.sleepWaiting }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="flex-direction: row; align-items: center; gap: 14px">
+<svg class="ring" viewBox="0 0 36 36" role="img" aria-label="{{ v.ringAria }}"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--sf2)" stroke-width="4"></circle><circle cx="18" cy="18" r="15" fill="none" stroke="var(--ac)" stroke-width="4" stroke-dasharray="{{ v.ringDash }}" transform="rotate(-90 18 18)" stroke-linecap="round"></circle><text x="18" y="22" text-anchor="middle" font-size="10" font-weight="600" fill="var(--tx)" font-family="Lexend, sans-serif">{{ v.ringText }}</text></svg>
+<div style="flex: 1"><p class="h2" style="font-size: calc(var(--f17,17px)*var(--ts))">Sleep and your attacks</p><p class="sub">{{ v.waitText }}</p></div>
+</div>
+</sc-if>
+<sc-if value="{{ is.sleepReady }}" hint-placeholder-val="{{ true }}">
+<div class="card" style="gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><p class="h2">Sleep and your attacks</p><span class="sub" style="display: flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"></path></svg>Apple Health</span></div>
+<p class="sub" style="margin-top: -4px">Migraine the next day</p>
+<sc-for list="{{ sleepRows }}" as="r" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 8px; font-size: calc(var(--f15,15px)*var(--ts))"><span>{{ r.l }}</span><span style="font-weight: 600">{{ r.n }}</span></div>
+<span class="track" role="img" aria-label="{{ r.aria }}"><span class="fill" style="width: {{ r.pct }}"></span></span>
+</div>
+</sc-for>
+<p class="sub">A personal pattern, not a cause. Sleep comes from Apple Health, so it covers every night, not only migraine days. [10 attacks · 120 nights]</p>
+</div>
+</sc-if>
+<sc-if value="{{ is.healthOff }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="flex-direction: row; align-items: center; gap: 12px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg><span style="flex: 1"><span style="display: block; font-size: calc(var(--f17,17px)*var(--ts)); font-weight: 600">Compare your sleep</span><span class="sub" style="display: block">Share sleep from Apple Health to see how it lines up with your attacks.</span></span><button class="bt" onClick="{{ t.oHealth }}">Connect</button></div>
+</sc-if>
+<div class="card" style="gap: 12px">
+<p class="h2">Noted before attacks</p>
+<sc-for list="{{ factorCounts }}" as="f" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="{{ f.d }}"></path></svg><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px"><span style="display: flex; justify-content: space-between; gap: 8px; font-size: calc(var(--f15,15px)*var(--ts))"><span>{{ f.l }}</span><span style="font-weight: 600">{{ f.n }}</span></span><span class="track" role="img" aria-label="{{ f.aria }}"><span class="fill" style="width: {{ f.pct }}"></span></span></span></div>
+</sc-for>
+<p class="sub">Counts only. Lidd doesn't ask on days without a migraine, so these can't show what is linked to your attacks.</p>
+</div>
+</div></div>
+</sc-if>
+
+<!-- ============ SETTINGS ============ -->
+<!-- v3.9 · My medications -->
+<sc-if value="{{ is.meds }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 14px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.settings }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">My medications</p><span style="width: 44px"></span></div>
+<p class="h2">For an attack</p>
+<sc-if value="{{ is.hasAcute }}" hint-placeholder-val="{{ true }}"><div class="grp"><sc-for list="{{ medAcute }}" as="m" hint-placeholder-count="2"><button class="r" aria-label="Edit {{ m.name }}" onClick="{{ m.edit }}"><span class="mb">{{ m.badge }}</span><span class="tx"><span style="display: block; font-weight: 500">{{ m.name }}</span><span class="v" style="display: block">{{ m.dose }}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></sc-for></div></sc-if>
+<sc-if value="{{ is.noAcute }}" hint-placeholder-val="{{ false }}"><div class="card"><p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts))">Nothing added yet. Add what you take for an attack and it shows up when you log.</p></div></sc-if>
+<button class="bs" style="flex: none" onClick="{{ a.medAddAcute }}">+ Add a medication</button>
+<p class="h2" style="margin-top: 10px">Every day</p>
+<p class="sub" style="margin-top: -8px">Preventive. Kept out of attack logging.</p>
+<sc-if value="{{ is.hasPrev }}" hint-placeholder-val="{{ false }}"><div class="grp"><sc-for list="{{ medPrev }}" as="m" hint-placeholder-count="1"><button class="r" aria-label="Edit {{ m.name }}" onClick="{{ m.edit }}"><span class="mb" style="border-color: var(--bd)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M9 3v4M15 3v4"></path></svg></span><span class="tx"><span style="display: block; font-weight: 500">{{ m.name }}</span><span class="v" style="display: block">{{ m.dose }}</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></sc-for></div></sc-if>
+<button class="bs" style="flex: none" onClick="{{ a.medAddPrev }}">+ Add a daily medication</button>
+</div></div>
+</sc-if>
+
+<!-- v3.9 · Add / edit a medication: tiles and steppers, not dropdowns; limits tucked away and never pre-filled -->
+<sc-if value="{{ is.medEdit }}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="padding-bottom: 180px"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Close" onClick="{{ go.meds }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><p class="ht">{{ v.dTitle }}</p><span style="width: 44px"></span></div>
+<div class="segs" role="radiogroup" aria-label="When it's taken"><button class="seg {{ g.dKind_acute }}" role="radio" aria-checked="{{ v.dAcuteP }}" onClick="{{ gs.dKind_acute }}">For an attack</button><button class="seg {{ g.dKind_prev }}" role="radio" aria-checked="{{ v.dPrevP }}" onClick="{{ gs.dKind_prev }}">Every day</button></div>
+<label class="fl"><span class="lbl">Name</span><input class="in" placeholder="e.g. Sumatriptan" value="{{ v.dName }}" onChange="{{ a.dName }}"></label>
+<div class="fl"><p class="lbl">Form</p><div class="tiles four" role="radiogroup" aria-label="Form"><sc-for list="{{ dForms }}" as="it" hint-placeholder-count="4"><button class="tile single {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div></div>
+<div class="fl"><p class="lbl">One dose</p>
+<div style="display: flex; align-items: center; gap: 8px"><input class="in" style="flex: 1; min-width: 0" aria-label="Strength" placeholder="Strength, e.g. 50 mg" value="{{ v.dStrength }}" onChange="{{ a.dStrength }}"><button class="stp" aria-label="One fewer" onClick="{{ a.dQtyDown }}">−</button><span style="min-width: 72px; text-align: center; font-weight: 600; font-size: calc(var(--f15,15px)*var(--ts))">{{ v.dQtyText }}</span><button class="stp" aria-label="One more" onClick="{{ a.dQtyUp }}">+</button></div></div>
+<sc-if value="{{ is.dAcute }}" hint-placeholder-val="{{ true }}">
+<div class="fl"><div style="display: flex; justify-content: space-between; align-items: center"><p class="lbl">Type</p><button class="info" aria-label="Why the type matters" aria-expanded="{{ p.infoType }}" onClick="{{ t.infoType }}">i</button></div>
+<sc-if value="{{ is.infoType }}" hint-placeholder-val="{{ false }}"><p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts))">Monthly limits differ by type: 10 days for triptans and combinations, 15 for simple painkillers. Not sure counts with 10.</p></sc-if>
+<div class="tiles" role="radiogroup" aria-label="Type"><sc-for list="{{ dTypes }}" as="it" hint-placeholder-count="5"><button class="tile single {{ it.cls }}" style="min-height: 76px" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><span class="mb">{{ it.badge }}</span>{{ it.l }}</button></sc-for></div></div>
+<div class="card" style="gap: 12px">
+<button class="r" style="padding: 0; min-height: 48px" aria-expanded="{{ p.dLimitsOpen }}" onClick="{{ t.dLimitsOpen }}"><span class="tx"><span style="display: block; font-weight: 600">Limits from your leaflet · optional</span><span class="v" style="display: block">{{ v.dLimitsSummary }}</span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="{{ v.dChevron }}"></path></svg></button>
+<sc-if value="{{ is.dLimitsOpen }}" hint-placeholder-val="{{ false }}">
+<p class="sub">Lidd counts your doses against these and shows where you are. It never stops you logging a dose.</p>
+<sc-for list="{{ dLimits }}" as="l" hint-placeholder-count="3"><label style="display: flex; align-items: center; gap: 10px"><span style="flex: 1; min-width: 0"><span style="display: block; font-size: calc(var(--f16,16px)*var(--ts))">{{ l.l }}</span><span class="sub" style="display: block">{{ l.hint }}</span></span><input class="in" style="width: 84px; text-align: center; padding: 0 8px" inputmode="numeric" placeholder="–" value="{{ l.val }}" onChange="{{ l.set }}"><span class="sub" style="width: 52px">{{ l.unit }}</span></label></sc-for>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ is.dEditing }}" hint-placeholder-val="{{ false }}"><button class="bd" style="flex: none; margin-top: 8px" onClick="{{ a.medDelete }}">Delete medication</button></sc-if>
+</div></div>
+<div class="bar"><sc-if value="{{ is.dInvalid }}" hint-placeholder-val="{{ true }}"><p class="why">Add a name and the strength to save</p></sc-if><button class="bp {{ v.dOff }}" aria-disabled="{{ v.dDisabled }}" onClick="{{ a.medSave }}">Save</button></div>
+</sc-if>
+
+<sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb"><div class="col" style="gap: 16px">
+<p class="big" style="font-size: calc(32px*var(--tsh))">Settings</p>
+<div class="grp">
+<button class="r" onClick="{{ go.meds }}"><span class="tx">My medications</span><span class="v">{{ v.medCount }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="r" onClick="{{ go.display }}"><span class="tx">Display &amp; attack mode</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="r" onClick="{{ go.report }}"><span class="tx">Doctor report</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="r" onClick="{{ go.states }}"><span class="tx">Empty &amp; error states (preview)</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="r" onClick="{{ a.restart }}"><span class="tx">Restart prototype</span></button>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.display }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.settings }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">Display</p><span style="width: 44px"></span></div>
+<div class="tiles two" role="radiogroup" aria-label="Theme">
+<button class="tile single {{ g.theme_light }}" style="background: #F5F2EC; color: #2A2724" role="radio" aria-checked="{{ v.lightP }}" onClick="{{ gs.theme_light }}">Light</button>
+<button class="tile single {{ g.theme_dark }}" style="background: #1B1A18; color: #E4DFD6" role="radio" aria-checked="{{ v.darkP }}" onClick="{{ gs.theme_dark }}">Dark</button>
+</div>
+<div class="tiles two" role="radiogroup" aria-label="Font">
+<button class="tile single {{ g.font_lexend }}" style="font-family: Lexend, sans-serif" role="radio" aria-checked="{{ v.lexP }}" onClick="{{ gs.font_lexend }}"><span style="font-size: calc(30px*var(--tsh))">Aa</span>Lexend</button>
+<button class="tile single {{ g.font_atk }}" style="font-family: 'Atkinson Hyperlegible', sans-serif" role="radio" aria-checked="{{ v.atkP }}" onClick="{{ gs.font_atk }}"><span style="font-size: calc(30px*var(--tsh))">Aa</span>Atkinson</button>
+</div>
+<div class="grp">
+<div class="r"><span class="tx">Attack mode when I start an attack</span><button class="tg {{ c.amAuto }}" role="switch" aria-checked="{{ p.amAuto }}" aria-label="Attack mode when I start an attack" onClick="{{ t.amAuto }}"><span class="k"></span></button></div>
+<div class="r"><span class="tx">Use iPhone text size</span><button class="tg {{ c.dynType }}" role="switch" aria-checked="{{ p.dynType }}" aria-label="Use iPhone text size" onClick="{{ t.dynType }}"><span class="k"></span></button></div>
+</div>
+<p class="h2" style="margin-top: 8px">Screen</p>
+<p class="lbl">Brightness in Lidd</p>
+<div class="tiles four" role="radiogroup" aria-label="Brightness in Lidd"><sc-for list="{{ brightOpts }}" as="it" hint-placeholder-count="4"><button class="tile single {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<p class="lbl">Warmth</p>
+<div class="tiles three" role="radiogroup" aria-label="Warmth"><sc-for list="{{ warmOpts }}" as="it" hint-placeholder-count="3"><button class="tile single {{ it.cls }}" style="min-height: 76px" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><span class="sw" style="background: {{ it.sw }}"></span>{{ it.l }}</button></sc-for></div>
+<div class="grp"><div class="r"><span class="tx">In attack mode</span><span class="v">{{ v.amScreenLabel }}</span></div></div>
+<p class="sub">Brightness changes the phone's screen while Lidd is open, and goes back when you leave.</p>
+<p class="h2" style="margin-top: 8px">Text size · preview</p>
+<div class="segs" role="radiogroup" aria-label="Preview text size"><button class="seg {{ g.textSize_default }}" role="radio" aria-checked="{{ v.tsDefP }}" onClick="{{ gs.textSize_default }}">Default</button><button class="seg {{ g.textSize_ax2 }}" role="radio" aria-checked="{{ v.tsAx2P }}" onClick="{{ gs.textSize_ax2 }}">AX2</button><button class="seg {{ g.textSize_ax3 }}" role="radio" aria-checked="{{ v.tsAx3P }}" onClick="{{ gs.textSize_ax3 }}">AX3</button></div>
+<p class="sub">From AX1 the head map opens as a list. Tiles go to two columns, then one column from AX3. AX3 is the first iPhone size past 200%.</p>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.report }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.settings }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">Doctor report</p><span style="width: 44px"></span></div>
+<div style="align-self: center; width: 230px; background: #FBFAF7; color: #2A2724; border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.12)"><p style="margin: 0; font-size: calc(var(--f14,14px)*var(--ts)); font-weight: 600">Headache diary · Jul–Sep</p><div style="display: flex; align-items: flex-end; gap: 8px; height: 50px"><span style="width: 22px; height: 36px; background: #6E8B74"></span><span style="width: 22px; height: 50px; background: #6E8B74"></span><span style="width: 22px; height: 16px; background: #6E8B74"></span></div><span style="height: 6px; background: #D8D2C6; border-radius: 3px"></span><span style="height: 6px; width: 70%; background: #D8D2C6; border-radius: 3px"></span></div>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ go.settings }}">Share PDF</button></div>
+</sc-if>
+
+<sc-if value="{{ is.states }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.settings }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">States</p><span style="width: 44px"></span></div>
+<p class="lbl">Empty · first open of Logs</p>
+<div class="card" style="align-items: center; text-align: center; gap: 8px; padding: 24px 16px"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"></path></svg><p style="margin: 0; font-size: calc(var(--f17,17px)*var(--ts)); font-weight: 600">Nothing logged yet</p><p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts))">Add your first entry when you're ready.</p><button class="bp" style="min-height: 48px; margin-top: 6px; width: auto; padding: 0 20px">Log an attack</button></div>
+<p class="lbl">Error · save failed</p>
+<div class="warn" role="alert"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg><span style="flex: 1">That didn't save. Let's try again.</span><button class="bt" style="color: var(--tx); font-weight: 600">Retry</button></div>
+<p class="lbl">Permission off · Apple Health</p>
+<div class="card" style="flex-direction: row; align-items: center; gap: 12px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"></path></svg><span style="flex: 1; font-size: calc(var(--f15,15px)*var(--ts))">Sleep isn't shared. You can still log it by hand.</span><button class="bt">Settings</button></div>
+<p class="lbl">Not enough data · Insights</p>
+<div class="card" style="flex-direction: row; align-items: center; gap: 12px"><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--sf2)" stroke-width="4"></circle><circle cx="18" cy="18" r="15" fill="none" stroke="var(--ac)" stroke-width="4" stroke-dasharray="9.4 94.2" transform="rotate(-90 18 18)" stroke-linecap="round"></circle></svg><span style="flex: 1; font-size: calc(var(--f15,15px)*var(--ts))">Charts fill in as you log. A week or two is enough to start.</span></div>
+</div></div>
+</sc-if>
+
+<!-- ============ TABS ============ -->
+<sc-if value="{{ is.tabs }}" hint-placeholder-val="{{ false }}">
+<nav class="tabs" aria-label="Main">
+<button class="tab {{ tc.today }}" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg>Today</button>
+<button class="tab {{ tc.logs }}" onClick="{{ go.logs }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"></path></svg>Logs</button>
+<sc-if value="{{ is.plus }}" hint-placeholder-val="{{ true }}"><button class="plus" aria-label="{{ v.plusLabel }}" onClick="{{ a.plus }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></sc-if>
+<button class="tab {{ tc.insights }}" onClick="{{ go.insights }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4v16h16"></path><path d="M7 15l4-5 3 3 5-6"></path></svg>Insights</button>
+<button class="tab {{ tc.settings }}" onClick="{{ go.settings }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>Settings</button>
+</nav>
+</sc-if>
+
+<!-- ============ SHEETS ============ -->
+<sc-if value="{{ is.sheetAdd }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.closeSheet }}"></button>
+<div class="sheet" role="dialog" aria-label="Log">
+<div class="grab" aria-hidden="true"></div>
+<button class="card" style="border: 2px solid var(--acline); background: var(--acsoft); color: inherit; font: inherit; text-align: left; flex-direction: row; align-items: center; gap: 14px" onClick="{{ go.same }}">
+<svg width="44" height="50" viewBox="0 0 30 34" aria-hidden="true"><ellipse cx="15" cy="17" rx="13" ry="15" fill="var(--bg)" stroke="var(--mu)" stroke-width="1.2"></ellipse><path d="M15 2 A13 15 0 0 1 15 32 Z" fill="var(--ac)"></path></svg>
+<span style="flex: 1"><span style="display: block; font-size: calc(var(--f19,19px)*var(--ts)); font-weight: 600">Log like last time</span><span class="sub" style="display: block">Left side · throbbing · you'll confirm first</span></span>
+</button>
+<div class="tiles">
+<button class="tile" onClick="{{ go.w1 }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2 2 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>Something's different</button>
+<button class="tile" onClick="{{ a.logHeadache }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 15h8M9 9h.01M15 9h.01"></path></svg>Just a headache</button>
+<button class="tile" onClick="{{ go.w1 }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l-3 2"></path></svg>Log an earlier attack</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.sheetPrompt }}" hint-placeholder-val="{{ false }}">
+<div class="dim" aria-hidden="true"></div>
+<div class="sheet" role="dialog" aria-label="Switch to attack mode?" style="gap: 14px">
+<div class="grab" aria-hidden="true"></div>
+<div style="display: flex; align-items: center; gap: 14px"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--acs)" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg><div><p style="margin: 0; font-size: calc(22px*var(--ts)); font-weight: 600">Switch to attack mode?</p><p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts))">Dimmer, bigger, only the essentials</p></div></div>
+<div class="grp"><div class="r"><span class="tx">Always when I start an attack</span><button class="tg {{ c.amAuto }}" role="switch" aria-checked="{{ p.amAuto }}" aria-label="Always switch on attack mode" onClick="{{ t.amAuto }}"><span class="k"></span></button></div></div>
+<div style="display: flex; gap: 10px"><button class="bs" onClick="{{ a.promptOff }}">Not now</button><button class="bp" onClick="{{ a.promptOn }}">Switch on</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.sheetRedflag }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.closeSheet }}"></button>
+<div class="sheet {{ v.amCls }}" role="dialog" aria-label="Feels different from usual?" style="gap: 12px; max-height: calc(100% - 44px); overflow-y: auto">
+<div class="grab" aria-hidden="true"></div>
+<p style="margin: 0; font-size: calc(22px*var(--ts)); font-weight: 600">Does any of this fit?</p>
+<div class="tiles two"><sc-for list="{{ sets.rf }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" style="min-height: 96px; font-size: calc(var(--f15,15px)*var(--ts)); padding: 10px; {{ it.st }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<sc-if value="{{ is.rfNow }}" hint-placeholder-val="{{ false }}">
+<div class="tier now" role="alert">
+<p class="tt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg>Signs like these should be checked straight away.</p>
+<a class="b112" href="tel:112"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"></path></svg>Call 112</a>
+</div>
+</sc-if>
+<sc-if value="{{ is.rfSoon }}" hint-placeholder-val="{{ false }}">
+<div class="tier soon" role="status">
+<p class="tt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>This can have other causes. It's a good idea to see your doctor today.</p>
+<a class="bs lnk" href="tel:1813" style="color: var(--tx)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"></path></svg>Out of hours · [1813]</a>
+</div>
+</sc-if>
+<sc-if value="{{ is.rfAny }}" hint-placeholder-val="{{ false }}"><p class="sub">Saved with this attack for your doctor report.</p></sc-if>
+<button class="bs" style="flex: none" onClick="{{ a.closeSheet }}">Back to logging</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.sheetDelete }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.closeSheet }}"></button>
+<div class="sheet" role="alertdialog" aria-label="Delete this attack?" style="gap: 14px">
+<div class="grab" aria-hidden="true"></div>
+<p style="margin: 0; font-size: calc(22px*var(--ts)); font-weight: 600">Delete this attack?</p>
+<p class="sub" style="font-size: calc(var(--f15,15px)*var(--ts))">{{ ld.date }} · {{ ld.dur }}. You can undo right after.</p>
+<div style="display: flex; gap: 10px"><button class="bs" onClick="{{ a.closeSheet }}">Keep</button><button class="bd" onClick="{{ a.doDelete }}">Delete</button></div>
+</div>
+</sc-if>
+
+<!-- v3.2 · Screen sheet: brightness + warmth -->
+<sc-if value="{{ is.sheetScreen }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.closeSheet }}"></button>
+<div class="sheet {{ v.amCls }}" role="dialog" aria-label="Screen" style="gap: 12px">
+<div class="grab" aria-hidden="true"></div>
+<p style="margin: 0; font-size: calc(24px*var(--ts)); font-weight: 600">Screen</p>
+<p class="lbl">Brightness</p>
+<div class="tiles four" role="radiogroup" aria-label="Brightness"><sc-for list="{{ brightOpts }}" as="it" hint-placeholder-count="4"><button class="tile single {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<p class="lbl">Warmth</p>
+<div class="tiles three" role="radiogroup" aria-label="Warmth"><sc-for list="{{ warmOpts }}" as="it" hint-placeholder-count="3"><button class="tile single {{ it.cls }}" style="min-height: 88px" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><span class="sw" style="background: {{ it.sw }}"></span>{{ it.l }}</button></sc-for></div>
+<p class="sub">Back to normal when you leave Lidd.</p>
+<button class="bp" style="flex: none" onClick="{{ a.closeSheet }}">Done</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.toast }}" hint-placeholder-val="{{ false }}">
+<div class="toast {{ v.amCls }}" role="status"><span>{{ v.toast }}</span><sc-if value="{{ is.toastUndo }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.undo }}">Undo</button></sc-if><sc-if value="{{ is.toastPlain }}" hint-placeholder-val="{{ true }}"><button aria-label="Dismiss" onClick="{{ a.toastClose }}">OK</button></sc-if></div>
+</sc-if>
+
+<!-- v3.2 · On device, brightness is the phone's backlight. Here it is simulated with a scrim. -->
+<sc-if value="{{ is.ovlBright }}" hint-placeholder-val="{{ false }}"><div class="ovl bright" style="opacity: {{ v.brightA }}" aria-hidden="true"></div><p class="sim" aria-hidden="true">Brightness simulated</p></sc-if>
+<sc-if value="{{ is.ovlWarm }}" hint-placeholder-val="{{ false }}"><div class="ovl warm" style="opacity: {{ v.warmB }}" aria-hidden="true"></div></sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"preset":{"editor":"enum","options":["onb","today","todayWarn","addSheet","same","where","whereList","worse","meds","redflag","attack","attackMode","checkin","details","end","logs","detail","delete","insights","states","display","amScreen","amDimmed","amWhere","displayScreen","ax2Details","ax3Where","onbAge","rfNow","rfSoon","ongoing","ongoingCheckin","amOngoing","amOngoingCheckin","amIdle","todayCluster","insightsHealth","insightsEarly","insightsFewNights","updStart","updBetter","updAdd","updMixed","updMapPick","amUpdBetter","updSheet","amUpdMapPick","updMeds","updSyms","updAll","medsList","medAdd","medEditSuma","onbDoseP","updMedsLib","logsV10","logA2","logA3"],"default":"onb"},"hero":{"editor":"enum","options":["duration","trend"],"default":"trend"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  icons() {
+    return {
+      nausea: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 15c1.5-1 2.5-1 4 0s2.5 1 4 0M9 9h.01M15 9h.01',
+      vomit: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 9h.01M15 9h.01M10 13h4v3a2 2 0 0 1-4 0z',
+      light: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
+      sound: 'M11 5L6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13',
+      aura: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM8 12l2-2 2 4 2-2 2 2',
+      dizzy: 'M12 12a2 2 0 1 1 2-2 4 4 0 1 1-4-4 6 6 0 1 1-6 6',
+      pain: 'M12 3a7 7 0 0 0-7 7c0 2.5 1.2 3.8 2 5v4h10v-4c.8-1.2 2-2.5 2-5a7 7 0 0 0-7-7zM10 8l2 3-2 2',
+      throb: 'M3 12h4l2-6 4 12 2-6h6',
+      press: 'M12 3v6M9 6l3 3 3-3M12 21v-6M9 18l3-3 3 3M4 12h16',
+      stab: 'M13 2L4 14h7l-1 8 9-12h-7z',
+      dull: 'M3 12c3-3 6 3 9 0s6 3 9 0',
+      dark: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+      cold: 'M12 2v20M4.9 7l14.2 10M19.1 7L4.9 17',
+      rest: 'M3 18v-6h18v6M3 12V7M7 12a2 2 0 1 1 0-4h5v4M21 18v2M3 18v2',
+      mint: 'M5 19c0-8 6-14 14-14 0 8-6 14-14 14zM5 19l7-7',
+      device: 'M7 3h10v18H7zM10 7h4M12 16h.01',
+      sleep: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5zM15 3h4l-4 4h4',
+      stress: 'M3 12l3-4 3 8 3-10 3 10 3-6 3 2',
+      meal: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2 6 0 8v10',
+      alcohol: 'M8 3h8l-1 8a3 3 0 0 1-6 0zM12 14v7M9 21h6',
+      period: 'M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z',
+      weather: 'M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z',
+      yawn: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 9h2M14 9h2M12 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4z',
+      crave: 'M12 3a9 9 0 1 0 9 9 4 4 0 0 1-5-5 4 4 0 0 1-4-4zM8 12h.01M12 16h.01M15 13h.01',
+      neck: 'M9 3a3 3 0 1 0 6 0M12 6v6M6 21c1-5 3-7 6-7s5 2 6 7',
+      mood: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 16c1-1.5 2.5-2 4-2s3 .5 4 2M9 9h.01M15 9h.01',
+      tired: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 10h3M13 10h3M9 15h6',
+      foggy: 'M4 9h16M2 13h20M4 17h16',
+      fine: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12l3 3 5-6',
+      walk: 'M13 4a2 2 0 1 0 0 .01M10 21l2-6 3 3v3M9 11l3-3 3 3 3 1M12 8l-2 6',
+      still: 'M12 4a2 2 0 1 0 0 .01M12 8v7M9 21l3-6 3 6M8 11h8',
+      eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
+      tingle: 'M7 21v-6M11 21V9a2 2 0 0 1 4 0v12M15 13h2a2 2 0 0 1 2 2v6M4 4l2 2M20 4l-2 2M12 2v2',
+      words: 'M4 5h16v11H9l-5 4zM8 9h.01M12 9h.01M16 9h.01',
+      bolt: 'M13 2L4 14h7l-1 8 9-12h-7z',
+      weak: 'M12 4a2 2 0 1 0 0 .01M12 8v6M8 21l4-7 4 7M7 11h5',
+      fever: 'M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0zM12 11v6',
+      change: 'M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4',
+      cal: 'M4 6h16v14H4zM4 10h16M9 3v4M15 3v4M9 14h6',
+      fTablet: 'M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7zM8.5 8.5l7 7',
+      fSpray: 'M9 2h6v4H9zM7 6h10v15H7zM11 10h2M11 14h2',
+      fInject: 'M18 2l4 4M17 7l3-3M19 9L9 19l-4 1 1-4L16 6zM9 11l4 4',
+      fOther: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12h.01M12 12h.01M16 12h.01',
+      sun0: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1',
+      sun1: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 3.5v1.5M12 19v1.5M3.5 12H5M19 12h1.5M6 6l1 1M17 17l1 1M6 18l1-1M17 7l1-1',
+      sun2: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 4.5h.01M12 19.5h.01M4.5 12h.01M19.5 12h.01',
+      sun3: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'
+    };
+  }
+  defaults(preset) {
+    const pr = preset || 'onb';
+    // v3.9 · the user's medication library (example values in brackets)
+    const M0 = [
+      { id: 'suma', name: 'Sumatriptan', kind: 'acute', form: 'tablet', strength: '[50 mg]', qty: 1, type: 'T', max24: 2, gapH: 2, maxDays: null },
+      { id: 'treo', name: 'Treo', kind: 'acute', form: 'tablet', strength: '[50 mg]', qty: 2, type: 'C', max24: null, gapH: null, maxDays: null }
+    ];
+    const pad = (n) => (n < 10 ? '0' : '') + n;
+    const now = Date.now();
+    const twoH = now - 2 * 3600000 - 5 * 60000;
+    const zv0 = { top: 0, rf: 0, lf: 0, rt: 0, lt: 0, re: 0, le: 0, back: 0, neck: 0, all: 0 };
+    const clk = (ts) => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+    const base = {
+      screen: 'onb1', sheet: null, theme: 'light', font: 'lexend', attack: false, amode: false, startAt: 0, painNow: 0, painTime: '', peak: 0,
+      zv: zv0, activeZ: null, mapView: 'map', worse: null, mbs: null, startChip: 'now', endChip: 'now',
+      sumaOn: false, sumaQty: 1, treoOn: false, nothing: false, samePain: 7, sameMed: null,
+      checkinDone: false, ciPick: -1, ciMbs: null, ciLabel: '', amPick: 0,
+      ended: false, endLabel: '', headacheLogged: false, merged: false, deleted: false, toast: '', toastUndo: null, undoState: null, triptanBase: 7,
+      auLen: null, auHour: null,
+      dSleep: false, dStress: false, dMeal: false, dPeriod: false, eYawn: false, eCrave: false, eNeck: false, eMood: false, earlyOpen: false,
+      symNausea: false, symVomit: false, symLight: false, symSound: false, symAura: false, symDizzy: false, auVis: false, auSens: false, auSpeech: false,
+      ftThrob: false, ftPress: false, ftStab: false, ftDull: false,
+      trDark: false, trMint: false, trCold: false, trRest: false, trDevice: false, trSleep: false,
+      pdTired: false, pdFoggy: false, pdLight: false, pdFine: false,
+      fSleep: false, fWeather: false, fStress: false, fMeal: false, fAlcohol: false, fPeriod: false,
+      rfSudden: false, rfWeak: false, rfFever: false, rfChange: false,
+      oSuma: true, oTreo: true, oIbu: false, oPara: false, oNap: false, oRime: false,
+      oSymNausea: true, oSymVomit: false, oSymLight: true, oSymSound: false, oSymAura: false, oSymDizzy: false,
+      oHealth: false, oNotif: true, onbCycle: false, amAuto: false, dynType: true, infoFactors: false, infoDays: false,
+      rfAfter50: false, decade: null, birthYear: null, textSize: 'default', dimN: 0, warmN: 0, dimA: 2, warmA: 1,
+      series: [], patternAttacks: 4, shortNights: 12,
+      meds: M0, w4o: {}, dId: null, dKind: 'acute', dName: '', dForm: 'tablet', dStrength: '', dQty: 1, dType: null, dMax24: '', dGap: '', dDays: '', dLimitsOpen: false, infoType: false
+    };
+    base.mapView = null;
+    const attackOn = { attack: true, startAt: twoH, painNow: 8, peak: 8, painTime: clk(twoH), zv: Object.assign({}, zv0, { le: 8, lf: 5 }), worse: 'yes', mbs: 'light', sumaOn: true, screen: 'today', series: [5, 7, 8] };
+    const oneH = now - 70 * 60000;
+    const earlyOn = Object.assign({}, attackOn, { startAt: oneH, painTime: clk(oneH) });
+    const P = {
+      onb: {},
+      today: { screen: 'today' },
+      todayWarn: { screen: 'today', triptanBase: 8 },
+      addSheet: { screen: 'today', sheet: 'add' },
+      same: { screen: 'same', sameMed: 'yes' },
+      where: { screen: 'w1', zv: Object.assign({}, zv0, { le: 8, lf: 5 }), activeZ: 'le' },
+      whereList: { screen: 'w1', mapView: 'list', zv: Object.assign({}, zv0, { le: 8, lf: 5 }) },
+      worse: { screen: 'w2', zv: Object.assign({}, zv0, { le: 8 }), worse: 'yes' },
+      meds: { screen: 'w4', zv: Object.assign({}, zv0, { le: 8 }), sumaOn: true, sumaQty: 3 },
+      redflag: { screen: 'w1', sheet: 'redflag', rfSudden: true },
+      attack: Object.assign({}, attackOn),
+      attackMode: Object.assign({}, attackOn, { amode: true }),
+      checkin: Object.assign({}, attackOn, { amode: true, screen: 'checkin', ciPick: 3, ciMbs: 'yes' }),
+      details: Object.assign({}, attackOn, { screen: 'details', ftThrob: true, symNausea: true, symLight: true, symAura: true, auVis: true, auLen: 'mid', auHour: 'yes', trDark: true }),
+      end: Object.assign({}, attackOn, { screen: 'end1', pdTired: true }),
+      logs: { screen: 'logs' },
+      detail: { screen: 'logDetail' },
+      delete: { screen: 'logDetail', sheet: 'delete' },
+      insights: { screen: 'insights' },
+      states: { screen: 'states' },
+      display: { screen: 'display' },
+      amScreen: Object.assign({}, attackOn, { amode: true, sheet: 'screen' }),
+      amDimmed: Object.assign({}, attackOn, { amode: true, dimA: 3, warmA: 2 }),
+      amWhere: { screen: 'w1', amode: true, zv: Object.assign({}, zv0, { le: 8, lf: 5 }), activeZ: 'le' },
+      displayScreen: { screen: 'display', dimN: 1, warmN: 1 },
+      ax2Details: Object.assign({}, attackOn, { screen: 'details', textSize: 'ax2', ftThrob: true, symNausea: true, symLight: true }),
+      ax3Where: { screen: 'w1', textSize: 'ax3', zv: Object.assign({}, zv0, { lf: 6, le: 8 }), activeZ: 'lf' },
+      onbAge: { screen: 'onbAge', decade: 1960, birthYear: 1968 },
+      rfNow: { screen: 'w1', sheet: 'redflag', zv: Object.assign({}, zv0, { le: 8 }), rfSudden: true },
+      rfSoon: { screen: 'w1', sheet: 'redflag', zv: Object.assign({}, zv0, { le: 8 }), birthYear: 1968, decade: 1960, rfAfter50: true },
+      ongoing: Object.assign({}, earlyOn),
+      ongoingCheckin: Object.assign({}, attackOn, { triptanBase: 8 }),
+      amOngoing: Object.assign({}, earlyOn, { amode: true }),
+      amOngoingCheckin: Object.assign({}, attackOn, { amode: true, triptanBase: 8 }),
+      amIdle: { screen: 'today', amode: true },
+      insightsHealth: { screen: 'insights', oHealth: true, patternAttacks: 10 },
+      logsV10: { screen: 'logs' },
+      logA2: { screen: 'logDetail', logSel: 'a2' },
+      logA3: { screen: 'logDetail', logSel: 'a3' },
+      medsList: { screen: 'meds', meds: M0.concat([{ id: 'm1', name: 'Propranolol', kind: 'prev', form: 'tablet', strength: '[40 mg]', qty: 1, type: null, max24: null, gapH: null, maxDays: null }]) },
+      medAdd: { screen: 'medEdit', dKind: 'acute' },
+      medEditSuma: { screen: 'medEdit', dId: 'suma', dKind: 'acute', dName: 'Sumatriptan', dForm: 'tablet', dStrength: '[50 mg]', dQty: 1, dType: 'T', dMax24: '2', dGap: '2', dDays: '', dLimitsOpen: true },
+      onbDoseP: { screen: 'onbDose', oIbu: true, meds: M0.concat([{ id: 'ibu', name: 'Ibuprofen', kind: 'acute', form: 'tablet', strength: '', qty: 1, type: 'P', max24: null, gapH: null, maxDays: null }]) },
+      updMedsLib: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 8, lf: 5 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), uSym: {}, uSymPrev: {}, uMeds: { treo: 2 }, uMedWhen: 'now', uSheet: 'med' }),
+      updStart: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 8, lf: 5 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }) }),
+      updBetter: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 5, lf: 5 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), uActive: 'le' }),
+      updAdd: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 5, lf: 5, rt: -1 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), uAdd: true }),
+      updMixed: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 6, lf: 0, rt: 6 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }) }),
+      updMapPick: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 5, lf: 5, rt: -1 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), uAdd: true, uActive: 'rt' }),
+      updSheet: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 5, lf: 5 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), uAdd: true }),
+      updMeds: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 8, lf: 5 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), symNausea: true, symLight: true, uSym: { nausea: true, light: true }, uSymPrev: { nausea: true, light: true }, uMbs: 'light', uMbsPrev: 'light', sumaQty: 2, uMeds: { suma: 1 }, uMedWhen: 'now', uSheet: 'med' }),
+      updSyms: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 8, lf: 5 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), symNausea: true, symLight: true, uSym: { nausea: true, light: true, vomit: true }, uSymPrev: { nausea: true, light: true }, uMbs: 'nausea', uMbsPrev: 'light', uSheet: 'sym' }),
+      updAll: Object.assign({}, attackOn, { screen: 'update', uz: Object.assign({}, zv0, { le: 6, lf: 0, rt: 6 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), symNausea: true, symLight: true, uSym: { nausea: true, light: true, vomit: true }, uSymPrev: { nausea: true, light: true }, uMbs: 'nausea', uMbsPrev: 'light', uMeds: { ibu: 1 }, uMedWhen: '30m' }),
+      amUpdMapPick: Object.assign({}, attackOn, { amode: true, screen: 'update', uz: Object.assign({}, zv0, { le: 5, lf: 5, rt: -1 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), uAdd: true, uActive: 'rt' }),
+      amUpdBetter: Object.assign({}, attackOn, { amode: true, screen: 'update', uz: Object.assign({}, zv0, { le: 5, lf: 5 }), uPrev: Object.assign({}, zv0, { le: 8, lf: 5 }), uActive: 'le' }),
+      insightsEarly: { screen: 'insights', oHealth: true, patternAttacks: 4 },
+      insightsFewNights: { screen: 'insights', oHealth: true, patternAttacks: 10, shortNights: 3 },
+      todayCluster: { screen: 'today', ended: true, endAt: now - 40 * 60000, startAt: now - 5 * 3600000, peak: 8, sumaOn: true, pdFoggy: true, endLabel: clk(now - 5 * 3600000) + ' – ' + clk(now - 40 * 60000) }
+    };
+    return Object.assign({}, base, P[pr] || {});
+  }
+  componentDidMount() { this._timer = setInterval(() => this.forceUpdate(), 30000); }
+  componentWillUnmount() { clearInterval(this._timer); }
+  renderVals() {
+    const I = this.icons();
+    const D = this.defaults(this.props.preset);
+    const s = Object.assign({}, D, this.state || {});
+    const S = (o) => () => this.setState(o);
+    const pad = (n) => (n < 10 ? '0' : '') + n;
+    const clock = (ts) => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+    const nowTs = Date.now();
+
+    const screens = ['onb1','onb2','onbDose','meds','medEdit','onb3','onbAge','onb4','today','same','update','w1','w2','w3','w4','details','end1','end2','saved','checkin','amUpdate','logs','logDetail','merge','insights','settings','display','report','states'];
+    const go = {};
+    screens.forEach((n) => { go[n] = S({ screen: n, sheet: null }); });
+
+    const keys = ['dSleep','dStress','dMeal','dPeriod','eYawn','eCrave','eNeck','eMood','earlyOpen','symNausea','symVomit','symLight','symSound','symAura','symDizzy','auVis','auSens','auSpeech','ftThrob','ftPress','ftStab','ftDull','trDark','trMint','trCold','trRest','trDevice','trSleep','pdTired','pdFoggy','pdLight','pdFine','fSleep','fWeather','fStress','fMeal','fAlcohol','fPeriod','rfSudden','rfWeak','rfFever','rfChange','oSuma','oTreo','oIbu','oPara','oNap','oRime','oSymNausea','oSymVomit','oSymLight','oSymSound','oSymAura','oSymDizzy','oHealth','oNotif','onbCycle','amAuto','dynType','infoFactors','infoDays','rfAfter50','infoType','dLimitsOpen','allUpdates'];
+    const t = {}, c = {}, p = {};
+    keys.forEach((k) => { t[k] = () => this.setState({ [k]: !s[k] }); c[k] = s[k] ? 'on' : ''; p[k] = s[k] ? 'true' : 'false'; });
+
+    const groups = { theme: ['light','dark'], font: ['lexend','atk'], startChip: ['now','1h','2h','woke'], endChip: ['now','1h','pick'], ciMbs: ['yes','no'], auLen: ['short','mid','long'], auHour: ['yes','no'], range: ['30d','3m','all'], mapView: ['map','list'], sameMed: ['yes','no'], dKind: ['acute','prev'], textSize: ['default','ax2','ax3','ax5'] };
+    const g = {}, gs = {};
+    Object.keys(groups).forEach((k) => groups[k].forEach((val) => { g[k + '_' + val] = s[k] === val ? 'on' : ''; gs[k + '_' + val] = () => this.setState({ [k]: val }); }));
+    // v3.2: from the accessibility sizes up, the head map opens as a list unless the user picked a view.
+    const bigText = s.textSize !== 'default';
+    const mv = s.mapView || (bigText ? 'list' : 'map');
+    g.mapView_map = mv === 'map' ? 'on' : ''; g.mapView_list = mv === 'list' ? 'on' : '';
+    gs.textSize_default = () => this.setState({ textSize: 'default', mapView: null });
+    ['ax2','ax3','ax5'].forEach((k) => { gs['textSize_' + k] = () => this.setState({ textSize: k, mapView: null }); });
+    // v3.2: age, only for the SNOOP "new headache after 50" item
+    const thisYear = new Date().getFullYear();
+    const age = s.birthYear ? thisYear - s.birthYear : null;
+    const over50 = age !== null && age >= 50;
+    const decades = [1930,1940,1950,1960,1970,1980,1990,2000].map((d) => ({ l: d + 's', cls: s.decade === d ? 'on' : '', p: s.decade === d ? 'true' : 'false', tap: () => this.setState({ decade: d, birthYear: null }) }));
+    const years = s.decade ? [0,1,2,3,4,5,6,7,8,9].map((i) => s.decade + i).filter((y) => y <= thisYear - 13).map((y) => ({ l: String(y), cls: s.birthYear === y ? 'on' : '', p: s.birthYear === y ? 'true' : 'false', tap: () => this.setState({ birthYear: y }) })) : [];
+    // v3.2: screen comfort. Attack mode keeps its own pair (default Low + Some warmth).
+    const brightA = [0, 0.18, 0.32, 0.45];
+    const warmB = [0, 0.3, 0.5];
+    const curDim = s.amode ? s.dimA : s.dimN;
+    const curWarm = s.amode ? s.warmA : s.warmN;
+    const dimKey = s.amode ? 'dimA' : 'dimN';
+    const warmKey = s.amode ? 'warmA' : 'warmN';
+    const brightNames = ['As phone','Lower','Low','Lowest'];
+    const warmNames = ['Off','Some','More'];
+    const brightOpts = brightNames.map((l, i) => ({ l: l, d: I['sun' + i], cls: curDim === i ? 'on' : '', p: curDim === i ? 'true' : 'false', tap: () => this.setState({ [dimKey]: i }) }));
+    const warmOpts = warmNames.map((l, i) => ({ l: l, sw: ['#F5F2EC','#F5DEC6','#F5D1AD'][i], cls: curWarm === i ? 'on' : '', p: curWarm === i ? 'true' : 'false', tap: () => this.setState({ [warmKey]: i }) }));
+
+    const tog = (list) => list.map((x) => ({ l: x[1], d: I[x[2]], badge: x[3] || '', cls: s[x[0]] ? 'on' : '', p: s[x[0]] ? 'true' : 'false', tap: () => this.setState({ [x[0]]: !s[x[0]] }) }));
+    const pick = (key, list) => list.map((x) => ({ l: x[1], d: I[x[2]], cls: s[key] === x[0] ? 'on' : '', p: s[key] === x[0] ? 'true' : 'false', tap: () => this.setState({ [key]: x[0] }) }));
+
+    // v3.9 · medication library helpers
+    const meds = s.meds || [];
+    const unitOf = (form, n) => ({ tablet: 'tablet', spray: 'spray', injection: 'injection', other: 'dose' })[form || 'tablet'] + (n === 1 ? '' : 's');
+    const doseText = (m) => m.qty + ' ' + unitOf(m.form, m.qty) + ' · ' + (m.strength ? m.strength : 'strength not set') + (m.max24 ? ' · max ' + m.max24 + ' in 24 h' : '');
+    const acuteMeds = meds.filter((m) => m.kind === 'acute');
+    const w4o = s.w4o || {};
+    const medOn = (id) => id === 'suma' ? s.sumaOn : (id === 'treo' ? s.treoOn : !!w4o[id]);
+    const medToggle = (id) => id === 'suma' ? { sumaOn: !s.sumaOn, nothing: false } : (id === 'treo' ? { treoOn: !s.treoOn, nothing: false } : { w4o: Object.assign({}, w4o, { [id]: !w4o[id] }), nothing: false });
+    const sumaLib = meds.find((m) => m.id === 'suma');
+    const KNOWN = { suma: ['Sumatriptan','T'], treo: ['Treo','C'], ibu: ['Ibuprofen','P'], para: ['Paracetamol','P'], nap: ['Naproxen','P'], rime: ['Rimegepant','G'] };
+    const OKEY = { suma: 'oSuma', treo: 'oTreo', ibu: 'oIbu', para: 'oPara', nap: 'oNap', rime: 'oRime' };
+    const setMed = (id, patch) => this.setState({ meds: meds.map((m) => m.id === id ? Object.assign({}, m, patch) : m) });
+    const onbDoseRows = acuteMeds.filter((m) => KNOWN[m.id]).map((m) => ({ name: m.name, badge: m.type || '–', strength: m.strength || '', qtyText: m.qty + ' ' + unitOf(m.form, m.qty), setStrength: (e) => setMed(m.id, { strength: e.target.value }), down: () => setMed(m.id, { qty: Math.max(1, m.qty - 1) }), up: () => setMed(m.id, { qty: Math.min(6, m.qty + 1) }) }));
+    const medRow = (m) => ({ name: m.name, badge: m.type || '–', dose: doseText(m), edit: () => this.setState({ screen: 'medEdit', dId: m.id, dKind: m.kind, dName: m.name, dForm: m.form || 'tablet', dStrength: m.strength || '', dQty: m.qty || 1, dType: m.type || null, dMax24: m.max24 ? String(m.max24) : '', dGap: m.gapH ? String(m.gapH) : '', dDays: m.maxDays ? String(m.maxDays) : '', dLimitsOpen: false, infoType: false }) });
+    const medAcute = acuteMeds.map(medRow);
+    const medPrev = meds.filter((m) => m.kind === 'prev').map(medRow);
+    const newDraft = (kind) => ({ screen: 'medEdit', dId: null, dKind: kind, dName: '', dForm: 'tablet', dStrength: '', dQty: 1, dType: null, dMax24: '', dGap: '', dDays: '', dLimitsOpen: false, infoType: false });
+    const dForms = [['tablet','Tablet','fTablet'],['spray','Spray','fSpray'],['injection','Injection','fInject'],['other','Other','fOther']].map((x) => ({ l: x[1], d: I[x[2]], cls: s.dForm === x[0] ? 'on' : '', p: s.dForm === x[0] ? 'true' : 'false', tap: () => this.setState({ dForm: x[0] }) }));
+    const dTypes = [['T','Triptan'],['C','Combination'],['P','Painkiller'],['G','Gepant'],['?','Not sure']].map((x) => ({ l: x[1], badge: x[0], cls: s.dType === x[0] ? 'on' : '', p: s.dType === x[0] ? 'true' : 'false', tap: () => this.setState({ dType: x[0] }) }));
+    const guideDays = s.dType === 'P' ? 15 : 10;
+    const dLimits = [['dMax24','Max in 24 hours', unitOf(s.dForm, 2), 'From the leaflet'],['dGap','Time between doses','hours','Shortest gap allowed'],['dDays','Max days a month','days','Guideline for this type: ' + guideDays]].map((x) => ({ l: x[1], unit: x[2], hint: x[3], val: s[x[0]] || '', set: (e) => this.setState({ [x[0]]: String(e.target.value).replace(/[^0-9]/g, '') }) }));
+    const dCount = ['dMax24','dGap','dDays'].filter((k) => s[k]).length;
+    const dInvalid = !(String(s.dName || '').trim() && String(s.dStrength || '').trim());
+    const sets = {
+      onbMeds: tog([['oSuma','Sumatriptan','', 'T'],['oTreo','Treo','', 'C'],['oIbu','Ibuprofen','', 'P'],['oPara','Paracetamol','', 'P'],['oNap','Naproxen','', 'P'],['oRime','Rimegepant','', 'G']]),
+      onbSym: tog([['oSymNausea','Nausea','nausea'],['oSymVomit','Vomiting','vomit'],['oSymLight','Light-sensitive','light'],['oSymSound','Sound-sensitive','sound'],['oSymAura','Aura','aura'],['oSymDizzy','Dizzy','dizzy']]),
+      daily: tog([['dSleep','Short sleep','sleep'],['dStress','Stressful','stress'],['dMeal','Missed meal','meal'],['dPeriod','Period','period']]),
+      early: tog([['eYawn','Yawning','yawn'],['eCrave','Cravings','crave'],['eNeck','Stiff neck','neck'],['eMood','Mood change','mood']]),
+      post: tog([['pdTired','Tired','tired'],['pdFoggy','Foggy','foggy'],['pdLight','Light-sensitive','light'],['pdFine','Back to normal','fine']]),
+      worse: pick('worse', [['yes','Yes, worse','walk'],['no','No','still']]),
+      mbs: pick('mbs', [['pain','The pain','pain'],['nausea','Nausea','nausea'],['light','Light','light'],['sound','Sound','sound']]),
+      feel: tog([['ftThrob','Throbbing','throb'],['ftPress','Pressing','press'],['ftStab','Stabbing','stab'],['ftDull','Dull ache','dull']]),
+      sym: tog([['symNausea','Nausea','nausea'],['symVomit','Vomiting','vomit'],['symLight','Light-sensitive','light'],['symSound','Sound-sensitive','sound'],['symAura','Aura','aura'],['symDizzy','Dizzy','dizzy']]),
+      aura: tog([['auVis','Visual','eye'],['auSens','Tingling','tingle'],['auSpeech','Speech','words']]),
+      tried: tog([['trDark','Dark room','dark'],['trMint','Peppermint','mint'],['trCold','Cold pack','cold'],['trRest','Rest','rest'],['trSleep','Sleep','sleep'],['trDevice','Device','device']]),
+      factors: tog([['fSleep','Short sleep','sleep'],['fStress','Stressful','stress'],['fMeal','Missed meal','meal'],['fAlcohol','Alcohol','alcohol'],['fPeriod','Period','period'],['fWeather','Weather','weather']]),
+      rf: tog([['rfSudden','Sudden, worst ever','bolt'],['rfWeak','New weakness or speech trouble','weak'],['rfFever','Fever and a stiff neck','fever'],['rfChange','Not like my usual','change']].concat(over50 ? [['rfAfter50','Only started after 50','cal']] : [])).map((it, i) => Object.assign(it, { st: i === 4 ? 'grid-column: span 2; min-height: 72px' : '' })),
+      meds: acuteMeds.map((m) => ({ l: m.name, badge: m.type || '–', cls: medOn(m.id) ? 'on' : '', p: medOn(m.id) ? 'true' : 'false', tap: () => this.setState(medToggle(m.id)) })).concat([
+        { l: 'Nothing yet', badge: '–', cls: s.nothing ? 'on' : '', p: s.nothing ? 'true' : 'false', tap: () => this.setState({ nothing: !s.nothing, sumaOn: false, treoOn: false, w4o: {} }) }
+      ])
+    };
+
+    const zv = s.zv;
+    const zoneMax = Math.max.apply(null, Object.keys(zv).map((k) => zv[k]));
+    const anyZone = zoneMax > 0;
+    const L = zv.lf > 0 || zv.lt > 0 || zv.le > 0;
+    const R = zv.rf > 0 || zv.rt > 0 || zv.re > 0;
+    const C = zv.top > 0 || zv.back > 0 || zv.neck > 0 || zv.all > 0;
+    const sideText = zv.all > 0 ? 'All over' : (L && !R && !C ? 'Left side' : (R && !L && !C ? 'Right side' : (anyZone ? 'Both sides' : '')));
+    const names = { top: 'Top of head', rf: 'Right forehead', lf: 'Left forehead', rt: 'Right temple', lt: 'Left temple', re: 'Behind right eye', le: 'Behind left eye', back: 'Back of head', neck: 'Neck', all: 'All over' };
+    const geo = {
+      top: { d: 'M118 44 Q183 -2 248 44 L234 66 Q183 44 132 66 Z', b: [150, 10, 66, 48] },
+      rf: { d: 'M132 70 Q152 54 181 52 L181 98 L100 98 Q104 82 132 70 Z', b: [116, 54, 66, 44] },
+      lf: { d: 'M234 70 Q214 54 185 52 L185 98 L266 98 Q262 82 234 70 Z', b: [184, 54, 66, 44] },
+      rt: { d: 'M78 104 L100 104 L102 150 L82 150 Q74 126 78 104 Z', b: [66, 104, 44, 46] },
+      lt: { d: 'M288 104 L266 104 L264 150 L284 150 Q292 126 288 104 Z', b: [256, 104, 44, 46] },
+      re: { d: 'M114 128 a32 21 0 1 0 64 0 a32 21 0 1 0 -64 0', b: [116, 106, 60, 44] },
+      le: { d: 'M188 128 a32 21 0 1 0 64 0 a32 21 0 1 0 -64 0', b: [190, 106, 60, 44] }
+    };
+    const shade = (n) => n > 0 ? 'color-mix(in srgb, var(--ac) ' + Math.round(10 + n * 4) + '%, var(--sf))' : 'var(--sf)';
+    const zoneTap = (k) => () => {
+      const nz = Object.assign({}, s.zv);
+      if (nz[k] > 0 && s.activeZ === k) { this.setState({ activeZ: null }); return; }
+      if (nz[k] > 0) { this.setState({ activeZ: k }); return; }
+      nz[k] = zoneMax > 0 ? zoneMax : 5;
+      this.setState({ zv: nz, activeZ: k });
+    };
+    const zoneList = Object.keys(geo).map((k) => ({
+      d: geo[k].d, fill: zv[k] > 0 ? shade(zv[k]) : 'transparent', stroke: zv[k] > 0 ? 'var(--acline)' : 'var(--mu)', dash: zv[k] > 0 ? '0' : '4 4',
+      bx: geo[k].b[0], by: geo[k].b[1], bw: geo[k].b[2], bh: geo[k].b[3],
+      num: zv[k] > 0 ? String(zv[k]) : '', act: s.activeZ === k ? 'act' : '',
+      pressed: zv[k] > 0 ? 'true' : 'false', aria: names[k] + (zv[k] > 0 ? ', pain ' + zv[k] : ', not selected'), tap: zoneTap(k)
+    }));
+    const zoneExtra = ['back','neck','all'].map((k) => ({ text: zv[k] > 0 ? names[k] + ' · ' + zv[k] : names[k], chip: zv[k] > 0 ? 'on' : '', pressed: zv[k] > 0 ? 'true' : 'false', tap: zoneTap(k) }));
+    const zoneRows = Object.keys(names).map((k) => {
+      const open = mv === 'list' && s.activeZ === k && zv[k] > 0;
+      return { name: names[k], num: zv[k] > 0 ? String(zv[k]) : '–', bg: zv[k] > 0 ? shade(zv[k]) : 'transparent', pressed: zv[k] > 0 ? 'true' : 'false', open: open, openCls: open ? 'open' : '', expanded: open ? 'true' : 'false', aria: names[k] + (zv[k] > 0 ? ', pain ' + zv[k] : ', not selected'), tap: zoneTap(k) };
+    });
+    const zoneGrid = [0,1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: n, bg: shade(n), cls: s.activeZ && zv[s.activeZ] === n ? 'on' : '', on: s.activeZ && zv[s.activeZ] === n ? 'true' : 'false', pick: () => { const nz = Object.assign({}, s.zv); nz[s.activeZ] = n; this.setState({ zv: nz, activeZ: n === 0 ? null : s.activeZ }); } }));
+
+    // v3.5 · update: uz = this reading (starts as a copy of the last one), up = the last reading. -1 = new place, number not chosen yet.
+    const uz = s.uz || {}; const up = s.uPrev || {};
+    const curSym = { nausea: s.symNausea, vomit: s.symVomit, light: s.symLight, sound: s.symSound, aura: s.symAura, dizzy: s.symDizzy };
+    const openUpdate = () => this.setState({ screen: 'update', uz: Object.assign({}, s.zv), uPrev: Object.assign({}, s.zv), uActive: null, uAdd: false, sheet: null, uSym: Object.assign({}, curSym), uSymPrev: Object.assign({}, curSym), uMbs: s.mbs, uMbsPrev: s.mbs, uMeds: {}, uMedNone: false, uMedWhen: 'now', uSheet: null });
+    const updKeys = Object.keys(names).filter((k) => (up[k] || 0) > 0 || (uz[k] || 0) !== 0);
+    const updStatus = (k) => { const p = up[k] || 0, n = uz[k] || 0; if (n === -1) return 'new · choose a number'; if (p === 0) return 'new'; if (n === 0) return 'was ' + p + ' · gone'; if (n < p) return 'was ' + p + ' · better'; if (n > p) return 'was ' + p + ' · worse'; return 'same as before'; };
+    const updChanged = updKeys.some((k) => (uz[k] || 0) !== (up[k] || 0));
+    const updPending = updKeys.some((k) => uz[k] === -1);
+    const updSet = (k, x) => { const nu = Object.assign({}, uz); nu[k] = x; this.setState({ uz: nu }); };
+    const updRows = updKeys.map((k) => {
+      const n = uz[k] || 0, p = up[k] || 0, open = s.uActive === k;
+      return { name: names[k], status: updStatus(k), num: n === -1 ? '?' : String(n), bg: n > 0 ? shade(n) : 'transparent', open: open, openCls: open ? 'open' : '', expanded: open ? 'true' : 'false', aria: names[k] + ', ' + (n > 0 ? 'pain ' + n + ', ' : '') + updStatus(k), tap: () => this.setState({ uActive: open ? null : k }),
+        grid: [0,1,2,3,4,5,6,7,8,9,10].map((x) => ({ n: x, bg: shade(x), cls: (n === x ? 'on' : '') + (p === x && p > 0 ? ' was' : ''), on: n === x ? 'true' : 'false', aria: x + (p === x && p > 0 ? ', before' : ''), pick: () => updSet(k, x) })) };
+    });
+    // v3.6: one docked picker for whichever place is active
+    const ua = s.uActive && updKeys.indexOf(s.uActive) >= 0 ? s.uActive : null;
+    const updGrid = ua ? [0,1,2,3,4,5,6,7,8,9,10].map((x) => { const n = uz[ua] || 0, p = up[ua] || 0; return { n: x, bg: shade(x), cls: (n === x ? 'on' : '') + (p === x && p > 0 ? ' was' : ''), on: n === x ? 'true' : 'false', aria: x + (p === x && p > 0 ? ', before' : ''), pick: () => updSet(ua, x) }; }) : [];
+    const updTap = (k) => () => { const nu = Object.assign({}, uz); if (!((nu[k] || 0) > 0) && nu[k] !== -1 && !((up[k] || 0) > 0)) nu[k] = -1; this.setState({ uz: nu, uActive: k }); };
+    const updZoneList = Object.keys(geo).map((k) => { const n = uz[k] || 0; return { d: geo[k].d, fill: n > 0 ? shade(n) : (n === -1 ? 'var(--acsoft)' : 'transparent'), stroke: n !== 0 ? 'var(--acline)' : 'var(--mu)', dash: n > 0 ? '0' : '4 4', bx: geo[k].b[0], by: geo[k].b[1], bw: geo[k].b[2], bh: geo[k].b[3], num: n > 0 ? String(n) : (n === -1 ? '?' : ''), act: s.uActive === k ? 'act' : '', aria: names[k] + (n > 0 ? ', pain ' + n : (n === -1 ? ', added, choose a number' : ', add this place')), tap: updTap(k) }; });
+    const updZoneExtra = ['back','neck','all'].map((k) => { const n = uz[k] || 0; return { text: names[k] + (n > 0 ? ' · ' + n : (n === -1 ? ' · ?' : '')), chip: n !== 0 ? 'on' : '', pressed: n !== 0 ? 'true' : 'false', tap: updTap(k) }; });
+    // v3.8 · symptoms and medication inside an update
+    const SYMK = [['nausea','symNausea','Nausea','nausea'],['vomit','symVomit','Vomiting','vomit'],['light','symLight','Light-sensitive','light'],['sound','symSound','Sound-sensitive','sound'],['aura','symAura','Aura','aura'],['dizzy','symDizzy','Dizzy','dizzy']];
+    const usy = s.uSym || {}, usp = s.uSymPrev || {};
+    const updSymTiles = SYMK.map((x) => ({ l: x[2], d: I[x[3]], cls: usy[x[0]] ? 'on' : '', p: usy[x[0]] ? 'true' : 'false', tap: () => this.setState({ uSym: Object.assign({}, usy, { [x[0]]: !usy[x[0]] }) }) }));
+    const symNew = SYMK.filter((x) => usy[x[0]] && !usp[x[0]]).map((x) => x[2]);
+    const symGone = SYMK.filter((x) => !usy[x[0]] && usp[x[0]]).map((x) => x[2]);
+    const mbsWord = { pain: 'the pain', nausea: 'nausea', light: 'light', sound: 'sound' };
+    const mbsChanged = !!s.uMbs && s.uMbs !== s.uMbsPrev;
+    const symParts = symNew.map((n) => n + ' new').concat(symGone.map((n) => n + ' gone')).concat(mbsChanged ? ['worst now: ' + mbsWord[s.uMbs]] : []);
+    const uSymText = symParts.length ? symParts.join(' · ') : 'Same as before';
+    const updMbsTiles = [['pain','The pain','pain'],['nausea','Nausea','nausea'],['light','Light','light'],['sound','Sound','sound']].map((x) => ({ l: x[1], d: I[x[2]], cls: s.uMbs === x[0] ? 'on' : '', p: s.uMbs === x[0] ? 'true' : 'false', tap: () => this.setState({ uMbs: x[0] }) }));
+    const um = s.uMeds || {};
+    const uSel = acuteMeds.filter((m) => (um[m.id] || 0) > 0);
+    const uMedAny = uSel.length > 0;
+    const updMedTiles = acuteMeds.map((m) => ({ l: m.name, badge: m.type || '–', cls: (um[m.id] || 0) > 0 ? 'on' : '', p: (um[m.id] || 0) > 0 ? 'true' : 'false', tap: () => this.setState({ uMeds: Object.assign({}, um, { [m.id]: (um[m.id] || 0) > 0 ? 0 : (m.qty || 1) }), uMedNone: false }) })).concat([{ l: 'Nothing', badge: '–', cls: s.uMedNone ? 'on' : '', p: s.uMedNone ? 'true' : 'false', tap: () => this.setState({ uMeds: {}, uMedNone: !s.uMedNone }) }]);
+    const updMedRows = uSel.map((m) => ({ l: m.name + ' · ' + unitOf(m.form, 2), n: um[m.id], down: () => this.setState({ uMeds: Object.assign({}, um, { [m.id]: Math.max(1, (um[m.id] || 0) - 1) }) }), up: () => this.setState({ uMeds: Object.assign({}, um, { [m.id]: Math.min(6, (um[m.id] || 0) + 1) }) }) }));
+    const uWhen = s.uMedWhen || 'now';
+    const doseTs = nowTs - ({ now: 0, '30m': 30, '1h': 60 })[uWhen] * 60000;
+    const earlierOf = (m) => m.id === 'suma' && s.sumaOn ? s.sumaQty : (m.id === 'treo' && s.treoOn ? (m.qty || 1) : 0);
+    const sumaTotal = (s.sumaOn ? s.sumaQty : 0) + (um.suma || 0);
+    // limits come only from what the user entered in My medications; nothing set, nothing shown
+    const uMedWarn = uSel.filter((m) => m.max24 && earlierOf(m) + um[m.id] > m.max24).map((m) => (earlierOf(m) + um[m.id]) + ' ' + unitOf(m.form, 2) + ' of ' + m.name + ' in 24 hours. Your limit is ' + m.max24 + '.').join(' ');
+    const uGapText = uSel.filter((m) => m.gapH && earlierOf(m) > 0 && doseTs < s.startAt + m.gapH * 3600000).map((m) => 'Your ' + m.gapH + '-hour gap for ' + m.name + ' ends ' + clock(s.startAt + m.gapH * 3600000) + '.').join(' ');
+    const uCheckText = 'Check-in at ' + clock(doseTs + 7200000) + ', 2 hours after this dose.';
+    const uMedText = uMedAny ? uSel.map((m) => m.name + ' × ' + um[m.id]).join(', ') + ' · ' + ({ now: 'just now', '30m': '30 min ago', '1h': '1 h ago' })[uWhen] : (s.uMedNone ? 'Nothing taken' : 'None logged');
+    const updChangedAll = updChanged || uMedAny || symParts.length > 0;
+    const startOffset = () => {
+      const n = Date.now();
+      if (s.startChip === '1h') return n - 3600000;
+      if (s.startChip === '2h') return n - 7200000;
+      if (s.startChip === 'woke') { const d = new Date(); d.setHours(6, 30, 0, 0); return d.getTime() < n ? d.getTime() : n - 3 * 3600000; }
+      return n;
+    };
+    const snapshot = () => ({ attack: s.attack, ended: s.ended, startAt: s.startAt, painNow: s.painNow, peak: s.peak, zv: s.zv, sumaOn: s.sumaOn, treoOn: s.treoOn, screen: 'today', amode: s.amode });
+    const afterStart = (extra) => {
+      const o = Object.assign({ series: [extra.painNow], attack: true, ended: false, checkinDone: false, ciPick: -1, ciMbs: null, screen: 'today', activeZ: null, undoState: snapshot(), toast: 'Attack started', toastUndo: 'start' }, extra);
+      if (s.amAuto) { o.amode = true; o.sheet = null; } else if (s.amode) { o.sheet = null; } else { o.sheet = 'prompt'; }
+      this.setState(o);
+    };
+    const mbsLabels = { pain: 'pain', nausea: 'nausea', light: 'light sensitivity', sound: 'sound sensitivity' };
+
+    const a = {
+      plus: () => { if (s.attack) openUpdate(); else this.setState({ sheet: 'add' }); },
+      updMapToggle: () => this.setState({ uAdd: !s.uAdd }),
+      updPickDone: () => this.setState({ uActive: null }),
+      updSheetOpen: () => this.setState({ uAdd: true, uActive: null }),
+      updSheetDone: () => { if (updPending) return; this.setState({ uAdd: false, uActive: null }); },
+      updSheetClose: () => this.setState({ uAdd: false, uActive: null }),
+      updSave: () => {
+        if (updPending) return;
+        const nz = {}; Object.keys(names).forEach((k) => { nz[k] = Math.max(0, uz[k] || 0); });
+        const mx = Math.max.apply(null, Object.keys(nz).map((k) => nz[k]));
+        const o = { zv: nz, painNow: mx, peak: Math.max(s.peak, mx), painTime: clock(Date.now()), series: (s.series || []).concat([mx]), screen: 'today', uActive: null, uAdd: false, uSheet: null, toast: updChangedAll ? 'Update saved' : 'Saved · nothing changed', toastUndo: null };
+        if (um.suma) { o.sumaOn = true; o.sumaQty = sumaTotal; }
+        if (um.treo) o.treoOn = true;
+        SYMK.forEach((x) => { o[x[1]] = !!usy[x[0]]; });
+        if (s.uMbs) o.mbs = s.uMbs;
+        this.setState(o);
+      },
+      uMedOpen: () => this.setState({ uSheet: 'med' }),
+      toOnbDose: () => { const picked = Object.keys(OKEY).filter((id) => s[OKEY[id]]); const nm = picked.map((id) => meds.find((m) => m.id === id) || { id: id, name: KNOWN[id][0], kind: 'acute', form: 'tablet', strength: '', qty: 1, type: KNOWN[id][1], max24: null, gapH: null, maxDays: null }).concat(meds.filter((m) => !KNOWN[m.id])); this.setState({ meds: nm, screen: 'onbDose', sheet: null }); },
+      medAddAcute: () => this.setState(newDraft('acute')),
+      medAddPrev: () => this.setState(newDraft('prev')),
+      dName: (e) => this.setState({ dName: e.target.value }),
+      dStrength: (e) => this.setState({ dStrength: e.target.value }),
+      dQtyDown: () => this.setState({ dQty: Math.max(1, (s.dQty || 1) - 1) }),
+      dQtyUp: () => this.setState({ dQty: Math.min(6, (s.dQty || 1) + 1) }),
+      medSave: () => {
+        if (dInvalid) return;
+        const id = s.dId || ('m' + Date.now());
+        const rec = { id: id, name: String(s.dName).trim(), kind: s.dKind, form: s.dForm, strength: String(s.dStrength).trim(), qty: s.dQty || 1, type: s.dKind === 'acute' ? (s.dType || '?') : null, max24: s.dMax24 ? +s.dMax24 : null, gapH: s.dGap ? +s.dGap : null, maxDays: s.dDays ? +s.dDays : null };
+        const nm = s.dId ? meds.map((m) => m.id === s.dId ? rec : m) : meds.concat([rec]);
+        this.setState({ meds: nm, screen: 'meds', toast: s.dId ? 'Saved' : 'Added ' + rec.name, toastUndo: null });
+      },
+      medDelete: () => this.setState({ meds: meds.filter((m) => m.id !== s.dId), screen: 'meds', toast: 'Medication deleted', toastUndo: 'delmed', undoState: { meds: meds, screen: 'meds' } }),
+      uSymOpen: () => this.setState({ uSheet: 'sym' }),
+      uSheetClose: () => this.setState({ uSheet: null }),
+      closeSheet: S({ sheet: null }),
+      redflag: S({ sheet: 'redflag' }),
+      openScreen: S({ sheet: 'screen' }),
+      amodeToggle: () => this.setState({ amode: !s.amode, screen: 'today', sheet: null }),
+      zoneRemove: () => { const nz = Object.assign({}, s.zv); nz[s.activeZ] = 0; this.setState({ zv: nz, activeZ: null }); },
+      w1Next: () => { if (anyZone) this.setState({ screen: 'w2', activeZ: null }); },
+      start: () => { const st = startOffset(); afterStart({ startAt: st, painNow: zoneMax, peak: zoneMax, painTime: clock(st) }); },
+      samePainDown: () => this.setState({ samePain: Math.max(0, s.samePain - 1) }),
+      samePainUp: () => this.setState({ samePain: Math.min(10, s.samePain + 1) }),
+      sameStart: () => { if (!s.sameMed) return; afterStart({ startAt: Date.now(), painNow: s.samePain, peak: s.samePain, painTime: clock(Date.now()), zv: Object.assign({}, D.zv, { le: s.samePain, lf: Math.max(1, s.samePain - 3) }), worse: 'yes', mbs: 'light', ftThrob: true, sumaOn: s.sameMed === 'yes', treoOn: false, nothing: s.sameMed === 'no', sumaQty: 1 }); },
+      promptOn: S({ amode: true, sheet: null }),
+      promptOff: S({ sheet: null }),
+      painDown: () => this.setState({ painNow: Math.max(0, s.painNow - 1), painTime: clock(Date.now()) }),
+      painUp: () => { const n = Math.min(10, s.painNow + 1); this.setState({ painNow: n, peak: Math.max(s.peak, n), painTime: clock(Date.now()) }); },
+      qtyDown: () => this.setState({ sumaQty: Math.max(1, s.sumaQty - 1) }),
+      qtyUp: () => this.setState({ sumaQty: Math.min(6, s.sumaQty + 1) }),
+      amUpdate: () => openUpdate(),
+      amSave: () => this.setState({ series: (s.series || []).concat([s.amPick]), painNow: s.amPick, peak: Math.max(s.peak, s.amPick), painTime: clock(Date.now()), screen: 'today', toast: 'Pain saved', toastUndo: null }),
+      ciSave: () => {
+        const pv = s.ciPick < 0 ? s.painNow : s.ciPick;
+        let lbl = pv === 0 ? 'pain-free' : 'pain ' + pv;
+        if (s.mbs && s.mbs !== 'pain' && s.ciMbs) lbl += ' · ' + mbsLabels[s.mbs] + (s.ciMbs === 'yes' ? ' better' : ' not better');
+        this.setState({ series: (s.series || []).concat([pv]), checkinDone: true, ciLabel: lbl, painNow: pv, painTime: clock(Date.now()), screen: 'today', toast: 'Check-in saved', toastUndo: null });
+      },
+      detailsSave: S({ screen: 'today', toast: 'Details saved', toastUndo: null }),
+      endSave: () => this.setState({ attack: false, ended: true, endAt: Date.now(), endLabel: clock(s.startAt) + ' – ' + clock(Date.now()), screen: 'saved', sheet: null, toast: '' }),
+      logHeadache: () => this.setState({ headacheLogged: true, sheet: null, screen: 'today', toast: 'Headache day saved', toastUndo: 'headache', undoState: { headacheLogged: false } }),
+      toastClose: S({ toast: '', toastUndo: null }),
+      undo: () => { const o = Object.assign({}, s.undoState || {}, { toast: '', toastUndo: null, sheet: null }); this.setState(o); },
+      merge: () => this.setState({ merged: true, screen: 'logs', toast: 'Merged into 1 attack', toastUndo: 'merge', undoState: { merged: false, screen: 'logs' } }),
+      editAttack: S({ screen: 'w1', zv: Object.assign({}, D.zv, { le: 7 }), activeZ: 'le' }),
+      askDelete: S({ sheet: 'delete' }),
+      logAddUpdate: () => this.setState({ toast: 'Adds a reading to this past attack (not built in the prototype)', toastUndo: null }),
+      doDelete: () => this.setState({ delIds: (s.delIds || []).concat([s.logSel || 'a2']), deleted: true, sheet: null, screen: 'logs', toast: 'Attack deleted', toastUndo: 'delete', undoState: { deleted: false, delIds: s.delIds || [], screen: 'logs' } }),
+      restart: () => this.setState(this.defaults('onb'))
+    };
+
+    const amGrid = [0,1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: n, bg: shade(n), cls: s.amPick === n ? 'on' : '', on: s.amPick === n ? 'true' : 'false', pick: S({ amPick: n }) }));
+    const ciGrid = [0,1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: n, bg: shade(n), cls: s.ciPick === n ? 'on' : '', on: s.ciPick === n ? 'true' : 'false', pick: S({ ciPick: n }) }));
+
+    const logged = s.attack || s.ended;
+    const dailyAny = s.dSleep || s.dStress || s.dMeal || s.dPeriod;
+    // v3.4: no daily check-ins. The last 7 days show only migraines and headaches, and only once there are 2+ migraines in them.
+    // Example data: one migraine 4 days ago, plus today's if one was logged.
+    const DAYN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const week = []; const weekParts = []; let migCount = 0;
+    for (let off = 6; off >= 0; off--) {
+      const dn = new Date(nowTs - off * 86400000).getDay();
+      const mig = off === 4 || (off === 0 && logged);
+      const hd = off === 0 && !logged && s.headacheLogged;
+      if (mig) { migCount++; weekParts.push('migraine on ' + DAYN[dn]); }
+      if (hd) weekParts.push('headache on ' + DAYN[dn]);
+      week.push({ l: DAYN[dn][0], cls: (mig ? 'mg' : (hd ? 'hd' : '')) + (off === 0 ? ' td' : '') });
+    }
+    const lastEndTs = s.ended && s.endAt ? s.endAt : nowTs - 4 * 86400000 - 3 * 3600000;
+    const sinceMin = Math.max(1, Math.floor((nowTs - lastEndTs) / 60000));
+    const sinceLast = sinceMin < 60 ? sinceMin + ' min' : (sinceMin < 1440 ? Math.floor(sinceMin / 60) + (Math.floor(sinceMin / 60) === 1 ? ' hour' : ' hours') : Math.floor(sinceMin / 1440) + (Math.floor(sinceMin / 1440) === 1 ? ' day' : ' days'));
+    const timeline = [{ time: s.startAt ? clock(s.startAt) : '', l: 'Started · ' + (sideText || 'location not set') }];
+    if (s.sumaOn) timeline.push({ time: s.startAt ? clock(s.startAt) : '', l: 'Sumatriptan × ' + s.sumaQty });
+    if (s.treoOn) timeline.push({ time: s.startAt ? clock(s.startAt) : '', l: 'Treo' });
+
+    const logRows = [];
+    if (s.ended) { logRows.push({ isHead: true, isRow: false, title: 'Today' }); logRows.push({ isHead: false, isRow: true, peak: s.peak, title: s.endLabel, sub: sideText, side: sideText, r: R || C ? 'var(--ac)' : 'transparent', l: L || C ? 'var(--ac)' : 'transparent' }); }
+    logRows.push({ isHead: true, isRow: false, title: s.merged ? 'Wed 19 – Thu 20 Aug' : 'Thu 20 Aug' });
+    if (s.merged) logRows.push({ isHead: false, isRow: true, peak: 9, title: '08:17 – 13:02 · 28 h 45 m', sub: 'Left side · merged', side: 'Left side', r: 'transparent', l: 'var(--ac)' });
+    else {
+      if (!s.deleted) logRows.push({ isHead: false, isRow: true, peak: 7, title: '13:06 · 1 min', sub: 'Left eye', side: 'Left side', r: 'transparent', l: 'var(--ac)' });
+      logRows.push({ isHead: false, isRow: true, peak: 6, title: '02:07 · 10 h 55 m', sub: 'Left forehead', side: 'Left side', r: 'transparent', l: 'var(--ac)' });
+    }
+    logRows.push({ isHead: true, isRow: false, title: 'Mon 17 Aug' });
+    logRows.push({ isHead: false, isRow: true, peak: 5, title: '09:15 · 2 h 30 m', sub: 'Right temple', side: 'Right side', r: 'var(--ac)', l: 'transparent' });
+
+    // v3.10 · past attacks (example data)
+    const SYMD = { nausea: [I.nausea, 'Nausea'], light: [I.light, 'Light'], sound: [I.sound, 'Sound'], vomit: [I.vomit, 'Vomiting'], throb: [I.throb, 'Throbbing'], walk: [I.walk, 'Worse moving'] };
+    const RES = { ok: 'M5 12l5 5 9-10', no: 'M6 12h12', none: 'M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01' };
+    const LOGS = [
+      { id: 'a1', day: 'Thu 20 Aug', date: 'Thu 20 Aug', start: '02:07', span: 'Thu 02:07 – 13:02', dur: '10h 55m', peak: 6, side: 'L', sym: ['throb','nausea','light'],
+        meds: [{ badge: 'T', name: 'Sumatriptan · 1 tablet', after: 'after 40m', res: 'ok', text: 'Pain 6 → 2 at 2 hours · helped' }],
+        series: [4, 6, 5, 2, 1], doseAt: [1], areas: [['Left forehead', 6, 0]], impact: 'A lot', factors: 'Short sleep',
+        updates: [['13:02', 'Attack ended', ''], ['04:50', 'Pain 1', 'Left forehead 1 · Light gone'], ['03:10', 'Pain 2', 'Left forehead 2'], ['02:47', 'Pain 5', 'Left forehead 5 · Took Sumatriptan'], ['02:07', 'Pain 6', 'Left forehead 6 · Woke up with it']] },
+      { id: 'a2', day: 'Wed 19 Aug', date: 'Wed 19 Aug', start: '08:17', span: 'Wed 08:17 – Thu 08:26', dur: '24h 9m', peak: 9, side: 'L', sym: ['throb','walk','nausea','light'],
+        meds: [{ badge: 'C', name: 'Treo · 2 tablets', after: 'after 7h 3m', res: 'ok', text: 'Pain 7 → 3 at 2 hours · helped' }, { badge: 'T', name: 'Sumatriptan · 1 tablet', after: 'after 18h 3m', res: 'none', text: 'No reading near 2 hours · next was 9 after 3h 28m' }],
+        series: [6, 7, 8, 7, 3, 4, 8, 9, 9], doseAt: [2, 6], areas: [['Behind left eye', 9, 9], ['Left forehead', 5, 5], ['Right forehead', 3, 0]], impact: "Couldn't function", factors: 'Stressful, short sleep',
+        updates: [['08:26', 'Attack ended', ''], ['07:12', 'Pain 9', 'Behind left eye 9 · Left forehead 5 · Took Sumatriptan'], ['22:11', 'Pain 3', 'Behind left eye 3 · Left forehead 1 · Right forehead 1'], ['20:12', 'Pain 7', 'Took Treo · Nausea new'], ['17:40', 'Pain 8', 'Behind left eye 8 · Left forehead 5'], ['12:05', 'Pain 7', 'Behind left eye 7'], ['10:30', 'Pain 7', 'Same as before'], ['08:17', 'Pain 6', 'Behind left eye 6 · Started']] },
+      { id: 'a3', day: 'Mon 17 Aug', date: 'Mon 17 Aug', start: '09:15', span: 'Mon 09:15 – 11:45', dur: '2h 30m', peak: 5, side: 'R', sym: ['light'],
+        meds: [{ badge: 'P', name: 'Ibuprofen · 1 tablet', after: 'after 20m', res: 'no', text: 'Pain 5 → 5 at 2 hours · no change' }],
+        series: [4, 5, 5, 3], doseAt: [0], areas: [['Right temple', 5, 3]], impact: 'A little', factors: '–',
+        updates: [['11:45', 'Attack ended', ''], ['11:35', 'Pain 3', 'Right temple 3'], ['09:35', 'Pain 5', 'Right temple 5 · Took Ibuprofen'], ['09:15', 'Pain 4', 'Right temple 4']] },
+      { id: 'a4', day: 'Thu 13 Aug', date: 'Thu 13 Aug', start: '16:40', span: 'Thu 16:40 – 22:10', dur: '5h 30m', peak: 7, side: 'B', sym: ['nausea','light','sound'],
+        meds: [], series: [5, 7, 6, 4], doseAt: [], areas: [['Left temple', 7, 4], ['Right temple', 6, 3]], impact: 'Not answered', factors: 'Weather',
+        updates: [['22:10', 'Attack ended', ''], ['20:30', 'Pain 4', 'Left temple 4 · Right temple 3'], ['18:00', 'Pain 7', 'Both temples'], ['16:40', 'Pain 5', 'Left temple 5 · Right temple 4']] }
+    ];
+    const delIds = s.delIds || [];
+    const sideFill = (sd) => ({ r: sd === 'R' || sd === 'B' ? 'var(--ac)' : 'transparent', l: sd === 'L' || sd === 'B' ? 'var(--ac)' : 'transparent' });
+    const sideWord = { L: 'left side', R: 'right side', B: 'both sides' };
+    const logList = [];
+    let lastDay = '';
+    LOGS.filter((x) => delIds.indexOf(x.id) < 0).forEach((x) => {
+      if (x.day !== lastDay) { logList.push({ isHead: true, isRow: false, title: x.day }); lastDay = x.day; }
+      const sf = sideFill(x.side);
+      logList.push({ isHead: false, isRow: true, dur: x.dur, peak: x.peak, pkBg: shade(x.peak), when: x.day + ' · ' + x.start, r: sf.r, l: sf.l,
+        meds: x.meds.map((m) => ({ badge: m.badge, res: RES[m.res] })), noMed: x.meds.length === 0, sym: x.sym.filter((k) => ['nausea','light','sound','vomit'].indexOf(k) >= 0).map((k) => SYMD[k][0]),
+        aria: x.dur + ', peak ' + x.peak + ', ' + sideWord[x.side] + ', ' + x.day + ' ' + x.start + '. ' + (x.meds.length ? x.meds.map((m) => m.name.split(' ·')[0] + ' ' + ({ ok: 'helped', no: "didn't help", none: 'no 2-hour reading' })[m.res]).join(', ') : 'No medication'),
+        open: () => this.setState({ screen: 'logDetail', logSel: x.id, allUpdates: false }) });
+    });
+    const LG = LOGS.find((x) => x.id === s.logSel) || LOGS[1];
+    const cx = (i, n) => 26 + (n === 1 ? 150 : i * 296 / (n - 1));
+    const cy = (v) => 100 - v * 9;
+    const ldUpdates = s.allUpdates ? LG.updates : LG.updates.slice(0, 3);
+    const ld = Object.assign({}, sideFill(LG.side), { date: LG.date, dur: LG.dur, peak: LG.peak, sideText: sideWord[LG.side], span: LG.span,
+      path: 'M' + LG.series.map((v, i) => cx(i, LG.series.length).toFixed(1) + ' ' + cy(v)).join(' L'),
+      chartAria: 'Pain over time: ' + LG.series.join(', ') + (LG.meds.length ? '. Doses: ' + LG.meds.map((m) => m.name.split(' ·')[0]).join(', ') : ''),
+      marks: LG.doseAt.map((di, j) => ({ x: cx(di, LG.series.length).toFixed(1), bx: (cx(di, LG.series.length) - 11).toFixed(1), badge: LG.meds[j] ? LG.meds[j].badge : '' })),
+      meds: LG.meds.map((m) => ({ badge: m.badge, name: m.name, when: m.after + ' the attack started', res: RES[m.res], cls: m.res === 'ok' ? 'ok' : '', text: m.text })), noMed: LG.meds.length === 0,
+      areas: LG.areas.map((z) => ({ name: z[0], peak: String(z[1]), pkBg: shade(z[1]), now: z[2] ? String(z[2]) : 'gone', nowBg: z[2] ? shade(z[2]) : 'transparent' })),
+      sym: LG.sym.map((k) => ({ d: SYMD[k][0], l: SYMD[k][1] })),
+      updates: ldUpdates.map((u) => ({ time: u[0], pain: u[1], more: u[2] })), moreUpdates: LG.updates.length > 3, moreLabel: s.allUpdates ? 'Show fewer' : 'Show all ' + LG.updates.length + ' updates',
+      impact: LG.impact, factors: LG.factors });
+    const detailIcons = [{ d: I.throb, l: 'Throbbing' }, { d: I.walk, l: 'Worse moving' }, { d: I.nausea, l: 'Nausea' }, { d: I.light, l: 'Light' }];
+
+    const mins = s.attack ? Math.max(0, Math.floor((nowTs - s.startAt) / 60000)) : 0;
+    const checkMed = s.sumaOn ? 'Sumatriptan' : (s.treoOn ? 'Treo' : '');
+    const triptan = s.triptanBase + (logged && s.sumaOn ? 1 : 0);
+    const combo = 1 + (logged && s.treoOn ? 1 : 0);
+
+    // v3.3: the hero's trajectory. Pinned to 0–10 and evenly spaced, as the Logs sparkline is.
+    const ser = (s.series && s.series.length) ? s.series : [s.painNow];
+    const spark = (() => {
+      const n = ser.length, W = 200, H = 48;
+      const pt = (v, i) => [n === 1 ? W - 6 : 6 + i * (W - 12) / (n - 1), 4 + (1 - v / 10) * (H - 10)];
+      const pts = ser.map(pt);
+      return { d: 'M' + pts.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L'), x: pts[n - 1][0].toFixed(1), y: pts[n - 1][1].toFixed(1) };
+    })();
+    const v = {
+      themeCls: s.amode && s.screen === 'today' ? 't-dark' : (s.theme === 'dark' ? 't-dark' : 't-light'),
+      fontCls: s.font === 'atk' ? 'f-atk' : '',
+      amCls: s.amode ? 'am' : '',
+      elapsed: Math.floor(mins / 60) + 'h ' + pad(mins % 60) + 'm',
+      startClock: s.startAt ? clock(s.startAt) : '',
+      painNow: s.painNow, peak: s.peak,
+      sideText: sideText || 'Location not set',
+      headL: L || C ? 'var(--ac)' : 'transparent', headR: R || C ? 'var(--ac)' : 'transparent',
+      activeLabel: s.activeZ ? names[s.activeZ] : '',
+      startOff: anyZone ? '' : 'off', w1Disabled: anyZone ? 'false' : 'true',
+      mapP: mv === 'map' ? 'true' : 'false', listP: mv === 'list' ? 'true' : 'false',
+      tsCls: bigText ? s.textSize : '',
+      tsDefP: s.textSize === 'default' ? 'true' : 'false', tsAx2P: s.textSize === 'ax2' ? 'true' : 'false', tsAx3P: s.textSize === 'ax3' ? 'true' : 'false', tsAx5P: s.textSize === 'ax5' ? 'true' : 'false',
+      brightA: brightA[curDim], warmB: warmB[curWarm], wmCls: curWarm > 0 ? 'wm' : '',
+      amScreenLabel: brightNames[s.dimA] + ' · ' + (s.warmA === 0 ? 'no warmth' : warmNames[s.warmA].toLowerCase() + ' warmth'),
+      ageNext: s.birthYear ? 'Next' : 'Skip',
+      greeting: (() => { const hr = new Date().getHours(); return hr < 12 ? 'Good morning' : (hr < 18 ? 'Good afternoon' : 'Good evening'); })(),
+      sparkD: spark.d, sparkX: spark.x, sparkY: spark.y,
+      sparkAria: 'Pain readings so far: ' + ser.join(', '),
+      trendText: s.painNow + ' now · peak ' + s.peak + (sideText ? ' · ' + sideText.toLowerCase() : ''),
+      durText: 'Pain ' + s.painNow + (sideText ? ' · ' + sideText.toLowerCase() : ''),
+      medBadge: s.sumaOn ? 'T' : 'C',
+      medName: s.sumaOn ? 'Sumatriptan · ' + s.sumaQty + (s.sumaQty === 1 ? ' tablet' : ' tablets') : 'Treo',
+      medWhen: s.sumaOn ? ('Taken ' + clock(s.startAt) + ' · ' + (nowTs >= s.startAt + 7200000 ? '2-hour gap has passed' : 'next dose from ' + clock(s.startAt + 7200000))) : ('Taken ' + clock(s.startAt)),
+      plusLabel: s.attack ? 'Update pain' : 'Log',
+      sinceLast: sinceLast,
+      weekTitle: migCount + ' migraines in the last 7 days',
+      weekAria: 'Last 7 days: ' + weekParts.join(', '),
+      w2Label: s.worse ? 'Next' : 'Skip', w3Label: s.mbs ? 'Next' : 'Skip',
+      sumaQty: s.sumaQty, checkMed: checkMed, checkinLabel: s.ciLabel,
+      mbsLabel: s.mbs ? mbsLabels[s.mbs] : '',
+      ciYesP: s.ciMbs === 'yes' ? 'true' : 'false', ciNoP: s.ciMbs === 'no' ? 'true' : 'false',
+      samePain: s.samePain, sameOff: s.sameMed ? '' : 'off', sameYesP: s.sameMed === 'yes' ? 'true' : 'false', sameNoP: s.sameMed === 'no' ? 'true' : 'false',
+      endLabel: s.endLabel,
+      checkins: 5 + (dailyAny || logged ? 1 : 0),
+      headacheDays: 4 + (logged ? 1 : 0) + (s.headacheLogged ? 1 : 0),
+      migraineDays: 3 + (logged ? 1 : 0),
+      triptanDays: triptan, triptanPct: Math.min(100, triptan * 10) + '%', triptanHi: triptan >= 8 ? 'hi' : '',
+      comboDays: combo, comboPct: (combo * 10) + '%',
+      lightP: s.theme === 'light' ? 'true' : 'false', darkP: s.theme === 'dark' ? 'true' : 'false',
+      lexP: s.font === 'lexend' ? 'true' : 'false', atkP: s.font === 'atk' ? 'true' : 'false',
+      toast: s.toast
+    };
+
+    const is = {};
+    screens.forEach((n) => { is[n] = s.screen === n; });
+    is.todayNormal = s.screen === 'today' && !s.amode && !s.attack;
+    is.todayAttack = s.screen === 'today' && !s.amode && s.attack;
+    is.amToday = s.screen === 'today' && s.amode && s.attack;
+    is.amIdle = s.screen === 'today' && s.amode && !s.attack;
+    is.tabs = ['today','logs','insights','settings'].indexOf(s.screen) >= 0 && !(s.screen === 'today' && s.amode);
+    is.plus = true;
+    is.heroTrend = this.props.hero !== 'duration';
+    is.weekCluster = migCount >= 2;
+    is.updMapOpen = !!s.uAdd;
+    is.updMapClosed = !s.uAdd;
+    is.updPending = updPending;
+    is.updPicking = !!ua && !s.uAdd;
+    is.sheetAddPlace = s.screen === 'update' && !!s.uAdd;
+    is.sheetPicking = !!ua && !!s.uAdd;
+    is.sheetHint = !!s.uAdd && !ua;
+    is.sheetMed = s.screen === 'update' && s.uSheet === 'med';
+    is.sheetSym = s.screen === 'update' && s.uSheet === 'sym';
+    is.uMedAny = uMedAny;
+    is.uMedWarn = !!uMedWarn;
+    is.uGap = !!uGapText;
+    is.uSymChanged = symParts.length > 0;
+    v.updSave = updChangedAll ? 'Save update' : "Nothing's changed";
+    v.lastClock = s.painTime || clock(s.startAt);
+    v.uMedText = uMedText; v.uSymText = uSymText; v.uMedWarn = uMedWarn; v.uGapText = uGapText; v.uCheckText = uCheckText;
+    v.uWhenNowP = uWhen === 'now' ? 'true' : 'false'; v.uWhen30P = uWhen === '30m' ? 'true' : 'false'; v.uWhen1hP = uWhen === '1h' ? 'true' : 'false';
+    g.uMedWhen_now = uWhen === 'now' ? 'on' : ''; g.uMedWhen_30m = uWhen === '30m' ? 'on' : ''; g.uMedWhen_1h = uWhen === '1h' ? 'on' : '';
+    gs.uMedWhen_now = () => this.setState({ uMedWhen: 'now' }); gs.uMedWhen_30m = () => this.setState({ uMedWhen: '30m' }); gs.uMedWhen_1h = () => this.setState({ uMedWhen: '1h' });
+    v.updPickName = ua ? names[ua] : '';
+    v.updPad = is.updPicking ? (s.amode ? '520px' : '400px') : '200px';
+    v.updSave = updChangedAll ? 'Save update' : "Nothing's changed";
+    v.updOff = updPending ? 'off' : '';
+    v.updDisabled = updPending ? 'true' : 'false';
+    is.healthOn = s.oHealth;
+    is.healthOff = !s.oHealth;
+    // v3.4: the sleep pattern waits for about 10 attacks (threshold to confirm)
+    // and for about 10 nights in the smaller sleep group, so one bar can't rest on 3 nights
+    const fewAttacks = s.patternAttacks < 10;
+    is.sleepReady = s.oHealth && !fewAttacks && s.shortNights >= 10;
+    is.sleepWaiting = s.oHealth && !is.sleepReady;
+    const ringN = fewAttacks ? s.patternAttacks : s.shortNights;
+    v.ringText = ringN + '/10';
+    v.ringAria = fewAttacks ? ringN + ' of about 10 attacks' : ringN + ' of about 10 nights of short sleep';
+    v.waitText = fewAttacks ? "Shows after about 10 attacks, so a few unlucky nights can't make a pattern." : 'Shows once there are about 10 nights under 6 hours to compare with.';
+    v.ringDash = (Math.min(10, ringN) / 10 * 94.2).toFixed(1) + ' 94.2';
+    is.heroDur = !is.heroTrend;
+    is.medRow = s.attack && (s.sumaOn || s.treoOn);
+    is.sheetAdd = s.sheet === 'add';
+    is.sheetPrompt = s.sheet === 'prompt';
+    is.sheetRedflag = s.sheet === 'redflag';
+    is.sheetDelete = s.sheet === 'delete';
+    is.sumaOn = s.sumaOn;
+    is.sumaWarn = !!(s.sumaOn && sumaLib && sumaLib.max24 && s.sumaQty > sumaLib.max24);
+    v.sumaMax = sumaLib && sumaLib.max24 ? sumaLib.max24 : '';
+    is.hasAcute = acuteMeds.length > 0; is.noAcute = acuteMeds.length === 0; is.hasPrev = medPrev.length > 0;
+    is.dAcute = s.dKind === 'acute'; is.infoType = !!s.infoType; is.dLimitsOpen = !!s.dLimitsOpen; is.dEditing = !!s.dId; is.dInvalid = dInvalid; is.noOnbMeds = onbDoseRows.length === 0;
+    v.medCount = String(meds.length);
+    v.dTitle = s.dId ? 'Edit medication' : 'Add medication';
+    v.dAcuteP = s.dKind === 'acute' ? 'true' : 'false'; v.dPrevP = s.dKind === 'prev' ? 'true' : 'false';
+    v.dName = s.dName || ''; v.dStrength = s.dStrength || '';
+    v.dQtyText = (s.dQty || 1) + ' ' + unitOf(s.dForm, s.dQty || 1);
+    v.dLimitsSummary = dCount ? dCount + ' of 3 set' : 'None set';
+    v.dChevron = s.dLimitsOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6';
+    v.dOff = dInvalid ? 'off' : ''; v.dDisabled = dInvalid ? 'true' : 'false';
+    is.checkinAsk = s.attack && !!checkMed && !s.checkinDone && mins >= 115;
+    is.checkinDone = s.checkinDone;
+    is.mbsNotPain = !!s.mbs && s.mbs !== 'pain';
+    is.zoneActive = !!s.activeZ && zv[s.activeZ] > 0;
+    is.zoneActiveMap = is.zoneActive && mv === 'map';
+    is.noZone = !anyZone;
+    is.mapView = mv === 'map';
+    is.listView = mv === 'list';
+    is.sheetScreen = s.sheet === 'screen';
+    is.ovlBright = curDim > 0;
+    is.ovlWarm = curWarm > 0;
+    is.decadePicked = !!s.decade;
+    is.noYear = !s.birthYear;
+    is.rfNow = s.rfSudden || s.rfWeak || s.rfFever;
+    is.rfSoon = !is.rfNow && (s.rfChange || (over50 && s.rfAfter50));
+    is.sameNoPick = !s.sameMed;
+    is.notMerged = !s.merged;
+    is.postdromeCard = s.ended;
+    is.overuse = triptan >= 8;
+    is.auraOn = s.symAura;
+    is.auraFlag = s.symAura && s.auLen === 'long';
+    is.earlyOpen = s.earlyOpen;
+    is.earlyClosed = !s.earlyOpen;
+    is.rfAny = s.rfSudden || s.rfWeak || s.rfFever || s.rfChange || (over50 && s.rfAfter50);
+    is.infoFactors = s.infoFactors;
+    is.infoDays = s.infoDays;
+    is.toast = !!s.toast;
+    is.toastUndo = !!s.toastUndo;
+    is.toastPlain = !s.toastUndo;
+
+    const tc = { today: s.screen === 'today' ? 'on' : '', logs: s.screen === 'logs' ? 'on' : '', insights: s.screen === 'insights' ? 'on' : '', settings: s.screen === 'settings' ? 'on' : '' };
+
+    return { go: go, a: a, t: t, c: c, p: p, g: g, gs: gs, is: is, v: v, tc: tc, sets: sets, zoneList: zoneList, zoneExtra: zoneExtra, zoneRows: zoneRows, zoneGrid: zoneGrid, amGrid: amGrid, ciGrid: ciGrid, week: week, timeline: timeline, logRows: logRows, detailIcons: detailIcons, decades: decades, years: years, brightOpts: brightOpts, warmOpts: warmOpts, updRows: updRows, updGrid: updGrid, logList: logList, ld: ld, onbDoseRows: onbDoseRows, medAcute: medAcute, medPrev: medPrev, dForms: dForms, dTypes: dTypes, dLimits: dLimits, updSymTiles: updSymTiles, updMbsTiles: updMbsTiles, updMedTiles: updMedTiles, updMedRows: updMedRows, updZoneList: updZoneList, updZoneExtra: updZoneExtra,
+      // v3.4 example data, shown in [brackets] on the card's caption
+      sleepRows: [
+        { l: 'After under 6 h sleep', n: '4 of 12 nights', pct: '33%', aria: 'After under 6 hours sleep: migraine the next day 4 of 12 nights' },
+        { l: 'After 6 h or more', n: '6 of 108 nights', pct: '6%', aria: 'After 6 hours or more: migraine the next day 6 of 108 nights' }
+      ],
+      factorCounts: (s.patternAttacks >= 10 ? [['Short sleep', 'sleep', 4], ['Stressful', 'stress', 3], ['Weather', 'weather', 1]] : [['Short sleep', 'sleep', 2], ['Stressful', 'stress', 1], ['Weather', 'weather', 1]]).map((f) => ({ l: f[0], d: I[f[1]], n: f[2] + ' of ' + s.patternAttacks, pct: Math.round(f[2] / s.patternAttacks * 100) + '%', aria: f[0] + ': before ' + f[2] + ' of ' + s.patternAttacks + ' attacks' }))
+    };
+  }
+}
+</script>
+</body>
+</html>
