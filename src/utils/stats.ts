@@ -672,6 +672,32 @@ export const FOLLOW_UP_MIN_MS = 60 * 60 * 1000;
 export const FOLLOW_UP_MAX_MS = 4 * 60 * 60 * 1000;
 const TARGET_MS = 2 * 60 * 60 * 1000;
 
+/**
+ * The follow-up reading for the dose at `snaps[i]`: whichever later reading
+ * lands closest to dose + 2h inside the 1–4h window, or `null`.
+ *
+ * **The one definition of "the two-hour reading"** — Insights' response line,
+ * Today's check-in card and the Logs row's "did it help" all read it from
+ * here, so none of them can call a dose checked that another calls
+ * unmeasured.
+ */
+export function followUpReading(snaps: Snapshot[], i: number): Snapshot | null {
+  const doseTime = new Date(snaps[i].time).getTime();
+  let best: { delta: number; snap: Snapshot } | null = null;
+  for (let j = i + 1; j < snaps.length; j++) {
+    const dt = new Date(snaps[j].time).getTime() - doseTime;
+    if (dt < FOLLOW_UP_MIN_MS) continue;
+    if (dt > FOLLOW_UP_MAX_MS) break;
+    const delta = Math.abs(dt - TARGET_MS);
+    if (!best || delta < best.delta) best = { delta, snap: snaps[j] };
+  }
+  return best?.snap ?? null;
+}
+
+/** "Helped" mirrors the trial definition of pain relief: severity at least
+ *  halved, or down to mild. */
+export const doseHelped = (before: number, after: number) => after <= before / 2 || after <= 3;
+
 /** `since` scopes it to the same window as `medicationDaysInWindow`, and on
  *  the same key — the dose's own time. Two figures in one block measured over
  *  different windows is exactly the drift this page keeps correcting. */
@@ -687,22 +713,12 @@ export function medicationResponse(attacks: Attack[], since: number | null = nul
       if (!acc.has(name)) acc.set(name, { changes: [], unmeasured: 0, helped: 0 });
       const entry = acc.get(name)!;
 
-      const doseTime = new Date(snaps[i].time).getTime();
       const before = maxSeverity(snaps[i]);
-      let best: { delta: number; sev: number } | null = null;
-      for (let j = i + 1; j < snaps.length; j++) {
-        const dt = new Date(snaps[j].time).getTime() - doseTime;
-        if (dt < FOLLOW_UP_MIN_MS) continue;
-        if (dt > FOLLOW_UP_MAX_MS) break;
-        const distance = Math.abs(dt - TARGET_MS);
-        if (!best || distance < best.delta) best = { delta: distance, sev: maxSeverity(snaps[j]) };
-      }
-
-      if (!best) { entry.unmeasured++; continue; }
-      entry.changes.push(best.sev - before);
-      // "Helped" mirrors the trial definition of pain relief: severity at
-      // least halved, or down to mild.
-      if (best.sev <= before / 2 || best.sev <= 3) entry.helped++;
+      const follow = followUpReading(snaps, i);
+      if (!follow) { entry.unmeasured++; continue; }
+      const after = maxSeverity(follow);
+      entry.changes.push(after - before);
+      if (doseHelped(before, after)) entry.helped++;
     }
   }
 
@@ -748,19 +764,57 @@ export function doseCheckIn(attack: Attack, now: number = Date.now()): CheckIn |
   const name = snaps[i].medication!.name;
   const doseAt = new Date(snaps[i].time).getTime();
 
-  let best: { delta: number; sev: number } | null = null;
-  for (let j = i + 1; j < snaps.length; j++) {
-    const dt = new Date(snaps[j].time).getTime() - doseAt;
-    if (dt < FOLLOW_UP_MIN_MS) continue;
-    if (dt > FOLLOW_UP_MAX_MS) break;
-    const delta = Math.abs(dt - TARGET_MS);
-    if (!best || delta < best.delta) best = { delta, sev: maxSeverity(snaps[j]) };
-  }
-  if (best) return { state: 'answered', name, severity: best.sev };
+  const follow = followUpReading(snaps, i);
+  if (follow) return { state: 'answered', name, severity: maxSeverity(follow) };
 
   const age = now - doseAt;
   if (age >= TARGET_MS - CHECK_IN_LEAD_MS && age < FOLLOW_UP_MAX_MS) return { state: 'due', name };
   return null;
+}
+
+/**
+ * Did it help? — the first dose of each drug in one attack, against its own
+ * two-hour reading. Backs the Logs row and Attack detail (v3, 2026-10-26).
+ *
+ * - `helped` / `not-helped`: a follow-up reading exists; `doseHelped` decides.
+ * - `pending`: no reading yet, the attack is still going and the window is
+ *   still open — a fact about now, not a gap.
+ * - `no-reading`: the window closed without one. Stated as absent, never as
+ *   "didn't help": a missing reading says nothing about the drug.
+ *
+ * The first dose of each drug, because that is the one the trial endpoint is
+ * about; a later dose is usually the answer to the first not working.
+ * Retired names are skipped, like every other medication tally.
+ */
+export type DoseVerdict = 'helped' | 'not-helped' | 'pending' | 'no-reading';
+
+export interface DoseOutcome {
+  name: string;
+  dose: string;
+  amount?: number;
+  time: string;
+  verdict: DoseVerdict;
+  before: number;
+  after: number | null;
+}
+
+export function attackDoseOutcomes(attack: Attack, now: number = Date.now()): DoseOutcome[] {
+  const out: DoseOutcome[] = [];
+  const snaps = attack.snapshots;
+  for (let i = 0; i < snaps.length; i++) {
+    const med = snaps[i].medication;
+    const name = med?.name?.trim();
+    if (!med || !name || isRetired(name) || out.some((o) => o.name === name)) continue;
+    const before = maxSeverity(snaps[i]);
+    const follow = followUpReading(snaps, i);
+    const after = follow ? maxSeverity(follow) : null;
+    const age = now - new Date(snaps[i].time).getTime();
+    const verdict: DoseVerdict = after !== null
+      ? (doseHelped(before, after) ? 'helped' : 'not-helped')
+      : attack.end === null && age < FOLLOW_UP_MAX_MS ? 'pending' : 'no-reading';
+    out.push({ name, dose: med.dose, amount: med.amount, time: snaps[i].time, verdict, before, after });
+  }
+  return out;
 }
 
 /**

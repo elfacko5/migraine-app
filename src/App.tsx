@@ -834,6 +834,7 @@ export default function App() {
         {detailAttack && (
           <AttackDetail
             attack={detailAttack}
+            medications={medications}
             onDelete={() => deleteAttack(detailAttack.id)}
             onClose={() => setDetailAttackId(null)}
             onAddUpdate={() => { setUpdateAttackId(detailAttack.id); setDetailAttackId(null); }}

@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import type { Attack } from '../types';
+import type { Attack, Medication } from '../types';
 import { formatDate, formatTime, formatDuration, isoToLocalInput, localInputToIso } from '../utils/format';
-import { attackMaxSeverity } from '../utils/stats';
+import { attackDoseOutcomes, attackMaxSeverity, type DoseOutcome } from '../utils/stats';
+import { attackSide, SIDE_LABELS } from '../utils/laterality';
+import { findMedication } from '../utils/medGuardrails';
+import { COUNTED_CLASSES } from '../utils/medClasses';
+import { ClassBadge } from './ClassBadge';
 import { SeverityBreakdown } from './SeverityBreakdown';
 import { SnapshotRow } from './SnapshotRow';
 import { ConfirmDialog } from './ConfirmDialog';
 import { BinIcon, SunriseIcon } from './icons';
 import { IMPACT_SHORT } from '../utils/impact';
 import { attackFirstDoses } from '../utils/medDisplay';
-import { MedIcon, TriggerIcon } from './drawnIcons';
+import { MedIcon, SideGlyph, SymptomIcon, TriggerIcon } from './drawnIcons';
 import { isRetired } from '../utils/retired';
 import { ChipSelector } from './ChipSelector';
 import { chipClass} from '../utils/chipStyles';
@@ -27,6 +31,8 @@ interface Props {
   onSaveDetails?: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>>) => void;
   triggerOptions?: string[];
   onAddTrigger?: (label: string) => void;
+  /** The library — for each drug's class badge. */
+  medications?: Medication[];
 }
 
 /**
@@ -38,10 +44,13 @@ interface Props {
  * same reason — a footer that has to stay put above the home indicator is
  * more reliable flex-pinned than `sticky` inside an iOS PWA scroll container.
  */
-export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAttack, onSaveDetails, triggerOptions = [], onAddTrigger }: Props) {
+export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAttack, onSaveDetails, triggerOptions = [], onAddTrigger, medications = [] }: Props) {
   const maxSev = attackMaxSeverity(attack);
   const start = attack.snapshots[0];
   const firstDoses = attackFirstDoses(attack, isRetired, formatDuration);
+  const outcomes = attackDoseOutcomes(attack);
+  const side = attackSide(attack);
+  const symptoms = [...new Set(attack.snapshots.flatMap((s) => s.symptoms ?? []))].filter((x) => !isRetired(x));
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const ongoing = attack.end === null;
@@ -89,9 +98,11 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           </svg>
         </button>
 
-        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-medium text-text-primary">
-          Attack details
-        </span>
+        {/* v3: the attack's own date and start time, rather than "Attack
+            details" — the sheet's name is obvious, which attack it is isn't. */}
+        <h2 className="pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-base font-medium text-text-primary">
+          {formatDate(start.time)} · {formatTime(start.time)}
+        </h2>
 
         <button
           type="button"
@@ -105,20 +116,65 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
 
       {/* Body — the only scrolling region */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-5 space-y-5">
-      {/* Header */}
-      <div>
-        <h2 className="text-lg font-medium text-text-primary">{formatDate(start.time)}</h2>
-        <p className="text-sm text-text-secondary">
-          {attack.end
-            ? formatDuration(start.time, attack.end) + ' duration'
-            : 'Ongoing'}
-          {' · '}max severity {maxSev}
-        </p>
-        {/* Each trigger carries its mark, the same way the symptoms on a Logs
-            row and the medications on a reading do — a comma-joined line was
-            the one list in the app that read as raw text. */}
+      {/* **Three facts first, as cards** (v3, 2026-10-26): how bad at worst,
+          how long, which side — the same three the Logs row leads with, so
+          opening a row answers its questions in the same order. On the sheet's
+          own `bg-surface`, so they are raised. Plain numbers, not severity
+          colour: the figure carries the value, as on the row's badge. */}
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard value={String(maxSev)} label="highest pain" />
+        <StatCard value={ongoing ? formatDuration(start.time, null) : formatDuration(start.time, attack.end)} label={ongoing ? 'so far' : 'long'} />
+        <div className="flex flex-col items-center justify-center gap-1 rounded-[1.25rem] bg-bg-raised p-3 text-center">
+          {side
+            ? <SideGlyph side={side} className="h-[2.125rem] w-auto text-text-secondary" />
+            : <span aria-hidden="true" className="h-[2.125rem]" />}
+          <span className="text-xs text-text-secondary">{side ? SIDE_LABELS[side].toLowerCase() : 'side not recorded'}</span>
+        </div>
+      </div>
+
+      {/* **Did it help, per drug** — its first dose, how long into the attack
+          it was taken (the figure §5 of the dossier asks for), and its own
+          two-hour reading by the rule Insights scores with. A missing reading
+          is said as missing, never as "didn't help". */}
+      {outcomes.length > 0 && (
+        <div className="space-y-2.5">
+          {outcomes.map((o) => {
+            const cls = COUNTED_CLASSES.find((c) => c.value === findMedication(medications, o.name)?.class);
+            const timing = firstDoses.find((d) => d.name === o.name)?.timing;
+            return (
+              <div key={o.name} className="flex items-center gap-3 rounded-[1.25rem] bg-bg-raised p-3.5">
+                <ClassBadge>{cls ? cls.letter : <MedIcon name={o.name} dose={o.dose} className="h-4 w-4" />}</ClassBadge>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-text-primary">{[o.name, o.dose].filter(Boolean).join(' · ')}</p>
+                  <p className="text-xs text-text-secondary">{[timing, verdictLine(o)].filter(Boolean).join(' · ')}</p>
+                </div>
+                <span className="shrink-0 text-xs tabular-nums text-text-secondary">{formatTime(o.time)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Symptoms as tiles, each with its drawn mark — read-only, so a static
+          block with no press state. ICHD-3 criterion C lives here. */}
+      {symptoms.length > 0 && (
+        <div className="grid grid-cols-4 gap-2" aria-label="Symptoms">
+          {symptoms.map((sym) => (
+            <div key={sym} className="flex min-h-[4.75rem] flex-col items-center justify-center gap-1.5 rounded-[1.25rem] bg-bg-raised px-1 py-2 text-center text-xs text-text-primary">
+              <SymptomIcon name={sym} className="h-6 w-6 text-text-secondary" />
+              <span className="leading-tight [overflow-wrap:anywhere]">{sym}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {(attack.triggers.length > 0 || attack.impact !== undefined || attack.wokeWithMigraine) && (
+      <div className="space-y-1">
+        {/* Each trigger carries its mark, the same way the symptoms do — a
+            comma-joined line was the one list in the app that read as raw
+            text. */}
         {attack.triggers.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {attack.triggers.map((t) => (
               <span key={t} className="inline-flex items-center gap-1 text-xs text-text-secondary">
                 <TriggerIcon name={t} />
@@ -127,45 +183,22 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
             ))}
           </div>
         )}
-        {/* **Read-only, and absent entirely when unanswered.** Impact is a
-            judgement about the episode made while it's fresh — the Today
-            prompt asks for 24h after the attack ends and then stops. Offering
-            it again here would invite an answer reconstructed days later,
-            which is the recall bias a prospective diary exists to avoid, and
-            a badly remembered level counts in the disability figures where an
-            absent one doesn't. So this states what was answered and offers no
-            way to change it; "not answered" shows nothing rather than an empty
-            control implying something is missing.
-            Labelled the way AttackCard labels it, since a bare degree ("a
-            lot") means nothing read cold. */}
+        {/* **Read-only, and absent entirely when unanswered.** Impact is asked
+            once, inside 24h of the end, on Today; offering it again here
+            would invite an answer reconstructed days later. */}
         {attack.impact !== undefined && (
-          <p className="text-xs text-text-secondary mt-1">
+          <p className="text-xs text-text-secondary">
             Impact: <span className="text-text-primary">{IMPACT_SHORT[attack.impact]}</span>
           </p>
         )}
-        {/* Time from onset to each drug's first dose — the half of the
-            medication record that the Logs card deliberately leaves out. The
-            timeline below says *when* each dose was taken in clock time; this
-            says how long into the attack that was, which is the figure §5 of
-            the dossier actually asks for and the one a clinician reads. */}
-        {firstDoses.length > 0 && (
-          <p className="text-xs text-text-secondary mt-1">
-            {firstDoses.map((m, i) => (
-              <span key={m.name}>
-                {i > 0 && ' · '}
-                <MedIcon name={m.name} dose={m.dose} className="inline h-4 w-4 align-[-0.2em]" />{' '}
-                <span className="text-text-primary">{m.name}</span> {m.timing}
-              </span>
-            ))}
-          </p>
-        )}
         {attack.wokeWithMigraine && (
-          <p className="text-xs text-accent-light mt-1 flex items-center gap-1.5">
+          <p className="flex items-center gap-1.5 text-xs text-accent-light">
             <SunriseIcon className="h-4 w-4" />
             Woke up with this migraine
           </p>
         )}
       </div>
+      )}
 
       {/* Severity chart */}
       {attack.snapshots.length >= 2 ? (
@@ -402,4 +435,24 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
       </div>
     </div>
   );
+}
+
+/** One figure over its label — the v3 stat card on the detail sheet. */
+function StatCard({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-0.5 rounded-[1.25rem] bg-bg-raised p-3 text-center">
+      <span className="whitespace-nowrap text-[1.5rem] font-semibold leading-tight tabular-nums text-text-primary">{value}</span>
+      <span className="text-xs text-text-secondary">{label}</span>
+    </div>
+  );
+}
+
+/** The two-hour reading, as a short clause. */
+function verdictLine(o: DoseOutcome): string {
+  switch (o.verdict) {
+    case 'helped': return `helped · ${o.before} → ${o.after} at 2 hours`;
+    case 'not-helped': return `didn't help · ${o.before} → ${o.after} at 2 hours`;
+    case 'pending': return '2-hour reading to come';
+    case 'no-reading': return 'no 2-hour reading';
+  }
 }

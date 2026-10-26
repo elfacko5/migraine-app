@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { Attack } from '../types';
 import { AttackCard } from './AttackCard';
+import { formatDate } from '../utils/format';
 import {
   applyFilters, sortAttacks, activeFilterChips, filterCount, clearFilterKey,
   DEFAULT_FILTERS, SORT_LABELS,
@@ -37,6 +38,7 @@ export function HistoryView({
     [attacks, filters, sort]
   );
 
+  const byDate = sort === 'newest' || sort === 'oldest';
   const chips = activeFilterChips(filters);
   const count = filterCount(filters);
   const total = attacks.length;
@@ -144,17 +146,39 @@ export function HistoryView({
           )}
         </div>
       ) : (
-        <div className="space-y-3">
-          {visible.map((a) => (
-            <AttackCard
-              key={a.id}
-              attack={a}
-              isOngoing={a.end === null}
-              onClick={() => onAttackClick(a)}
-            />
-          ))}
+        // **Grouped under date headers while the list is in date order** (v3):
+        // the row's title is then just "time · length", and the date is said
+        // once per day instead of on every row. Under any other sort the
+        // headers would scatter, so the rows carry their own date instead.
+        <div className="space-y-2.5">
+          {visible.map((a, i) => {
+            const day = dayLabel(a.snapshots[0].time);
+            const header = byDate && (i === 0 || dayLabel(visible[i - 1].snapshots[0].time) !== day);
+            return (
+              <div key={a.id} className="space-y-2.5">
+                {header && <h2 className={`text-xs font-medium text-text-secondary ${i > 0 ? 'pt-2' : ''}`}>{day}</h2>}
+                <AttackCard
+                  attack={a}
+                  isOngoing={a.end === null}
+                  showDate={!byDate}
+                  onClick={() => onAttackClick(a)}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
+}
+
+/** "Today", "Yesterday", or the date — the Logs date header. Built from the
+ *  attack's own start; the comparison day is read here rather than in render. */
+function dayLabel(iso: string, now: Date = new Date()): string {
+  const d = new Date(iso);
+  const key = (x: Date) => `${x.getFullYear()}-${x.getMonth()}-${x.getDate()}`;
+  if (key(d) === key(now)) return 'Today';
+  const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  if (key(d) === key(y)) return 'Yesterday';
+  return formatDate(iso);
 }
