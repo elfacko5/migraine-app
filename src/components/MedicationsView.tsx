@@ -1,6 +1,6 @@
 import type { Medication } from '../types';
-import { COUNTED_CLASSES } from '../utils/medClasses';
-import { MedIcon } from './drawnIcons';
+import { classLetter } from '../utils/medClasses';
+import { unitsLabel } from '../utils/medGuardrails';
 import { ClassBadge } from './ClassBadge';
 import { ProfileSubPage } from './ProfileSubPage';
 import { Chevron, SettingsGroup } from './settingsUi';
@@ -12,86 +12,81 @@ interface Props {
   onClose: () => void;
 }
 
-const KIND_LABEL: Record<Medication['kind'], string> = {
-  acute: 'Acute treatment',
-  preventive: 'Preventive',
-};
+// My medications — the v3.9 design (docs/redesign-v3), 2026-10-26. Two lists
+// named for when the medicine is taken, "For an attack" and "Every day",
+// rather than the clinical "acute" / "preventive"; the data model keeps its
+// own words.
+//
+// Each row is a single tap target with a chevron, and carries no Delete of
+// its own: two small buttons per row put a destructive action a thumb-width
+// from a safe one on every line. Delete lives inside the editor, confirmed.
 
-// Named rather than left blank: this screen is where someone meets the
-// acute/preventive distinction for the first time, and an empty list with a
-// bare "Add" button explains neither what goes here nor why it's split.
-const KIND_BLURB: Record<Medication['kind'], string> = {
-  acute: 'Taken to treat an attack. These appear as one-tap chips when you log medication.',
-  preventive: 'Taken daily, whether or not you have an attack. Kept out of attack logging.',
-};
-
-/**
- * The row's leading mark. An acute medication with a type carries its class
- * letter — the same T / C / P badge Today's medication card counts it under,
- * so the two screens name it the same way. Anything without a class keeps
- * its form icon in the same frame, so every row's text starts at one edge.
- */
-function MedBadge({ med }: { med: Medication }) {
-  const cls = med.kind === 'acute' ? COUNTED_CLASSES.find((c) => c.value === med.class) : undefined;
+/** Lucide `calendar` — an every-day medicine, which has no overuse type. */
+function DailyIcon() {
   return (
-    <ClassBadge>
-      {cls ? cls.letter : <MedIcon name={med.name} dose={med.dose} className="h-4 w-4" />}
-    </ClassBadge>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-[1.125rem] w-[1.125rem]" aria-hidden="true">
+      <path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" />
+    </svg>
   );
 }
 
-// v3 (2026-10-26): each kind is one grouped card, the Settings menu's own
-// shape. Rows are a single tap target with a chevron — this is a list you go
-// into — and still carry no Delete of their own: two small buttons per row put
-// a destructive action a thumb-width from a safe one on every line, so the
-// delete stays inside the editor, behind a deliberate tap and a confirm.
-//
-// **Add is the group's last row**, not a full-width secondary button under it,
-// so an empty list is still one card with one thing to do rather than a
-// heading over a lone button.
+/** "1 tablet · 50 mg · max 2 in 24 h" — one dose, then the one limit that
+ *  bears on the next few hours, when the user entered it. */
+function doseLine(med: Medication): string {
+  return [
+    unitsLabel(med.quantity ?? 1, med),
+    med.strength,
+    med.kind === 'acute' && med.maxPerDay ? `max ${med.maxPerDay} in 24 h` : null,
+  ].filter(Boolean).join(' · ') || med.dose;
+}
+
 export function MedicationsView({ medications, onEdit, onAddNew, onClose }: Props) {
+  const sections = [
+    { kind: 'acute' as const, title: 'For an attack', caption: null, add: 'Add a medication' },
+    { kind: 'preventive' as const, title: 'Every day', caption: 'Preventive. Kept out of attack logging.', add: 'Add a daily medication' },
+  ];
+
   return (
     <ProfileSubPage title="My medications" onClose={onClose}>
       <div className="space-y-8">
-        {(['acute', 'preventive'] as const).map((kind) => {
+        {sections.map(({ kind, title, caption, add }) => {
           const items = medications.filter((m) => m.kind === kind);
           return (
             <section key={kind} className="space-y-3">
               <div className="space-y-1">
-                <h2 className="text-sm font-medium text-text-primary">{KIND_LABEL[kind]}</h2>
-                <p className="text-xs text-text-secondary">{KIND_BLURB[kind]}</p>
+                <h2 className="text-[1.375rem] font-semibold text-text-primary">{title}</h2>
+                {caption && <p className="text-xs text-text-secondary">{caption}</p>}
               </div>
 
-              <SettingsGroup raised>
-                {items.map((med) => (
-                  <button
-                    key={med.id}
-                    type="button"
-                    onClick={() => onEdit(med)}
-                    aria-label={`Edit ${med.name}`}
-                    className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-bg-elevated"
-                  >
-                    <MedBadge med={med} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm text-text-primary">{med.name}</span>
-                      {med.dose && <span className="block truncate text-xs text-text-secondary">{med.dose}</span>}
-                    </span>
-                    <Chevron />
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => onAddNew(kind)}
-                  className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left text-sm font-medium text-accent-light transition-colors hover:bg-bg-elevated"
-                >
-                  <span aria-hidden="true" className="flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </span>
-                  Add {kind === 'acute' ? 'an acute' : 'a preventive'} medication
-                </button>
-              </SettingsGroup>
+              {items.length > 0 && (
+                <SettingsGroup raised>
+                  {items.map((med) => (
+                    <button
+                      key={med.id}
+                      type="button"
+                      onClick={() => onEdit(med)}
+                      aria-label={`Edit ${med.name}`}
+                      className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-bg-elevated"
+                    >
+                      {/* The type letter Today counts it under; "–" for an
+                          attack medicine with no type, a calendar for a daily
+                          one, which has none to give. */}
+                      <ClassBadge large>
+                        {kind === 'preventive' ? <DailyIcon /> : (classLetter(med.class) ?? '–')}
+                      </ClassBadge>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-text-primary">{med.name}</span>
+                        <span className="block truncate text-xs text-text-secondary">{doseLine(med)}</span>
+                      </span>
+                      <Chevron />
+                    </button>
+                  ))}
+                </SettingsGroup>
+              )}
+
+              <button type="button" onClick={() => onAddNew(kind)} className="btn-secondary w-full">
+                + {add}
+              </button>
             </section>
           );
         })}

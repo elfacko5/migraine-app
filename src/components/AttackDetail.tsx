@@ -4,7 +4,7 @@ import { formatDate, formatTime, formatDuration, isoToLocalInput, localInputToIs
 import { attackDoseOutcomes, attackMaxSeverity, type DoseOutcome } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
 import { findMedication } from '../utils/medGuardrails';
-import { COUNTED_CLASSES } from '../utils/medClasses';
+import { classLetter } from '../utils/medClasses';
 import { ClassBadge } from './ClassBadge';
 import { SeverityBreakdown } from './SeverityBreakdown';
 import { SnapshotRow } from './SnapshotRow';
@@ -139,11 +139,11 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
       {outcomes.length > 0 && (
         <div className="space-y-2.5">
           {outcomes.map((o) => {
-            const cls = COUNTED_CLASSES.find((c) => c.value === findMedication(medications, o.name)?.class);
+            const letter = classLetter(findMedication(medications, o.name)?.class);
             const timing = firstDoses.find((d) => d.name === o.name)?.timing;
             return (
               <div key={o.name} className="flex items-center gap-3 rounded-[1.25rem] bg-bg-raised p-3.5">
-                <ClassBadge>{cls ? cls.letter : <MedIcon name={o.name} dose={o.dose} className="h-4 w-4" />}</ClassBadge>
+                <ClassBadge>{letter ?? <MedIcon name={o.name} dose={o.dose} className="h-4 w-4" />}</ClassBadge>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-text-primary">{[o.name, o.dose].filter(Boolean).join(' · ')}</p>
                   <p className="text-xs text-text-secondary">{[timing, verdictLine(o)].filter(Boolean).join(' · ')}</p>

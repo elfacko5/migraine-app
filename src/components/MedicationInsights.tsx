@@ -79,7 +79,8 @@ export function MedicationInsights({
           // without meaning anything, and an amber figure that says "overuse"
           // when it doesn't is the one direction this page must not fail in.
           // Under a month it can only ever under-warn, which is safe.
-          const nearing = monthScale && med.days >= mohDaysFor(med.name, medications);
+          const limit = mohDaysFor(med.name, medications);
+          const nearing = monthScale && limit !== null && med.days >= limit;
           return (
             <div
               key={med.name}

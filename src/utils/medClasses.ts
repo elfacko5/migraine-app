@@ -1,19 +1,23 @@
 import type { MedClass } from '../types';
 import { MOH_DAYS_COMBINATION, MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from './stats';
 
-// The four ICHD-3 classes. The class decides one thing only: which
-// medication-overuse reference point a monthly count is measured against.
-//
-// Shared by `MedicationEditor`'s Type picker and Today's medication card, so
-// the card's "Combination painkiller days" is the same words the user chose
-// the type by. Lives here rather than in the editor, because a component
-// module that also exports constants breaks Fast Refresh.
-export const CLASSES: { value: MedClass; label: string }[] = [
-  { value: 'triptan', label: 'Triptan' },
-  { value: 'combination', label: 'Combination painkiller' },
-  { value: 'simple', label: 'Simple painkiller' },
-  { value: 'other', label: 'Other' },
+// The types the v3 editor offers (2026-10-26), with the letter each wears on
+// every screen — My medications, Today's medication card, Attack detail and
+// its pain chart. "Not sure" is no class at all (`undefined`), which counts
+// like an untyped drug: no bar, the default reference point of 10.
+export const TYPE_OPTIONS: { value: MedClass | undefined; label: string; letter: string }[] = [
+  { value: 'triptan', label: 'Triptan', letter: 'T' },
+  { value: 'combination', label: 'Combination', letter: 'C' },
+  { value: 'simple', label: 'Painkiller', letter: 'P' },
+  { value: 'gepant', label: 'Gepant', letter: 'G' },
+  { value: undefined, label: 'Not sure', letter: '?' },
 ];
+
+/** The badge letter for a class; `null` for none, so the caller can draw the
+ *  form icon instead. `'other'` (pre-v3) reads as no class. */
+export function classLetter(cls: MedClass | undefined): string | null {
+  return TYPE_OPTIONS.find((t) => t.value === cls && t.value !== undefined)?.letter ?? null;
+}
 
 /** The three classes with an overuse threshold, in the order Today lists them. */
 export type CountedClass = 'triptan' | 'combination' | 'simple';

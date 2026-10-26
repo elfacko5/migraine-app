@@ -43,7 +43,11 @@ export interface Attack {
 // which ICHD-3 medication-overuse reference point applies to it. Both numbers
 // have always existed in stats.ts, but nothing knew a drug's class, so 10 was
 // applied to everything and simple analgesics were flagged five days early.
-export type MedClass = 'triptan' | 'combination' | 'simple' | 'other';
+// 'gepant' (v3, 2026-10-26) has no medication-overuse threshold: it is counted
+// in no class bar and drawn no overuse warning unless the user entered their
+// own monthly limit. 'other' predates the v3 editor, which offers "Not sure"
+// (no class) instead; both are treated as untyped.
+export type MedClass = 'triptan' | 'combination' | 'simple' | 'gepant' | 'other';
 
 export interface Medication {
   id: string;

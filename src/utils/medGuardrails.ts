@@ -160,9 +160,12 @@ export function findMedication(medications: Medication[], name: string): Medicat
  * warns earlier rather than later, and warning early about a simple analgesic
  * is a much smaller failure than staying quiet about a triptan.
  */
-export function mohDaysFor(name: string, medications: Medication[]): number {
+export function mohDaysFor(name: string, medications: Medication[]): number | null {
   const med = findMedication(medications, name);
   if (med?.maxDaysPerMonth && med.maxDaysPerMonth > 0) return med.maxDaysPerMonth;
+  // A gepant has no overuse guideline, so it has no threshold unless the
+  // user entered one of their own above (v3, 2026-10-26).
+  if (med?.class === 'gepant') return null;
   if (med?.class === 'simple') return MOH_DAYS_SIMPLE;
   if (med?.class === 'combination') return MOH_DAYS_COMBINATION;
   return MOH_DAYS_TRIPTAN;

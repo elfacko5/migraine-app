@@ -496,7 +496,8 @@ export interface ClassDays {
   simple: number;
   /** Distinct days with a triptan, combination or simple dose — the mixed-use count. */
   any: number;
-  /** Names logged in the window whose class is `other` or unset — counted in no bar. */
+  /** Names logged in the window whose class is `other` or unset — counted in no bar.
+   *  A gepant is neither counted nor listed here. */
   untyped: string[];
 }
 
@@ -533,6 +534,10 @@ export function classDaysInWindow(
       if (cls === 'triptan' || cls === 'combination' || cls === 'simple') {
         days[cls].add(day);
         days.any.add(day);
+      } else if (cls === 'gepant') {
+        // No overuse guideline for gepants: counted in no bar, and not
+        // "untyped" either — the user did set its type.
+        continue;
       } else {
         untyped.add(name);
       }

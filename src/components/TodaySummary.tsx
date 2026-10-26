@@ -4,7 +4,7 @@ import {
   attacksInWindow, classDaysInWindow, medicationDaysLastWindow, migraineDaysInWindow, MOH_DAYS_MIXED,
 } from '../utils/stats';
 import { formatTime } from '../utils/format';
-import { COUNTED_CLASSES, type CountedClass } from '../utils/medClasses';
+import { classLetter, COUNTED_CLASSES, type CountedClass } from '../utils/medClasses';
 import { TODAY_CARD } from '../utils/todayCard';
 import { MedIcon } from './drawnIcons';
 import { ClassBadge } from './ClassBadge';
@@ -170,7 +170,7 @@ export function TodaySummary({
     // branch is unchanged apart from the window (its redesign is separate).
     const nearing = perDrug
       .map((m) => ({ ...m, threshold: mohDaysFor(m.name, medications) }))
-      .filter((m) => m.days >= warnAt(m.threshold));
+      .filter((m) => m.threshold !== null && m.days >= warnAt(m.threshold));
     if (nearing.length === 0 && !lastDose) return null;
     return (
       <div className="space-y-3">
@@ -225,7 +225,9 @@ export function TodaySummary({
   for (const m of perDrug) {
     const lib = findMedication(medications, m.name);
     const own = lib?.maxDaysPerMonth && lib.maxDaysPerMonth > 0 ? lib.maxDaysPerMonth : null;
-    const typed = lib?.class === 'triptan' || lib?.class === 'combination' || lib?.class === 'simple';
+    // A gepant has a type but no overuse guideline, so it counts as typed
+    // here and draws no default warning.
+    const typed = lib?.class === 'triptan' || lib?.class === 'combination' || lib?.class === 'simple' || lib?.class === 'gepant';
     if (own !== null) {
       if (m.days >= warnAt(own)) {
         warnings.push({
@@ -236,7 +238,7 @@ export function TodaySummary({
       }
     } else if (!typed) {
       const threshold = mohDaysFor(m.name, medications);
-      if (m.days >= warnAt(threshold)) {
+      if (threshold !== null && m.days >= warnAt(threshold)) {
         warnings.push({ key: `drug:${m.name}`, drug: m.name, count: `${m.name} on ${m.days} days in the last 30 days.`, note: GUIDELINE_NOTE });
       }
     }
@@ -254,7 +256,7 @@ export function TodaySummary({
 
   const migraineDays = migraineDaysInWindow(attacks);
   const attackCount = attacksInWindow(attacks);
-  const lastCountedClass = COUNTED_CLASSES.find((c) => c.value === lastClass);
+  const lastLetter = classLetter(lastClass);
 
   return (
     <div className="space-y-3.5">
@@ -266,7 +268,7 @@ export function TodaySummary({
         <div className={TODAY_CARD}>
           <div className="flex items-center gap-3">
             <ClassBadge large>
-              {lastCountedClass?.letter ?? <MedIcon name={lastDose.medication.name} dose={lastDose.medication.dose} className="h-4 w-4" />}
+              {lastLetter ?? <MedIcon name={lastDose.medication.name} dose={lastDose.medication.dose} className="h-4 w-4" />}
             </ClassBadge>
             <div className="min-w-0">
               <p className="text-base font-semibold text-text-primary">{lastDose.medication.name}</p>

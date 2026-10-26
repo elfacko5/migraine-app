@@ -805,7 +805,7 @@ export default function App() {
             kind={'med' in medEditor ? medEditor.med.kind : medEditor.newKind}
             onSave={(next) => {
               if ('med' in medEditor) updateMedication(medEditor.med.id, next);
-              else addMedication({ ...next, kind: medEditor.newKind });
+              else addMedication(next);
               setMedEditor(null);
             }}
             onDelete={'med' in medEditor ? () => { removeMedication(medEditor.med.id); setMedEditor(null); } : undefined}
