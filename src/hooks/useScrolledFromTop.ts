@@ -5,9 +5,9 @@ import { useEffect, useRef, useState } from 'react';
 // read and takes it back when you return to the start — currently the
 // Insights header, which hides its title and keeps only the period control.
 //
-// **Deliberately not `useScrollCollapse`.** That one watches *direction*, so
-// a floating pill gets its label back the moment you scroll up, which is the
-// gesture meaning "I'm looking for something". A header that changes height
+// **Position, not direction.** The floating attack-mode pill (removed in v3)
+// used a direction-watching hook, so its label came back the moment you
+// scrolled up. A header that changes height
 // cannot do that: every upward flick would grow it and every downward one
 // shrink it, and the content under it would move each time. Position, not
 // direction, is the right signal here — and it is what "reappear once we

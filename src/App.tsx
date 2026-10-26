@@ -8,7 +8,6 @@ import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
 import { useAuth } from './hooks/useAuth';
 import { useViewportHeight } from './hooks/useViewportHeight';
-import { useScrollCollapse } from './hooks/useScrollCollapse';
 import { useScrolledFromTop } from './hooks/useScrolledFromTop';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { isRetired } from './utils/retired';
@@ -127,11 +126,9 @@ export default function App() {
   // the data rather than the writers, so no future save path can forget it.
   useWidgetSnapshot(attacks, medications);
 
-  // The shell's nested scroll container, watched so AttackModePill can shed
-  // its label while the user is reading downward and get it back on the way
-  // up. Nothing else may scroll at page level for this to be the whole story.
+  // The shell's nested scroll container — watched by the Insights header to
+  // collapse its title. Nothing else may scroll at page level.
   const scrollRef = useRef<HTMLDivElement>(null);
-  const pillCollapsed = useScrollCollapse(scrollRef);
   const insightsScrolled = useScrolledFromTop(scrollRef);
 
   // Combine the independent sync hooks into one status for Profile: an error
@@ -204,7 +201,7 @@ export default function App() {
   // that state, so TopBar stands down — see the note at its call site.
   const heroOnToday = tab === 'log' && !!(ongoingAttack || lastAttackEnd);
   // The attack mode button's Today placement: the hero's top-right corner.
-  const heroAttackMode = <AttackModePill active={attackMode} onToggle={setAttackMode} inline />;
+  const heroAttackMode = <AttackModePill active={attackMode} onToggle={setAttackMode} />;
 
   // The attack whose impact Today should ask about, if any.
   //
@@ -484,7 +481,7 @@ export default function App() {
             // attack mode button lives here instead, so attack mode is
             // reachable before the first attack is ever logged.
             control={tab === 'log' ? (
-              <AttackModePill active={attackMode} onToggle={setAttackMode} inline />
+              <AttackModePill active={attackMode} onToggle={setAttackMode} />
             ) : tab === 'stats' && attacks.length > 0 ? (
               <SegmentedControl
                 options={PERIOD_SEGMENTS}
@@ -505,23 +502,17 @@ export default function App() {
         )}
         <div
           className="mx-auto max-w-2xl px-4 pt-5 sm:px-6"
-          // The reserve has to clear the floating pill, not just the nav —
-          // AttackModePill sits at calc(4.5rem + 1rem + inset) and is up to
-          // 52px tall, so it ends around 8.5rem up. At the old 7rem the last
-          // thing on a page (the heatmap's LESS/MORE scale) sat underneath it
-          // with nothing left to scroll. 10rem clears the pill with a little
-          // air; anything added to the floating layer has to be checked
-          // against this number.
+          // The reserve clears the nav and the FAB in it. It was 10rem while
+          // AttackModePill floated over every tab; that pill is gone (v3,
+          // 2026-10-26 — attack mode lives in Today's hero and on the Display
+          // page), so nothing floats over the content any more. **Anything
+          // added to a floating layer later has to be checked against this.**
           //
           // The inset is added rather than assumed: BottomNav's own height
           // grows with env(safe-area-inset-bottom), so a flat reserve tuned
           // against a zero-inset preview leaves content behind the nav on a
           // real device.
-          //
-          // **Today reserves less** (v3, 2026-10-26): the pill moved into its
-          // hero, so on that tab the reserve only has to clear the nav and the
-          // FAB rising out of it. The other three tabs still float the pill.
-          style={{ paddingBottom: `calc(${tab === 'log' ? '7rem' : '10rem'} + env(safe-area-inset-bottom))` }}
+          style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom))' }}
         >
         {/* ── Today tab ───────────────────────────── */}
         {/* Order, top to bottom (v3, 2026-10-26): hero → impact question →
@@ -655,11 +646,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Floating on every tab but Today, where it moved into the hero's
-          corner (v3, 2026-10-26 — Today only, Sunny's call). */}
-      {tab !== 'log' && (
-        <AttackModePill active={attackMode} onToggle={setAttackMode} collapsed={pillCollapsed} />
-      )}
       {/* FAB opens Add-update when an attack is already ongoing — you can't
           start a second one until the current attack ends. */}
       <BottomNav
