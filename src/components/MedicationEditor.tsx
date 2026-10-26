@@ -3,7 +3,6 @@ import type { MedClass, Medication } from '../types';
 import { DEFAULT_UNIT } from '../utils/medGuardrails';
 import { MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from '../utils/stats';
 import { TYPE_OPTIONS } from '../utils/medClasses';
-import { CHIP_ON } from '../utils/chipStyles';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ClassBadge } from './ClassBadge';
 import { OptionTile } from './settingsUi';
@@ -70,8 +69,6 @@ export type MedicationDraft = Omit<Medication, 'id' | 'createdAt'>;
 interface Props {
   /** Absent when adding. */
   medication?: Medication;
-  /** Which list "Add" was pressed under; the switch at the top can change it. */
-  kind: Medication['kind'];
   onSave: (next: MedicationDraft) => void;
   onDelete?: () => void;
   onClose: () => void;
@@ -81,12 +78,13 @@ const inputClass =
   'w-full min-h-[3.25rem] rounded-2xl bg-bg-surface px-4 text-sm text-text-primary ring-1 ring-inset ring-border-control ' +
   'placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent';
 
-export function MedicationEditor({ medication, kind: initialKind, onSave, onDelete, onClose }: Props) {
+export function MedicationEditor({ medication, onSave, onDelete, onClose }: Props) {
   const nameId = useId();
   const strengthId = useId();
-  const startedId = useId();
 
-  const [kind, setKind] = useState<Medication['kind']>(medication?.kind ?? initialKind);
+  // Every new medication is for an attack: the "Every day" list was removed
+  // (Sunny, 2026-10-26). A preventive stored before then keeps its kind.
+  const kind: Medication['kind'] = medication?.kind ?? 'acute';
   const [name, setName] = useState(medication?.name ?? '');
   const initialForm = formOf(medication?.unitLabel);
   const [form, setForm] = useState<Form>(initialForm);
@@ -107,7 +105,6 @@ export function MedicationEditor({ medication, kind: initialKind, onSave, onDele
   const [maxPerDay, setMaxPerDay] = useState(medication?.maxPerDay?.toString() ?? '');
   const [minHoursBetween, setMinHoursBetween] = useState(medication?.minHoursBetween?.toString() ?? '');
   const [maxDaysPerMonth, setMaxDaysPerMonth] = useState(medication?.maxDaysPerMonth?.toString() ?? '');
-  const [startedOn, setStartedOn] = useState(medication?.startedOn ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const acute = kind === 'acute';
@@ -155,7 +152,7 @@ export function MedicationEditor({ medication, kind: initialKind, onSave, onDele
       maxPerDay: acute ? toNumber(maxPerDay) : undefined,
       minHoursBetween: acute ? toNumber(minHoursBetween) : undefined,
       maxDaysPerMonth: acute ? toNumber(maxDaysPerMonth) : undefined,
-      startedOn: !acute ? (startedOn || undefined) : undefined,
+      startedOn: acute ? undefined : medication?.startedOn,
     };
   }
 
@@ -196,25 +193,6 @@ export function MedicationEditor({ medication, kind: initialKind, onSave, onDele
       </div>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-6 pt-2 sm:px-6">
-        {/* When it's taken. Moving a medication between the two lists is an
-            edit like any other now, rather than a delete and re-add. */}
-        <div role="radiogroup" aria-label="When it's taken" className="flex gap-1 rounded-2xl bg-bg-raised p-1">
-          {(['acute', 'preventive'] as const).map((k) => (
-            <button
-              key={k}
-              type="button"
-              role="radio"
-              aria-checked={kind === k}
-              onClick={() => setKind(k)}
-              className={`min-h-11 flex-1 rounded-xl text-sm transition-colors ${
-                kind === k ? `${CHIP_ON} font-semibold !text-text-primary` : 'text-text-primary hover:bg-bg-elevated'
-              }`}
-            >
-              {k === 'acute' ? 'For an attack' : 'Every day'}
-            </button>
-          ))}
-        </div>
-
         <div className="space-y-2">
           <label htmlFor={nameId} className="block text-xs font-medium text-text-secondary">Name</label>
           <input id={nameId} type="text" placeholder="e.g. Sumatriptan" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
@@ -271,7 +249,7 @@ export function MedicationEditor({ medication, kind: initialKind, onSave, onDele
           </div>
         </div>
 
-        {acute ? (
+        {acute && (
           <>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -356,21 +334,6 @@ export function MedicationEditor({ medication, kind: initialKind, onSave, onDele
               )}
             </div>
           </>
-        ) : (
-          // A preventive keeps the one optional field it always had: the
-          // date it was started, which the ≥50% comparison on Insights uses.
-          <div className="space-y-2">
-            <label htmlFor={startedId} className="block text-xs font-medium text-text-secondary">Started · optional</label>
-            <input
-              id={startedId}
-              type="date"
-              value={startedOn}
-              max={new Date().toISOString().slice(0, 10)}
-              onChange={(e) => setStartedOn(e.target.value)}
-              className={inputClass}
-            />
-            <p className="text-xs text-text-secondary">Lets Insights compare your migraine days before and after.</p>
-          </div>
         )}
 
       </div>

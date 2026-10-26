@@ -92,7 +92,7 @@ export default function App() {
   // Which medication the editor sheet is open on: an existing one, or a new
   // one of a given kind. Kept here rather than inside MedicationsView because
   // Sheet anchors to the app root — see the Profile tab notes in CLAUDE.md.
-  const [medEditor, setMedEditor] = useState<{ med: Medication } | { newKind: Medication['kind'] } | null>(null);
+  const [medEditor, setMedEditor] = useState<{ med: Medication } | { isNew: true } | null>(null);
   // Set when either sheet below was opened by voice — the Siri App Intent or
   // the Shortcut deep link (see the voice effect below) — and cleared whenever
   // that sheet closes so a stray prefill never leaks into a later manual open.
@@ -725,7 +725,7 @@ export default function App() {
           <MedicationsView
             medications={medications}
             onEdit={(med) => setMedEditor({ med })}
-            onAddNew={(kind) => setMedEditor({ newKind: kind })}
+            onAddNew={() => setMedEditor({ isNew: true })}
             onClose={() => setProfileSheet(null)}
           />
         )}
@@ -803,7 +803,6 @@ export default function App() {
         {medEditor && (
           <MedicationEditor
             medication={'med' in medEditor ? medEditor.med : undefined}
-            kind={'med' in medEditor ? medEditor.med.kind : medEditor.newKind}
             onSave={(next) => {
               if ('med' in medEditor) updateMedication(medEditor.med.id, next);
               else addMedication(next);
