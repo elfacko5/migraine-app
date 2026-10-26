@@ -19,13 +19,16 @@ interface Props {
  * state keeps its own labelled button — a bare plus is a weak first
  * affordance, and someone with no history needs the words once.
  *
- * **No detail line, and a greeting instead.** It read "Since Thu 20 Aug,
- * 10:40" under "8 minutes" — the same fact twice, on the largest piece of
- * real estate in the app, where what a person wants is how long it has been
- * and not the timestamp it is measured from. The exact end time is still on
- * the attack itself in `AttackDetail`. The line it freed goes to a time-of-day
- * greeting, which is also where the "Hello" that `TopBar` used to carry on
- * Today ended up.
+ * **The greeting is the kicker, and the three lines read as one sentence**
+ * (v3, 2026-10-26): "Good evening / 4 days / since your last attack". It used
+ * to be a greeting *and* a label — "Attack-free for" — and "attack-free" read
+ * as a score to keep up, the thing §9.2 says a tracker must never build. The
+ * phrasing now follows the Insights tile's "Days since · last attack": a plain
+ * count from an event, not a run to protect.
+ *
+ * Still no date. "Since Thu 20 Aug, 10:40" under "8 minutes" was the
+ * headline's own figure said a second way; the exact end time is on the
+ * attack in `AttackDetail`.
  */
 export function AttackFreeCard({ lastEnd }: Props) {
   // Every minute, and on every return to the foreground — an interval alone
@@ -35,9 +38,9 @@ export function AttackFreeCard({ lastEnd }: Props) {
   return (
     <HomeCard
       art={<AttackFreeArt />}
-      greeting={greeting()}
-      label="Attack-free for"
+      label={greeting()}
       headline={formatSinceLong(lastEnd)}
+      detail="since your last attack"
     />
   );
 }

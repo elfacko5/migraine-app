@@ -8,21 +8,17 @@ interface Props {
    */
   art: ReactNode;
   /**
-   * A greeting above the label, on the attack-free hero only. It is where the
-   * "Hello" that `TopBar` used to carry on Today went — the hero took the top
-   * of the screen, and a page that opens on a bare figure reads colder than
-   * the app is meant to. Deliberately absent mid-attack: a "Good morning"
-   * above "Ongoing attack" would be the app failing to notice.
+   * The kicker above the headline: a time-of-day greeting between attacks,
+   * "Ongoing attack" during one. Never a greeting mid-attack — "Good morning"
+   * above an ongoing attack would be the app failing to notice.
    */
-  greeting?: string;
-  /** Small label above the headline — "Attack-free for", "Ongoing attack". */
   label: string;
   /** The one thing the hero exists to say, at a glance. */
   headline: string;
   /**
-   * Supporting line under the headline. Optional: the attack-free hero has
-   * none, because the only fact it had to offer there was the date the last
-   * attack ended, which is the headline's own figure said a second way.
+   * Supporting line under the headline — "since your last attack", or where
+   * an ongoing attack sits now. Optional; nothing passes a date here, which
+   * would be the headline's own figure said a second way.
    */
   detail?: ReactNode;
   /** When set, the text block becomes the way through to the detail view. */
@@ -64,14 +60,13 @@ interface Props {
  * The artwork is `aria-hidden` and `focusable="false"` — it carries mood, not
  * information, and every fact is in the text beside it.
  */
-export function HomeCard({ art, greeting, label, headline, detail, onOpenDetail, children }: Props) {
+export function HomeCard({ art, label, headline, detail, onOpenDetail, children }: Props) {
   const text = (
     <>
       {/* Deliberately uneven gaps, to spec: 4px under the label so it reads as
           a kicker attached to the headline, then 16px before the detail line
           so it separates as its own fact. A uniform stack made the label float
           between the two. */}
-      {greeting && <p className="mb-1 text-sm font-medium text-text-secondary">{greeting}</p>}
       <p className="text-sm font-medium text-text-secondary">{label}</p>
       {/* Never wrapped. "Started 24h 38m" broke onto a second line against the
           64% text width and pushed the hero taller for no reason — the
