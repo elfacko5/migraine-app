@@ -3,7 +3,7 @@ import { formatElapsed } from '../utils/format';
 import { attackLatestSeverity, attackMaxSeverity } from '../utils/stats';
 import { useNowTick } from '../hooks/useNowTick';
 import { HomeCard } from './HomeCard';
-import cardImage from '../assets/card-ongoing.jpg';
+import { OngoingArt } from './heroArt';
 
 interface Props {
   attack: Attack;
@@ -31,9 +31,7 @@ export function OngoingAttackBanner({ attack, onEnd, onOpenDetail }: Props) {
 
   return (
     <HomeCard
-      image={cardImage}
-      // Pre-trimmed tight to the swirl, so its right edge is the one to keep.
-      imageAnchor="right"
+      art={<OngoingArt />}
       label="Ongoing attack"
       headline={`Started ${formatElapsed(start)}`}
       // Stated plainly rather than colour-coded: the card sits on artwork,

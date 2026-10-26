@@ -106,6 +106,14 @@
   --color-severity-high:  #c68880;  /* desaturated terracotta, not bright red */
   --color-warning:        #b07a3c;
   --color-positive:       #7fa187;
+
+  /* ── Hero illustration ──────────────────────────────
+     The two fills `heroArt.tsx` draws the Today hero with. Decorative only,
+     so no contrast target of their own — the headline that runs over them
+     has one, and is measured against them. Warm clay and the sage family,
+     both low-saturation: the art is the largest coloured area on Today. */
+  --color-ill-1:          #8c735e;
+  --color-ill-2:          #5e7363;
 }
 
 /* ── Attack mode ────────────────────────────────────────
@@ -145,6 +153,9 @@
   --color-button-secondary-bg:     #1e1e17;
   /* 3:1 control outline — see the dark theme's note. */
   --color-button-secondary-border: #736d5a;
+  /* Dark's values for now: this palette is being redesigned separately. */
+  --color-ill-1:          #8c735e;
+  --color-ill-2:          #5e7363;
 }
 
 /* ── Light mode ─────────────────────────────────────────
@@ -190,21 +201,8 @@
   --color-severity-high:  #82423b;
   --color-warning:        #7b5020;
   --color-positive:       #4f6b57;
-}
-
-/* The Today hero photographs (`HomeCard`'s `.hero-artwork`) are night-toned,
-   composed against the dark page — there's no light-mode version of them yet.
-   Left alone under `[data-theme="light"]` they read as a dark rectangle
-   dropped into an otherwise light screen rather than as art dissolving into
-   the page, which is what the surrounding `from-bg-base` gradients (already
-   theme-correct, since those are real CSS custom properties) are built to do.
-   This is a stopgap softening, not a redesign of the images: raise brightness
-   and pull saturation/contrast down so the existing artwork sits closer to
-   the page's own low-key register instead of contradicting it. If it isn't
-   enough on device, the fix is new or treated source images, not a stronger
-   filter — see docs/palette.md's light-mode section. */
-[data-theme="light"] .hero-artwork {
-  filter: brightness(1.4) saturate(0.55) contrast(0.55);
+  --color-ill-1:          #c9a98a;
+  --color-ill-2:          #a9bfad;
 }
 
 /* ── Three-tier button hierarchy ───────────────────────

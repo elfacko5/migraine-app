@@ -1,7 +1,7 @@
 import { formatSinceLong, greeting } from '../utils/format';
 import { useNowTick } from '../hooks/useNowTick';
 import { HomeCard } from './HomeCard';
-import cardImage from '../assets/card-attack-free.jpg';
+import { AttackFreeArt } from './heroArt';
 
 interface Props {
   lastEnd: string;
@@ -34,9 +34,7 @@ export function AttackFreeCard({ lastEnd }: Props) {
 
   return (
     <HomeCard
-      image={cardImage}
-      // Full square with the moon left of centre — keeping the left edge is what carries it into the visible strip.
-      imageAnchor="left"
+      art={<AttackFreeArt />}
       greeting={greeting()}
       label="Attack-free for"
       headline={formatSinceLong(lastEnd)}
