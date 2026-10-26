@@ -1,6 +1,9 @@
 import type { Medication } from '../types';
+import { COUNTED_CLASSES } from '../utils/medClasses';
 import { MedIcon } from './drawnIcons';
+import { ClassBadge } from './ClassBadge';
 import { ProfileSubPage } from './ProfileSubPage';
+import { Chevron, SettingsGroup } from './settingsUi';
 
 interface Props {
   medications: Medication[];
@@ -22,62 +25,73 @@ const KIND_BLURB: Record<Medication['kind'], string> = {
   preventive: 'Taken daily, whether or not you have an attack. Kept out of attack logging.',
 };
 
-function PencilIcon() {
+/**
+ * The row's leading mark. An acute medication with a type carries its class
+ * letter — the same T / C / P badge Today's medication card counts it under,
+ * so the two screens name it the same way. Anything without a class keeps
+ * its form icon in the same frame, so every row's text starts at one edge.
+ */
+function MedBadge({ med }: { med: Medication }) {
+  const cls = med.kind === 'acute' ? COUNTED_CLASSES.find((c) => c.value === med.class) : undefined;
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-text-secondary" aria-hidden="true">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-    </svg>
+    <ClassBadge>
+      {cls ? cls.letter : <MedIcon name={med.name} dose={med.dose} className="h-4 w-4" />}
+    </ClassBadge>
   );
 }
 
-// Rows are a single tap target with a pencil at the trailing edge, rather
-// than a row carrying its own Edit and Remove buttons. Two small buttons per
-// row put a destructive action a thumb-width from a safe one on every line
-// of the list; the delete now lives inside the editor, behind a deliberate
-// tap and a confirm.
+// v3 (2026-10-26): each kind is one grouped card, the Settings menu's own
+// shape. Rows are a single tap target with a chevron — this is a list you go
+// into — and still carry no Delete of their own: two small buttons per row put
+// a destructive action a thumb-width from a safe one on every line, so the
+// delete stays inside the editor, behind a deliberate tap and a confirm.
+//
+// **Add is the group's last row**, not a full-width secondary button under it,
+// so an empty list is still one card with one thing to do rather than a
+// heading over a lone button.
 export function MedicationsView({ medications, onEdit, onAddNew, onClose }: Props) {
-  const acute = medications.filter((m) => m.kind === 'acute');
-  const preventive = medications.filter((m) => m.kind === 'preventive');
-
   return (
     <ProfileSubPage title="My medications" onClose={onClose}>
       <div className="space-y-8">
         {(['acute', 'preventive'] as const).map((kind) => {
-          const items = kind === 'acute' ? acute : preventive;
+          const items = medications.filter((m) => m.kind === kind);
           return (
             <section key={kind} className="space-y-3">
               <div className="space-y-1">
-                <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">
-                  {KIND_LABEL[kind]}
-                </p>
+                <h2 className="text-sm font-medium text-text-primary">{KIND_LABEL[kind]}</h2>
                 <p className="text-xs text-text-secondary">{KIND_BLURB[kind]}</p>
               </div>
 
-              {items.map((med) => (
+              <SettingsGroup raised>
+                {items.map((med) => (
+                  <button
+                    key={med.id}
+                    type="button"
+                    onClick={() => onEdit(med)}
+                    aria-label={`Edit ${med.name}`}
+                    className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-bg-elevated"
+                  >
+                    <MedBadge med={med} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-text-primary">{med.name}</span>
+                      {med.dose && <span className="block truncate text-xs text-text-secondary">{med.dose}</span>}
+                    </span>
+                    <Chevron />
+                  </button>
+                ))}
                 <button
-                  key={med.id}
                   type="button"
-                  onClick={() => onEdit(med)}
-                  aria-label={`Edit ${med.name}`}
-                  className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
+                  onClick={() => onAddNew(kind)}
+                  className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left text-sm font-medium text-accent-light transition-colors hover:bg-bg-elevated"
                 >
-                  <MedIcon name={med.name} dose={med.dose} className="h-5 w-5 shrink-0 text-text-secondary" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-text-primary">{med.name}</span>
-                    {med.dose && <span className="block truncate text-xs text-text-secondary">{med.dose}</span>}
+                  <span aria-hidden="true" className="flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
                   </span>
-                  <PencilIcon />
+                  Add {kind === 'acute' ? 'an acute' : 'a preventive'} medication
                 </button>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => onAddNew(kind)}
-                className="btn-secondary w-full rounded-xl py-2.5 text-sm font-medium transition-colors"
-              >
-                Add {kind === 'acute' ? 'an acute' : 'a preventive'} medication
-              </button>
+              </SettingsGroup>
             </section>
           );
         })}
