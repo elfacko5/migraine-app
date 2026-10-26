@@ -29,7 +29,7 @@ const TAB_TITLES: Record<Tab, string> = {
   log: 'Hello',
   history: 'Logs',
   stats: 'Insights',
-  profile: 'Profile',
+  profile: 'Settings',
 };
 import { LogForm } from './components/LogForm';
 import { QuickUpdateForm } from './components/QuickUpdateForm';
