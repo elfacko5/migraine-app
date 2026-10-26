@@ -2069,6 +2069,6 @@ Rebuilt from the v3.1 artboards' Logs and Attack detail frames on Sunny's ask: "
 On Sunny's instruction: the *Every day* list, its *Add a daily medication* button, the editor's *For an attack / Every day* switch and the preventive *Started* field are gone. Every new medication is `acute`.
 
 - **Nothing stored is deleted.** `kind: 'preventive'` stays in the type and in the data, so a preventive saved before this keeps its row in `hd_medications` and in Supabase. It's just not shown on the page. It was never offered in the wizard, so logging is unchanged.
-- **`PreventiveInsights` on Insights still reads stored preventives with a `startedOn`.** Nothing new can feed it now. Whether to remove that section too is open.
+- **Insights' Preventives section went too** (Sunny, same day), with `preventiveEffect` and its constants in `stats.ts`. Nothing new could feed it, and a section fed only by entries the app no longer offers would be a dead end. Its rules are kept in CLAUDE.md's Medications section in case preventives come back.
 
 **Verified** at 375px on 5175, signed out, with one acute and one preventive seeded: the page lists only the acute one, and the editor opens on Name with no switch. Seed cleared afterwards.

@@ -13,7 +13,6 @@ import {
 import { HeadHeatmap } from './HeadHeatmap';
 import { MigraineDaysChart } from './MigraineDaysChart';
 import { MedicationInsights } from './MedicationInsights';
-import { PreventiveInsights } from './PreventiveInsights';
 import { InsightSection } from './InsightSection';
 import { PERIOD_MS, type Period } from '../utils/logFilters';
 import { useUiTheme, type UiTheme } from '../hooks/useUiTheme';
@@ -280,11 +279,6 @@ export function StatsView({ attacks, medications = [], period }: Props) {
         windowLabel={PERIOD_SUB[period]}
         monthScale={monthScale}
       />
-      {/* Preventives are the exception and stay whole-history: the figure is
-          up to 3 complete months before a start date against up to 3 since,
-          which a rolling window cannot express at all — it is not a view of
-          the diary, it is a before/after comparison with its own two windows. */}
-      <PreventiveInsights attacks={attacks} medications={medications} />
 
       {filtered.length > 0 && (
         <>
