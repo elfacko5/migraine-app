@@ -11,9 +11,11 @@ interface Props {
   attack: Attack;
   onEnd: () => void;
   onOpenDetail: () => void;
+  /** The attack mode button, pinned to the hero's corner. */
+  topAction?: React.ReactNode;
 }
 
-export function OngoingAttackBanner({ attack, onEnd, onOpenDetail }: Props) {
+export function OngoingAttackBanner({ attack, onEnd, onOpenDetail, topAction }: Props) {
   // Keeps the elapsed headline honest — every minute, and on every return to the
   // foreground, which is the case a bare interval silently got wrong.
   useNowTick();
@@ -49,6 +51,7 @@ export function OngoingAttackBanner({ attack, onEnd, onOpenDetail }: Props) {
         side ? SIDE_LABELS[side].toLowerCase() : null,
       ].filter(Boolean).join(' · ')}
       onOpenDetail={onOpenDetail}
+      topAction={topAction}
     >
       {/* **The only action the hero carries, and the only one it should.**
           "Add update" used to sit here as the primary, which was the FAB's

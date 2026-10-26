@@ -198,6 +198,8 @@ export default function App() {
   // Whether Today is showing its hero. The hero owns the top of the screen in
   // that state, so TopBar stands down — see the note at its call site.
   const heroOnToday = tab === 'log' && !!(ongoingAttack || lastAttackEnd);
+  // The attack mode button's Today placement: the hero's top-right corner.
+  const heroAttackMode = <AttackModePill active={attackMode} onToggle={setAttackMode} inline />;
 
   // The attack whose impact Today should ask about, if any.
   //
@@ -469,7 +471,12 @@ export default function App() {
             // offset against this header's height, which varies with the
             // safe-area inset and the text-size setting and so cannot be a
             // constant.
-            control={tab === 'stats' && attacks.length > 0 ? (
+            // On Today this is the first-run state — no hero yet — and the
+            // attack mode button lives here instead, so attack mode is
+            // reachable before the first attack is ever logged.
+            control={tab === 'log' ? (
+              <AttackModePill active={attackMode} onToggle={setAttackMode} inline />
+            ) : tab === 'stats' && attacks.length > 0 ? (
               <SegmentedControl
                 options={PERIOD_SEGMENTS}
                 value={statsPeriod}
@@ -501,7 +508,11 @@ export default function App() {
           // grows with env(safe-area-inset-bottom), so a flat reserve tuned
           // against a zero-inset preview leaves content behind the nav on a
           // real device.
-          style={{ paddingBottom: 'calc(10rem + env(safe-area-inset-bottom))' }}
+          //
+          // **Today reserves less** (v3, 2026-10-26): the pill moved into its
+          // hero, so on that tab the reserve only has to clear the nav and the
+          // FAB rising out of it. The other three tabs still float the pill.
+          style={{ paddingBottom: `calc(${tab === 'log' ? '7rem' : '10rem'} + env(safe-area-inset-bottom))` }}
         >
         {/* ── Today tab ───────────────────────────── */}
         {tab === 'log' && (
@@ -509,13 +520,14 @@ export default function App() {
             {ongoingAttack && (
               <OngoingAttackBanner
                 attack={ongoingAttack}
+                topAction={heroAttackMode}
                 onEnd={() => setEndConfirmOpen(true)}
                 onOpenDetail={() => setDetailAttackId(ongoingAttack.id)}
               />
             )}
 
             {!ongoingAttack && lastAttackEnd && (
-              <AttackFreeCard lastEnd={lastAttackEnd} />
+              <AttackFreeCard lastEnd={lastAttackEnd} topAction={heroAttackMode} />
             )}
 
             {/* Asked here rather than in the end-attack dialog, so closing an
@@ -608,7 +620,11 @@ export default function App() {
         </div>
       </div>
 
-      <AttackModePill active={attackMode} onToggle={setAttackMode} collapsed={pillCollapsed} />
+      {/* Floating on every tab but Today, where it moved into the hero's
+          corner (v3, 2026-10-26 — Today only, Sunny's call). */}
+      {tab !== 'log' && (
+        <AttackModePill active={attackMode} onToggle={setAttackMode} collapsed={pillCollapsed} />
+      )}
       {/* FAB opens Add-update when an attack is already ongoing — you can't
           start a second one until the current attack ends. */}
       <BottomNav

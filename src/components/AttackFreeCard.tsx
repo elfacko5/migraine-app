@@ -5,6 +5,8 @@ import { AttackFreeArt } from './heroArt';
 
 interface Props {
   lastEnd: string;
+  /** The attack mode button, pinned to the hero's corner. */
+  topAction?: React.ReactNode;
 }
 
 /**
@@ -30,7 +32,7 @@ interface Props {
  * headline's own figure said a second way; the exact end time is on the
  * attack in `AttackDetail`.
  */
-export function AttackFreeCard({ lastEnd }: Props) {
+export function AttackFreeCard({ lastEnd, topAction }: Props) {
   // Every minute, and on every return to the foreground — an interval alone
   // leaves "14 days" reading whatever it said before the app was backgrounded.
   useNowTick();
@@ -41,6 +43,7 @@ export function AttackFreeCard({ lastEnd }: Props) {
       label={greeting()}
       headline={formatSinceLong(lastEnd)}
       detail="since your last attack"
+      topAction={topAction}
     />
   );
 }

@@ -5,6 +5,12 @@ interface Props {
   onToggle: (on: boolean) => void;
   /** Scrolling down — shed the label and leave just the icon. */
   collapsed?: boolean;
+  /**
+   * Drawn in place rather than floating: in the Today hero's corner, or in
+   * `TopBar`'s control slot on a first run. No scroll-collapse there — the
+   * button scrolls away with the hero instead of riding over the content.
+   */
+  inline?: boolean;
 }
 
 // The glyph is a flare radiating from a centre — `AttackModeIcon` in
@@ -38,7 +44,9 @@ interface Props {
 // the thing you reach for *while* an attack is happening, which is exactly
 // when hunting through a settings page is hardest. One tap, always in the
 // same place, reversible by tapping again.
-export function AttackModePill({ active, onToggle, collapsed = false }: Props) {
+export function AttackModePill({ active, onToggle, collapsed = false, inline = false }: Props) {
+  if (inline) return <InlineAttackModeButton active={active} onToggle={onToggle} />;
+
   // Collapses on scroll-down like any other state, including while attack
   // mode is on (2026-09-25, Sunny's call, reversing the earlier "never while
   // active" rule — the tint (`bg-accent/20`) still tells the on state apart
@@ -96,6 +104,37 @@ export function AttackModePill({ active, onToggle, collapsed = false }: Props) {
       >
         {active ? 'Attack mode on' : 'Attack mode'}
       </span>
+    </button>
+  );
+}
+
+// The Today v3 placement (2026-10-26): a pill in the hero's top-right corner,
+// replacing the floating pill on Today only — it still floats on the other
+// three tabs. The off state is new, to the v3 spec: a `bg-surface` pill with a
+// quiet `bg-border` ring, 44px tall, 15px label, 18px mark. **The on state is
+// the floating pill's own pressed treatment, unchanged** — attack mode's look
+// is being redesigned separately and is out of scope here.
+//
+// **The mark is `AttackModeIcon`, not a moon**, although the v3 spec and the
+// prototype draw a crescent: `MoonIcon` already means sleep, as a relief and a
+// trigger, and one symbol has one meaning in this app (see the note on the
+// floating pill above). Same behaviour as that pill — the same `onToggle`, the
+// same `aria-pressed` and label.
+function InlineAttackModeButton({ active, onToggle }: Pick<Props, 'active' | 'onToggle'>) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(!active)}
+      aria-pressed={active}
+      aria-label={active ? 'Turn off attack mode' : 'Turn on attack mode'}
+      className={`flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-[0.9375rem] font-medium ring-1 transition-[color,background-color,box-shadow] ${
+        active
+          ? 'bg-accent/20 text-accent-light ring-accent/40'
+          : 'bg-bg-surface text-text-primary ring-bg-border hover:bg-bg-raised'
+      }`}
+    >
+      <AttackModeIcon className="h-[1.125rem] w-[1.125rem]" />
+      <span>{active ? 'Attack mode on' : 'Attack mode'}</span>
     </button>
   );
 }

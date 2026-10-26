@@ -27,6 +27,11 @@ interface Props {
    * would be the headline's own figure said a second way.
    */
   detail?: ReactNode;
+  /**
+   * A control pinned to the hero's top-right corner — the attack mode button,
+   * since v3. Positioned against the hero, so it scrolls away with it.
+   */
+  topAction?: ReactNode;
   /** When set, the text block becomes the way through to the detail view. */
   onOpenDetail?: () => void;
   /**
@@ -66,7 +71,7 @@ interface Props {
  * The artwork is `aria-hidden` and `focusable="false"` — it carries mood, not
  * information, and every fact is in the text beside it.
  */
-export function HomeCard({ art, label, headline, figure, detail, onOpenDetail, children }: Props) {
+export function HomeCard({ art, label, headline, figure, detail, topAction, onOpenDetail, children }: Props) {
   const text = (
     <>
       {/* Deliberately uneven gaps, to spec: 4px under the label so it reads as
@@ -102,14 +107,23 @@ export function HomeCard({ art, label, headline, figure, detail, onOpenDetail, c
     // preview and a flat value tuned there would sit under the clock on
     // device. Running the picture to y=0 put the clock and battery on top of
     // it.
-    <div className="relative isolate -mx-4 -mt-5 flex min-h-[20rem] items-center sm:-mx-6">
+    //
+    // **No `isolate`, and the layers carry explicit z-indices instead.** The
+    // hero used to be its own stacking context with the art at -z-10, which
+    // was fine until it held the attack mode button: that control has to sit
+    // *above* the attack-mode dim scrim (z-35 on the shell root), because it
+    // is the control that turns attack mode off — the floating pill sat at
+    // z-45 for the same reason. Inside an isolated hero no z-index can escape
+    // to the root, so the art and fades are z-0, the text z-1, and the button
+    // z-45 in the root's own stacking context. Sheets (z-50) still cover it.
+    <div className="relative -mx-4 -mt-5 flex min-h-[20rem] items-center sm:-mx-6">
       {/* Right-aligned and 64% wide. With the drawn art the box's *height*
           still drives the scale — `xMaxYMid slice` covers the box the way
           `object-cover` did — so if it ever looks too zoomed, the number is
           the hero's min-height, not this width. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 right-0 -z-10 w-[64%] [&>svg]:h-full [&>svg]:w-full"
+        className="pointer-events-none absolute bottom-0 right-0 z-0 w-[64%] [&>svg]:h-full [&>svg]:w-full"
         style={{ top: 'calc(2.5rem + env(safe-area-inset-top))' }}
       >
         {art}
@@ -123,15 +137,15 @@ export function HomeCard({ art, label, headline, figure, detail, onOpenDetail, c
           reaches the viewport. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-bg-base from-40% via-bg-base/55 via-66% to-bg-base/0 to-90%"
+        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-bg-base from-40% via-bg-base/55 via-66% to-bg-base/0 to-90%"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[30%] bg-gradient-to-b from-bg-base via-bg-base/45 via-40% to-bg-base/0"
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[30%] bg-gradient-to-b from-bg-base via-bg-base/45 via-40% to-bg-base/0"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-2/5 bg-gradient-to-t from-bg-base via-bg-base/55 via-40% to-bg-base/0"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-2/5 bg-gradient-to-t from-bg-base via-bg-base/55 via-40% to-bg-base/0"
       />
 
       {/* Centred against the artwork rather than sitting at the top of it:
@@ -140,12 +154,21 @@ export function HomeCard({ art, label, headline, figure, detail, onOpenDetail, c
           to have a picture behind it. `items-center` on the band is what
           does it, so the two stay centred on each other however the hero
           grows at larger text sizes. */}
-      {/* 24px sides and bottom, to spec. The top is the safe-area inset plus
-          room for the status bar, added rather than substituted for the same
-          reason as the art box above. */}
+      {topAction && (
+        <div
+          className="absolute right-4 z-[45]"
+          style={{ top: 'calc(0.75rem + env(safe-area-inset-top))' }}
+        >
+          {topAction}
+        </div>
+      )}
+
+      {/* 24px sides and bottom, to spec. The 110px top clears the attack mode
+          button above it, on top of the safe-area inset — added rather than
+          substituted, for the same reason as the art box. */}
       <div
-        className="w-full px-6 pb-6"
-        style={{ paddingTop: 'calc(2.75rem + env(safe-area-inset-top))' }}
+        className="relative z-[1] w-full px-6 pb-6"
+        style={{ paddingTop: 'calc(6.875rem + env(safe-area-inset-top))' }}
       >
         {onOpenDetail ? (
           // The text block is the way into the detail view — a hero this
