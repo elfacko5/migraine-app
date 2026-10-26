@@ -2018,3 +2018,17 @@ Today was rebuilt from the v3 canvas (`docs/today-v3-handoff.md`, rows v3.3 and 
 **Verified** at 375px on a signed-out 5175 origin (5174 was signed in during this work): every section in dark; light mode for the hero, week card and check-in; attack mode toggling from the hero and staying above the scrim; the 150% text size; the acceptance cases as util calls (a lone midnight-spanning attack shows no week card; two triptans on one day add one triptan day; an answered dose gets no second reminder). **Not verified:** on a device, VoiceOver in practice (labels checked in the DOM only), and the art's look in a dark room at phone brightness.
 
 **Working practice:** `migraine-app-verify` (5175, strictPort) was added to `.claude/launch.json` because 5174 is now signed in to the real account. The rule hasn't changed: check for an `sb-` key inside the same call as any seed.
+
+## Settings and the nav, v3 (2026-10-26)
+
+Built after Today v3 from the v3.1 prototype (`Lidd redesign explorations/lidd-v3.1-artboards.html`, the Settings screens and tab bar), with Sunny's answers on what the sketch left open.
+
+- **The fourth tab is "Settings" with a gear** (Sunny's call), reversing 2026-08-25's "Profile, with a person". It is Lucide's `settings` cog. The prototype draws its gear as a dot with eight rays, which is the sun, already the theme switch's mark.
+- **The bar takes the v3 look.** It has its own tone (a `color-mix` of `bg-base` and `bg-surface`, so no new token and attack mode follows), 22px marks, the active tab in accent plus semibold instead of a top rule, and a 58px FAB in the bar instead of raised on a ring.
+- **The menu keeps the app's own rows**, regrouped as the v3 grouped list. Of the prototype's rows, "Empty & error states (preview)" and "Restart prototype" are prototype tools. The **Doctor report** is a feature of its own (report contents, PDF, sharing) and wasn't built here.
+- **Accessibility became "Display & attack mode"**: theme and font as radio tiles (ring plus a radio mark, never colour alone), then switches.
+- **Atkinson Hyperlegible Next as an opt-in face.** It was rejected as the *default* on 2026-08-18, never as an option, and the dossier's stack asks for it as an option. It's the variable "Next" cut because the original's 400/700 pair would slab every 500/600 label, the reason Lexend is variable. Downloaded with Sunny's OK from `@fontsource-variable/atkinson-hyperlegible-next` 5.3.0; only the Latin woff2 (34KB) and its OFL licence are in the repo, with no dependency added.
+- **"Attack mode when I start an attack"**, off by default. Logging an attack that's still going turns attack mode on; a retrospective log doesn't.
+- **"Use iPhone text size"** reads `-apple-system-body` (Apple WebKit only), scales iOS's 17px default to the app's 16px, and **clamps to the same 14–24px** the five steps cover. Dynamic Type's accessibility sizes reach 53px, and the 150% ceiling stays for the reason it was set. Re-read on every return to the foreground. Off Apple WebKit it stays 16px.
+
+**Verified** at 375px on 5175, signed out: the menu, the Display page in dark and light, Atkinson loading and taking over the body face, the system-size switch falling back to 16px on desktop Chromium and restoring the chosen step when turned off, and auto attack mode turning on after logging an ongoing attack through the real wizard. **Not verified:** the text size against real Dynamic Type on a device, and Atkinson's look on device.
