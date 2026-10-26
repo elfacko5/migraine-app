@@ -112,3 +112,45 @@ export function BrightnessIcon({ className = 'h-5 w-5' }: IconProps) {
     </svg>
   );
 }
+
+// ── Lucide, inlined unchanged ─────────────────────────────────────────────
+// Generic UI affordances come from Lucide, whose contract — 24×24, no fill,
+// `currentColor`, round caps — is the app's own, so the paths drop in as-is.
+// These three arrived with the Today v3 cards (2026-10-26) and run at the
+// v3 spec's 1.8 stroke, the weight the nav's Lucide marks already use.
+function lucide(className: string, children: React.ReactNode) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+/** Lucide `clock` — the 2-hour check-in. */
+export function ClockIcon({ className = 'h-5 w-5' }: IconProps) {
+  return lucide(className, <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>);
+}
+
+/** Lucide `circle-check` — a check-in that has been answered. */
+export function CircleCheckIcon({ className = 'h-5 w-5' }: IconProps) {
+  return lucide(className, <><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></>);
+}
+
+/** Lucide `triangle-alert` — paired with every amber state, so a warning is
+ *  never colour alone. */
+export function WarningIcon({ className = 'h-5 w-5' }: IconProps) {
+  return lucide(className, <>
+    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+    <path d="M12 9v4" />
+    <path d="M12 17h.01" />
+  </>);
+}

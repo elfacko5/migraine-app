@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import type { Attack } from '../types';
-import { attackMaxSeverity, FOLLOW_UP_MAX_MS } from './stats';
+import { attackMaxSeverity, doseCheckIn, FOLLOW_UP_MAX_MS } from './stats';
 import { formatTime } from './format';
 import { queuePendingAction } from './pendingActions';
 
@@ -286,6 +286,15 @@ const LATE_DOSE_LEAD_MS = 10 * 60 * 1000;
 export function medCheckInDelay(attack: Attack, baseDelay: number, now: number = Date.now()): number {
   const lastDose = [...attack.snapshots].reverse().find((s) => s.medication?.name);
   if (!lastDose) return baseDelay;
+
+  // **Already answered, so don't ask again** (2026-10-26). A reading that has
+  // landed in the dose's follow-up window is the answer the check-in exists to
+  // collect — whether it came from Today's check-in card, an ordinary update,
+  // or this reminder. Without this, a reading logged in-app at 2h05m was
+  // followed ten minutes later by the late-dose catch-up asking the same
+  // question, and one logged at 1h30m by the dose + 2h reminder. `doseCheckIn`
+  // is the card's own test, so the two can't disagree about "answered".
+  if (doseCheckIn(attack, now)?.state === 'answered') return baseDelay;
 
   const doseAt = new Date(lastDose.time).getTime();
   const checkInAt = doseAt + MED_CHECK_IN_MS;

@@ -561,7 +561,7 @@ export interface MedResponse {
 // follow-up reading is whichever one falls closest to dose + 2h. A window of
 // 1-4h keeps a reading that arrived late (the reminder is answered when it's
 // answered) while refusing one so far out that it says nothing about the dose.
-const FOLLOW_UP_MIN_MS = 60 * 60 * 1000;
+export const FOLLOW_UP_MIN_MS = 60 * 60 * 1000;
 /** Exported so the reminder scheduler can aim inside the same window it will
  *  later be measured against — two copies of "4 hours" would drift. */
 export const FOLLOW_UP_MAX_MS = 4 * 60 * 60 * 1000;
@@ -611,6 +611,51 @@ export function medicationResponse(attacks: Attack[], since: number | null = nul
       return { name, measured: e.changes.length, unmeasured: e.unmeasured, medianChange, helped: e.helped };
     })
     .sort((a, b) => (b.measured + b.unmeasured) - (a.measured + a.unmeasured) || a.name.localeCompare(b.name));
+}
+
+/**
+ * Where an ongoing attack's last dose stands against the two-hour check-in —
+ * the reading `medicationResponse` will later score that dose by. Backs
+ * Today's check-in card.
+ *
+ * - `due`: the dose is at least 1h 55m old, under `FOLLOW_UP_MAX_MS`, and no
+ *   reading has landed since `FOLLOW_UP_MIN_MS` after it. Five minutes early,
+ *   so the card is up when the reminder arrives rather than just after.
+ * - `answered`: a reading has landed in that window; `severity` is the one
+ *   closest to two hours, picked exactly as `medicationResponse` picks it.
+ * - `null`: no dose, too soon, or the window has closed unanswered.
+ *
+ * **Same window, same constants**, because two definitions of "the 2-hour
+ * reading" would let the card say a dose was checked while Insights says it
+ * had no reading to compare. The clock is read here, not by the caller.
+ */
+export type CheckIn =
+  | { state: 'due'; name: string }
+  | { state: 'answered'; name: string; severity: number };
+
+const CHECK_IN_LEAD_MS = 5 * 60 * 1000;
+
+export function doseCheckIn(attack: Attack, now: number = Date.now()): CheckIn | null {
+  const snaps = attack.snapshots;
+  let i = snaps.length - 1;
+  while (i >= 0 && !snaps[i].medication?.name) i--;
+  if (i < 0) return null;
+  const name = snaps[i].medication!.name;
+  const doseAt = new Date(snaps[i].time).getTime();
+
+  let best: { delta: number; sev: number } | null = null;
+  for (let j = i + 1; j < snaps.length; j++) {
+    const dt = new Date(snaps[j].time).getTime() - doseAt;
+    if (dt < FOLLOW_UP_MIN_MS) continue;
+    if (dt > FOLLOW_UP_MAX_MS) break;
+    const delta = Math.abs(dt - TARGET_MS);
+    if (!best || delta < best.delta) best = { delta, sev: maxSeverity(snaps[j]) };
+  }
+  if (best) return { state: 'answered', name, severity: best.sev };
+
+  const age = now - doseAt;
+  if (age >= TARGET_MS - CHECK_IN_LEAD_MS && age < FOLLOW_UP_MAX_MS) return { state: 'due', name };
+  return null;
 }
 
 /**

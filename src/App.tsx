@@ -41,6 +41,7 @@ import { attackAwaitingImpact } from './utils/impact';
 import { hit6Due } from './utils/hit6';
 import { TodaySummary } from './components/TodaySummary';
 import { WeekCard } from './components/WeekCard';
+import { CheckInCard } from './components/CheckInCard';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
 import { SegmentedControl } from './components/SegmentedControl';
@@ -553,6 +554,13 @@ export default function App() {
                 mode shows is being redesigned separately, so nothing new
                 joins it except the check-in, which bears on the next hour. */}
             {!attackMode && <WeekCard attacks={attacks} />}
+
+            {/* The two-hour check-in after a dose, ongoing attacks only. Kept
+                in attack mode — it bears on the next hour. Tapping it opens
+                the ordinary Add update flow for this attack. */}
+            {ongoingAttack && (
+              <CheckInCard attack={ongoingAttack} onOpen={() => setUpdateAttackId(ongoingAttack.id)} />
+            )}
 
             {/* Below the hero card: the month's two figures, and — only when
                 they apply — an overuse warning and the last dose taken.
