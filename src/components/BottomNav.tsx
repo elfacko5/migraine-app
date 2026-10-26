@@ -3,7 +3,7 @@ import type { Tab } from '../types';
 interface NavItem { id: Tab; label: string; icon: React.ReactNode }
 
 // The four tab marks are Lucide paths, inlined unchanged — `calendar`, `list`,
-// `line-chart` and `settings` — which is the rule for a generic UI affordance:
+// `line-chart` — plus the design's own gear for Settings — which is the rule for a generic UI affordance:
 // Lucide's contract (24×24, fill none, currentColor, round caps) is the same
 // one every icon here already follows, so a path drops straight in. They match
 // the nav in Sunny's Figma, and the stroke is 1.8 rather than Lucide's own 2
@@ -26,14 +26,16 @@ function StatsIcon() {
 }
 // **A gear, and the tab is "Settings" again** (v3, 2026-10-26, Sunny's call),
 // reversing the 2026-08-25 "Profile, with a person" decision: the v3 design
-// names the tab for what it holds — display, attack mode, medications, data —
-// and the person read as an account page in an app whose account is optional.
+// names the tab for what it holds — display, attack mode, medications, data.
 //
-// Lucide's `settings` cog, **not the prototype's gear**, which is a dot with
-// eight rays: that is the sun, and the sun is already the light/dark switch's
-// mark on the Display page. One symbol, one meaning.
+// **The design's own gear, drawn as it is there**: a ring with eight short
+// spokes. It is not Lucide's cog (that was the first build, and Sunny asked
+// for the design's mark). It reads close to a sun, which used to matter —
+// the sun was the light/dark switch's mark — but that switch became the two
+// theme tiles in the same round, so the shape has no other meaning to clash
+// with now. Keep it that way: don't bring a sun back as an icon elsewhere.
 function SettingsIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
 }
 function PlusIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" className="w-7 h-7"><path d="M12 5v14M5 12h14"/></svg>
@@ -85,15 +87,17 @@ export function BottomNav({ active, onChange, onAdd, addLabel }: Props) {
           </li>
         ))}
 
-        {/* 58px, and it sits *in* the bar rather than riding above it on a
-            page-coloured ring (v3): the raised version read as a second
-            floating layer, and nothing else in the bar floats. */}
+        {/* 58px, centred on the tabs' own icon-and-label block so its top
+            meets the bar's top edge, as in the design — *in* the bar rather
+            than riding above it on a page-coloured ring: the raised version
+            read as a second floating layer, and nothing else in the bar
+            floats. */}
         <li className="flex flex-1 justify-center self-center">
           <button
             type="button"
             aria-label={addLabel}
             onClick={onAdd}
-            className="-mt-1 flex items-center justify-center rounded-full bg-accent text-bg-base transition-colors hover:bg-accent-light active:scale-95 [&_svg]:h-[min(1.625rem,30px)] [&_svg]:w-[min(1.625rem,30px)]"
+            className="flex items-center justify-center rounded-full bg-accent text-bg-base transition-colors hover:bg-accent-light active:scale-95 [&_svg]:h-[min(1.625rem,30px)] [&_svg]:w-[min(1.625rem,30px)]"
             style={{ height: 'min(3.625rem, 68px)', width: 'min(3.625rem, 68px)' }}
           >
             <PlusIcon />
@@ -117,8 +121,10 @@ function TabBtn({ tab, isActive, onClick }: { tab: NavItem; isActive: boolean; o
       onClick={onClick}
       aria-current={isActive ? 'page' : undefined}
       // v3: the active tab is its colour **and** a heavier label — never colour
-      // alone, so the 2px rule that used to mark it isn't needed. 22px marks.
-      className={`flex min-h-[3.125rem] w-full flex-col items-center justify-center gap-0.5 px-1 pt-1.5 pb-1 transition-colors [&_svg]:h-[min(1.375rem,26px)] [&_svg]:w-[min(1.375rem,26px)] ${isActive ? 'font-semibold text-accent-light' : 'font-medium text-text-secondary hover:text-text-primary'}`}
+      // alone, so the 2px rule that used to mark it isn't needed. 22px marks,
+      // 12px above them (measured off the design; 7px read as cramped against
+      // the bar's top edge), and a tight label line under them.
+      className={`flex w-full flex-col items-center gap-0.5 px-1 pt-3 pb-1.5 leading-tight transition-colors [&_svg]:h-[min(1.375rem,26px)] [&_svg]:w-[min(1.375rem,26px)] ${isActive ? 'font-semibold text-accent-light' : 'font-medium text-text-secondary hover:text-text-primary'}`}
       // The bar is fixed-width chrome with five slots, so its labels grow only
       // so far: at the 200% text setting the unclamped labels pushed Insights
       // into a clip and Profile off the screen entirely, which is a whole tab
