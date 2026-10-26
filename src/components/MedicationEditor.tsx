@@ -4,8 +4,16 @@ import { DEFAULT_UNIT } from '../utils/medGuardrails';
 import { MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from '../utils/stats';
 import { ConfirmDialog } from './ConfirmDialog';
 import { BinIcon } from './icons';
+import { ChipCheck } from './ChipCheck';
+import { ClassBadge } from './ClassBadge';
+import { OptionTile } from './settingsUi';
 import { CLASSES } from '../utils/medClasses';
+import { chipClass } from '../utils/chipStyles';
 
+// The letter each type wears — the same T / C / P Today's medication card and
+// My medications use, so a type reads the same on every screen. "Other" has no
+// overuse threshold and no bar, so it gets a dash rather than a letter.
+const CLASS_LETTER: Record<MedClass, string> = { triptan: 'T', combination: 'C', simple: 'P', other: '–' };
 
 // A fixed list rather than free text: the unit is only ever one of a handful
 // of words, it labels the wizard's quantity picker ("2 sprays"), and a typo
@@ -120,8 +128,61 @@ function Field({ label, infoKey, onInfo, children }: {
   );
 }
 
+// A field whose control is a set of choices rather than one input. A
+// `<label htmlFor>` can't name a radiogroup, so the label is a plain line the
+// group points at with `aria-labelledby` — the same pairing `Field` makes with
+// an id, by the other route.
+function ChoiceField({ label, infoKey, onInfo, children }: {
+  label: string;
+  infoKey?: string;
+  onInfo?: (key: string) => void;
+  children: React.ReactNode;
+}) {
+  const id = useId();
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline gap-3">
+        <p id={id} className="min-w-0 flex-1 text-sm text-text-secondary">{label}</p>
+        {infoKey && onInfo && (
+          <button
+            type="button"
+            onClick={() => onInfo(infoKey)}
+            aria-label={`More info about ${label}`}
+            className="tap-44 shrink-0 text-xs text-accent-light hover:underline"
+          >
+            More info
+          </button>
+        )}
+      </div>
+      <div role="radiogroup" aria-labelledby={id}>{children}</div>
+    </div>
+  );
+}
+
+// One option in a chip row: a radio pill in the app's chip states, tint plus
+// `ChipCheck` after the label when chosen (where `ChipSelector` puts it) (never colour alone), the check's slot always drawn
+// so the row doesn't reflow as the choice moves. 44px tall: these are the
+// whole control, with nothing else on the line to tap instead.
+function ChoiceChip({ selected, onSelect, children }: { selected: boolean; onSelect: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-sm transition-colors ${chipClass(selected)}`}
+    >
+      {children}
+      <ChipCheck selected={selected} />
+    </button>
+  );
+}
+
+// v3 (2026-10-26): a ring, not a border — it takes no layout space, the rule
+// every control here follows — on `bg-raised`, since the sheet is `bg-surface`.
+// 44px tall, the same as the chips and the tiles beside them.
 const inputClass =
-  'w-full rounded-lg bg-bg-raised border border-border-control px-3 py-2.5 text-sm text-text-primary ' +
+  'w-full min-h-11 rounded-xl bg-bg-raised px-3 py-2.5 text-sm text-text-primary ring-1 ring-inset ring-border-control ' +
   'placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent';
 
 /** A numeric limit with its unit spelled out at the trailing edge of the box. */
@@ -276,7 +337,7 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
       <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-5 space-y-6">
         <section className="space-y-4">
           <div className="space-y-1">
-            <h2 className="text-lg font-medium text-text-primary">Medication details</h2>
+            <h2 className="text-sm font-medium text-text-primary">Medication details</h2>
             <p className="text-xs text-text-secondary">
               As prescribed by your doctor, or off the label if you bought it over the counter — what one
               dose of it is.{' '}
@@ -305,33 +366,32 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
                 className={inputClass}
               />
             </Field>
-            <Field label="Quantity">
-              <select
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className={inputClass}
-              >
-                <option value="" disabled>Choose</option>
-                {QUANTITIES.map((q) => <option key={q} value={q}>{q}</option>)}
-              </select>
-            </Field>
-            <Field label="Unit">
-              <select
-                value={unitLabel}
-                onChange={(e) => setUnitLabel(e.target.value)}
-                className={inputClass}
-              >
-                <option value="" disabled>Choose</option>
-                {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-              </select>
-            </Field>
           </div>
+
+          {/* Chips rather than dropdowns (v3): six quantities and seven units
+              are short enough to see at once, and a choice you can see is one
+              tap where a picker is three. Still required, still start empty —
+              "required" means a choice was actually made. */}
+          <ChoiceField label="Quantity">
+            <div className="flex flex-wrap gap-2">
+              {QUANTITIES.map((q) => (
+                <ChoiceChip key={q} selected={quantity === q} onSelect={() => setQuantity(q)}>{q}</ChoiceChip>
+              ))}
+            </div>
+          </ChoiceField>
+          <ChoiceField label="Unit">
+            <div className="flex flex-wrap gap-2">
+              {UNITS.map((u) => (
+                <ChoiceChip key={u} selected={unitLabel === u} onSelect={() => setUnitLabel(u)}>{u}</ChoiceChip>
+              ))}
+            </div>
+          </ChoiceField>
         </section>
 
         <section className="space-y-4 border-t border-bg-border pt-6">
           <div className="space-y-1">
-            <h2 className="text-lg font-medium text-text-primary">
-              Additional information <span className="text-sm font-normal text-text-secondary">· optional</span>
+            <h2 className="text-sm font-medium text-text-primary">
+              Additional information <span className="font-normal text-text-secondary">· optional</span>
             </h2>
             <p className="text-xs text-text-secondary">
               {acute
@@ -342,16 +402,29 @@ export function MedicationEditor({ medication, kind, onSave, onDelete, onClose }
 
           {acute ? (
             <>
-              <Field label="Type" infoKey="type" onInfo={setInfo}>
-                <select
-                  value={medClass ?? ''}
-                  onChange={(e) => setMedClass((e.target.value || undefined) as MedClass | undefined)}
-                  className={inputClass}
-                >
-                  <option value="">Not set</option>
-                  {CLASSES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </Field>
+              {/* Four tiles with the letter each type wears elsewhere. Tapping
+                  the chosen one again clears it, back to "not set" — the one
+                  answer a radio group can't otherwise give, and the honest one
+                  when the box doesn't say. */}
+              <ChoiceField label="Type" infoKey="type" onInfo={setInfo}>
+                <div className="grid grid-cols-2 gap-3">
+                  {CLASSES.map((c) => {
+                    const on = medClass === c.value;
+                    return (
+                      <OptionTile
+                        key={c.value}
+                        compact
+                        selected={on}
+                        onSelect={() => setMedClass(on ? undefined : c.value)}
+                        className={`text-text-primary ${on ? 'bg-accent/20' : 'bg-bg-raised'}`}
+                      >
+                        <ClassBadge>{CLASS_LETTER[c.value]}</ClassBadge>
+                        <span className="leading-tight">{c.label}</span>
+                      </OptionTile>
+                    );
+                  })}
+                </div>
+              </ChoiceField>
 
               <Field label="Max in one go" infoKey="maxPerIntake" onInfo={setInfo}>
                 <NumberField
