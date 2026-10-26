@@ -626,6 +626,7 @@ export default function App() {
               onSort={setLogsSort}
               onOpenFilters={() => setLogsFilterOpen(true)}
               onAttackClick={(a) => setDetailAttackId(a.id)}
+              medications={medications}
             />
           </section>
         )}
@@ -816,7 +817,7 @@ export default function App() {
 
       {/* Attack detail sheet — flush/bareHeader because AttackDetail brings
           its own top bar and pins its own footer. */}
-      <Sheet open={!!detailAttack} onClose={() => setDetailAttackId(null)} title="Attack details" flush bareHeader>
+      <Sheet open={!!detailAttack} onClose={() => setDetailAttackId(null)} title="Attack details" flush bareHeader enterFrom="right">
         {detailAttack && (
           <AttackDetail
             attack={detailAttack}

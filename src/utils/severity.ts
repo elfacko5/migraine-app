@@ -28,3 +28,18 @@ export function sevBadgeClass(s: number): string {
   if (s <= MID_MAX) return 'bg-severity-mid/20 text-severity-mid border-severity-mid/30';
   return 'bg-severity-high/20 text-severity-high border-severity-high/30';
 }
+
+/**
+ * The v3.10 shaded number (2026-10-26): a box whose fill is the accent mixed
+ * into the card colour by severity — 14% at 1, 50% at 10 — so a higher peak
+ * reads as a deeper tint while the number itself carries the value. One hue,
+ * not the three-band ramp: on the Logs row and the detail's "Where it hurt"
+ * table every box sits beside its printed number, so magnitude needs no
+ * second colour system. Capped at 40% so `text-primary` on the box stays
+ * readable in both themes (measured in docs/decisions.md).
+ */
+export function peakShade(n: number): string {
+  if (n <= 0) return 'var(--color-bg-surface)';
+  const pct = Math.min(40, Math.round(10 + n * 3));
+  return `color-mix(in srgb, var(--color-accent) ${pct}%, var(--color-bg-surface))`;
+}

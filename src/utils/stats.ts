@@ -801,6 +801,9 @@ export interface DoseOutcome {
   verdict: DoseVerdict;
   before: number;
   after: number | null;
+  /** With no two-hour reading: the next reading after the dose, if any, so
+   *  the detail can say what *was* recorded ("next was 9 after 3h 28m"). */
+  next: { severity: number; afterMs: number } | null;
 }
 
 export function attackDoseOutcomes(attack: Attack, now: number = Date.now()): DoseOutcome[] {
@@ -817,7 +820,10 @@ export function attackDoseOutcomes(attack: Attack, now: number = Date.now()): Do
     const verdict: DoseVerdict = after !== null
       ? (doseHelped(before, after) ? 'helped' : 'not-helped')
       : attack.end === null && age < FOLLOW_UP_MAX_MS ? 'pending' : 'no-reading';
-    out.push({ name, dose: med.dose, amount: med.amount, time: snaps[i].time, verdict, before, after });
+    const doseMs = new Date(snaps[i].time).getTime();
+    const nextSnap = after === null ? snaps.slice(i + 1).find((x) => new Date(x.time).getTime() > doseMs) : undefined;
+    const next = nextSnap ? { severity: maxSeverity(nextSnap), afterMs: new Date(nextSnap.time).getTime() - doseMs } : null;
+    out.push({ name, dose: med.dose, amount: med.amount, time: snaps[i].time, verdict, before, after, next });
   }
   return out;
 }

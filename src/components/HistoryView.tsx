@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import type { Attack } from '../types';
+import type { Attack, Medication } from '../types';
+import { VerdictMark } from './VerdictMark';
 import { AttackCard } from './AttackCard';
 import { formatDate } from '../utils/format';
 import {
@@ -24,10 +25,12 @@ interface Props {
   onSort: (s: SortOrder) => void;
   onOpenFilters: () => void;
   onAttackClick: (attack: Attack) => void;
+  /** The library — for each drug's type letter on a row. */
+  medications?: Medication[];
 }
 
 export function HistoryView({
-  attacks, filters, onFilters, sort, onSort, onOpenFilters, onAttackClick,
+  attacks, filters, onFilters, sort, onSort, onOpenFilters, onAttackClick, medications = [],
 }: Props) {
   // One stage now that the period is a filter like the rest. The empty state
   // below still distinguishes "nothing matched" from "nothing logged", which
@@ -160,12 +163,19 @@ export function HistoryView({
                 <AttackCard
                   attack={a}
                   isOngoing={a.end === null}
-                  showDate={!byDate}
+                  medications={medications}
                   onClick={() => onAttackClick(a)}
                 />
               </div>
             );
           })}
+          {/* The key for the marks on each row — shapes, said in words once,
+              so no row has to spell them out (v3.10). */}
+          <p className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1 pt-1 text-xs text-text-secondary">
+            <span className="inline-flex items-center gap-1"><VerdictMark verdict="helped" />helped</span>
+            <span className="inline-flex items-center gap-1"><VerdictMark verdict="not-helped" />didn't help</span>
+            <span className="inline-flex items-center gap-1"><VerdictMark verdict="no-reading" />no 2-hour reading</span>
+          </p>
         </div>
       )}
     </div>
