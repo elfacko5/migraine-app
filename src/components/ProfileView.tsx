@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { TextScale, Theme } from '../hooks/useSettings';
+import type { FontChoice, TextScale, Theme } from '../hooks/useSettings';
 import type { useAuth } from '../hooks/useAuth';
 import type { SyncStatus } from '../types';
 import { formatSince, formatDatetime, formatTime } from '../utils/format';
@@ -9,14 +9,13 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon } from './drawnIcons';
-import { BrightnessIcon } from './icons';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
 // Fixed px values used only in this picker as a visual size-comparison reference.
 const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
 
-export type ProfileSection = 'medications' | 'hit6' | 'accessibility' | 'account' | 'data';
+export type ProfileSection = 'medications' | 'hit6' | 'display' | 'account' | 'data';
 
 interface MenuProps {
   onOpen: (section: ProfileSection) => void;
@@ -27,17 +26,52 @@ interface MenuProps {
   hit6Due?: boolean;
 }
 
+type MenuItem = { id: ProfileSection; Icon: (p: { className?: string }) => React.ReactElement; label: string };
+
 // Drawn marks rather than emoji, for the reason the attack-mode pill gave up
 // its own: an emoji is full-colour and can't inherit `currentColor`, so four
 // of them made a settings list the most saturated thing on a screen the
 // palette works to keep quiet. These take the row's own colour and size.
-const MENU: { id: ProfileSection; Icon: (p: { className?: string }) => React.ReactElement; label: string; hint: string }[] = [
-  { id: 'medications',   Icon: TabletIcon,   label: 'My medications',  hint: 'Acute and preventive' },
-  { id: 'hit6',          Icon: ChecklistIcon, label: 'Headache impact', hint: 'Every four weeks' },
-  { id: 'accessibility', Icon: EyeIcon,    label: 'Accessibility',  hint: 'Text size and screen brightness' },
-  { id: 'account',       Icon: CloudIcon,  label: 'Account & sync', hint: 'Sign in to sync across devices' },
-  { id: 'data',          Icon: DataIcon,   label: 'Data',           hint: 'Export or import a backup' },
+//
+// **Two groups, in the v3 grouped-list look** (2026-10-26): what you keep in
+// the app (medications, the impact questionnaire), then how the app behaves
+// (display, account, data). The v3 prototype's own rows — a doctor report, a
+// states preview, "restart prototype" — are not here: the last two are
+// prototype tools, and the report is a feature of its own.
+const MENU_GROUPS: MenuItem[][] = [
+  [
+    { id: 'medications', Icon: TabletIcon, label: 'My medications' },
+    { id: 'hit6', Icon: ChecklistIcon, label: 'Headache impact' },
+  ],
+  [
+    { id: 'display', Icon: EyeIcon, label: 'Display & attack mode' },
+    { id: 'account', Icon: CloudIcon, label: 'Account & sync' },
+    { id: 'data', Icon: DataIcon, label: 'Data' },
+  ],
 ];
+
+function Chevron() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-text-secondary" aria-hidden="true">
+      <path d="m9 18 6-6-6-6"/>
+    </svg>
+  );
+}
+
+// A v3 group: rows on one `bg-surface` card, separated by a hairline. The
+// rule is drawn per row rather than with `divide-y`, which measured as no
+// border at all on the Insights medication rows. `bg-border` because it
+// separates things you read, not the outline of a control.
+//
+// `raised` inside a sub-page: the sheet itself is `bg-surface`, so a surface
+// group on it vanishes — there it is a card on a card.
+function Group({ children, raised = false }: { children: React.ReactNode; raised?: boolean }) {
+  return (
+    <div className={`overflow-hidden rounded-2xl ${raised ? 'bg-bg-raised' : 'bg-bg-surface'} [&>*+*]:border-t [&>*+*]:border-bg-border`}>
+      {children}
+    </div>
+  );
+}
 
 // Every group is its own sub-page. An earlier version kept these flat and
 // gave only medications a row, which left one row sitting above three loose
@@ -45,34 +79,106 @@ const MENU: { id: ProfileSection; Icon: (p: { className?: string }) => React.Rea
 // be one thing or the other.
 export function ProfileView({ onOpen, accountEnabled, hit6Due = false }: MenuProps) {
   return (
-    <div className="space-y-2">
-      {MENU.filter((m) => m.id !== 'account' || accountEnabled).map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => onOpen(item.id)}
-          className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-4 text-left transition-colors hover:bg-bg-raised"
-        >
-          <item.Icon className="h-5 w-5 shrink-0 text-text-secondary" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-text-primary">{item.label}</span>
-            <span className="block text-xs text-text-secondary">{item.hint}</span>
-          </span>
-          {/* Text, not a coloured dot: a dot on a settings row reads as an
-              alert, and this is a suggestion about a questionnaire. */}
-          {item.id === 'hit6' && hit6Due && (
-            <span className="shrink-0 text-xs text-text-secondary">Due</span>
-          )}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-text-secondary" aria-hidden="true">
-            <path d="m9 18 6-6-6-6"/>
-          </svg>
-        </button>
+    <div className="space-y-4">
+      {MENU_GROUPS.map((group, gi) => (
+        <Group key={gi}>
+          {group.filter((m) => m.id !== 'account' || accountEnabled).map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onOpen(item.id)}
+              className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2 text-left transition-colors hover:bg-bg-raised"
+            >
+              <item.Icon className="h-5 w-5 shrink-0 text-text-secondary" />
+              <span className="min-w-0 flex-1 text-sm text-text-primary">{item.label}</span>
+              {/* Text, not a coloured dot: a dot on a settings row reads as an
+                  alert, and this is a suggestion about a questionnaire. */}
+              {item.id === 'hit6' && hit6Due && (
+                <span className="shrink-0 text-xs text-text-secondary">Due</span>
+              )}
+              <Chevron />
+            </button>
+          ))}
+        </Group>
       ))}
     </div>
   );
 }
 
-interface AccessibilityProps {
+/** The app's one switch treatment — control-token track, `bg-surface` thumb
+ *  (see the measured note on the attack mode switch it was lifted from). */
+function SwitchTrack({ on }: { on: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${on ? 'bg-accent' : 'bg-border-control'}`}
+    >
+      <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-bg-surface transition-transform ${on ? 'translate-x-5' : ''}`} />
+    </span>
+  );
+}
+
+function SwitchRow({ label, hint, on, onChange }: { label: string; hint?: string; on: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => onChange(!on)}
+      className="flex min-h-14 w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-bg-elevated"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm text-text-primary">{label}</span>
+        {hint && <span className="block text-xs text-text-secondary">{hint}</span>}
+      </span>
+      <SwitchTrack on={on} />
+    </button>
+  );
+}
+
+/**
+ * A v3 radio tile. Selected is a 2px accent ring **and** a filled radio mark in
+ * the corner, so the state never rests on colour — and the mark's slot is
+ * always drawn, `ChipCheck`'s rule, so nothing shifts as the choice moves.
+ * A ring, never a border: rings take no layout space.
+ */
+function OptionTile({ selected, onSelect, className = '', style, children }: {
+  selected: boolean;
+  onSelect: () => void;
+  className?: string;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      style={style}
+      className={`relative flex min-h-[7.5rem] flex-col items-center justify-center gap-2.5 rounded-[1.25rem] px-2 py-2 text-[1.125rem] ring-inset transition-colors ${
+        selected ? 'font-semibold ring-2 ring-accent' : 'ring-1 ring-border-control'
+      } ${className}`}
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute right-2.5 top-2.5 h-3.5 w-3.5 rounded-full ring-inset ${selected ? 'ring-[5px] ring-accent' : 'ring-2 ring-current opacity-60'}`}
+      />
+      {children}
+    </button>
+  );
+}
+
+// Each tile previews the theme it selects, so it can't take its colours from
+// the tokens — those resolve to whichever theme is showing *now*. These are
+// the two palettes' own page and text values (docs/palette.md) and have to
+// change with them.
+const THEME_SWATCH: Record<Theme, React.CSSProperties> = {
+  light: { background: '#f5f2ec', color: '#3a3733' },
+  dark: { background: '#1b1a18', color: '#cdc7bb' },
+};
+
+interface DisplayProps {
   textScale: TextScale;
   onTextScale: (s: TextScale) => void;
   brightness: number;
@@ -81,116 +187,85 @@ interface AccessibilityProps {
   onTheme: (t: Theme) => void;
   attackMode: boolean;
   onAttackMode: (on: boolean) => void;
+  font: FontChoice;
+  onFont: (f: FontChoice) => void;
+  attackModeAuto: boolean;
+  onAttackModeAuto: (on: boolean) => void;
+  systemText: boolean;
+  onSystemText: (on: boolean) => void;
   onClose: () => void;
 }
 
-export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrightness, theme, onTheme, attackMode, onAttackMode, onClose }: AccessibilityProps) {
+// "Display & attack mode", the v3 page (2026-10-26) — it was "Accessibility".
+// Theme and font are radio tiles you can see the result in; the attack mode
+// controls and the text-size source are one group of switches; the five-step
+// text size and the brightness overlay keep their own sections below.
+export function DisplayPanel({
+  textScale, onTextScale, brightness, onBrightness, theme, onTheme, attackMode, onAttackMode,
+  font, onFont, attackModeAuto, onAttackModeAuto, systemText, onSystemText, onClose,
+}: DisplayProps) {
   return (
-    <ProfileSubPage title="Accessibility" onClose={onClose}>
+    <ProfileSubPage title="Display & attack mode" onClose={onClose}>
       <div className="space-y-8">
 
-      {/* Appearance — manual only, no prefers-color-scheme detection
-          (2026-09-25, Sunny's call): this is a single-user app and she wanted
-          an explicit choice, not one the OS makes for her. Above Attack mode
-          because that group is the temporary override; this is the resting
-          state it overrides. Same switch shape as Attack mode's own toggle,
-          for the reason every switch in the app shares one treatment — see
-          the note on that one below.
-
-          **`BrightnessIcon` (a sun, from icons.tsx), not a new mark.** It's a
-          generic UI affordance, not a domain one, so it's Lucide-sourced per
-          the icon rule — and it's free to reuse now: it was the brightness
-          pill's own icon until that floating button was removed, and
-          CLAUDE.md's "sun means brightness" constraint on AttackModeIcon's
-          own shape was specifically about not colliding with that button.
-          With the button gone, the sun has no meaning left to collide with. */}
+      {/* Manual only, no prefers-color-scheme detection (2026-09-25, Sunny's
+          call): an explicit choice, not one the OS makes. Attack mode still
+          overrides whichever is picked here while it's on. */}
       <div className="space-y-3">
-        <p className="text-sm font-medium text-text-primary">Appearance</p>
-        <div className="space-y-3 rounded-2xl bg-bg-surface py-4">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={theme === 'light'}
-            onClick={() => onTheme(theme === 'light' ? 'dark' : 'light')}
-            className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
-          >
-            <BrightnessIcon className="h-5 w-5 shrink-0 text-text-secondary" />
-            <span className="min-w-0 flex-1 text-sm text-text-primary">
-              {theme === 'light' ? 'Light' : 'Dark'}
-            </span>
-            <span
-              aria-hidden="true"
-              className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${theme === 'light' ? 'bg-accent' : 'bg-border-control'}`}
-            >
-              <span
-                className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-bg-surface transition-transform ${theme === 'light' ? 'translate-x-5' : ''}`}
-              />
-            </span>
-          </button>
-          <p className="text-xs text-text-secondary">
-            The app is dark by default. Light swaps every surface and colour for a warm, low-contrast light palette built to the same rules.
-          </p>
+        <p className="text-sm font-medium text-text-primary">Theme</p>
+        <div role="radiogroup" aria-label="Theme" className="grid grid-cols-2 gap-3">
+          <OptionTile selected={theme === 'light'} onSelect={() => onTheme('light')} style={THEME_SWATCH.light}>Light</OptionTile>
+          <OptionTile selected={theme === 'dark'} onSelect={() => onTheme('dark')} style={THEME_SWATCH.dark}>Dark</OptionTile>
         </div>
       </div>
 
-      {/* Attack mode — also one tap from the floating pill on every screen;
-          it lives here too so it's discoverable when nothing hurts yet.
+      {/* Each tile is set in the face it selects, which is the whole preview.
+          Lexend stays the default; Atkinson is the dossier's opt-in for
+          maximum character distinction. */}
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-text-primary">Font</p>
+        <div role="radiogroup" aria-label="Font" className="grid grid-cols-2 gap-3">
+          <OptionTile
+            selected={font === 'lexend'}
+            onSelect={() => onFont('lexend')}
+            className={`text-text-primary ${font === 'lexend' ? 'bg-accent/20' : 'bg-bg-raised'}`}
+            style={{ fontFamily: "'Lexend', sans-serif" }}
+          >
+            <span aria-hidden="true" className="text-[1.875rem] leading-none">Aa</span>
+            Lexend
+          </OptionTile>
+          <OptionTile
+            selected={font === 'atkinson'}
+            onSelect={() => onFont('atkinson')}
+            className={`text-text-primary ${font === 'atkinson' ? 'bg-accent/20' : 'bg-bg-raised'}`}
+            style={{ fontFamily: "'Atkinson Hyperlegible Next', sans-serif" }}
+          >
+            <span aria-hidden="true" className="text-[1.875rem] leading-none">Aa</span>
+            Atkinson
+          </OptionTile>
+        </div>
+      </div>
 
-          **Each group is now its own `bg-bg-surface` card** (2026-09-23,
-          Sunny's call) — the three used to be nothing but a heading and
-          `space-y-8`, which read as one long list rather than three separate
-          settings once the page had more than a line or two per group. The
-          control inside stays `bg-bg-raised`, which is now correctly "card on
-          card" per the surface hierarchy rather than raised sitting directly
-          on the page.
-
-          **Vertical padding only** (2026-09-24, Sunny's call) — `p-4` gave
-          the card's content a 16px inset the heading above it doesn't share,
-          so the button and caption sat visibly to the right of "Attack mode".
-          Every control inside already carries its own horizontal spacing
-          (the button's `px-4`, the picker's own padding), so dropping the
-          card's own left/right inset lines everything up with the heading
-          without costing any of them their breathing room. */}
+      {/* Attack mode — also one tap from the hero on Today and the floating
+          pill on the other tabs; it lives here too so it's discoverable when
+          nothing hurts yet. */}
       <div className="space-y-3">
         <p className="text-sm font-medium text-text-primary">Attack mode</p>
-        <div className="space-y-3 rounded-2xl bg-bg-surface py-4">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={attackMode}
-            onClick={() => onAttackMode(!attackMode)}
-            className="flex w-full items-center gap-3 rounded-xl border border-border-control bg-bg-raised/40 px-4 py-3 text-left transition-colors hover:bg-bg-raised"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5 shrink-0 text-text-secondary" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
-            </svg>
-            <span className="min-w-0 flex-1 text-sm text-text-primary">
-              {attackMode ? 'On' : 'Off'}
-            </span>
-            <span
-              aria-hidden="true"
-              /* Matches NotificationSettings' switch, which is the other one in
-                 the app — the off track takes the control-outline token (1.4.11
-                 wants 3:1 for a component's own boundary; bg-bg-border measured
-                 1.47:1 against the page) and the thumb is bg-bg-surface, not
-                 text-primary. A light thumb measured 1.70:1 against the accent
-                 track when ON, so the switch's own indicator was the least
-                 visible thing on it in the state that matters. bg-bg-surface
-                 reads 3.44 off / 5.42 on. */
-              className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${attackMode ? 'bg-accent' : 'bg-border-control'}`}
-            >
-              <span
-                className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-bg-surface transition-transform ${attackMode ? 'translate-x-5' : ''}`}
-              />
-            </span>
-          </button>
-          <p className="text-xs text-text-secondary">
-            Dims the screen, warms and lowers the contrast, enlarges body text and stops all animation.
-            Everything you logged stays exactly as it is.
-          </p>
-        </div>
+        <Group raised>
+          <SwitchRow label="Attack mode" on={attackMode} onChange={onAttackMode} />
+          <SwitchRow
+            label="Attack mode when I start an attack"
+            hint="Turns it on as soon as you log an attack that's still going."
+            on={attackModeAuto}
+            onChange={onAttackModeAuto}
+          />
+        </Group>
+        <p className="text-xs text-text-secondary">
+          Dims the screen, warms and lowers the contrast, enlarges body text and stops all animation.
+          Everything you logged stays exactly as it is.
+        </p>
       </div>
+
       {/* Accessibility — text size and brightness were two sibling sections;
           they're one group now, since both answer "make this easier to look
           at" and neither means much on its own. */}
@@ -202,6 +277,14 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
             "Default" is the accurate word — see attack mode's own 20px body
             floor in CLAUDE.md, which this picker doesn't override. */}
         <p className="text-sm font-medium text-text-primary">Default text size</p>
+        <Group raised>
+          <SwitchRow
+            label="Use iPhone text size"
+            hint="Follows the size set in your iPhone's settings, from XS to XL."
+            on={systemText}
+            onChange={onSystemText}
+          />
+        </Group>
         <div className="space-y-4 rounded-2xl bg-bg-surface py-4">
           {/* Moved above the picker (2026-09-23, Sunny's call) — it used to
               sit under the preview card, after the thing it explains had
@@ -213,7 +296,12 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
             Changes apply instantly across the app, and every screen reflows rather than clipping — XL is 50% larger than the default.
           </p>
 
-          {/* Five-segment picker */}
+          {/* Five-segment picker — set aside while the iPhone's size is in
+              charge, rather than left looking live and doing nothing. The
+              choice is kept, so turning the switch off restores it. */}
+          {systemText ? (
+            <p className="text-xs text-text-secondary">Following your iPhone's text size.</p>
+          ) : (
           <div className="flex rounded-xl overflow-hidden border border-border-control">
             {SCALES.map((s, i) => (
               <button
@@ -235,6 +323,7 @@ export function AccessibilityPanel({ textScale, onTextScale, brightness, onBrigh
               </button>
             ))}
           </div>
+          )}
 
           {/* Live preview card — inherits root font size so it updates instantly */}
           <div className="rounded-xl border border-bg-border/60 bg-bg-raised/40 p-4">

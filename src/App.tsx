@@ -48,7 +48,7 @@ import { SegmentedControl } from './components/SegmentedControl';
 import { HistoryView } from './components/HistoryView';
 import { LogsFilterPanel, LogsFilterReset } from './components/LogsFilterPanel';
 import { DEFAULT_FILTERS, PERIOD_SEGMENTS, type LogFilters, type SortOrder, type Period } from './utils/logFilters';
-import { ProfileView, AccessibilityPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
+import { ProfileView, DisplayPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
 import { Hit6View } from './components/Hit6View';
 import { MedicationEditor } from './components/MedicationEditor';
@@ -118,7 +118,10 @@ export default function App() {
     syncStatus: hit6SyncStatus, lastSyncedAt: hit6LastSyncedAt,
   } = useHit6(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
-  const { textScale, setTextScale, brightness, setBrightness, theme, setTheme, attackMode, setAttackMode } = useSettings();
+  const {
+    textScale, setTextScale, brightness, setBrightness, theme, setTheme, attackMode, setAttackMode,
+    font, setFont, attackModeAuto, setAttackModeAuto, systemText, setSystemText,
+  } = useSettings();
 
   // Mirrors what the home-screen widget shows out to the App Group. Watches
   // the data rather than the writers, so no future save path can forget it.
@@ -416,6 +419,10 @@ export default function App() {
       try { await requestPermission(); } catch (err) { console.error('Notification permission request failed:', err); }
     }
     startAttack(snapshot, triggersSel, notifConfig, end, wokeWithMigraine, doseReadings);
+    // "Attack mode when I start an attack" (Display page, opt-in). Only for
+    // an attack that's still going — a retrospective log is someone looking
+    // back, not someone in the middle of one.
+    if (attackModeAuto && !end && !attackMode) setAttackMode(true);
     closeLogSheet();
   }
 
@@ -743,8 +750,8 @@ export default function App() {
             onClose={() => setProfileSheet(null)}
           />
         )}
-        {profileSheet === 'accessibility' && (
-          <AccessibilityPanel
+        {profileSheet === 'display' && (
+          <DisplayPanel
             textScale={textScale}
             onTextScale={setTextScale}
             brightness={brightness}
@@ -753,6 +760,12 @@ export default function App() {
             onTheme={setTheme}
             attackMode={attackMode}
             onAttackMode={setAttackMode}
+            font={font}
+            onFont={setFont}
+            attackModeAuto={attackModeAuto}
+            onAttackModeAuto={setAttackModeAuto}
+            systemText={systemText}
+            onSystemText={setSystemText}
             onClose={() => setProfileSheet(null)}
           />
         )}

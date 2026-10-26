@@ -21,6 +21,25 @@
   src: url('./assets/fonts/Lexend-Variable.woff2') format('woff2-variations');
 }
 
+/* Atkinson Hyperlegible Next — the optional second face, chosen on the
+   Display page (v3, 2026-10-26; `data-font="atkinson"` on <html>). The
+   dossier asks for exactly this: Lexend primary, Atkinson as an opt-in for
+   people who want maximum character distinction. It was rejected as the
+   *default* on looks (2026-08-18), never as an option.
+
+   **The "Next" cut, because it is variable** (200–800, used 400–700 here):
+   the original Atkinson ships only 400 and 700, which would send every 500
+   and 600 in the app to 700 — the slabbed-labels problem that made Lexend
+   variable in the first place. Self-hosted for the same offline/CSP reasons,
+   Latin subset, 34KB, OFL (licence beside the file). */
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./assets/fonts/AtkinsonHyperlegibleNext-Variable.woff2') format('woff2-variations');
+}
+
 @theme {
   --font-sans: 'Lexend', system-ui, -apple-system, sans-serif;
 
@@ -302,11 +321,25 @@
 [data-scale="lg"] { font-size: 22px; }   /* 137% */
 [data-scale="xl"] { font-size: 24px; }   /* 150% */
 
+/* "Use iPhone text size" (v3): `useSettings` measures the OS text size
+   (`font: -apple-system-body`, which only Apple's WebKit understands), maps
+   it onto the same 14–24px range the steps above cover, and writes it to
+   --system-text. Elsewhere the measurement fails and it stays 16px. */
+[data-scale="system"] { font-size: var(--system-text, 16px); }
+
+/* The face the Display page picks. Overrides the token the whole app reads,
+   so every `font-sans` call site follows; the two SVG diagrams and the widget
+   name Lexend literally and stay Lexend. */
+[data-font="atkinson"] {
+  --font-sans: 'Atkinson Hyperlegible Next', system-ui, -apple-system, sans-serif;
+}
+
 /* Attack mode lifts body text to the spec's 20px floor, but never drags a
    larger choice back down — lg and xl are already past it. */
 [data-theme="attack"][data-scale="xs"],
 [data-theme="attack"][data-scale="sm"],
 [data-theme="attack"][data-scale="md"] { font-size: 20px; }
+[data-theme="attack"][data-scale="system"] { font-size: max(20px, var(--system-text, 16px)); }
 
 /* ── Motion ──────────────────────────────────────────
    Attack mode kills animation outright; everyone else gets the OS setting
