@@ -40,6 +40,7 @@ import { Hit6Prompt } from './components/Hit6Prompt';
 import { attackAwaitingImpact } from './utils/impact';
 import { hit6Due } from './utils/hit6';
 import { TodaySummary } from './components/TodaySummary';
+import { WeekCard } from './components/WeekCard';
 import { AttackDetail } from './components/AttackDetail';
 import { StatsView } from './components/StatsView';
 import { SegmentedControl } from './components/SegmentedControl';
@@ -546,6 +547,12 @@ export default function App() {
                 onDismiss={() => setImpactDismissed(impactPending.id)}
               />
             )}
+
+            {/* Only when two or more attacks overlap the last seven days —
+                it renders nothing otherwise. Off in attack mode: what that
+                mode shows is being redesigned separately, so nothing new
+                joins it except the check-in, which bears on the next hour. */}
+            {!attackMode && <WeekCard attacks={attacks} />}
 
             {/* Below the hero card: the month's two figures, and — only when
                 they apply — an overuse warning and the last dose taken.

@@ -398,6 +398,27 @@ export function lastSevenDays(attacks: Attack[], now: number = Date.now()): DayC
   });
 }
 
+/**
+ * How many attacks overlap the same seven local days `lastSevenDays` draws —
+ * ongoing or ended. Backs Today's week card, which shows only when this is 2
+ * or more.
+ *
+ * **Attacks, not migraine days**, deliberately (Sunny, 2026-10-26): one
+ * 28-hour attack covers two calendar days and marks both on the strip, but it
+ * is one episode, and a single long attack is not the cluster the card exists
+ * to point out.
+ */
+export function attacksInLastSevenDays(attacks: Attack[], now: number = Date.now()): number {
+  const base = new Date(now);
+  const windowStart = new Date(base.getFullYear(), base.getMonth(), base.getDate() - 6).getTime();
+  return attacks.filter((a) => {
+    if (a.snapshots.length === 0) return false;
+    const start = new Date(a.snapshots[0].time).getTime();
+    const end = a.end ? new Date(a.end).getTime() : now;
+    return start <= now && end >= windowStart;
+  }).length;
+}
+
 export function migraineDaysByMonth(attacks: Attack[], months = 6, now: number = Date.now()): MonthDays[] {
   const byMonth = migraineDaysByMonthMap(attacks, now);
 
