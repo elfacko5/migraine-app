@@ -1,33 +1,65 @@
 import type { Attack, Medication } from '../types';
 import { useNowTick } from '../hooks/useNowTick';
-import { migraineDaysByMonth, medicationDaysByMonth } from '../utils/stats';
+import {
+  attacksInWindow, classDaysInWindow, medicationDaysLastWindow, migraineDaysInWindow, MOH_DAYS_MIXED,
+} from '../utils/stats';
 import { formatTime } from '../utils/format';
+import { COUNTED_CLASSES, type CountedClass } from '../utils/medClasses';
+import { TODAY_CARD } from '../utils/todayCard';
 import { MedIcon } from './drawnIcons';
+import { ClassBadge } from './ClassBadge';
+import { WarningIcon } from './icons';
 import {
   checkDose, doseUnits, findMedication, lastDoseSnapshot, mohDaysFor, unitsInWindow, unitsLabel,
 } from '../utils/medGuardrails';
 
-// What belongs under the hero card on Today: figures that need no
-// interpretation, and one warning that has to arrive before it's too late to
-// act on. Anything that needs reading rather than glancing stays on Insights.
+// What belongs under the hero on Today: figures that need no interpretation,
+// and one warning that has to arrive before it's too late to act on. Anything
+// that needs reading rather than glancing stays on Insights.
+//
+// **Every figure here is "last 30 days"** (v3, 2026-10-26). They were "this
+// month", which read 1 on the 1st after a bad 31st and reset to zero for no
+// reason anyone could see. A rolling window says the same thing every day.
 interface Props {
   attacks: Attack[];
   ongoing: Attack | null;
-  /** The library — for each drug's overuse reference point and its own
-   *  per-intake / per-day / minimum-gap limits. */
+  /** The library — for each drug's class, its overuse reference point, and
+   *  its own per-intake / per-day / minimum-gap limits. */
   medications?: Medication[];
   /** Attack mode strips this down to what's actionable — see below. */
   attackMode?: boolean;
+  /** The tiles and the medication card open Insights. */
+  onOpenInsights?: () => void;
+  /** "Set type" on an untyped medication opens My medications. */
+  onOpenMedications?: () => void;
 }
 
-// Warn at 70% of whichever overuse reference point applies to *that* drug, not
-// at it. The number is only useful while there's still room to change course;
-// at 10 of 10 it's a fact about the past.
-//
-// The threshold is now per medication rather than a module constant: it used
-// to be 70% of 10 for everything, because nothing knew a drug's class, so a
-// simple analgesic was warned about five days early.
+// Warn at 70% of whichever overuse reference point applies, not at it. The
+// number is only useful while there's still room to change course; at 10 of
+// 10 it's a fact about the past.
 const warnAt = (threshold: number) => Math.ceil(threshold * 0.7);
+
+const CLASS_NOUN: Record<CountedClass, string> = {
+  triptan: 'triptan',
+  combination: 'combination painkiller',
+  simple: 'simple painkiller',
+};
+
+// The plain sentence that follows a guideline count. §9.5: Today is read at a
+// glance and mid-attack, so it says what frequent use can do in everyday
+// words; Insights keeps the clinical term, "medication-overuse headache".
+// States the number and the guideline, and stops — never dosing advice.
+const GUIDELINE_NOTE = 'Frequent use can sometimes lead to more headaches. Maybe worth a chat with your doctor.';
+
+/** One overuse warning: a bold count, then the sentence that explains it. */
+interface Warning {
+  key: string;
+  count: string;
+  note: string;
+  /** The drug it belongs to, when the ongoing dose card can carry it instead. */
+  drug?: string;
+  cls?: CountedClass;
+}
 
 // **The two medication rows are one shape.** They carry the same kind of
 // content — a drug, a figure about it, and a line of supporting detail — and
@@ -98,8 +130,8 @@ function MedRow({ name, icon, figure, detail, warning = false }: {
 // nothing else in the app has yet acted on (§8.3, and CLAUDE.md has recorded
 // it as the spec's one unimplemented half). Concretely:
 //
-//   - **The two month tiles go.** Migraine days and medication days this
-//     month are figures you read and think about; mid-attack there is nothing
+//   - **The tiles and the medication card go.** Migraine days and medication
+//     days are figures you read and think about; mid-attack there is nothing
 //     to do with either, and they're the largest, brightest text on the page.
 //     They are still on Insights, and attack mode is one tap to leave.
 //   - **The overuse warning stays, minus its explanation.** It's the one
@@ -110,159 +142,261 @@ function MedRow({ name, icon, figure, detail, warning = false }: {
 //     mode exists to avoid; the count and the drug name carry the point.
 //   - **The last dose stays as-is.** One line, and it's the question people
 //     actually open the app mid-attack to answer.
-export function TodaySummary({ attacks, ongoing, medications = [], attackMode = false }: Props) {
-  const months = migraineDaysByMonth(attacks, 1);
-  const migraineDays = months[months.length - 1]?.days ?? 0;
+export function TodaySummary({
+  attacks, ongoing, medications = [], attackMode = false, onOpenInsights, onOpenMedications,
+}: Props) {
+  // The 24-hour figure and the rolling 30 days both go stale on their own as
+  // doses age out — the same reason every live duration in the app ticks. All
+  // of the helpers below read the clock themselves, which keeps `Date.now()`
+  // out of this render.
+  useNowTick(60_000);
 
-  const meds = medicationDaysByMonth(attacks);
-  const totalMedDays = meds.reduce((n, m) => Math.max(n, m.thisMonth), 0);
-  const nearing = meds
-    .map((m) => ({ ...m, threshold: mohDaysFor(m.name, medications) }))
-    .filter((m) => m.thisMonth >= warnAt(m.threshold));
+  const perDrug = medicationDaysLastWindow(attacks);
+  const classOf = (name: string) => findMedication(medications, name)?.class;
 
   // Mid-attack, the question is "when did I last take something" — the one
-  // thing here that changes what you do in the next hour. It now carries the
-  // running 24-hour total beside it, which is the same question asked one step
-  // further on: not just when, but how much is already in.
+  // thing here that changes what you do in the next hour — with the running
+  // 24-hour total beside it: not just when, but how much is already in.
   const lastDose = ongoing ? lastDoseSnapshot(ongoing) : null;
   const lastName = lastDose?.medication?.name ?? '';
   const lastLibrary = findMedication(medications, lastName);
-  // The 24-hour figure is a rolling window, so it goes stale on its own as
-  // doses age out of it — the same reason every live duration in the app ticks
-  // rather than trusting the last render. Cheap here: Today already re-renders
-  // on this cadence for the hero card's elapsed time. Both helpers read the
-  // clock themselves, which is also what keeps `Date.now()` out of this render.
-  useNowTick(60_000);
   const takenIn24h = lastDose ? unitsInWindow(attacks, lastName) : 0;
   // Asked with zero further units, so this reports where the *last* dose left
   // things rather than pre-judging a dose nobody has said they're taking.
   const position = lastDose ? checkDose(lastLibrary, attacks, lastName, 0) : null;
 
-  if (migraineDays === 0 && meds.length === 0 && !lastDose) return null;
-  // Attack mode drops everything but these two, so with neither of them there
-  // is nothing left to draw — and an empty wrapper would still cost the gap
-  // above it.
-  if (attackMode && nearing.length === 0 && !lastDose) return null;
+  if (attackMode) {
+    // Per drug, against each drug's own reference point — the attack-mode
+    // branch is unchanged apart from the window (its redesign is separate).
+    const nearing = perDrug
+      .map((m) => ({ ...m, threshold: mohDaysFor(m.name, medications) }))
+      .filter((m) => m.days >= warnAt(m.threshold));
+    if (nearing.length === 0 && !lastDose) return null;
+    return (
+      <div className="space-y-3">
+        {nearing.map((m) => (
+          <MedRow
+            key={m.name}
+            name={m.name}
+            icon={<MedIcon name={m.name} className="h-4 w-4" />}
+            figure={`on ${m.days} days in the last 30 days`}
+            warning
+          />
+        ))}
+        {lastDose?.medication && (
+          <MedRow
+            name={lastDose.medication.name}
+            icon={<MedIcon name={lastDose.medication.name} dose={lastDose.medication.dose} className="h-4 w-4" />}
+            figure={unitsLabel(doseUnits(lastDose.medication), lastLibrary)}
+            detail={lastDoseDetail(false)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ── The class bars ─────────────────────────────────────────────────────
+  const cd = classDaysInWindow(attacks, classOf);
+  // A row per class the user actually has: an acute medication of that class
+  // in the library, or a dose of one in the window. A class nobody takes is
+  // an empty bar that says nothing.
+  const rows = COUNTED_CLASSES.filter((c) =>
+    cd[c.value] > 0 || medications.some((m) => m.kind === 'acute' && m.class === c.value));
+  // The mixed-use line only when two or more classes were taken: with one, it
+  // would repeat that class's own row.
+  const showMixed = COUNTED_CLASSES.filter((c) => cd[c.value] > 0).length >= 2;
+
+  // ── Warnings ───────────────────────────────────────────────────────────
+  // **From the class bars, naming the class**, since the bars are what the
+  // threshold is about. A drug's own entered limit is the exception: it is
+  // the user's number, about that drug, so its warning names the drug and
+  // quotes the limit back rather than a guideline. An untyped drug is in no
+  // bar, so it keeps a per-drug warning against the default reference point.
+  const warnings: Warning[] = [];
+  for (const c of rows) {
+    const days = cd[c.value];
+    if (days >= warnAt(c.limit)) {
+      warnings.push({ key: c.value, cls: c.value, count: `${days} of ${c.limit} ${CLASS_NOUN[c.value]} days in the last 30 days.`, note: GUIDELINE_NOTE });
+    }
+  }
+  if (showMixed && cd.any >= warnAt(MOH_DAYS_MIXED)) {
+    warnings.push({ key: 'mixed', count: `${cd.any} of ${MOH_DAYS_MIXED} acute medication days in the last 30 days.`, note: GUIDELINE_NOTE });
+  }
+  for (const m of perDrug) {
+    const lib = findMedication(medications, m.name);
+    const own = lib?.maxDaysPerMonth && lib.maxDaysPerMonth > 0 ? lib.maxDaysPerMonth : null;
+    const typed = lib?.class === 'triptan' || lib?.class === 'combination' || lib?.class === 'simple';
+    if (own !== null) {
+      if (m.days >= warnAt(own)) {
+        warnings.push({
+          key: `drug:${m.name}`, drug: m.name,
+          count: `${m.name} on ${m.days} days in the last 30 days.`,
+          note: `You entered a limit of ${own} days a month for this one. Worth raising at your next appointment.`,
+        });
+      }
+    } else if (!typed) {
+      const threshold = mohDaysFor(m.name, medications);
+      if (m.days >= warnAt(threshold)) {
+        warnings.push({ key: `drug:${m.name}`, drug: m.name, count: `${m.name} on ${m.days} days in the last 30 days.`, note: GUIDELINE_NOTE });
+      }
+    }
+  }
+
+  // The warning that belongs to the drug being taken now rides inside its
+  // card, under a divider, rather than repeating above it: the drug's own
+  // limit first, else its class's.
+  const lastClass = lastLibrary?.class;
+  const lastWarning = lastDose
+    ? warnings.find((w) => w.drug && w.drug.toLowerCase() === lastName.trim().toLowerCase())
+      ?? warnings.find((w) => w.cls && w.cls === lastClass)
+    : undefined;
+  const banners = warnings.filter((w) => w !== lastWarning);
+
+  const migraineDays = migraineDaysInWindow(attacks);
+  const attackCount = attacksInWindow(attacks);
+  const lastCountedClass = COUNTED_CLASSES.find((c) => c.value === lastClass);
 
   return (
-    <div className="space-y-3">
-      {nearing.map((m) => (
-        <MedRow
-          key={m.name}
-          name={m.name}
-          icon={<MedIcon name={m.name} className="h-4 w-4" />}
-          figure={`on ${m.thisMonth} days this month`}
-          warning
-          /* States the number and the guideline, and stops. Deciding what it
-             means is a conversation with a doctor — and when the user entered
-             a limit of their own, that is the number quoted back, not a
-             guideline they didn't ask about.
+    <div className="space-y-3.5">
+      {lastDose?.medication && (
+        // The ongoing dose card. Same data as the old last-dose row: what was
+        // taken, when, the 24-hour position against the user's own limit and,
+        // when a minimum gap was entered, when that gap ends — a statement of
+        // the user's own number, never an instruction.
+        <div className={TODAY_CARD}>
+          <div className="flex items-center gap-3">
+            <ClassBadge large>
+              {lastCountedClass?.letter ?? <MedIcon name={lastDose.medication.name} dose={lastDose.medication.dose} className="h-4 w-4" />}
+            </ClassBadge>
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-text-primary">{lastDose.medication.name}</p>
+              <div className="text-xs text-text-secondary">{lastDoseDetail(true)}</div>
+            </div>
+          </div>
+          {lastWarning && (
+            <p className="mt-3 flex items-start gap-2 border-t border-bg-border pt-3 text-[0.9375rem] font-semibold text-text-primary">
+              <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-severity-mid" />
+              {lastWarning.count}
+            </p>
+          )}
+        </div>
+      )}
 
-             **Plainer than the Insights caption, deliberately.** Today is
-             read at a glance and mid-attack, so it says what frequent use can
-             do in everyday words; Insights keeps the clinical term
-             "medication-overuse headache", which is what a doctor will call
-             it and that page is the one you read carefully. §9.5 — the deeper
-             into an attack, the simpler the copy. */
-          detail={!attackMode
-            ? `${findMedication(medications, m.name)?.maxDaysPerMonth
-                ? `You entered a limit of ${m.threshold} days a month for this one.`
-                : `Taking acute medication often can itself lead to more headaches — guidelines put that at around ${m.threshold} days a month for this type, sustained over three months.`
-              } Worth raising at your next appointment.`
-            : null}
-        />
+      {banners.map((w) => (
+        <div key={w.key} className="flex items-start gap-2.5 rounded-[0.875rem] bg-severity-mid/15 p-3 text-[0.9375rem] text-text-primary">
+          <WarningIcon className="h-6 w-6 shrink-0 text-severity-mid [&>path]:[stroke-width:2]" />
+          <p><span className="font-semibold">{w.count}</span> {w.note}</p>
+        </div>
       ))}
 
-      {lastDose?.medication && (
-        <MedRow
-          name={lastDose.medication.name}
-          icon={<MedIcon name={lastDose.medication.name} dose={lastDose.medication.dose} className="h-4 w-4" />}
-          // **Line 1 is just the dose's own amount now** (2026-09-24, Sunny's
-          // call) — "Sumatriptan 2 tablets", matching how a chip in the
-          // wizard's own medication step reads. Everything else it used to
-          // carry on one line — the 24h position and the clock time — moved
-          // to `detail`, which is why that prop had to stop being a single
-          // string. `unitsLabel` is the same helper the wizard's quantity
-          // picker uses, so "tablet"/"spray"/... always matches the
-          // medication's own `unitLabel`.
-          figure={unitsLabel(doseUnits(lastDose.medication), lastLibrary)}
-          detail={
-            <>
-              {/* "Treo at 20:51" reads as a label with a timestamp — it could
-                  as easily mean a reminder due then, or when it was logged.
-                  The verb is what makes it a statement about a dose that was
-                  taken. */}
-              <p>
-                {[
-                  lastLibrary?.maxPerDay ? `${takenIn24h} of ${lastLibrary.maxPerDay} in the last 24h` : null,
-                  `${takenIn24h > doseUnits(lastDose.medication) ? 'last taken' : 'taken'} at ${formatTime(lastDose.time)}`,
-                ].filter(Boolean).join(' · ')}
-              </p>
-              {/* Only when a minimum gap was entered and it hasn't elapsed. A
-                  statement of the user's own number, never an instruction. */}
-              {position?.tooSoon && position.nextAllowedAt && (
-                <p>Next dose from {formatTime(position.nextAllowedAt)}, by the gap you entered.</p>
-              )}
-            </>
-          }
-        />
-      )}
-
-      {!attackMode && (
-      <div className="grid grid-cols-2 gap-3">
-        {/* **Both tiles are label = the subject, value = the unit and the
-            period.** The left one used to label the *period* ("This month")
-            and put the subject in the value ("9 migraine days"), so two tiles
-            side by side were built the opposite way round from each other and
-            neither could be read against the other. Now it's Migraine days ·
-            8 · this month, Medication days · 0 · this month.
-
-            **The label carries "days", not the unit line** (2026-09-23,
-            Sunny's call) — matching the stat tiles just above it on Insights
-            ("Days in a row" / 0 / "with a migraine", "Days since" / 27 /
-            "last attack"), which lead with the countable unit and leave the
-            sub-line for context. It used to be the other way round — bare
-            "Migraine"/"Medication" as the label, "days this month" as the
-            unit — on the reasoning that "days" shouldn't appear twice; moving
-            it to the label keeps that (it still only appears once) and gets
-            the term the app actually uses, "migraine days" (see
-            MigraineDaysChart in CLAUDE.md), onto one line instead of split
-            across two. No more singular/plural on the unit line either — like
-            "Days in a row", the label doesn't bend to the count.
-
-            **Now the same shape as Insights' `StatCard`** — border, value on
-            its own line with the unit stacked beneath (2026-09-23, Sunny's
-            call). The figure was already `text-2xl` (28px) in both places,
-            identical to Insights' tiles — but on Today the number shared a
-            baseline row with its unit and sat in a borderless `bg-bg-surface`
-            card, which cost it definition it didn't need to lose. That reads
-            fine on Insights, packed between charts and captions with plenty
-            else to set the scale against; on Today, alone under the hero
-            with a page's worth of empty space around it, the same tile read
-            as small.
-
-            **The unit line and the tile's own height needed a second pass,
-            found on device** (2026-09-23): "days this month" is
-            `text-[0.75rem]` — 12px, under this app's own 14px caption floor.
-            The label above it (MIGRAINE/MEDICATION) is the one documented
-            exception to that floor, because it's a name for a 28px figure
-            that carries the tile on its own — the unit line is body text
-            someone actually has to read, so it doesn't get the same pass and
-            goes to `text-xs` (14px, the floor). The tile also went from
-            `p-4` to `px-4 py-5` with a bit more space between its three
-            lines, for the "more air" Sunny asked for alongside it. */}
-        <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 px-4 py-5">
-          <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">Migraine days</p>
-          <p className="mt-2 text-2xl font-bold text-text-primary leading-none">{migraineDays}</p>
-          <p className="mt-1 text-xs text-text-secondary">this month</p>
-        </div>
-        <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 px-4 py-5">
-          <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">Medication days</p>
-          <p className="mt-2 text-2xl font-bold text-text-primary leading-none">{totalMedDays}</p>
-          <p className="mt-1 text-xs text-text-secondary">this month</p>
-        </div>
+      {/* **Two number tiles: migraine days, and attacks.** The v3 prototype
+          pairs migraine days with headache days, but the app has no
+          headache-day record and nothing to count, so the second slot is the
+          other figure Today can state plainly (Sunny, 2026-10-26). "Attack"
+          is the episode and "migraine day" the calendar day — one attack can
+          be two of them, which is why both are worth showing side by side.
+          The label is a single 14px line under the figure, with the unit and
+          the window together; no uppercase kicker. Both open Insights. */}
+      <div className="grid grid-cols-2 gap-3.5">
+        <NumberTile value={migraineDays} label="migraine days · last 30 days" onClick={onOpenInsights} />
+        <NumberTile value={attackCount} label={`${attackCount === 1 ? 'attack' : 'attacks'} · last 30 days`} onClick={onOpenInsights} />
       </div>
+
+      {rows.length > 0 && (
+        // **Days per class, not per drug** — the threshold is about how often a
+        // class is taken, so two triptans on one day are one triptan day. The
+        // card replaced the single "Medication days · this month" tile, which
+        // summed every drug into one number with no threshold to read it by.
+        <div className={`${TODAY_CARD} space-y-2.5`}>
+          <button type="button" onClick={onOpenInsights} className="block w-full space-y-2.5 text-left">
+            <p className="text-xs text-text-secondary">Last 30 days</p>
+            {rows.map((c) => (
+              <ClassBar key={c.value} letter={c.letter} label={`${c.label} days`} days={cd[c.value]} limit={c.limit} />
+            ))}
+            {showMixed && <ClassBar letter="+" label="Any of these" days={cd.any} limit={MOH_DAYS_MIXED} />}
+          </button>
+          {/* Outside the button: "Set type" is its own action, and a button
+              can't hold another. Only names logged in the window count —
+              an untyped drug nobody took is nothing to fix today. */}
+          {cd.untyped.length > 0 && (
+            <p className="text-xs text-text-secondary">
+              {cd.untyped.length === 1
+                ? `${cd.untyped[0]} has no type set, so it isn't counted here.`
+                : `${cd.untyped.slice(0, -1).join(', ')} and ${cd.untyped[cd.untyped.length - 1]} have no type set, so they aren't counted here.`}{' '}
+              <button type="button" onClick={onOpenMedications} className="font-medium text-accent-light underline-offset-2 hover:underline">
+                Set type
+              </button>
+            </p>
+          )}
+        </div>
       )}
     </div>
+  );
+
+  // Shared by both modes: the 24-hour position and when it was taken, then
+  // the next-dose line when a minimum gap was entered and hasn't elapsed.
+  // `withUnits` leads with the amount for the v3 card, whose name line carries
+  // only the name; attack mode's row already shows it beside the name.
+  function lastDoseDetail(withUnits: boolean) {
+    if (!lastDose?.medication) return null;
+    const units = doseUnits(lastDose.medication);
+    return (
+      <>
+        {/* "Treo at 20:51" reads as a label with a timestamp — the verb is
+            what makes it a statement about a dose that was taken. */}
+        <p>
+          {[
+            withUnits ? unitsLabel(units, lastLibrary) : null,
+            `${takenIn24h > units ? 'last taken' : 'taken'} ${formatTime(lastDose.time)}`,
+            lastLibrary?.maxPerDay ? `${takenIn24h} of ${lastLibrary.maxPerDay} in the last 24h` : null,
+          ].filter(Boolean).join(' · ')}
+        </p>
+        {position?.tooSoon && position.nextAllowedAt && (
+          <p>Next dose from {formatTime(position.nextAllowedAt)}, by the gap you entered.</p>
+        )}
+      </>
+    );
+  }
+}
+
+/** A figure over its one-line label — the v3 number tile. */
+function NumberTile({ value, label, onClick }: { value: number; label: string; onClick?: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={`${TODAY_CARD} block w-full text-left`}>
+      <span className="block text-[2.125rem] font-semibold leading-[1.1] text-text-primary">{value}</span>
+      <span className="mt-1 block text-xs text-text-secondary">{label}</span>
+    </button>
+  );
+}
+
+/**
+ * One class row: badge, label, "4 of 10", and an 8px bar under it. At 70% of
+ * the limit the fill turns amber **and** a triangle sits before the figure —
+ * never colour alone, since FL-41 lenses shift exactly the hues that would
+ * carry it. The bar is `aria-hidden`; the figure and an `sr-only` phrase carry
+ * the same facts as text.
+ */
+function ClassBar({ letter, label, days, limit }: { letter: string; label: string; days: number; limit: number }) {
+  const warn = days >= warnAt(limit);
+  return (
+    <span className="block">
+      <span className="flex items-center gap-2.5">
+        <ClassBadge>{letter}</ClassBadge>
+        <span className="min-w-0 flex-1 text-sm text-text-primary">
+          {label}<span className="sr-only">,</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1 text-xs text-text-secondary">
+          {warn && <WarningIcon className="h-4 w-4 text-severity-mid" />}
+          {days} of {limit}
+          {warn && <span className="sr-only">, {days >= limit ? 'at or over the guideline' : 'close to the guideline'}</span>}
+        </span>
+      </span>
+      <span aria-hidden="true" className="mt-2 block h-2 overflow-hidden rounded bg-bg-raised">
+        <span
+          className={`block h-full rounded ${warn ? 'bg-severity-mid' : 'bg-accent'}`}
+          style={{ width: `${Math.min(100, (days / limit) * 100)}%` }}
+        />
+      </span>
+    </span>
   );
 }

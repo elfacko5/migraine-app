@@ -1,6 +1,6 @@
 import type { Attack, Medication, Snapshot } from '../types';
 import { isRetired } from './retired';
-import { MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from './stats';
+import { MOH_DAYS_COMBINATION, MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from './stats';
 
 // Acute medications carry limits that come from the prescription, not from
 // migraine guidelines: how many units in one intake, how many in 24 hours, and
@@ -163,7 +163,9 @@ export function findMedication(medications: Medication[], name: string): Medicat
 export function mohDaysFor(name: string, medications: Medication[]): number {
   const med = findMedication(medications, name);
   if (med?.maxDaysPerMonth && med.maxDaysPerMonth > 0) return med.maxDaysPerMonth;
-  return med?.class === 'simple' ? MOH_DAYS_SIMPLE : MOH_DAYS_TRIPTAN;
+  if (med?.class === 'simple') return MOH_DAYS_SIMPLE;
+  if (med?.class === 'combination') return MOH_DAYS_COMBINATION;
+  return MOH_DAYS_TRIPTAN;
 }
 
 /** The plural unit label for a count — "1 tablet" / "2 tablets". */

@@ -569,7 +569,14 @@ export default function App() {
                 where HIT-6 is a four-week retrospective that's never urgent —
                 so the actionable figure outranks the one that can wait. */}
             {(ongoingAttack || lastAttackEnd) && (
-              <TodaySummary attacks={attacks} ongoing={ongoingAttack} medications={medications} attackMode={attackMode} />
+              <TodaySummary
+                attacks={attacks}
+                ongoing={ongoingAttack}
+                medications={medications}
+                attackMode={attackMode}
+                onOpenInsights={() => setTab('stats')}
+                onOpenMedications={() => { setTab('profile'); setProfileSheet('medications'); }}
+              />
             )}
 
             {/* Offered on Today when it's due, on Sunny's instruction — see

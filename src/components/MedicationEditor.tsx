@@ -4,15 +4,8 @@ import { DEFAULT_UNIT } from '../utils/medGuardrails';
 import { MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from '../utils/stats';
 import { ConfirmDialog } from './ConfirmDialog';
 import { BinIcon } from './icons';
+import { CLASSES } from '../utils/medClasses';
 
-// The four ICHD-3 classes. The class decides one thing only: which
-// medication-overuse reference point a monthly count is measured against.
-const CLASSES: { value: MedClass; label: string }[] = [
-  { value: 'triptan', label: 'Triptan' },
-  { value: 'combination', label: 'Combination painkiller' },
-  { value: 'simple', label: 'Simple painkiller' },
-  { value: 'other', label: 'Other' },
-];
 
 // A fixed list rather than free text: the unit is only ever one of a handful
 // of words, it labels the wizard's quantity picker ("2 sprays"), and a typo

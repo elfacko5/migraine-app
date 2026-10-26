@@ -1,4 +1,4 @@
-import type { Attack, Medication, Snapshot } from '../types';
+import type { Attack, MedClass, Medication, Snapshot } from '../types';
 import { isRetired } from './retired';
 
 export function maxSeverity(snapshot: Snapshot): number {
@@ -448,7 +448,104 @@ export const CHRONIC_DAYS_THRESHOLD = 15;
  * guideline numbers are; it never concludes anything.
  */
 export const MOH_DAYS_TRIPTAN = 10;
+export const MOH_DAYS_COMBINATION = 10;
 export const MOH_DAYS_SIMPLE = 15;
+/**
+ * ICHD-3 8.2.6: overuse of more than one class counts at 10 days a month in
+ * total, even when no single class reaches its own threshold.
+ */
+export const MOH_DAYS_MIXED = 10;
+
+/** Today's window for every figure it shows, since v3: a rolling 30 days. */
+export const TODAY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+const localDayKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/**
+ * Migraine days in a rolling window ending now — the same day set the monthly
+ * chart counts, from the local day the window starts on through today.
+ *
+ * **Rolling, not calendar** (Today v3, 2026-10-26): "this month" read 1 on the
+ * 1st after a bad 31st and reset to zero for no reason the reader could see.
+ * Today now says "last 30 days" everywhere; Insights keeps whole calendar
+ * months, because that is the unit the 15-day line is stated in.
+ */
+export function migraineDaysInWindow(attacks: Attack[], windowMs: number = TODAY_WINDOW_MS, now: number = Date.now()): number {
+  const from = localDayKey(new Date(now - windowMs));
+  const to = localDayKey(new Date(now));
+  let n = 0;
+  for (const day of migraineDaySet(attacks, now)) if (day >= from && day <= to) n++;
+  return n;
+}
+
+/** Attacks overlapping a rolling window ending now, ongoing ones included. */
+export function attacksInWindow(attacks: Attack[], windowMs: number = TODAY_WINDOW_MS, now: number = Date.now()): number {
+  const since = now - windowMs;
+  return attacks.filter((a) => {
+    if (a.snapshots.length === 0) return false;
+    const start = new Date(a.snapshots[0].time).getTime();
+    const end = a.end ? new Date(a.end).getTime() : now;
+    return start <= now && end >= since;
+  }).length;
+}
+
+export interface ClassDays {
+  triptan: number;
+  combination: number;
+  simple: number;
+  /** Distinct days with a triptan, combination or simple dose — the mixed-use count. */
+  any: number;
+  /** Names logged in the window whose class is `other` or unset — counted in no bar. */
+  untyped: string[];
+}
+
+/**
+ * Medication days per overuse class in a rolling window ending now — Today's
+ * T / C / P bars.
+ *
+ * **Days per class, never a sum of per-drug days.** Two triptans on one day
+ * are one triptan day, because the class threshold is about how often that
+ * class is taken, not about which drug. `any` is the same rule across all
+ * three, for ICHD-3's mixed-use line.
+ *
+ * Filtered on the snapshot's own time like `medicationDaysInWindow`, with
+ * retired names skipped. `classOf` resolves a logged name against the library
+ * — passed in rather than imported, since `medGuardrails` imports from here.
+ */
+export function classDaysInWindow(
+  attacks: Attack[],
+  classOf: (name: string) => MedClass | undefined,
+  windowMs: number = TODAY_WINDOW_MS,
+  now: number = Date.now(),
+): ClassDays {
+  const since = now - windowMs;
+  const days = { triptan: new Set<string>(), combination: new Set<string>(), simple: new Set<string>(), any: new Set<string>() };
+  const untyped = new Set<string>();
+  for (const a of attacks) {
+    for (const snap of a.snapshots) {
+      const name = snap.medication?.name?.trim();
+      if (!name || isRetired(name)) continue;
+      const t = new Date(snap.time).getTime();
+      if (t > now || t < since) continue;
+      const day = localDayKey(new Date(t));
+      const cls = classOf(name);
+      if (cls === 'triptan' || cls === 'combination' || cls === 'simple') {
+        days[cls].add(day);
+        days.any.add(day);
+      } else {
+        untyped.add(name);
+      }
+    }
+  }
+  return {
+    triptan: days.triptan.size,
+    combination: days.combination.size,
+    simple: days.simple.size,
+    any: days.any.size,
+    untyped: [...untyped].sort((x, y) => x.localeCompare(y)),
+  };
+}
 
 export interface MedMonth {
   name: string;
@@ -543,6 +640,14 @@ export function medicationDaysInWindow(
   return [...days.entries()]
     .map(([name, set]) => ({ name, days: set.size, doses: doses.get(name) ?? 0 }))
     .sort((a, b) => b.days - a.days || a.name.localeCompare(b.name));
+}
+
+/** `medicationDaysInWindow` over Today's rolling window, reading the clock
+ *  here so no component has to. */
+export function medicationDaysLastWindow(
+  attacks: Attack[], windowMs: number = TODAY_WINDOW_MS, now: number = Date.now(),
+): MedWindow[] {
+  return medicationDaysInWindow(attacks, now - windowMs, now);
 }
 
 export interface MedResponse {
