@@ -8,6 +8,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ClassBadge } from './ClassBadge';
 import { OptionTile } from './settingsUi';
 import { InjectionIcon, SprayIcon, TabletIcon } from './drawnIcons';
+import { BinIcon } from './icons';
 
 // Add / edit a medication — the v3.9 design (docs/redesign-v3, "My
 // medications and dose in onboarding"), rebuilt 2026-10-26: tiles and a
@@ -162,7 +163,9 @@ export function MedicationEditor({ medication, kind: initialKind, onSave, onDele
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Top bar — close and title. Delete moved into the body (v3.9). */}
+      {/* Top bar — close, title, and Delete as a bin at the trailing edge
+          (Sunny, 2026-10-26), the same shape as Attack detail's header: away
+          from Save in the footer, and still confirmed. */}
       <div
         className="relative flex items-center px-3 py-3 sm:px-4"
         style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
@@ -180,6 +183,16 @@ export function MedicationEditor({ medication, kind: initialKind, onSave, onDele
         <h2 className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-base font-semibold text-text-primary">
           {medication ? 'Edit medication' : 'Add medication'}
         </h2>
+        {onDelete && (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            aria-label="Delete medication"
+            className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-severity-high/15 hover:text-severity-high"
+          >
+            <BinIcon className="h-6 w-6" />
+          </button>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-6 pt-2 sm:px-6">
@@ -360,13 +373,6 @@ export function MedicationEditor({ medication, kind: initialKind, onSave, onDele
           </div>
         )}
 
-        {/* In the body, away from Save — a destructive action next to the
-            primary one is a mis-tap waiting to happen. Still confirmed. */}
-        {onDelete && (
-          <button type="button" onClick={() => setConfirmDelete(true)} className="btn-secondary w-full !text-severity-high">
-            Delete medication
-          </button>
-        )}
       </div>
 
       <div
