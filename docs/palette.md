@@ -424,6 +424,10 @@ commit, never a deliberate call), and is restored here with the boxes actually c
    dissolving into the page rather than a dark rectangle, with the moon/orbs/leaves still legible. If
    it isn't enough on device the next step is new or hand-treated artwork, not a stronger filter.
    Same photographs both themes; only the rendering changes, and only under `[data-theme="light"]`.
+   **Superseded 2026-10-26 (Today v3):** the photographs were replaced by drawn SVGs filled from two
+   new tokens, `--color-ill-1` (`#8c735e` dark and attack / `#c9a98a` light) and `--color-ill-2`
+   (`#5e7363` / `#a9bfad`), so the hero follows the theme by construction and the filter is gone.
+   Headline contrast over the art is recorded in `docs/today-cards.md`.
 5. **A third state on the theme control.** Simpler than planned, because of a decision taken before
    any code was written (2026-09-25, Sunny's call): attack mode always wins. Turning it on sets
    `data-theme="attack"` regardless of the light/dark choice underneath, exactly as it already did —
