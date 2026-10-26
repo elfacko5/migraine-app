@@ -16,6 +16,12 @@ interface Props {
   /** The one thing the hero exists to say, at a glance. */
   headline: string;
   /**
+   * A small figure between the headline and the detail line — the ongoing
+   * hero's trajectory. When present, the detail line sits 8px under it
+   * instead of 16px under the headline: the figure is what separates them.
+   */
+  figure?: ReactNode;
+  /**
    * Supporting line under the headline — "since your last attack", or where
    * an ongoing attack sits now. Optional; nothing passes a date here, which
    * would be the headline's own figure said a second way.
@@ -60,7 +66,7 @@ interface Props {
  * The artwork is `aria-hidden` and `focusable="false"` — it carries mood, not
  * information, and every fact is in the text beside it.
  */
-export function HomeCard({ art, label, headline, detail, onOpenDetail, children }: Props) {
+export function HomeCard({ art, label, headline, figure, detail, onOpenDetail, children }: Props) {
   const text = (
     <>
       {/* Deliberately uneven gaps, to spec: 4px under the label so it reads as
@@ -79,7 +85,8 @@ export function HomeCard({ art, label, headline, detail, onOpenDetail, children 
           time ("Since Tue 18 Aug, 20:18") broke after the comma and read as
           two facts; neither hero carries a date any more, and at the largest
           text size a nowrap line would run off the screen edge. */}
-      {detail && <p className="mt-4 text-base text-text-primary">{detail}</p>}
+      {figure && <span className="mt-3.5 block">{figure}</span>}
+      {detail && <p className={`${figure ? 'mt-2' : 'mt-4'} text-base text-text-primary`}>{detail}</p>}
     </>
   );
 
