@@ -2045,3 +2045,21 @@ Rebuilt from the v3.1 artboards' Logs and Attack detail frames on Sunny's ask: "
 - **Attack detail keeps Delete in the top bar and its X**, though the v3.1 frame has a back arrow and a Delete button in the body. The X is the bottom-sheet contrast this app keeps, and Delete away from the footer is the mis-tap rule. The breakdown and timeline stay below the new cards, since the design's frame has no equivalent and dropping them would hide the readings.
 
 **Verified** at 375px on 5175, signed out: all four verdicts on seeded attacks, date headers (Today, Yesterday, dates), and the detail sheet's cards. **Not verified:** on a device; a medication's class badge on the detail sheet (5175 had no library at the time, so it showed the form icon).
+
+## The v3 redesign folder, and building to it (2026-10-26)
+
+**`docs/redesign-v3/index.html` is the redesign's source of truth** (screens in `screens/`, the interactive prototype in `prototype/`), on Sunny's instruction. The Logs and medication screens had first been built from the older v3.1 artboards and didn't match; they were rebuilt from this folder the same day. It supersedes the v3.1 artboards and `docs/today-v3-handoff.md` where they disagree.
+
+- **The floating attack mode pill is gone from every tab** (Sunny's call), reversing the earlier "Today only" answer. Attack mode lives in Today's hero, the first-run top bar, and Settings → Display & attack mode. `useScrollCollapse` went with it, and the bottom reserve is 7rem on every tab.
+- **My medications and the editor follow v3.9.** The kind is now an editable switch (For an attack / Every day). Form tiles set the unit, one dose is a stepper, Type is five tiles, and the limits fold into one optional card that is never pre-filled. Only a name and a strength are required, where the old editor needed four fields, two of them dropdowns that started empty.
+- **Gepant added as a type** (Sunny's call; the design's own note flagged it). Gepants have no medication-overuse guideline, so a G medicine sits in no T/C/P bar and draws no default warning. `mohDaysFor` now returns `null` for it unless the user entered their own monthly limit, and every caller handles that.
+- **Logs and attack detail follow v3.10.** Each row has duration, a shaded peak, the side, the date, a type badge per drug with helped / didn't help / no reading, and the ICHD symptoms. The detail sheet has tiles, a pain chart with lettered dose lines, a card per drug with its two-hour outcome, where it hurt, symptoms, the last three updates, and impact. The detail is now a drill-down: it enters from the right behind a back chevron, with a bin in the header.
+- **Departures from the design, each for a recorded rule:**
+  - An area missing from the last update shows "–" (*not recorded*), not "gone": the update wizard starts blank, so the app can't tell "it stopped" from "only the worst was logged".
+  - The peak shade is capped at 40% sage, so its number holds at least 4.59:1 in all three themes.
+  - "Max in one go" survives only where a value is already stored.
+  - Delete has a confirmation but no Undo yet.
+  - The attack mode mark stays the arcs, not the prototype's moon.
+- **Not built from these sections:** the Logs overlap/merge banner, onboarding's one-dose step, Undo toasts, and the zone display names ("Behind left eye"). The app still prints its stored zone names ("Eye left").
+
+**Verified** at 375px on 5175, signed out: the pill on no tab but Today, the medication list and both editor states, a save round-trip, the Logs rows with all four verdicts, and the detail sheet for a helped, a no-change, an ongoing and an untreated attack. **Not verified:** on a device, light mode for the new Logs and detail screens (only contrast was computed), and VoiceOver beyond the labels in the DOM.
