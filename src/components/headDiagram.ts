@@ -1,5 +1,5 @@
 // Pain-area diagram geometry, inlined from the user's exported SVG
-// ("New head.svg" at the repo root — front, back, and the three laterality
+// ("head illustration/New head.svg" — front, back, and the three laterality
 // heads that back `SideGlyph`). Each selectable area is one closed path from
 // that file; the ears and the front neck are the paths it leaves unfilled.
 //

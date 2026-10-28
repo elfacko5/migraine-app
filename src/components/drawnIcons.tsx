@@ -503,7 +503,7 @@ export function BellIcon({ className = 'h-5 w-5' }: IconProps) {
 /**
  * A face seen from the front, with the affected side filled.
  *
- * Inlined from `New head.svg` at the repo root — Sunny's artwork, whose third
+ * Inlined from `head illustration/New head.svg` — Sunny's artwork, whose third
  * artboard draws this glyph in all three states. It arrives already split into
  * one path per half, so the fill is a per-path opacity and there is no
  * clipping to do; the two halves are lifted out of the states that shade each
