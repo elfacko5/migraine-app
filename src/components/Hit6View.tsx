@@ -17,7 +17,7 @@ interface Props {
   onClose: () => void;
 }
 
-const CHIP = 'flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors';
+const CHIP = 'flex w-full items-center gap-2 rounded-control px-4 py-3 text-left text-sm font-medium transition-colors';
 
 /**
  * The Headache Impact Test, as its own Profile sub-page.
@@ -79,7 +79,7 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
         footer={<button type="button" onClick={onClose} className="btn-primary w-full">Done</button>}
       >
         <div className="space-y-4">
-          <div className="rounded-xl bg-bg-raised p-4">
+          <div className="rounded-inset bg-bg-raised p-4">
             <div className="text-3xl font-bold text-text-primary">{result.score}</div>
             <div className="text-sm text-text-primary">{band.label}</div>
             <p className="mt-1 text-xs text-text-secondary">{band.detail}</p>
@@ -223,7 +223,7 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(e)}
-                    className="shrink-0 rounded-lg px-2 py-1 text-xs text-text-secondary transition-colors hover:text-text-primary"
+                    className="shrink-0 rounded-control-sm px-2 py-1 text-xs text-text-secondary transition-colors hover:text-text-primary"
                   >
                     Delete
                   </button>

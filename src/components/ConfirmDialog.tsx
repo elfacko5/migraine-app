@@ -61,7 +61,7 @@ export function ConfirmDialog({
         role="alertdialog"
         aria-modal="true"
         aria-label={title}
-        className={`relative w-full max-w-sm rounded-2xl border border-bg-border bg-bg-surface p-5 transition-all duration-200 ${open ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+        className={`relative w-full max-w-sm rounded-sheet border border-bg-border bg-bg-surface p-5 transition-all duration-200 ${open ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
       >
         <h2 className="text-base font-medium text-text-primary">{title}</h2>
         {message && <p className="mt-1.5 text-sm text-text-secondary leading-relaxed">{message}</p>}
@@ -71,7 +71,7 @@ export function ConfirmDialog({
             ref={cancelRef}
             type="button"
             onClick={onCancel}
-            className="btn-secondary flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors"
+            className="btn-secondary flex-1 rounded-control py-2.5 text-sm font-medium transition-colors"
           >
             {cancelLabel}
           </button>
@@ -92,7 +92,7 @@ export function ConfirmDialog({
             // `--color-bg-base` text: a saturated-enough fill in this palette
             // always carries dark text. A light-on-light pairing here was the
             // odd one out, not the house style.
-            className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-control py-2.5 text-sm font-medium transition-colors ${
               danger
                 ? 'bg-severity-high text-bg-base hover:opacity-90'
                 : 'btn-primary'

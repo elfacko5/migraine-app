@@ -49,7 +49,7 @@ export function SegmentedControl<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className={`${fill ? 'flex w-full' : 'inline-flex'} h-8 items-center gap-0.5 rounded-lg border border-border-control bg-bg-raised/15 p-0.5`}
+      className={`${fill ? 'flex w-full' : 'inline-flex'} h-8 items-center gap-0.5 rounded-control-sm border border-border-control bg-bg-raised/15 p-0.5`}
     >
       {options.map((o) => {
         const isActive = o.value === value;
@@ -63,7 +63,7 @@ export function SegmentedControl<T extends string>({
             // segments and room to spare, this one has four and has to hold
             // "3 months" at 375px. `truncate` is the backstop at the largest
             // text sizes; `min-w-0` is what lets it engage inside a flex item.
-            className={`flex h-7 min-w-0 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors ${
+            className={`flex h-7 min-w-0 items-center justify-center rounded-segment px-2 text-xs font-medium transition-colors ${
               fill ? 'flex-1' : ''
             } ${isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:text-text-primary'}`}
           >

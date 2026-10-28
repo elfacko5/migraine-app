@@ -12,7 +12,7 @@ export function NotificationSettings({ value, onChange }: Props) {
   const FIXED_OPTIONS = [30, 60, 120, 240];
 
   return (
-    <div className="rounded-xl bg-bg-raised/60 border border-bg-border px-4 py-3 space-y-4">
+    <div className="rounded-inset bg-bg-raised/60 border border-bg-border px-4 py-3 space-y-4">
       {/* Enable toggle */}
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2 text-sm text-text-primary">
@@ -54,7 +54,7 @@ export function NotificationSettings({ value, onChange }: Props) {
                   key={mode}
                   type="button"
                   onClick={() => onChange({ ...value, mode })}
-                  className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-colors ${chipClass(
+                  className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-chip py-2 text-sm font-medium transition-colors ${chipClass(
                     value.mode === mode,
                   )}`}
                 >
@@ -78,7 +78,7 @@ export function NotificationSettings({ value, onChange }: Props) {
                     key={min}
                     type="button"
                     onClick={() => onChange({ ...value, fixedIntervalMinutes: min })}
-                    className={`flex-1 inline-flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium transition-colors ${chipClass(
+                    className={`flex-1 inline-flex items-center justify-center gap-1 rounded-chip py-2 text-xs font-medium transition-colors ${chipClass(
                       value.fixedIntervalMinutes === min,
                     )}`}
                   >

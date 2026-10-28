@@ -70,7 +70,7 @@ export function SeverityBreakdown({ attack }: Props) {
   return (
     // Sits on its own surface rather than floating on the sheet — px-3 not
     // px-4, because the name column is the one that pays for the padding.
-    <div className="space-y-2 rounded-xl bg-bg-raised px-3 py-3">
+    <div className="space-y-2 rounded-inset bg-bg-raised px-3 py-3">
       <div className="grid grid-cols-[1fr_96px_2rem_2rem] items-center gap-2">
         <span className="text-[0.6875rem] text-text-secondary">Pain areas</span>
         <span />
@@ -100,9 +100,9 @@ export function SeverityBreakdown({ attack }: Props) {
 
             <Sparkline row={row} snapshotCount={snaps.length} theme={theme} />
 
-            <span className={`rounded-md py-1 text-center text-xs ${peak.bg} ${peak.text}`}>{row.peak}</span>
+            <span className={`rounded-segment py-1 text-center text-xs ${peak.bg} ${peak.text}`}>{row.peak}</span>
             {now ? (
-              <span className={`rounded-md py-1 text-center text-xs ${now.bg} ${now.text}`}>{row.now}</span>
+              <span className={`rounded-segment py-1 text-center text-xs ${now.bg} ${now.text}`}>{row.now}</span>
             ) : (
               // A dot here read as a speck of dirt on the screen. A short rule
               // says "no value" the way a dash does in any table, and it's the

@@ -98,7 +98,7 @@ function MedRow({ name, icon, figure, detail, warning = false }: {
 }) {
   return (
     <div
-      className={`rounded-xl border px-4 py-3 ${
+      className={`rounded-inset border px-4 py-3 ${
         warning ? 'border-severity-mid/40 bg-severity-mid/10' : 'border-bg-border/60 bg-bg-raised/60'
       }`}
     >

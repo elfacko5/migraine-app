@@ -213,7 +213,7 @@ export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onCl
         <button
           type="button"
           onClick={onClose}
-          className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors"
+          className="btn-primary w-full rounded-control py-3 text-sm font-medium transition-colors"
         >
           Show results
         </button>
@@ -230,7 +230,7 @@ export function LogsFilterReset({ filters, onChange }: { filters: LogFilters; on
       type="button"
       onClick={() => onChange(DEFAULT_FILTERS)}
       disabled={count === 0}
-      className="rounded-lg px-2 py-1 text-sm font-medium text-accent-light transition-colors hover:text-accent disabled:opacity-40 disabled:hover:text-accent-light"
+      className="rounded-control-sm px-2 py-1 text-sm font-medium text-accent-light transition-colors hover:text-accent disabled:opacity-40 disabled:hover:text-accent-light"
     >
       Clear all
     </button>

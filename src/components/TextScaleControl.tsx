@@ -20,7 +20,7 @@ export function TextScaleControl({ scale, onScale }: Props) {
         onClick={() => !atMin && onScale(SCALES[i - 1])}
         disabled={atMin}
         aria-label="Decrease text size"
-        className="flex h-8 w-7 items-center justify-center rounded-md text-lg leading-none text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors"
+        className="flex h-8 w-7 items-center justify-center rounded-segment text-lg leading-none text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors"
       >
         −
       </button>
@@ -35,7 +35,7 @@ export function TextScaleControl({ scale, onScale }: Props) {
         onClick={() => !atMax && onScale(SCALES[i + 1])}
         disabled={atMax}
         aria-label="Increase text size"
-        className="flex h-8 w-7 items-center justify-center rounded-md text-lg leading-none text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors"
+        className="flex h-8 w-7 items-center justify-center rounded-segment text-lg leading-none text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors"
       >
         +
       </button>

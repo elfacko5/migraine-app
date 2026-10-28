@@ -153,7 +153,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         <div className="grid grid-cols-3 gap-2.5">
           <Tile value={formatDuration(start, attack.end)} label={ongoing ? 'so far' : 'long'} />
           <Tile value={String(peak)} label="peak pain" />
-          <div className="flex flex-col items-center justify-center gap-1 rounded-[1.25rem] bg-bg-surface p-3 text-center">
+          <div className="flex flex-col items-center justify-center gap-1 rounded-card bg-bg-surface p-3 text-center">
             {side
               ? <SideGlyph side={side} className="h-[2.125rem] w-auto text-text-secondary" />
               : <span aria-hidden="true" className="h-[2.125rem]" />}
@@ -166,13 +166,13 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
 
         <h3 className="pt-2 text-lg font-semibold text-text-primary">Medication</h3>
         {outcomes.length === 0 ? (
-          <div className="rounded-[1.25rem] bg-bg-surface p-4 text-xs text-text-secondary">Nothing taken for this attack.</div>
+          <div className="rounded-card bg-bg-surface p-4 text-xs text-text-secondary">Nothing taken for this attack.</div>
         ) : outcomes.map((o) => {
           const timing = firstDoses.find((d) => d.name === o.name)?.timing;
           const lib = findMedication(medications, o.name);
           const amount = o.amount ? unitsLabel(o.amount, lib) : o.dose;
           return (
-            <div key={o.name} className="space-y-2 rounded-[1.25rem] bg-bg-surface p-4">
+            <div key={o.name} className="space-y-2 rounded-card bg-bg-surface p-4">
               <div className="flex items-center gap-3">
                 <ClassBadge large>{letterFor(o.name) ?? <MedIcon name={o.name} dose={o.dose} className="h-4 w-4" />}</ClassBadge>
                 <div className="min-w-0 flex-1">
@@ -184,7 +184,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
                   </p>
                 </div>
               </div>
-              <p className={`flex items-start gap-2.5 rounded-xl bg-bg-base px-3.5 py-2.5 text-sm text-text-primary ${
+              <p className={`flex items-start gap-2.5 rounded-inset bg-bg-base px-3.5 py-2.5 text-sm text-text-primary ${
                 o.verdict === 'helped' ? 'ring-2 ring-inset ring-accent' : ''
               }`}>
                 <VerdictMark verdict={o.verdict} className="mt-0.5 h-4 w-4 shrink-0" />
@@ -197,7 +197,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         {areas.length > 0 && (
           <>
             <h3 className="pt-2 text-lg font-semibold text-text-primary">Where it hurt</h3>
-            <div className="overflow-hidden rounded-[1.25rem] bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
+            <div className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
               <div className="flex items-center gap-3 px-4 py-2 text-xs text-text-secondary">
                 <span className="flex-1" />
                 <span className="w-11 text-center">peak</span>
@@ -208,7 +208,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
                   <span className="min-w-0 flex-1 text-sm text-text-primary">{z.name}</span>
                   <ShadedValue value={z.peak} />
                   {z.end !== null ? <ShadedValue value={z.end} /> : (
-                    <span className="flex h-9 w-11 items-center justify-center rounded-[0.625rem] text-sm text-text-secondary ring-1 ring-inset ring-bg-border">
+                    <span className="flex h-9 w-11 items-center justify-center rounded-badge text-sm text-text-secondary ring-1 ring-inset ring-bg-border">
                       <span aria-hidden="true">–</span>
                       <span className="sr-only">Not recorded at the last update</span>
                     </span>
@@ -224,7 +224,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
             <h3 className="pt-2 text-lg font-semibold text-text-primary">Symptoms</h3>
             <ul className="grid grid-cols-4 gap-2">
               {symptoms.map((sym) => (
-                <li key={sym} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-1.5 rounded-[1.25rem] bg-bg-surface px-1 py-2 text-center text-xs text-text-primary ring-1 ring-inset ring-bg-border">
+                <li key={sym} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-1.5 rounded-card bg-bg-surface px-1 py-2 text-center text-xs text-text-primary ring-1 ring-inset ring-bg-border">
                   <SymptomIcon name={sym} className="h-6 w-6 text-text-secondary" />
                   <span className="leading-tight [overflow-wrap:anywhere]">{sym}</span>
                 </li>
@@ -234,7 +234,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         )}
 
         <h3 className="pt-2 text-lg font-semibold text-text-primary">Updates</h3>
-        <ol className="overflow-hidden rounded-[1.25rem] bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
+        <ol className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
           {shownUpdates.map((u) => (
             <li key={u.key} className="flex items-start gap-3 px-4 py-3">
               <span className="w-12 shrink-0 text-xs tabular-nums text-text-secondary">
@@ -262,7 +262,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
             offering it here would invite an answer reconstructed days later,
             so an unanswered one shows nothing rather than an empty control. */}
         {(impact || attack.triggers.length > 0 || attack.wokeWithMigraine) && (
-          <dl className="overflow-hidden rounded-[1.25rem] bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
+          <dl className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
             {impact && <Row term="Impact on your day" value={impact} />}
             {attack.triggers.length > 0 && <Row term="Different the day before" value={attack.triggers.join(', ')} />}
             {attack.wokeWithMigraine && <Row term="Started" value="Woke up with it" />}
@@ -303,7 +303,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
 
 function Tile({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-0.5 rounded-[1.25rem] bg-bg-surface p-3 text-center">
+    <div className="flex flex-col items-center justify-center gap-0.5 rounded-card bg-bg-surface p-3 text-center">
       <span className="whitespace-nowrap text-[1.625rem] font-semibold leading-tight tabular-nums text-text-primary">{value}</span>
       <span className="text-xs text-text-secondary">{label}</span>
     </div>
@@ -313,7 +313,7 @@ function Tile({ value, label }: { value: string; label: string }) {
 function ShadedValue({ value }: { value: number }) {
   return (
     <span
-      className="flex h-9 w-11 items-center justify-center rounded-[0.625rem] text-sm font-semibold tabular-nums text-text-primary ring-1 ring-inset ring-bg-border"
+      className="flex h-9 w-11 items-center justify-center rounded-badge text-sm font-semibold tabular-nums text-text-primary ring-1 ring-inset ring-bg-border"
       style={{ background: peakShade(value) }}
     >
       {value}
@@ -363,7 +363,7 @@ function PainChart({ attack, letterFor }: { attack: Attack; letterFor: (name: st
   const label = `Pain over time: ${values.join(', ')}${doses.length ? `. Doses: ${doses.map((m) => m.name).join(', ')}` : ''}`;
 
   return (
-    <div className="space-y-1.5 rounded-[1.25rem] bg-bg-surface p-4">
+    <div className="space-y-1.5 rounded-card bg-bg-surface p-4">
       <h3 className="text-base font-semibold text-text-primary">Pain over time</h3>
       <svg viewBox="0 0 326 132" role="img" aria-label={label} className="block h-auto w-full">
         <text x="0" y="16" className="fill-text-secondary" fontSize="14" fontFamily="Lexend, sans-serif">10</text>
@@ -468,7 +468,7 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
             type="button"
             aria-pressed={woke}
             onClick={() => setWoke((w) => !w)}
-            className={`flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${chipClass(woke)}`}
+            className={`flex w-full items-center gap-2 rounded-control px-4 py-3 text-left text-sm font-medium transition-colors ${chipClass(woke)}`}
           >
             <SunriseIcon className="h-4 w-4 shrink-0" />
             <span className="flex-1">Woke up with this migraine</span>
@@ -508,10 +508,10 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
         className="flex flex-col gap-2 border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
         style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
-        <button type="button" onClick={save} className="btn-primary w-full rounded-xl py-3 text-sm font-medium transition-colors">
+        <button type="button" onClick={save} className="btn-primary w-full rounded-control py-3 text-sm font-medium transition-colors">
           Save changes
         </button>
-        <button type="button" onClick={onCancel} className="btn-secondary w-full rounded-xl py-3 text-sm font-medium transition-colors">
+        <button type="button" onClick={onCancel} className="btn-secondary w-full rounded-control py-3 text-sm font-medium transition-colors">
           Cancel
         </button>
       </div>

@@ -10,8 +10,8 @@ export function ClassBadge({ children, large = false, small = false }: { childre
   return (
     <span
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-[0.625rem] bg-bg-base font-bold text-text-primary ring-[1.5px] ring-inset ring-accent ${
-        large ? 'h-9 w-9 text-sm' : small ? 'h-[1.625rem] w-[1.625rem] rounded-lg text-xs' : 'h-[1.875rem] w-[1.875rem] text-xs'
+      className={`flex shrink-0 items-center justify-center rounded-badge bg-bg-base font-bold text-text-primary ring-[1.5px] ring-inset ring-accent ${
+        large ? 'h-9 w-9 text-sm' : small ? 'h-[1.625rem] w-[1.625rem] rounded-badge-sm text-xs' : 'h-[1.875rem] w-[1.875rem] text-xs'
       }`}
     >
       {children}

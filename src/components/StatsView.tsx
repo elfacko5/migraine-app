@@ -76,7 +76,7 @@ interface Props {
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="rounded-xl bg-bg-raised/60 border border-bg-border/60 p-4">
+    <div className="rounded-inset bg-bg-raised/60 border border-bg-border/60 p-4">
       {/* 12px, below the 14px caption floor the rest of the app keeps. These
           are labels on a number that is itself 28px — the figure carries the
           card, the label only has to name it — and at 14px a two-word label

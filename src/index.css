@@ -60,6 +60,31 @@
   --text-2xl:  1.75rem;   /* 28px — H1 */
   --text-2xl--line-height: 1.3;
 
+  /* ── Radius roles (CODE DS phase 3, 2026-10-29) ──────
+     Each becomes a `rounded-<role>` utility. A role names what the corner
+     belongs to, so a theme can change cards without changing controls.
+     The values are exactly the ones these call sites already used: this was
+     a no-visual-change refactor. `rounded-full` stays as it is, and a few
+     one-off shapes from the v3 spec keep their literal values (the 9px peak
+     box, the 14px warning banner, the 4px bar, the week card's 2px and 1px
+     diamonds). */
+  --radius-control: 0.75rem;   /* buttons, full-width option rows */
+  --radius-card:    1.25rem;   /* v3 cards and option tiles */
+  --radius-sheet:   1rem;      /* dialogs and the + menu */
+  --radius-chip:    0.5rem;    /* presets and pick chips */
+  --radius-field:   0.5rem;    /* text inputs and DateTimeField */
+  --radius-segment: 0.375rem;  /* segments, Qty pills, severity cells */
+  --radius-badge:   0.625rem;  /* T / C / P letter badge, dose pill */
+
+  /* Lidd-local, temporary: collapse when the drift is decided.
+     Each of these is a role above at a different value, kept separate so
+     this pass moves no pixels. */
+  --radius-group:      1rem;     /* a card at 16px: Settings groups, Insights cards */
+  --radius-inset:      0.75rem;  /* a card at 12px: pre-v3 nested boxes, Hit6 and impact prompts */
+  --radius-control-sm: 0.5rem;   /* a control at 8px: segmented tracks, buttons overriding btn-* */
+  --radius-field-lg:   1rem;     /* a field at 16px: the v3 medication editor */
+  --radius-badge-sm:   0.5rem;   /* a badge at 8px: the small letter badge */
+
   /* ── Color tokens — warm dark ────────────────────────
      Warm charcoal rather than the old blue-leaning slate: saturated blue is
      the worst hue for photophobia, and the previous palette had a blue cast
@@ -243,7 +268,7 @@
    text-sm font-medium` are harmless duplicates of what they now inherit. */
 @layer components {
   .btn-primary, .btn-secondary, .btn-tertiary {
-    border-radius: 0.75rem;              /* rounded-xl */
+    border-radius: var(--radius-control);
     padding: 0.75rem 1rem;               /* py-3 px-4 */
     font-size: var(--text-sm);
     line-height: 1.5;

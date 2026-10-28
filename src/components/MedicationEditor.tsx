@@ -75,7 +75,7 @@ interface Props {
 }
 
 const inputClass =
-  'w-full min-h-[3.25rem] rounded-2xl bg-bg-surface px-4 text-sm text-text-primary ring-1 ring-inset ring-border-control ' +
+  'w-full min-h-[3.25rem] rounded-field-lg bg-bg-surface px-4 text-sm text-text-primary ring-1 ring-inset ring-border-control ' +
   'placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent';
 
 export function MedicationEditor({ medication, onSave, onDelete, onClose }: Props) {
@@ -293,7 +293,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
             {/* Limits, folded away. They come off a leaflet the app knows
                 nothing about, so nothing here is ever pre-filled, and nothing
                 warns until the user has entered a number. */}
-            <div className="rounded-[1.25rem] bg-bg-raised p-4">
+            <div className="rounded-card bg-bg-raised p-4">
               <button
                 type="button"
                 aria-expanded={limitsOpen}
@@ -325,7 +325,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
                         placeholder="–"
                         value={l.value}
                         onChange={(e) => l.set(e.target.value.replace(/[^0-9.]/g, ''))}
-                        className="min-h-11 w-[5.25rem] rounded-xl bg-bg-surface px-2 text-center text-sm tabular-nums text-text-primary ring-1 ring-inset ring-border-control placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+                        className="min-h-11 w-[5.25rem] rounded-control bg-bg-surface px-2 text-center text-sm tabular-nums text-text-primary ring-1 ring-inset ring-border-control placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
                       />
                       <span className="w-[3.25rem] text-xs text-text-secondary">{l.unit}</span>
                     </label>

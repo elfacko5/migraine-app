@@ -602,7 +602,7 @@ export default function App() {
             )}
 
             {!ongoingAttack && !lastAttackEnd && (
-              <div className="rounded-xl border border-dashed border-bg-border p-10 text-center space-y-2">
+              <div className="rounded-inset border border-dashed border-bg-border p-10 text-center space-y-2">
                 {/* "when you're ready" is the dossier's §9.4 empty state: the
                     app doesn't chase, and a first entry shouldn't feel owed. */}
                 <p className="text-text-secondary text-sm">
@@ -611,7 +611,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setLogSheetOpen(true)}
-                  className="btn-primary rounded-xl px-6 py-2.5 text-sm font-medium transition-colors"
+                  className="btn-primary rounded-control px-6 py-2.5 text-sm font-medium transition-colors"
                 >
                   Start logging
                 </button>

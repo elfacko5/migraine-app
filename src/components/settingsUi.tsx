@@ -19,7 +19,7 @@ export function Chevron() {
 // group on it vanishes — there it is a card on a card.
 export function SettingsGroup({ children, raised = false }: { children: React.ReactNode; raised?: boolean }) {
   return (
-    <div className={`overflow-hidden rounded-2xl ${raised ? 'bg-bg-raised' : 'bg-bg-surface'} [&>*+*]:border-t [&>*+*]:border-bg-border`}>
+    <div className={`overflow-hidden rounded-group ${raised ? 'bg-bg-raised' : 'bg-bg-surface'} [&>*+*]:border-t [&>*+*]:border-bg-border`}>
       {children}
     </div>
   );
@@ -78,7 +78,7 @@ export function OptionTile({ selected, onSelect, className = '', style, compact 
       aria-checked={selected}
       onClick={onSelect}
       style={style}
-      className={`relative flex flex-col items-center justify-center rounded-[1.25rem] px-2 py-2 ring-inset transition-colors ${
+      className={`relative flex flex-col items-center justify-center rounded-card px-2 py-2 ring-inset transition-colors ${
         compact ? 'min-h-[5.5rem] gap-2 text-sm' : 'min-h-[7.5rem] gap-2.5 text-[1.125rem]'
       } ${
         selected ? 'font-semibold ring-2 ring-accent' : 'ring-1 ring-border-control'

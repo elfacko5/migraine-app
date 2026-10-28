@@ -105,7 +105,7 @@ export function DateTimeField({
   const timeMax = max && max.slice(0, 10) === datePart ? max.slice(11, 16) : undefined;
 
   const box = surface === 'raised' ? 'bg-bg-surface' : 'bg-bg-raised';
-  const boxCls = `relative flex min-w-0 items-center gap-2 rounded-lg border border-border-control ${box} px-3 py-2 text-left text-sm text-text-primary focus-within:ring-2 focus-within:ring-border-subtle focus-visible:ring-2 focus-visible:ring-border-subtle`;
+  const boxCls = `relative flex min-w-0 items-center gap-2 rounded-field border border-border-control ${box} px-3 py-2 text-left text-sm text-text-primary focus-within:ring-2 focus-within:ring-border-subtle focus-visible:ring-2 focus-visible:ring-border-subtle`;
   const inputCls = 'absolute inset-0 h-full w-full cursor-pointer opacity-0';
 
   const openNative = useCallback(async (mode: 'time' | 'datetime') => {

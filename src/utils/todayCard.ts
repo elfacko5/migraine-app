@@ -8,4 +8,4 @@
 // the same pass, so the two pages differ on purpose in the meantime (Sunny,
 // 2026-10-26). One constant rather than the classes spelled out per card,
 // because four cards spelling out a radius is how one of them drifts.
-export const TODAY_CARD = 'rounded-[1.25rem] bg-bg-surface p-4';
+export const TODAY_CARD = 'rounded-card bg-bg-surface p-4';

@@ -117,7 +117,7 @@ export function MedicationInput({
                 role="radio"
                 onClick={() => pick(med)}
                 aria-checked={selected?.name === med.name}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-chip px-3 py-2 text-sm font-medium transition-colors ${
                   selected?.name === med.name ? CHIP_ON : CHIP_OFF
                 }`}
               >
@@ -141,7 +141,7 @@ export function MedicationInput({
               placeholder="Medication name"
               value={value.name}
               onChange={(e) => onChange({ ...value, name: e.target.value })}
-              className="flex-1 min-w-0 rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 min-w-0 rounded-field bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
             />
             <input
               type="text"
@@ -149,7 +149,7 @@ export function MedicationInput({
               placeholder="Dose / strength"
               value={value.dose}
               onChange={(e) => onChange({ ...value, dose: e.target.value })}
-              className="w-32 rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-32 rounded-field bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -159,7 +159,7 @@ export function MedicationInput({
             <button
               type="button"
               onClick={() => { onChange({ name: '', dose: '' }); setCustomOpen(false); }}
-              className="btn-tertiary rounded-lg py-1.5 text-sm font-medium transition-colors"
+              className="btn-tertiary rounded-control-sm py-1.5 text-sm font-medium transition-colors"
             >
               Cancel
             </button>
@@ -169,7 +169,7 @@ export function MedicationInput({
         <button
           type="button"
           onClick={() => { onChange({ name: '', dose: '' }); setCustomOpen(true); }}
-          className="btn-tertiary rounded-lg py-2 text-sm font-medium transition-colors"
+          className="btn-tertiary rounded-control-sm py-2 text-sm font-medium transition-colors"
         >
           + Add a different medication
         </button>
@@ -189,7 +189,7 @@ export function MedicationInput({
                 role="radio"
                 aria-checked={units === n}
                 onClick={() => setUnits(n)}
-                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1 rounded-segment px-2.5 py-1 text-xs font-medium transition-colors ${
                   units === n ? CHIP_ON : CHIP_OFF
                 }`}
               >
@@ -276,7 +276,7 @@ function DoseTimeCard({ timing }: { timing: DoseTiming }) {
   }, [timing.mode]);
 
   return (
-    <div className="rounded-xl border border-bg-border bg-bg-raised p-4 space-y-3">
+    <div className="rounded-inset border border-bg-border bg-bg-raised p-4 space-y-3">
       <p id="dose-time-label" className="text-sm font-medium text-text-primary">When did you take it?</p>
       <div role="radiogroup" aria-labelledby="dose-time-label" className="flex flex-wrap gap-2">
         {options.map((m) => (
@@ -286,7 +286,7 @@ function DoseTimeCard({ timing }: { timing: DoseTiming }) {
             role="radio"
             aria-checked={mode === m}
             onClick={() => timing.onMode(m)}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-chip px-3 py-2 text-sm font-medium transition-colors ${
               mode === m ? CHIP_ON : CHIP_OFF
             }`}
           >

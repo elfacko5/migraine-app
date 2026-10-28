@@ -72,7 +72,7 @@ export function AttackCard({ attack, onClick, isOngoing, medications = [] }: Pro
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={`flex w-full flex-col gap-1.5 rounded-[1.25rem] bg-bg-surface px-4 py-3.5 text-left transition-colors hover:bg-bg-raised ${
+      className={`flex w-full flex-col gap-1.5 rounded-card bg-bg-surface px-4 py-3.5 text-left transition-colors hover:bg-bg-raised ${
         isOngoing ? 'ring-1 ring-inset ring-accent/40' : ''
       }`}
     >
@@ -93,7 +93,7 @@ export function AttackCard({ attack, onClick, isOngoing, medications = [] }: Pro
       {(outcomes.length > 0 || symptoms.length > 0) && (
         <span aria-hidden="true" className="flex min-h-[1.875rem] flex-wrap items-center gap-2">
           {outcomes.map((o) => (
-            <span key={o.name} className="inline-flex items-center gap-1 rounded-[0.625rem] bg-bg-base py-0.5 pl-0.5 pr-2 text-text-primary">
+            <span key={o.name} className="inline-flex items-center gap-1 rounded-badge bg-bg-base py-0.5 pl-0.5 pr-2 text-text-primary">
               <ClassBadge small>{classLetter(findMedication(medications, o.name)?.class) ?? '–'}</ClassBadge>
               <VerdictMark verdict={o.verdict} />
             </span>

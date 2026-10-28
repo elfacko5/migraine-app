@@ -78,11 +78,11 @@ export function SnapshotRow({ snap, dateLabel }: Props) {
           hairlines inside stay: those separate things *within* one reading. */}
       <div className="min-w-0 flex-1 pb-4">
         {noChange ? (
-          <div className="rounded-xl bg-bg-raised px-4 py-3">
+          <div className="rounded-inset bg-bg-raised px-4 py-3">
             <p className="text-sm text-text-secondary">No change</p>
           </div>
         ) : (
-        <div className="rounded-xl bg-bg-raised px-4 py-3">
+        <div className="rounded-inset bg-bg-raised px-4 py-3">
           {/* Pain areas: one wrapping line, each zone coloured by its own
               severity. This is the line the timeline exists to be scanned
               for, so nothing sits above it. */}

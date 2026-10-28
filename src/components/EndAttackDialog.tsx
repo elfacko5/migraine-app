@@ -83,7 +83,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
         // defaults to min-width:auto, so a native datetime-local input's own
         // intrinsic content width (wider than the dialog on some devices)
         // would push the whole dialog wider instead of fitting inside it.
-        className={`relative w-full min-w-0 max-w-sm rounded-2xl border border-bg-border bg-bg-surface p-5 transition-all duration-200 ${open ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+        className={`relative w-full min-w-0 max-w-sm rounded-sheet border border-bg-border bg-bg-surface p-5 transition-all duration-200 ${open ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
       >
         <h2 className="text-base font-medium text-text-primary">End this attack?</h2>
         <p className="mt-1.5 text-sm text-text-secondary leading-relaxed">
@@ -108,7 +108,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
                 role="radio"
                 aria-checked={mode === m}
                 onClick={() => setMode(m)}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === m ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'}`}
+                className={`inline-flex items-center gap-1.5 rounded-chip px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === m ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'}`}
               >
                 <RadioDot selected={mode === m} />
                 {label}
@@ -145,7 +145,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
           <button
             type="button"
             onClick={onCancel}
-            className="btn-secondary flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors"
+            className="btn-secondary flex-1 rounded-control py-2.5 text-sm font-medium transition-colors"
           >
             Cancel
           </button>
@@ -153,7 +153,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
             ref={confirmRef}
             type="button"
             onClick={confirm}
-            className="btn-primary flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors"
+            className="btn-primary flex-1 rounded-control py-2.5 text-sm font-medium transition-colors"
           >
             End attack
           </button>

@@ -20,7 +20,7 @@ interface Props {
 // in the same breath as closing the attack down.
 export function ImpactPrompt({ onAnswer, onDismiss }: Props) {
   return (
-    <div className="relative rounded-xl bg-bg-surface p-4">
+    <div className="relative rounded-inset bg-bg-surface p-4">
       <button
         type="button"
         onClick={onDismiss}

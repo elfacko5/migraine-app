@@ -65,7 +65,7 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
           padding around a 28px segment. `bg-bg-raised/15`, matching
           `SegmentedControl` — same shape, same fill, see the note there. */}
       <div className="flex justify-center">
-        <div className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-border-control bg-bg-raised/15 p-0.5">
+        <div className="inline-flex h-8 items-center gap-0.5 rounded-control-sm border border-border-control bg-bg-raised/15 p-0.5">
           {VIEWS.map((v) => {
             const isActive = v.id === activeViewId;
             const n = selectedCount(v);
@@ -80,7 +80,7 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
                 // two views of one step. No ring: the segment sits inside a
                 // bordered track that already draws the boundary, and a ring
                 // on top of it reads as a box in a box.
-                className={`flex h-7 items-center gap-1.5 rounded-md px-4 text-xs font-medium transition-colors ${
+                className={`flex h-7 items-center gap-1.5 rounded-segment px-4 text-xs font-medium transition-colors ${
                   isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
@@ -117,7 +117,7 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
 
       {/* Single severity slider — follows the focused area */}
       {active && (
-        <div className="rounded-xl border border-bg-border bg-bg-raised/30 px-4 py-3 space-y-2">
+        <div className="rounded-inset border border-bg-border bg-bg-raised/30 px-4 py-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-text-primary">{active}</span>
             <div className="flex items-center gap-2">

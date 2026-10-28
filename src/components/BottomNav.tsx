@@ -204,7 +204,7 @@ function FabMenu({ actions }: { actions: FabAction[] }) {
           role="menu"
           aria-label="Log or update an attack"
           onKeyDown={onMenuKey}
-          className="absolute bottom-[calc(100%+0.75rem)] left-1/2 w-max min-w-[13rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-2xl bg-bg-surface py-1 ring-1 ring-inset ring-border-control"
+          className="absolute bottom-[calc(100%+0.75rem)] left-1/2 w-max min-w-[13rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-sheet bg-bg-surface py-1 ring-1 ring-inset ring-border-control"
           // Chrome, like the bar under it: the menu grows with the text-size
           // setting, but only so far, so it can't outgrow a phone's width.
           style={{ fontSize: 'min(1rem, 20px)' }}

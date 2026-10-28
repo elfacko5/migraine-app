@@ -77,7 +77,7 @@ export function HistoryView({
         <button
           type="button"
           onClick={onOpenFilters}
-          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={`flex items-center gap-1.5 rounded-chip px-3 py-1.5 text-xs font-medium transition-colors ${
             count > 0
               ? 'bg-accent/15 text-accent-light ring-1 ring-accent/40'
               : 'bg-bg-raised text-text-secondary ring-1 ring-border-control hover:text-text-primary'
@@ -142,7 +142,7 @@ export function HistoryView({
             <button
               type="button"
               onClick={() => onFilters(DEFAULT_FILTERS)}
-              className="btn-secondary rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+              className="btn-secondary rounded-control px-4 py-2 text-sm font-medium transition-colors"
             >
               Clear filters
             </button>

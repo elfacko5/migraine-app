@@ -202,7 +202,7 @@ export function DisplayPanel({
             onChange={onSystemText}
           />
         </Group>
-        <div className="space-y-4 rounded-2xl bg-bg-surface py-4">
+        <div className="space-y-4 rounded-group bg-bg-surface py-4">
           {/* Moved above the picker (2026-09-23, Sunny's call) — it used to
               sit under the preview card, after the thing it explains had
               already been used. One line, so unlike the long Insights
@@ -219,7 +219,7 @@ export function DisplayPanel({
           {systemText ? (
             <p className="text-xs text-text-secondary">Following your iPhone's text size.</p>
           ) : (
-          <div className="flex rounded-xl overflow-hidden border border-border-control">
+          <div className="flex rounded-control overflow-hidden border border-border-control">
             {SCALES.map((s, i) => (
               <button
                 key={s}
@@ -243,7 +243,7 @@ export function DisplayPanel({
           )}
 
           {/* Live preview card — inherits root font size so it updates instantly */}
-          <div className="rounded-xl border border-bg-border/60 bg-bg-raised/40 p-4">
+          <div className="rounded-inset border border-bg-border/60 bg-bg-raised/40 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1 min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -278,7 +278,7 @@ export function DisplayPanel({
       <div className="space-y-4">
         <p className="text-sm font-medium text-text-primary">Screen brightness</p>
 
-        <div className="space-y-3 rounded-2xl bg-bg-surface py-4">
+        <div className="space-y-3 rounded-group bg-bg-surface py-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-text-primary">Overlay</span>
             <span className="text-sm font-medium text-text-secondary tabular-nums">
@@ -307,7 +307,7 @@ export function DisplayPanel({
               docs/viewport-architecture.md), this mirrors its exact recipe,
               `rgba(20,20,15,brightness)`, on a small swatch that lives inside
               the panel and updates on every drag. */}
-          <div className="relative overflow-hidden rounded-xl border border-bg-border/60 bg-bg-raised/40 p-4">
+          <div className="relative overflow-hidden rounded-inset border border-bg-border/60 bg-bg-raised/40 p-4">
             <p className="text-sm font-medium text-text-primary">Preview</p>
             <p className="text-xs text-text-secondary">How the dim looks during an attack.</p>
             <div
@@ -340,7 +340,7 @@ export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: Accoun
   return (
     <ProfileSubPage title="Account & sync" onClose={onClose}>
       {auth.enabled && (
-          <div className="rounded-xl border border-bg-border bg-bg-raised/40 p-4 space-y-3">
+          <div className="rounded-inset border border-bg-border bg-bg-raised/40 p-4 space-y-3">
             {auth.session ? (
               <>
                 <p className="text-sm text-text-primary">
@@ -351,7 +351,7 @@ export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: Accoun
                 <button
                   type="button"
                   onClick={() => auth.signOut()}
-                  className="btn-secondary w-full rounded-lg py-2.5 text-sm font-medium transition-colors"
+                  className="btn-secondary w-full rounded-control-sm py-2.5 text-sm font-medium transition-colors"
                 >
                   Sign out
                 </button>
@@ -420,7 +420,7 @@ function ReminderDiagnostics() {
           type="button"
           onClick={refresh}
           disabled={busy}
-          className="btn-secondary rounded-lg px-3 py-1.5 text-xs font-medium transition-colors active:opacity-60 disabled:opacity-40"
+          className="btn-secondary rounded-control-sm px-3 py-1.5 text-xs font-medium transition-colors active:opacity-60 disabled:opacity-40"
         >
           {busy ? 'Checking…' : 'Refresh'}
         </button>
@@ -493,19 +493,19 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
   return (
     <ProfileSubPage title="Data" onClose={onClose}>
 
-        <div className="rounded-xl border border-bg-border bg-bg-raised/40 p-4 space-y-3">
+        <div className="rounded-inset border border-bg-border bg-bg-raised/40 p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={exportData}
-              className="btn-secondary rounded-lg py-2.5 text-sm font-medium transition-colors"
+              className="btn-secondary rounded-control-sm py-2.5 text-sm font-medium transition-colors"
             >
               Export backup
             </button>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="btn-secondary rounded-lg py-2.5 text-sm font-medium transition-colors"
+              className="btn-secondary rounded-control-sm py-2.5 text-sm font-medium transition-colors"
             >
               Import backup
             </button>
@@ -644,12 +644,12 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="123456"
-            className="w-full rounded-lg bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+            className="w-full rounded-field bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
           />
           <button
             type="submit"
             disabled={verifying}
-            className="btn-secondary w-full rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+            className="btn-secondary w-full rounded-control-sm py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
           >
             {verifying ? 'Verifying…' : 'Verify code'}
           </button>
@@ -671,12 +671,12 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
-        className="w-full rounded-lg bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+        className="w-full rounded-field bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
       />
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="btn-primary w-full rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+        className="btn-primary w-full rounded-control-sm py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
       >
         {status === 'sending' ? 'Sending…' : 'Send sign-in link'}
       </button>
