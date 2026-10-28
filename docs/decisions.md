@@ -1318,6 +1318,14 @@ device end to end.
 
 **P2 — known gaps with decisions already attached**
 
+- **The medication step's Qty row overflows in attack mode** (found
+  2026-10-29, in the phase 3 baseline screenshots). Attack mode's 20px body
+  floor makes each "1 tablet / 2 tablets / 3 tablets" pill wrap to two lines,
+  and the three pills plus the "Qty:" label no longer fit 390px: "3 tablets"
+  runs off the right edge (`attack-md__42-log-step3` in `.phase3-screens/`).
+  The row is a non-wrapping `flex` in `MedicationInput`. Not fixed in phase 3,
+  which must not move pixels; the likely fix is `flex-wrap` on the row.
+
 3. ~~**The wizard's step instructions are written denser than §9.5 asks.**~~
    **Done 2026-08-19** — all 14 rewritten across `LogForm` and
    `QuickUpdateForm`. Original scope and reasoning:
