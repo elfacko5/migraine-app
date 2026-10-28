@@ -171,7 +171,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="flex h-11 w-11 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-bg-raised"
+          className="flex size-target items-center justify-center rounded-full text-text-primary transition-colors hover:bg-bg-raised"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-6 w-6" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12" />
@@ -185,7 +185,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
             type="button"
             onClick={() => setConfirmDelete(true)}
             aria-label="Delete medication"
-            className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-severity-high/15 hover:text-severity-high"
+            className="ml-auto flex size-target items-center justify-center rounded-full text-text-primary transition-colors hover:bg-severity-high/15 hover:text-severity-high"
           >
             <BinIcon className="h-6 w-6" />
           </button>
@@ -259,7 +259,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
                   aria-label="Why the type matters"
                   aria-expanded={typeInfo}
                   onClick={() => setTypeInfo((v) => !v)}
-                  className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-medium text-text-secondary ring-1 ring-inset ring-border-control transition-colors hover:text-text-primary"
+                  className="flex size-target items-center justify-center rounded-full text-sm font-medium text-text-secondary ring-1 ring-inset ring-border-control transition-colors hover:text-text-primary"
                 >
                   i
                 </button>
@@ -325,7 +325,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
                         placeholder="–"
                         value={l.value}
                         onChange={(e) => l.set(e.target.value.replace(/[^0-9.]/g, ''))}
-                        className="min-h-11 w-[5.25rem] rounded-control bg-bg-surface px-2 text-center text-sm tabular-nums text-text-primary ring-1 ring-inset ring-border-control placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+                        className="min-h-target w-[5.25rem] rounded-control bg-bg-surface px-2 text-center text-sm tabular-nums text-text-primary ring-1 ring-inset ring-border-control placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
                       />
                       <span className="w-[3.25rem] text-xs text-text-secondary">{l.unit}</span>
                     </label>

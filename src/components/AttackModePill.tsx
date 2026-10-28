@@ -41,7 +41,7 @@ export function AttackModePill({ active, onToggle }: Props) {
       // that changes with the state makes the state be announced twice.
       aria-label="Attack mode"
       title="Attack mode"
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 transition-[color,background-color,box-shadow] ${
+      className={`flex size-target shrink-0 items-center justify-center rounded-full ring-1 transition-[color,background-color,box-shadow] ${
         active
           ? 'bg-accent/20 text-accent-light ring-accent/40'
           : 'bg-bg-surface text-text-primary ring-bg-border hover:bg-bg-raised'

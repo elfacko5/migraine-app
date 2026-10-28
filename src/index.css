@@ -85,6 +85,15 @@
   --radius-field-lg:   1rem;     /* a field at 16px: the v3 medication editor */
   --radius-badge-sm:   0.5rem;   /* a badge at 8px: the small letter badge */
 
+  /* ── Control-size roles (phase 3) ─────────────────────
+     `size-target`, `min-h-target`, `size-compact`. Written on the spacing
+     scale so a theme that rescales --spacing rescales these too. In rem, so
+     they follow the text-size setting: 44px at the default 16px root, but
+     38.5px at the smallest (14px) and 66px at 150%. `.tap-44` below is the
+     fixed-pixel hit area and deliberately does not use this. */
+  --spacing-target:  calc(var(--spacing) * 11);  /* 44px touch target */
+  --spacing-compact: calc(var(--spacing) * 9);   /* 36px compact control */
+
   /* ── Color tokens — warm dark ────────────────────────
      Warm charcoal rather than the old blue-leaning slate: saturated blue is
      the worst hue for photophobia, and the previous palette had a blue cast

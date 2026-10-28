@@ -130,7 +130,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           type="button"
           onClick={onClose}
           aria-label="Back"
-          className="flex h-11 w-11 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-bg-raised"
+          className="flex size-target items-center justify-center rounded-full text-text-primary transition-colors hover:bg-bg-raised"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden="true">
             <path d="m15 18-6-6 6-6" />
@@ -143,7 +143,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           type="button"
           onClick={() => setConfirmDelete(true)}
           aria-label="Delete attack"
-          className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-severity-high/15 hover:text-severity-high"
+          className="ml-auto flex size-target items-center justify-center rounded-full text-text-primary transition-colors hover:bg-severity-high/15 hover:text-severity-high"
         >
           <BinIcon className="h-6 w-6" />
         </button>
@@ -252,7 +252,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           <button
             type="button"
             onClick={() => setAllUpdates((v) => !v)}
-            className="min-h-11 px-1 text-sm font-medium text-accent-light"
+            className="min-h-target px-1 text-sm font-medium text-accent-light"
           >
             {allUpdates ? 'Show fewer' : `Show all ${updates.length} updates`}
           </button>
