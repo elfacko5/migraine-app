@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lidd v3.1 artboards</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&amp;family=Inter:wght@400;600&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+
+.root{--ff:Lexend,Inter,sans-serif;width:390px;height:844px;position:relative;overflow:hidden;background:var(--bg);color:var(--tx);font-family:var(--ff);line-height:1.4}
+.t-light{--bg:#F5F2EC;--sf:#ECE7DD;--sf2:#E2DCD0;--tx:#2A2724;--mu:#6B655C;--ac:#6E8B74;--acs:#56705C;--acx:#F5F2EC;--acsoft:#DCE4DA;--acline:#6E8B74;--bd:#D8D2C6;--warn:#B07A3C;--warnbg:#EFE4D3;--danger:#A65A52;--tab:#EFEBE4;--dim:rgba(42,39,36,.45);--sheet:#F5F2EC;--ill1:#C9A98A;--ill2:#A9BFAD}
+.t-dark{--bg:#1B1A18;--sf:#262421;--sf2:#302D29;--tx:#E4DFD6;--mu:#A39D92;--ac:#7FA187;--acs:#7FA187;--acx:#1B1A18;--acsoft:#2E3A31;--acline:#7FA187;--bd:#3A3733;--warn:#C29A62;--warnbg:#2E2820;--danger:#C98B82;--tab:#211F1C;--dim:rgba(0,0,0,.55);--sheet:#232120;--ill1:#8C735E;--ill2:#5E7363}
+.f-atk{--ff:'Atkinson Hyperlegible',Lexend,sans-serif}
+.am{--bg:#14140F;--sf:#1E1E17;--sf2:#26261E;--tx:#C9C4B8;--mu:#9A958A;--ac:#7FA187;--acs:#2B3A2E;--acx:#D2DCCF;--acsoft:#25301F;--acline:#6F8F76;--bd:#2E2E25;--sheet:#1A1A14;background:#14140F;color:#C9C4B8}
+.root button,.root input,.root textarea{font-family:inherit;line-height:1.25}
+.scr{position:absolute;left:0;right:0;top:0;bottom:0;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;padding:56px 16px 140px;background:var(--bg)}
+.scr.tb{bottom:88px;padding-bottom:28px}
+.col{display:flex;flex-direction:column;gap:14px}
+.hdr{display:flex;align-items:center;justify-content:space-between;min-height:44px;margin:-8px -12px 6px}
+.ht{margin:0;font-size:17px;font-weight:600}
+.icb{width:44px;height:44px;border-radius:22px;border:0;background:transparent;color:var(--tx);display:flex;align-items:center;justify-content:center;flex:none}
+.big{margin:0;font-size:30px;font-weight:600;line-height:1.15}
+.h2{margin:0;font-size:19px;font-weight:600}
+.sub{margin:0;font-size:14px;color:var(--mu)}
+.lbl{margin:0;font-size:14px;font-weight:500;color:var(--mu)}
+.card{background:var(--sf);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tiles.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tiles.four{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tile{position:relative;min-height:86px;border-radius:20px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:15px;padding:8px 4px;text-align:center}
+.tile svg{width:28px;height:28px;flex:none}
+.tiles.two .tile{min-height:120px;font-size:18px;gap:10px}
+.tiles.two .tile svg{width:36px;height:36px}
+.tiles.four .tile{min-height:76px;font-size:14px}
+.tiles.four .tile svg{width:24px;height:24px}
+.tile.on{background:var(--acsoft);border:2px solid var(--acline);font-weight:600}
+.tile.multi.on::after{content:"✓";position:absolute;top:6px;right:10px;font-size:14px;font-weight:700;color:var(--acs)}
+.tile.single::before{content:"";position:absolute;top:9px;right:9px;width:14px;height:14px;border-radius:7px;border:2px solid var(--mu);box-sizing:border-box}
+.tile.single.on::before{border:5px solid var(--acs)}
+.mb{width:36px;height:36px;border-radius:10px;background:var(--bg);border:1.5px solid var(--acline);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+.segs{display:flex;gap:4px;padding:4px;background:var(--sf);border-radius:14px}
+.seg{flex:1;min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--tx);font-size:15px}
+.seg.on{background:var(--acsoft);font-weight:600;box-shadow:inset 0 0 0 1.5px var(--acline)}
+.bp{flex:1;width:100%;min-height:56px;border-radius:16px;border:0;background:var(--acs);color:var(--acx);font-size:17px;font-weight:600;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px}
+.bp.off{opacity:.45}
+.bs{flex:1;width:100%;min-height:56px;border-radius:16px;border:1px solid var(--bd);background:transparent;color:var(--tx);font-size:17px;font-weight:500}
+.bd{flex:1;width:100%;min-height:56px;border-radius:16px;border:1px solid var(--danger);background:transparent;color:var(--danger);font-size:17px;font-weight:500}
+.bt{min-height:44px;border:0;background:none;color:var(--acs);font-size:16px;font-weight:500;padding:0 6px}
+.bar{position:absolute;left:0;right:0;bottom:0;padding:10px 16px 30px;background:var(--bg);display:flex;flex-direction:column;gap:6px;z-index:3}
+.why{margin:0;text-align:center;font-size:14px;color:var(--mu)}
+.grp{background:var(--sf);border-radius:16px;overflow:hidden}
+.r{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 14px;box-sizing:border-box;border:0;border-top:1px solid var(--bd);background:none;color:var(--tx);text-align:left;font-size:16px}
+.r:first-child{border-top:0}
+.r .tx{flex:1;min-width:0}
+.r .v{font-size:14px;color:var(--mu)}
+.tg{position:relative;width:51px;height:31px;border-radius:16px;border:0;background:var(--sf2);box-shadow:inset 0 0 0 1px var(--bd);flex:none;padding:0}
+.tg .k{position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:14px;background:#F5F2EC;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.tg.on{background:var(--acs)}
+.tg.on .k{left:22px}
+.scale{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.pn{height:52px;border-radius:14px;border:1px solid var(--bd);color:var(--tx);font-size:19px;font-weight:600}
+.pn.on{outline:3px solid var(--tx);outline-offset:1px}
+.stp{width:52px;height:52px;border-radius:26px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:22px}
+.track{display:block;height:8px;border-radius:4px;background:var(--sf2);overflow:hidden;position:relative}
+.fill{display:block;height:8px;border-radius:4px;background:var(--ac)}
+.fill.hi{background:var(--warn)}
+.tabs{position:absolute;left:0;right:0;bottom:0;height:88px;background:var(--tab);border-top:1px solid var(--bd);display:flex;align-items:flex-start;padding:6px 8px 0;box-sizing:border-box;z-index:4}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;color:var(--mu);font-size:14px;min-height:50px;justify-content:center}
+.tab.on{color:var(--acs);font-weight:600}
+.plus{width:58px;height:58px;border-radius:29px;border:0;background:var(--acs);color:var(--acx);margin:-4px 6px 0;display:flex;align-items:center;justify-content:center;flex:none}
+.dim{position:absolute;left:0;top:0;right:0;bottom:0;background:var(--dim);z-index:5;border:0;width:100%;padding:0}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--sheet);border-radius:28px 28px 0 0;padding:10px 16px 30px;display:flex;flex-direction:column;gap:12px;z-index:6;box-sizing:border-box}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--bd);align-self:center;flex:none}
+.pill{min-height:44px;padding:0 14px;border-radius:22px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:15px;font-weight:500;display:flex;align-items:center;gap:8px}
+.dots{display:flex;gap:8px;justify-content:center}
+.dots span{width:8px;height:8px;border-radius:4px;background:var(--sf2)}
+.dots span.on{background:var(--tx);width:22px}
+.warn{display:flex;gap:10px;align-items:center;background:var(--warnbg);border-radius:14px;padding:12px;color:var(--tx);font-size:15px}
+.badge{width:44px;height:44px;border-radius:12px;background:var(--sf2);color:var(--tx);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;flex:none}
+.head{position:relative;height:262px;margin:0 -4px}
+.zh{position:absolute;border:0;background:transparent;color:var(--tx);font-size:19px;font-weight:700;padding:0;border-radius:14px}
+.zh.act{box-shadow:0 0 0 3px var(--tx)}
+.flag{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid var(--warn);background:transparent;color:var(--tx);font-size:16px;font-weight:500}
+.wk{display:flex;justify-content:space-between}
+.wd{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:14px;color:var(--mu);width:40px}
+.wd i{display:block;width:30px;height:30px;border-radius:15px;border:1.5px solid var(--bd);box-sizing:border-box;position:relative}
+.wd i.ck,.wd i.mg{background:var(--ac);border-color:var(--ac)}
+.wd i.mg::after{content:"";position:absolute;left:9px;top:9px;width:9px;height:9px;border-radius:2px;background:var(--bg);transform:rotate(45deg)}
+.wd i.td{border:2px solid var(--tx)}
+.info{width:44px;height:44px;border-radius:22px;border:1px solid var(--bd);background:transparent;color:var(--mu);font-size:16px;font-weight:600;flex:none}
+.amtop{display:flex;align-items:center;justify-content:space-between}
+.amx{min-height:52px;padding:0 20px;border-radius:26px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:18px;font-weight:500}
+.amp{width:100%;min-height:84px;border-radius:24px;border:0;background:var(--acs);color:var(--acx);font-size:24px;font-weight:600}
+.ams{width:100%;min-height:68px;border-radius:24px;border:1px solid var(--bd);background:transparent;color:var(--tx);font-size:22px;font-weight:500}
+.amg{height:72px;border-radius:20px;border:1px solid var(--bd);color:var(--tx);font-size:26px;font-weight:600}
+.amg.on{outline:3px solid var(--tx);outline-offset:1px}
+.toast{position:absolute;left:16px;right:16px;top:56px;z-index:7;background:var(--tx);color:var(--bg);border-radius:16px;padding:6px 6px 6px 16px;font-size:16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.toast button{min-height:44px;padding:0 14px;border:0;border-radius:12px;background:transparent;color:var(--bg);font-size:16px;font-weight:600;text-decoration:underline}
+.ring{width:64px;height:64px;flex:none}
+.mini{display:flex;gap:6px;align-items:center;color:var(--mu)}
+.mini svg{width:22px;height:22px}
+.dotrow{display:flex;gap:6px}
+.dotrow i{width:18px;height:18px;border-radius:9px;border:2px solid var(--mu);box-sizing:border-box;display:block}
+.dotrow i.y{background:var(--ac);border-color:var(--ac)}
+</style>
+
+<style>
+:root{--pbg:#EDE8DF;--ptx:#2A2724;--pmu:#6B655C;--pbd:#D8D2C6;--pac:#56705C}
+@media (prefers-color-scheme: dark){:root{--pbg:#151412;--ptx:#E4DFD6;--pmu:#A39D92;--pbd:#3A3733;--pac:#7FA187}}
+html,body{margin:0;background:var(--pbg);color:var(--ptx);font-family:Lexend,Inter,sans-serif}
+.page{max-width:1720px;margin:0 auto;padding:32px 16px 80px}
+.page>h1{margin:0 0 6px;font-size:30px;font-weight:600}
+.intro{margin:0 0 18px;color:var(--pmu);max-width:760px;line-height:1.5}
+nav.ix{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 28px}
+nav.ix a{color:var(--ptx);text-decoration:none;border:1px solid var(--pbd);border-radius:18px;padding:6px 12px;font-size:14px}
+.grid{display:flex;flex-wrap:wrap;gap:40px 32px}
+.board{width:390px;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.board header{min-height:150px}
+.board h2{margin:2px 0 4px;font-size:19px;font-weight:600}
+.bid{margin:0;font-size:13px;color:var(--pmu)}
+.bid code{font-size:13px}
+.fx{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--pac)}
+.look{margin:0;font-size:14px;color:var(--pmu);line-height:1.45}
+.frame{width:390px;height:844px;border-radius:40px;overflow:hidden;box-shadow:0 0 0 1px var(--pbd),0 10px 30px rgba(0,0,0,.12);position:relative}
+#prototype .frame{box-shadow:0 0 0 3px var(--pac),0 10px 30px rgba(0,0,0,.14)}
+@media (max-width:440px){.board{width:100%}.frame{zoom:.88}}
+</style>
+</head>
+<body>
+<div class="page">
+<h1>Lidd v3.1 — artboards after the heuristic review</h1>
+<p class="intro">Every frame is a live, tappable copy of the v3.1 prototype, opened at a different starting screen ("preset"). The first one is the full prototype. Anchors (#id) match the summary file <code>lidd-v3.1-review-summary.md</code>.</p>
+<nav class="ix" aria-label="Artboards"><a href="#prototype">Prototype</a><a href="#today-warn">Today</a><a href="#add-sheet">Log sheet</a><a href="#same">Like last time</a><a href="#where">Where does it hurt</a><a href="#where-list">Where</a><a href="#worse">Worse when you move</a><a href="#meds">Taken anything</a><a href="#redflag">Feels different from usual?</a><a href="#attack">Today</a><a href="#attack-mode">Attack mode</a><a href="#checkin">2-hour check-in</a><a href="#details">Details</a><a href="#end">End attack</a><a href="#logs">Logs</a><a href="#detail">Attack detail</a><a href="#delete">Delete confirm</a><a href="#insights">Insights</a><a href="#states">Empty, error &amp; permission states</a><a href="#display">Display &amp; attack mode settings</a></nav>
+<div class="grid">
+<section class="board" id="prototype">
+<header><p class="bid">#prototype · preset <code>onb</code></p><h2>Full prototype — start here</h2><p class="fx">All fixes</p><p class="look">Tap through onboarding → Today → + → Log like last time → confirm → Undo. Settings → Restart prototype resets it.</p></header>
+<div class="frame" data-preset="onb"></div>
+</section><section class="board" id="today-warn">
+<header><p class="bid">#today-warn · preset <code>todayWarn</code></p><h2>Today · overuse warning</h2><p class="fx">Fix 7</p><p class="look">Warning card shows automatically at 8 of 10 triptan days; T/C letter badges on the med-day bars; checked-in days and migraine days use two different shapes.</p></header>
+<div class="frame" data-preset="todayWarn"></div>
+</section><section class="board" id="add-sheet">
+<header><p class="bid">#add-sheet · preset <code>addSheet</code></p><h2>Log sheet</h2><p class="fx">Fix 2 · copy</p><p class="look">&#x27;Log like last time&#x27; now says &#x27;you&#x27;ll confirm first&#x27;. Copy: &#x27;Something&#x27;s different&#x27;, &#x27;Log an earlier attack&#x27;.</p></header>
+<div class="frame" data-preset="addSheet"></div>
+</section><section class="board" id="same">
+<header><p class="bid">#same · preset <code>same</code></p><h2>Like last time · confirm</h2><p class="fx">Fix 2, Fix 5</p><p class="look">Confirm step: head + areas, 0–10 pain stepper, &#x27;Taken Sumatriptan yet?&#x27;. Start stays disabled with a reason until answered.</p></header>
+<div class="frame" data-preset="same"></div>
+</section><section class="board" id="where">
+<header><p class="bid">#where · preset <code>where</code></p><h2>Where does it hurt · painted head</h2><p class="fx">Fix 1, 3, 4, 5</p><p class="look">Each area is filled with a shade matching its pain, number on top, &#x27;YOUR RIGHT / YOUR LEFT&#x27;, a 0–10 grid for the active area, &#x27;Feels different from usual?&#x27; as a visible button, Next shows the reason when disabled.</p></header>
+<div class="frame" data-preset="where"></div>
+</section><section class="board" id="where-list">
+<header><p class="bid">#where-list · preset <code>whereList</code></p><h2>Where · list view</h2><p class="fx">Fix 4</p><p class="look">Head | List toggle: a plain list of the 10 areas for large text, VoiceOver users or anyone who finds the map fiddly.</p></header>
+<div class="frame" data-preset="whereList"></div>
+</section><section class="board" id="worse">
+<header><p class="bid">#worse · preset <code>worse</code></p><h2>Worse when you move · single choice</h2><p class="fx">Fix 3, Fix 6</p><p class="look">Radio-dot tiles (single choice) vs ✓ tiles (multi choice). No auto-advance; the button reads Skip until something is picked.</p></header>
+<div class="frame" data-preset="worse"></div>
+</section><section class="board" id="meds">
+<header><p class="bid">#meds · preset <code>meds</code></p><h2>Taken anything · letter badges</h2><p class="fx">Fix 6</p><p class="look">Medication tiles carry class badges (T/C/–); dose stepper; 24-hour limit warning at 3 tablets. Start time: &#x27;Woke up&#x27; copy.</p></header>
+<div class="frame" data-preset="meds"></div>
+</section><section class="board" id="redflag">
+<header><p class="bid">#redflag · preset <code>redflag</code></p><h2>Feels different from usual? · red-flag sheet</h2><p class="fx">Fix 1</p><p class="look">Plain-language SNOOP items; picking any shows a calm &#x27;check in with a doctor&#x27; message and Call 112.</p></header>
+<div class="frame" data-preset="redflag"></div>
+</section><section class="board" id="attack">
+<header><p class="bid">#attack · preset <code>attack</code></p><h2>Today · attack in progress</h2><p class="fx">Fix 5, 7</p><p class="look">2-hour check-in card, 0–10 pain stepper, timeline. (Not on the canvas; included for context.)</p></header>
+<div class="frame" data-preset="attack"></div>
+</section><section class="board" id="attack-mode">
+<header><p class="bid">#attack-mode · preset <code>attackMode</code></p><h2>Attack mode · labelled</h2><p class="fx">Fix 1</p><p class="look">&#x27;Attack mode&#x27; label, &#x27;Update pain&#x27; / &#x27;End attack&#x27; instead of bare &#x27;Pain&#x27; / &#x27;End&#x27;. Attack-mode tokens #14140F / #C9C4B8.</p></header>
+<div class="frame" data-preset="attackMode"></div>
+</section><section class="board" id="checkin">
+<header><p class="bid">#checkin · preset <code>checkin</code></p><h2>2-hour check-in</h2><p class="fx">Fix 5, Fix 7</p><p class="look">Same 0–10 scale; second question &#x27;Is the light sensitivity better?&#x27; for the most bothersome symptom (2-hour MBS endpoint).</p></header>
+<div class="frame" data-preset="checkin"></div>
+</section><section class="board" id="details">
+<header><p class="bid">#details · preset <code>details</code></p><h2>Details · aura</h2><p class="fx">Copy</p><p class="look">Aura types &#x27;Visual / Tingling / Speech&#x27;; duration + &#x27;headache within an hour&#x27; (ICHD-3 1.2). (Not on the canvas; included for context.)</p></header>
+<div class="frame" data-preset="details"></div>
+</section><section class="board" id="end">
+<header><p class="bid">#end · preset <code>end</code></p><h2>End attack · how do you feel</h2><p class="fx">Copy</p><p class="look">After-phase tiles (Tired, Foggy, Light-sensitive, Back to normal). (Not on the canvas; included for context.)</p></header>
+<div class="frame" data-preset="end"></div>
+</section><section class="board" id="logs">
+<header><p class="bid">#logs · preset <code>logs</code></p><h2>Logs · grouped by date</h2><p class="fx">Fix 8</p><p class="look">Date headers, consistent &#x27;time · duration&#x27; titles, peak-pain badge + mini head. Merge banner → merge screen with Undo.</p></header>
+<div class="frame" data-preset="logs"></div>
+</section><section class="board" id="detail">
+<header><p class="bid">#detail · preset <code>detail</code></p><h2>Attack detail · edit / delete</h2><p class="fx">Fix 8</p><p class="look">Edit (reopens the head map) and Delete.</p></header>
+<div class="frame" data-preset="detail"></div>
+</section><section class="board" id="delete">
+<header><p class="bid">#delete · preset <code>delete</code></p><h2>Delete confirm</h2><p class="fx">Fix 8</p><p class="look">Confirm sheet; after deleting, an Undo toast appears.</p></header>
+<div class="frame" data-preset="delete"></div>
+</section><section class="board" id="insights">
+<header><p class="bid">#insights · preset <code>insights</code></p><h2>Insights · worst part row</h2><p class="fx">Fix 7 · copy</p><p class="look">Overuse card; 15-day chronic line; &#x27;Worst part better&#x27; row next to &#x27;Pain-free&#x27;; dots + legend, not colour alone; &#x27;Appear after about 30 check-ins&#x27;.</p></header>
+<div class="frame" data-preset="insights"></div>
+</section><section class="board" id="states">
+<header><p class="bid">#states · preset <code>states</code></p><h2>Empty, error &amp; permission states</h2><p class="fx">Fix 8</p><p class="look">Empty Logs, save failed + Retry, Apple Health permission off, not enough data — copy from dossier §9.4.</p></header>
+<div class="frame" data-preset="states"></div>
+</section><section class="board" id="display">
+<header><p class="bid">#display · preset <code>display</code></p><h2>Display &amp; attack mode settings</h2><p class="fx">Fix 6</p><p class="look">Theme and font as radio tiles; auto attack mode; follow iPhone text size. (Not on the canvas; included for context.)</p></header>
+<div class="frame" data-preset="display"></div>
+</section>
+</div>
+</div>
+<template id="tpl">
+<div class="root {{ v.themeCls }} {{ v.fontCls }}">
+
+<!-- ============ ONBOARDING ============ -->
+<sc-if value="{{ is.onb1 }}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="padding-top: 0">
+<svg width="390" height="330" viewBox="0 0 390 330" aria-hidden="true" style="display: block; margin: 0 -16px">
+<circle cx="240" cy="140" r="80" fill="var(--ill1)" fill-opacity="0.25"></circle>
+<circle cx="240" cy="140" r="48" fill="var(--ill1)" fill-opacity="0.85"></circle>
+<path d="M300 60c40-14 72 14 68 54-4 34-34 44-58 30-20-14-34-68-10-84z" fill="var(--ill2)"></path>
+<path d="M90 330c22-84 130-130 300-114v114z" fill="var(--ill1)" fill-opacity="0.5"></path>
+<path d="M40 290c34-48 80-104 160-150" stroke="var(--ac)" stroke-width="1.5" fill="none"></path>
+<ellipse cx="84" cy="236" rx="13" ry="24" transform="rotate(35 84 236)" fill="var(--ill2)"></ellipse>
+</svg>
+<div style="padding: 10px 8px 0" class="col"><p class="big" style="font-size: 32px">A calm diary for your migraines</p><p class="sub" style="font-size: 16px">Log in a few taps. See your own patterns.</p></div>
+</div>
+<div class="bar"><button class="bp" onClick="{{ go.onb2 }}">Get started</button><button class="bt" style="color: var(--tx)" onClick="{{ go.today }}">Skip setup</button></div>
+</sc-if>
+
+<sc-if value="{{ is.onb2 }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.onb1 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 1 of 3"><span class="on"></span><span></span><span></span></div><button class="bt" style="color: var(--tx)" onClick="{{ go.onb3 }}">Skip</button></div>
+<p class="big">What do you take for an attack?</p>
+<div class="tiles"><sc-for list="{{ sets.onbMeds }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><span class="mb">{{ it.badge }}</span>{{ it.l }}</button></sc-for></div>
+<p class="sub">T triptan · C combination · P painkiller · G gepant</p>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ go.onb3 }}">Next</button></div>
+</sc-if>
+
+<sc-if value="{{ is.onb3 }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.onb2 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 2 of 3"><span></span><span class="on"></span><span></span></div><button class="bt" style="color: var(--tx)" onClick="{{ go.onb4 }}">Skip</button></div>
+<p class="big">What usually comes with it?</p>
+<div class="tiles"><sc-for list="{{ sets.onbSym }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ go.onb4 }}">Next</button></div>
+</sc-if>
+
+<sc-if value="{{ is.onb4 }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.onb3 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 3 of 3"><span></span><span></span><span class="on"></span></div><span style="width: 44px"></span></div>
+<p class="big">A few helpers</p>
+<div class="card" style="flex-direction: row; align-items: center; gap: 14px; background: var(--am-preview, #1E1E17); color: #C9C4B8">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9A958A" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+<span style="flex: 1"><span style="display: block; font-size: 17px; font-weight: 600">Attack mode</span><span style="display: block; font-size: 14px; color: #9A958A">Dimmer, bigger, only the essentials</span></span>
+<button class="tg {{ c.amAuto }}" role="switch" aria-checked="{{ p.amAuto }}" aria-label="Switch on attack mode when I log" onClick="{{ t.amAuto }}"><span class="k"></span></button>
+</div>
+<div class="grp">
+<div class="r"><span class="tx">Read sleep from Apple Health</span><button class="tg {{ c.oHealth }}" role="switch" aria-checked="{{ p.oHealth }}" aria-label="Read sleep from Apple Health" onClick="{{ t.oHealth }}"><span class="k"></span></button></div>
+<div class="r"><span class="tx">2-hour check-in after a dose</span><button class="tg {{ c.oNotif }}" role="switch" aria-checked="{{ p.oNotif }}" aria-label="2-hour check-in" onClick="{{ t.oNotif }}"><span class="k"></span></button></div>
+<div class="r"><span class="tx">Track my cycle</span><button class="tg {{ c.onbCycle }}" role="switch" aria-checked="{{ p.onbCycle }}" aria-label="Track my cycle" onClick="{{ t.onbCycle }}"><span class="k"></span></button></div>
+</div>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ go.today }}">Done</button></div>
+</sc-if>
+
+<!-- ============ TODAY ============ -->
+<sc-if value="{{ is.todayNormal }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb" style="padding-top: 0"><div class="col" style="gap: 14px">
+<div style="position: relative; height: 176px; margin: 0 -16px">
+<svg width="390" height="176" viewBox="0 0 390 176" aria-hidden="true" style="position: absolute; inset: 0">
+<circle cx="306" cy="92" r="46" fill="var(--ill1)" fill-opacity="0.22"></circle>
+<circle cx="306" cy="92" r="26" fill="var(--ill1)" fill-opacity="0.85"></circle>
+<path d="M342 44c24-7 44 9 40 32-3 20-22 25-34 16-12-9-20-40-6-48z" fill="var(--ill2)"></path>
+<path d="M214 176c12-40 72-64 176-56v56z" fill="var(--ill1)" fill-opacity="0.45"></path>
+</svg>
+<div style="position: absolute; left: 16px; top: 108px"><p class="lbl" style="font-size: 16px">Good afternoon</p><p class="big" style="font-size: 26px">{{ v.checkins }} days checked in</p></div>
+<button class="pill" style="position: absolute; left: 16px; top: 54px; z-index: 2" aria-pressed="false" onClick="{{ a.amodeToggle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>Attack mode</button>
+</div>
+<div class="card" style="gap: 12px">
+<div class="wk" role="img" aria-label="This week so far: checked in Monday, Tuesday, Thursday and Saturday, migraine on Wednesday"><sc-for list="{{ week }}" as="d" hint-placeholder-count="7"><span class="wd"><i class="{{ d.cls }}"></i>{{ d.l }}</span></sc-for></div>
+<div class="mini" style="justify-content: center; gap: 16px; font-size: 14px"><span style="display: flex; align-items: center; gap: 6px"><i style="width: 12px; height: 12px; border-radius: 6px; background: var(--ac); display: block"></i>Checked in</span><span style="display: flex; align-items: center; gap: 6px"><i style="width: 9px; height: 9px; background: var(--ac); transform: rotate(45deg); display: block"></i>Migraine</span></div>
+</div>
+<sc-if value="{{ is.overuse }}" hint-placeholder-val="{{ false }}">
+<div class="warn" role="status" style="align-items: flex-start"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span><b>{{ v.triptanDays }} of 10 triptan days this month.</b> Frequent use can sometimes lead to more headaches. Maybe worth a chat with your doctor.</span></div>
+</sc-if>
+<sc-if value="{{ is.postdromeCard }}" hint-placeholder-val="{{ false }}">
+<div class="card"><p class="h2">How do you feel now?</p><div class="tiles four"><sc-for list="{{ sets.post }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div></div>
+</sc-if>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<button class="card" style="border: 0; color: inherit; font: inherit; text-align: left; gap: 2px" onClick="{{ go.insights }}"><span style="font-size: 34px; font-weight: 600; line-height: 1.1">{{ v.headacheDays }}</span><span class="sub">headache days · Oct</span></button>
+<button class="card" style="border: 0; color: inherit; font: inherit; text-align: left; gap: 2px" onClick="{{ go.insights }}"><span style="font-size: 34px; font-weight: 600; line-height: 1.1">{{ v.migraineDays }}</span><span class="sub">migraine days · Oct</span></button>
+</div>
+<button class="card" style="border: 0; color: inherit; font: inherit; text-align: left; gap: 10px" onClick="{{ go.insights }}">
+<span style="display: flex; align-items: center; gap: 10px"><span class="mb" style="width: 30px; height: 30px; font-size: 14px">T</span><span style="flex: 1">Triptan days</span><span class="sub">{{ v.triptanDays }} of 10</span></span>
+<span class="track"><span class="fill {{ v.triptanHi }}" style="width: {{ v.triptanPct }}"></span></span>
+<span style="display: flex; align-items: center; gap: 10px"><span class="mb" style="width: 30px; height: 30px; font-size: 14px">C</span><span style="flex: 1">Combination days</span><span class="sub">{{ v.comboDays }} of 10</span></span>
+<span class="track"><span class="fill" style="width: {{ v.comboPct }}"></span></span>
+</button>
+<div class="card">
+<p class="h2">Anything today?</p>
+<div class="tiles four"><sc-for list="{{ sets.daily }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<sc-if value="{{ is.earlyClosed }}" hint-placeholder-val="{{ true }}"><button class="bt" style="text-align: left" onClick="{{ t.earlyOpen }}">+ Early warning signs</button></sc-if>
+<sc-if value="{{ is.earlyOpen }}" hint-placeholder-val="{{ false }}"><div class="tiles four"><sc-for list="{{ sets.early }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div></sc-if>
+</div>
+</div></div>
+</sc-if>
+
+<!-- ============ TODAY · attack ============ -->
+<sc-if value="{{ is.todayAttack }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb"><div class="col" style="gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center"><p class="lbl" style="font-size: 16px">Attack in progress</p><button class="pill" aria-pressed="false" onClick="{{ a.amodeToggle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>Attack mode</button></div>
+<div style="display: flex; align-items: center; gap: 16px">
+<div style="flex: 1"><p style="margin: 0; font-size: 46px; font-weight: 600; line-height: 1">{{ v.elapsed }}</p><p class="sub" style="font-size: 16px; margin-top: 6px">since {{ v.startClock }}</p></div>
+<svg width="74" height="84" viewBox="0 0 74 84" role="img" aria-label="{{ v.sideText }}, pain {{ v.painNow }}"><ellipse cx="37" cy="44" rx="32" ry="38" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse><path d="M37 6 A32 38 0 0 0 37 82 Z" fill="{{ v.headR }}"></path><path d="M37 6 A32 38 0 0 1 37 82 Z" fill="{{ v.headL }}"></path><text x="37" y="51" text-anchor="middle" font-size="20" font-weight="600" fill="var(--tx)" font-family="Lexend, sans-serif">{{ v.painNow }}</text></svg>
+</div>
+<sc-if value="{{ is.checkinAsk }}" hint-placeholder-val="{{ false }}">
+<button class="card" style="border: 2px solid var(--acline); background: var(--acsoft); color: inherit; font: inherit; flex-direction: row; align-items: center; gap: 14px; text-align: left" onClick="{{ go.checkin }}"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--acs)" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span style="flex: 1"><span style="display: block; font-size: 18px; font-weight: 600">2-hour check-in</span><span class="sub" style="display: block">How is it after {{ v.checkMed }}?</span></span></button>
+</sc-if>
+<sc-if value="{{ is.checkinDone }}" hint-placeholder-val="{{ false }}"><div class="mini" style="font-size: 15px; padding: 0 4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg>At 2 hours: {{ v.checkinLabel }}</div></sc-if>
+<div class="card" style="flex-direction: row; align-items: center; gap: 12px"><span style="flex: 1; font-size: 17px">Pain now</span><button class="stp" aria-label="Lower pain" onClick="{{ a.painDown }}">−</button><span style="font-size: 26px; font-weight: 600; min-width: 34px; text-align: center">{{ v.painNow }}</span><button class="stp" aria-label="Raise pain" onClick="{{ a.painUp }}">+</button></div>
+<div class="card" style="gap: 8px"><sc-for list="{{ timeline }}" as="e" hint-placeholder-count="2"><div style="display: flex; align-items: center; gap: 12px"><span class="sub" style="width: 48px">{{ e.time }}</span><span style="font-size: 16px">{{ e.l }}</span></div></sc-for></div>
+<div style="display: flex; gap: 10px"><button class="bp" onClick="{{ go.details }}">Add details</button><button class="bs" onClick="{{ go.end1 }}">End attack</button></div>
+</div></div>
+</sc-if>
+
+<!-- ============ ATTACK MODE ============ -->
+<sc-if value="{{ is.amToday }}" hint-placeholder-val="{{ false }}">
+<div class="scr am" style="padding: 52px 16px 34px; display: flex; flex-direction: column">
+<div class="amtop"><p style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 18px; color: var(--mu)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>Attack mode</p><button class="amx" aria-pressed="true" onClick="{{ a.amodeToggle }}">Exit</button></div>
+<div style="padding: 44px 4px 0"><p style="margin: 0; font-size: 72px; font-weight: 600; line-height: 1">{{ v.elapsed }}</p><p style="margin: 12px 0 0; font-size: 26px; color: var(--mu)">Pain {{ v.painNow }}</p></div>
+<sc-if value="{{ is.checkinAsk }}" hint-placeholder-val="{{ false }}"><button class="ams" style="margin-top: 36px; min-height: 92px; border: 2px solid var(--acline); background: var(--acsoft)" onClick="{{ go.checkin }}">2-hour check-in</button></sc-if>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px">
+<button class="amp" onClick="{{ a.amUpdate }}">Update pain</button>
+<button class="ams" onClick="{{ go.end1 }}">End attack</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.amIdle }}" hint-placeholder-val="{{ false }}">
+<div class="scr am" style="padding: 52px 16px 34px; display: flex; flex-direction: column">
+<div class="amtop"><p style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 18px; color: var(--mu)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>Attack mode</p><button class="amx" aria-pressed="true" onClick="{{ a.amodeToggle }}">Exit</button></div>
+<button class="amp" style="margin-top: 190px; min-height: 140px; font-size: 30px; border-radius: 30px" onClick="{{ go.same }}">Log like last time</button>
+<button class="ams" style="margin-top: 14px" onClick="{{ go.w1 }}">Something's different</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.amUpdate }}" hint-placeholder-val="{{ false }}">
+<div class="scr am" style="padding: 52px 16px 34px; display: flex; flex-direction: column">
+<div class="amtop"><button class="amx" style="border: 0; background: none; padding: 0 4px" onClick="{{ go.today }}">Cancel</button></div>
+<p style="margin: 20px 4px 4px; font-size: 32px; font-weight: 600">Pain now?</p>
+<p style="margin: 0 4px 16px; font-size: 18px; color: var(--mu)">0 none · 10 worst</p>
+<div role="radiogroup" aria-label="Pain from 0 to 10" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px"><sc-for list="{{ amGrid }}" as="it" hint-placeholder-count="11"><button class="amg {{ it.cls }}" style="background: {{ it.bg }}" role="radio" aria-checked="{{ it.on }}" onClick="{{ it.pick }}">{{ it.n }}</button></sc-for></div>
+<button class="amp" style="margin-top: auto" onClick="{{ a.amSave }}">Save</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.checkin }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}" style="padding: 52px 16px 34px; display: flex; flex-direction: column">
+<div class="amtop"><button class="amx" style="border: 0; background: none; padding: 0 4px" onClick="{{ go.today }}">Later</button></div>
+<p style="margin: 16px 4px 4px; font-size: 30px; font-weight: 600">Pain now?</p>
+<p style="margin: 0 4px 14px; font-size: 17px; color: var(--mu)">2 hours after {{ v.checkMed }} · 0 none · 10 worst</p>
+<div role="radiogroup" aria-label="Pain from 0 to 10" class="scale" style="grid-template-columns: repeat(4, minmax(0, 1fr))"><sc-for list="{{ ciGrid }}" as="it" hint-placeholder-count="11"><button class="amg {{ it.cls }}" style="height: 60px; font-size: 22px; background: {{ it.bg }}" role="radio" aria-checked="{{ it.on }}" onClick="{{ it.pick }}">{{ it.n }}</button></sc-for></div>
+<sc-if value="{{ is.mbsNotPain }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 22px 4px 10px; font-size: 22px; font-weight: 600">Is the {{ v.mbsLabel }} better?</p>
+<div class="tiles two" role="radiogroup" aria-label="Is it better"><button class="tile single {{ g.ciMbs_yes }}" style="min-height: 68px" role="radio" aria-checked="{{ v.ciYesP }}" onClick="{{ gs.ciMbs_yes }}">Yes</button><button class="tile single {{ g.ciMbs_no }}" style="min-height: 68px" role="radio" aria-checked="{{ v.ciNoP }}" onClick="{{ gs.ciMbs_no }}">No</button></div>
+</sc-if>
+<button class="amp" style="margin-top: auto; min-height: 72px" onClick="{{ a.ciSave }}">Save</button>
+</div>
+</sc-if>
+
+<!-- ============ SAME AS LAST TIME (confirm) ============ -->
+<sc-if value="{{ is.same }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Close" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><p class="ht">Like last time</p><span style="width: 44px"></span></div>
+<div class="card" style="flex-direction: row; align-items: center; gap: 16px">
+<svg width="74" height="84" viewBox="0 0 74 84" role="img" aria-label="Left side"><ellipse cx="37" cy="44" rx="32" ry="38" fill="var(--bg)" stroke="var(--mu)" stroke-width="1.5"></ellipse><path d="M37 6 A32 38 0 0 1 37 82 Z" fill="var(--ac)"></path></svg>
+<div style="flex: 1"><p style="margin: 0; font-size: 18px; font-weight: 600">Left eye, left forehead</p><p class="sub" style="font-size: 15px">Throbbing · light bothers you most</p></div>
+<button class="bt" onClick="{{ go.w1 }}">Edit</button>
+</div>
+<div class="card" style="flex-direction: row; align-items: center; gap: 12px"><span style="flex: 1; font-size: 17px">Pain now</span><button class="stp" aria-label="Lower pain" onClick="{{ a.samePainDown }}">−</button><span style="font-size: 26px; font-weight: 600; min-width: 34px; text-align: center">{{ v.samePain }}</span><button class="stp" aria-label="Raise pain" onClick="{{ a.samePainUp }}">+</button></div>
+<p class="h2">Taken Sumatriptan yet?</p>
+<div class="tiles two" role="radiogroup" aria-label="Taken Sumatriptan yet"><button class="tile single {{ g.sameMed_yes }}" style="min-height: 84px" role="radio" aria-checked="{{ v.sameYesP }}" onClick="{{ gs.sameMed_yes }}"><span class="mb">T</span>Yes, just now</button><button class="tile single {{ g.sameMed_no }}" style="min-height: 84px" role="radio" aria-checked="{{ v.sameNoP }}" onClick="{{ gs.sameMed_no }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg>Not yet</button></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><sc-if value="{{ is.sameNoPick }}" hint-placeholder-val="{{ true }}"><p class="why">Choose yes or not yet to start</p></sc-if><button class="bp {{ v.sameOff }}" onClick="{{ a.sameStart }}">Start attack</button></div>
+</sc-if>
+
+<!-- ============ WIZARD ============ -->
+<sc-if value="{{ is.w1 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 14px">
+<div class="hdr"><button class="icb" aria-label="Close" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><div class="dots" aria-label="Step 1 of 4"><span class="on"></span><span></span><span></span><span></span></div><span style="width: 44px"></span></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px"><p class="big">Where does it hurt?</p></div>
+<div class="segs" role="tablist" aria-label="View"><button class="seg {{ g.mapView_map }}" role="tab" aria-selected="{{ v.mapP }}" onClick="{{ gs.mapView_map }}">Head</button><button class="seg {{ g.mapView_list }}" role="tab" aria-selected="{{ v.listP }}" onClick="{{ gs.mapView_list }}">List</button></div>
+<sc-if value="{{ is.mapView }}" hint-placeholder-val="{{ true }}">
+<div class="head">
+<svg width="366" height="262" viewBox="0 0 366 262" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+<ellipse cx="183" cy="124" rx="108" ry="116" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse>
+<ellipse cx="72" cy="136" rx="10" ry="22" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse>
+<ellipse cx="294" cy="136" rx="10" ry="22" fill="var(--sf)" stroke="var(--mu)" stroke-width="1.5"></ellipse>
+<sc-for list="{{ zoneList }}" as="z" hint-placeholder-count="7"><path d="{{ z.d }}" fill="{{ z.fill }}" stroke="{{ z.stroke }}" stroke-width="1.5" stroke-dasharray="{{ z.dash }}"></path></sc-for>
+<path d="M164 186 Q183 196 202 186" stroke="var(--mu)" stroke-width="1.5" fill="none"></path>
+<g font-size="14" font-weight="600" fill="var(--mu)" font-family="Lexend, sans-serif"><text x="2" y="256">YOUR RIGHT</text><text x="364" y="256" text-anchor="end">YOUR LEFT</text></g>
+</svg>
+<sc-for list="{{ zoneList }}" as="z" hint-placeholder-count="7"><button class="zh {{ z.act }}" style="left: {{ z.bx }}px; top: {{ z.by }}px; width: {{ z.bw }}px; height: {{ z.bh }}px" aria-label="{{ z.aria }}" aria-pressed="{{ z.pressed }}" onClick="{{ z.tap }}">{{ z.num }}</button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ is.listView }}" hint-placeholder-val="{{ false }}">
+<div class="grp"><sc-for list="{{ zoneRows }}" as="z" hint-placeholder-count="10"><button class="r" aria-pressed="{{ z.pressed }}" onClick="{{ z.tap }}"><span class="tx">{{ z.name }}</span><span class="v" style="font-size: 17px; font-weight: 600; color: var(--tx)">{{ z.num }}</span></button></sc-for></div>
+</sc-if>
+<sc-if value="{{ is.mapView }}" hint-placeholder-val="{{ true }}"><div class="tiles"><sc-for list="{{ zoneExtra }}" as="z" hint-placeholder-count="3"><button class="tile multi {{ z.chip }}" style="min-height: 56px" aria-pressed="{{ z.pressed }}" onClick="{{ z.tap }}">{{ z.text }}</button></sc-for></div></sc-if>
+<sc-if value="{{ is.zoneActive }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="padding: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center"><p style="margin: 0; font-size: 17px; font-weight: 600">{{ v.activeLabel }} · how bad?</p><button class="bt" style="color: var(--danger)" onClick="{{ a.zoneRemove }}">Remove</button></div>
+<div role="radiogroup" aria-label="Pain from 0 to 10" class="scale"><sc-for list="{{ zoneGrid }}" as="it" hint-placeholder-count="11"><button class="pn {{ it.cls }}" style="background: {{ it.bg }}" role="radio" aria-checked="{{ it.on }}" onClick="{{ it.pick }}">{{ it.n }}</button></sc-for></div>
+<p class="sub">0 none · 10 worst</p>
+</div>
+</sc-if>
+<button class="flag" onClick="{{ a.redflag }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg>Feels different from usual?</button>
+</div></div>
+<div class="bar {{ v.amCls }}"><sc-if value="{{ is.noZone }}" hint-placeholder-val="{{ true }}"><p class="why">Tap where it hurts to continue</p></sc-if><button class="bp {{ v.startOff }}" aria-disabled="{{ v.w1Disabled }}" onClick="{{ a.w1Next }}">Next</button></div>
+</sc-if>
+
+<sc-if value="{{ is.w2 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 22px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.w1 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 2 of 4"><span></span><span class="on"></span><span></span><span></span></div><span style="width: 44px"></span></div>
+<p class="big">Worse when you move?</p>
+<div class="tiles two" role="radiogroup" aria-label="Worse when you move"><sc-for list="{{ sets.worse }}" as="it" hint-placeholder-count="2"><button class="tile single {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ go.w3 }}">{{ v.w2Label }}</button></div>
+</sc-if>
+
+<sc-if value="{{ is.w3 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 22px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.w2 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 3 of 4"><span></span><span></span><span class="on"></span><span></span></div><span style="width: 44px"></span></div>
+<p class="big">What bothers you most?</p>
+<div class="tiles two" role="radiogroup" aria-label="What bothers you most"><sc-for list="{{ sets.mbs }}" as="it" hint-placeholder-count="4"><button class="tile single {{ it.cls }}" role="radio" aria-checked="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ go.w4 }}">{{ v.w3Label }}</button></div>
+</sc-if>
+
+<sc-if value="{{ is.w4 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.w3 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 4 of 4"><span></span><span></span><span></span><span class="on"></span></div><span style="width: 44px"></span></div>
+<p class="big">Taken anything?</p>
+<div class="tiles"><sc-for list="{{ sets.meds }}" as="it" hint-placeholder-count="3"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><span class="mb">{{ it.badge }}</span>{{ it.l }}</button></sc-for></div>
+<sc-if value="{{ is.sumaOn }}" hint-placeholder-val="{{ false }}"><div class="card" style="flex-direction: row; align-items: center; gap: 10px; padding: 12px"><span style="flex: 1; font-size: 16px">Sumatriptan tablets</span><button class="stp" aria-label="One fewer" onClick="{{ a.qtyDown }}">−</button><span style="font-size: 20px; font-weight: 600; min-width: 28px; text-align: center">{{ v.sumaQty }}</span><button class="stp" aria-label="One more" onClick="{{ a.qtyUp }}">+</button></div></sc-if>
+<sc-if value="{{ is.sumaWarn }}" hint-placeholder-val="{{ false }}"><div class="warn" role="status"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span>{{ v.sumaQty }} in 24 hours. Your limit is 2.</span></div></sc-if>
+<p class="h2">When did it start?</p>
+<div class="segs"><button class="seg {{ g.startChip_now }}" onClick="{{ gs.startChip_now }}">Now</button><button class="seg {{ g.startChip_1h }}" onClick="{{ gs.startChip_1h }}">1 h ago</button><button class="seg {{ g.startChip_2h }}" onClick="{{ gs.startChip_2h }}">2 h ago</button><button class="seg {{ g.startChip_woke }}" onClick="{{ gs.startChip_woke }}">Woke up</button></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ a.start }}">Start attack</button></div>
+</sc-if>
+
+<!-- ============ DETAILS ============ -->
+<sc-if value="{{ is.details }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">Details · optional</p><span style="width: 44px"></span></div>
+<p class="h2">Feels like</p>
+<div class="tiles four"><sc-for list="{{ sets.feel }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<p class="h2">Symptoms</p>
+<div class="tiles"><sc-for list="{{ sets.sym }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<sc-if value="{{ is.auraOn }}" hint-placeholder-val="{{ false }}">
+<div class="card" style="gap: 10px">
+<p class="h2">About the aura</p>
+<div class="tiles"><sc-for list="{{ sets.aura }}" as="it" hint-placeholder-count="3"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<p class="lbl">How long?</p>
+<div class="segs" style="background: var(--bg)"><button class="seg {{ g.auLen_short }}" onClick="{{ gs.auLen_short }}">Under 5 min</button><button class="seg {{ g.auLen_mid }}" onClick="{{ gs.auLen_mid }}">5–60 min</button><button class="seg {{ g.auLen_long }}" onClick="{{ gs.auLen_long }}">Over 1 h</button></div>
+<p class="lbl">Headache within an hour?</p>
+<div class="segs" style="background: var(--bg)"><button class="seg {{ g.auHour_yes }}" onClick="{{ gs.auHour_yes }}">Yes</button><button class="seg {{ g.auHour_no }}" onClick="{{ gs.auHour_no }}">No</button></div>
+<sc-if value="{{ is.auraFlag }}" hint-placeholder-val="{{ false }}"><div class="warn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span>An aura over an hour is worth checking with a doctor.</span></div></sc-if>
+</div>
+</sc-if>
+<p class="h2">What you've tried</p>
+<div class="tiles"><sc-for list="{{ sets.tried }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<p class="h2">Early warning signs</p>
+<div class="tiles four"><sc-for list="{{ sets.early }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ a.detailsSave }}">Save details</button></div>
+</sc-if>
+
+<!-- ============ END ============ -->
+<sc-if value="{{ is.end1 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 18px">
+<div class="hdr"><button class="icb" aria-label="Keep the attack going" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><div class="dots" aria-label="Step 1 of 2"><span class="on"></span><span></span></div><span style="width: 44px"></span></div>
+<p class="big">When did it end?</p>
+<div class="segs"><button class="seg {{ g.endChip_now }}" onClick="{{ gs.endChip_now }}">Just now</button><button class="seg {{ g.endChip_1h }}" onClick="{{ gs.endChip_1h }}">1 h ago</button><button class="seg {{ g.endChip_pick }}" onClick="{{ gs.endChip_pick }}">Pick time</button></div>
+<p class="h2">How do you feel now?</p>
+<div class="tiles two"><sc-for list="{{ sets.post }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" style="min-height: 96px" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ go.end2 }}">Next</button></div>
+</sc-if>
+
+<sc-if value="{{ is.end2 }}" hint-placeholder-val="{{ false }}">
+<div class="scr {{ v.amCls }}"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.end1 }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><div class="dots" aria-label="Step 2 of 2"><span></span><span class="on"></span></div><span style="width: 44px"></span></div>
+<div style="display: flex; align-items: flex-start; gap: 10px"><p class="big" style="flex: 1">Anything different the day before?</p><button class="info" aria-label="Why we ask" aria-expanded="{{ p.infoFactors }}" onClick="{{ t.infoFactors }}">i</button></div>
+<sc-if value="{{ is.infoFactors }}" hint-placeholder-val="{{ false }}"><p class="sub" style="font-size: 15px; margin-top: -6px">For your own patterns over time. Not a cause.</p></sc-if>
+<div class="tiles"><sc-for list="{{ sets.factors }}" as="it" hint-placeholder-count="6"><button class="tile multi {{ it.cls }}" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<div class="mini" style="font-size: 14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"></path></svg>Sleep last night: [5h 10m]</div>
+</div></div>
+<div class="bar {{ v.amCls }}"><button class="bp" onClick="{{ a.endSave }}">Save attack</button><button class="bt" style="color: var(--tx)" onClick="{{ a.endSave }}">Skip and save</button></div>
+</sc-if>
+
+<sc-if value="{{ is.saved }}" hint-placeholder-val="{{ false }}">
+<div class="scr" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-bottom: 150px">
+<svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+<p class="big" style="margin-top: 18px">Saved. Rest up.</p>
+<p class="sub" style="font-size: 16px; margin-top: 8px">{{ v.endLabel }} · highest pain {{ v.peak }}</p>
+</div>
+<div class="bar"><button class="bp" onClick="{{ go.today }}">Done</button></div>
+</sc-if>
+
+<!-- ============ LOGS ============ -->
+<sc-if value="{{ is.logs }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb"><div class="col" style="gap: 10px">
+<p class="big" style="font-size: 32px">Logs</p>
+<sc-if value="{{ is.notMerged }}" hint-placeholder-val="{{ true }}"><button class="warn" style="border: 0; text-align: left" onClick="{{ go.merge }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span style="flex: 1">4 entries overlap on 19–20 Aug</span><span style="font-weight: 600">Review</span></button></sc-if>
+<sc-for list="{{ logRows }}" as="row" hint-placeholder-count="5">
+<sc-if value="{{ row.isHead }}" hint-placeholder-val="{{ false }}"><p class="lbl" style="margin-top: 8px">{{ row.title }}</p></sc-if>
+<sc-if value="{{ row.isRow }}" hint-placeholder-val="{{ true }}">
+<button class="card" style="flex-direction: row; align-items: center; gap: 12px; border: 0; color: inherit; font: inherit; text-align: left; padding: 12px 14px" onClick="{{ go.logDetail }}"><span class="badge">{{ row.peak }}</span><svg width="30" height="34" viewBox="0 0 30 34" role="img" aria-label="{{ row.side }}"><ellipse cx="15" cy="17" rx="13" ry="15" fill="var(--bg)" stroke="var(--mu)" stroke-width="1.2"></ellipse><path d="M15 2 A13 15 0 0 0 15 32 Z" fill="{{ row.r }}"></path><path d="M15 2 A13 15 0 0 1 15 32 Z" fill="{{ row.l }}"></path></svg><span style="flex: 1"><span style="display: block; font-size: 16px; font-weight: 500">{{ row.title }}</span><span class="sub" style="display: block">{{ row.sub }}</span></span></button>
+</sc-if>
+</sc-for>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.logDetail }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col">
+<div class="hdr"><button class="icb" aria-label="Back to logs" onClick="{{ go.logs }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">Thu 20 Aug · 13:06</p><button class="bt" onClick="{{ a.editAttack }}">Edit</button></div>
+<div style="display: flex; gap: 12px">
+<div class="card" style="flex: 1; align-items: center; gap: 2px"><span style="font-size: 30px; font-weight: 600">7</span><span class="sub">highest pain</span></div>
+<div class="card" style="flex: 1; align-items: center; gap: 2px"><span style="font-size: 30px; font-weight: 600">1 min</span><span class="sub">long</span></div>
+<div class="card" style="flex: 1; align-items: center; gap: 2px"><svg width="30" height="34" viewBox="0 0 30 34" role="img" aria-label="Left side"><ellipse cx="15" cy="17" rx="13" ry="15" fill="var(--bg)" stroke="var(--mu)" stroke-width="1.2"></ellipse><path d="M15 2 A13 15 0 0 1 15 32 Z" fill="var(--ac)"></path></svg><span class="sub">left side</span></div>
+</div>
+<div class="tiles four"><sc-for list="{{ detailIcons }}" as="it" hint-placeholder-count="4"><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</div></sc-for></div>
+<div class="card" style="flex-direction: row; align-items: center; gap: 12px"><span class="mb">T</span><span style="flex: 1; font-size: 16px">Sumatriptan · 1 tablet</span><span class="sub">13:06</span></div>
+<button class="bd" style="margin-top: 10px; flex: none" onClick="{{ a.askDelete }}">Delete attack</button>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.merge }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col">
+<div class="hdr"><button class="icb" aria-label="Close" onClick="{{ go.logs }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><p class="ht">Overlapping entries</p><span style="width: 44px"></span></div>
+<p class="big" style="font-size: 26px">Merge into one attack?</p>
+<svg width="358" height="120" viewBox="0 0 358 120" role="img" aria-label="Four entries overlap between Wednesday 08:17 and Thursday 13:02">
+<g font-family="Lexend, sans-serif" font-size="14" fill="var(--mu)">
+<rect x="3" y="4" width="315" height="16" rx="5" fill="var(--ac)"></rect><rect x="131" y="28" width="187" height="16" rx="5" fill="var(--ac)" fill-opacity="0.8"></rect><rect x="216" y="52" width="130" height="16" rx="5" fill="var(--ac)" fill-opacity="0.6"></rect><rect x="317" y="76" width="8" height="16" rx="3" fill="var(--ac)" fill-opacity="0.5"></rect>
+<text x="0" y="116">Wed 08:00</text><text x="358" y="116" text-anchor="end">Thu 14:00</text>
+</g></svg>
+<div class="card" style="background: var(--acsoft); flex-direction: row; align-items: center; gap: 12px"><span class="badge" style="background: var(--bg)">9</span><span style="font-size: 17px; font-weight: 500">1 attack · 28 h 45 m · nothing is lost</span></div>
+</div></div>
+<div class="bar" style="flex-direction: row"><button class="bs" onClick="{{ go.logs }}">Keep separate</button><button class="bp" style="flex: 1.4" onClick="{{ a.merge }}">Merge</button></div>
+</sc-if>
+
+<!-- ============ INSIGHTS ============ -->
+<sc-if value="{{ is.insights }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb"><div class="col">
+<div style="display: flex; align-items: center; justify-content: space-between"><p class="big" style="font-size: 32px">Insights</p><button class="icb" style="background: var(--sf)" aria-label="Share report with your doctor" onClick="{{ go.report }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="M7 8l5-5 5 5"></path><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg></button></div>
+<div class="segs"><button class="seg {{ g.range_30d }}" onClick="{{ gs.range_30d }}">30 days</button><button class="seg {{ g.range_3m }}" onClick="{{ gs.range_3m }}">3 months</button><button class="seg {{ g.range_all }}" onClick="{{ gs.range_all }}">All</button></div>
+<div class="warn" role="status" style="align-items: flex-start"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18h.01"></path></svg><span><b>8 of 10 triptan days in August.</b> Frequent use can sometimes lead to more headaches. Maybe worth a chat with your doctor.</span></div>
+<div class="card">
+<div style="display: flex; align-items: center; justify-content: space-between"><p class="h2">Headache days</p><button class="info" aria-label="About this chart" aria-expanded="{{ p.infoDays }}" onClick="{{ t.infoDays }}">i</button></div>
+<sc-if value="{{ is.infoDays }}" hint-placeholder-val="{{ false }}"><p class="sub" style="font-size: 15px">15 or more headache days a month is the chronic range.</p></sc-if>
+<svg width="326" height="180" viewBox="0 0 326 180" role="img" aria-label="Headache days: July 8 of which 6 migraine, August 11 of which 9 migraine, September 4 of which 3 migraine. Line at 15.">
+<g font-family="Lexend, sans-serif" font-size="14" fill="var(--mu)">
+<line x1="10" y1="20" x2="326" y2="20" stroke="var(--danger)" stroke-dasharray="5 4"></line><text x="326" y="14" text-anchor="end" fill="var(--danger)">15</text>
+<line x1="10" y1="150" x2="326" y2="150" stroke="var(--mu)"></line>
+<rect x="40" y="81" width="60" height="69" rx="8" fill="var(--sf2)"></rect><rect x="40" y="98" width="60" height="52" rx="8" fill="var(--ac)"></rect>
+<rect x="133" y="55" width="60" height="95" rx="8" fill="var(--sf2)"></rect><rect x="133" y="72" width="60" height="78" rx="8" fill="var(--ac)"></rect>
+<rect x="226" y="115" width="60" height="35" rx="8" fill="var(--sf2)"></rect><rect x="226" y="124" width="60" height="26" rx="8" fill="var(--ac)"></rect>
+<text x="70" y="74" text-anchor="middle" fill="var(--tx)" font-weight="600">8</text><text x="163" y="48" text-anchor="middle" fill="var(--tx)" font-weight="600">11</text><text x="256" y="108" text-anchor="middle" fill="var(--tx)" font-weight="600">4</text>
+<text x="70" y="172" text-anchor="middle">Jul</text><text x="163" y="172" text-anchor="middle">Aug</text><text x="256" y="172" text-anchor="middle">Sep</text>
+</g></svg>
+<div class="mini" style="gap: 14px; font-size: 14px"><span style="display: flex; align-items: center; gap: 6px"><i style="width: 12px; height: 12px; border-radius: 3px; background: var(--ac); display: block"></i>Migraine</span><span style="display: flex; align-items: center; gap: 6px"><i style="width: 12px; height: 12px; border-radius: 3px; background: var(--sf2); border: 1px solid var(--bd); display: block"></i>Other headache</span><span>[example values]</span></div>
+</div>
+<div class="card" style="gap: 12px">
+<p class="h2">2 hours after a dose</p>
+<div style="display: flex; align-items: center; gap: 12px"><span class="mb" style="width: 30px; height: 30px; font-size: 14px">T</span><span style="width: 136px; font-size: 15px">Pain-free</span><span class="dotrow" role="img" aria-label="0 of 6"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+<div style="display: flex; align-items: center; gap: 12px"><span class="mb" style="width: 30px; height: 30px; font-size: 14px">T</span><span style="width: 136px; font-size: 15px">Worst part better</span><span class="dotrow" role="img" aria-label="2 of 6"><i class="y"></i><i class="y"></i><i></i><i></i><i></i><i></i></span></div>
+<div style="display: flex; align-items: center; gap: 12px"><span class="mb" style="width: 30px; height: 30px; font-size: 14px">C</span><span style="width: 136px; font-size: 15px">Pain-free</span><span class="dotrow" role="img" aria-label="1 of 4"><i class="y"></i><i></i><i></i><i></i></span></div>
+<div class="mini" style="gap: 14px; font-size: 14px"><span style="display: flex; align-items: center; gap: 6px"><i style="width: 12px; height: 12px; border-radius: 6px; background: var(--ac); display: block"></i>yes</span><span style="display: flex; align-items: center; gap: 6px"><i style="width: 12px; height: 12px; border-radius: 6px; border: 2px solid var(--mu); box-sizing: border-box; display: block"></i>no</span><span>· each dot is one checked dose</span></div>
+</div>
+<div class="card" style="flex-direction: row; align-items: center; gap: 14px">
+<svg class="ring" viewBox="0 0 36 36" role="img" aria-label="12 of about 30 check-ins"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--sf2)" stroke-width="4"></circle><circle cx="18" cy="18" r="15" fill="none" stroke="var(--ac)" stroke-width="4" stroke-dasharray="37.7 94.2" transform="rotate(-90 18 18)" stroke-linecap="round"></circle><text x="18" y="22" text-anchor="middle" font-size="10" font-weight="600" fill="var(--tx)" font-family="Lexend, sans-serif">12/30</text></svg>
+<div style="flex: 1"><p class="h2" style="font-size: 17px">Your patterns</p><p class="sub">Appear after about 30 check-ins</p></div>
+</div>
+</div></div>
+</sc-if>
+
+<!-- ============ SETTINGS ============ -->
+<sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+<div class="scr tb"><div class="col" style="gap: 16px">
+<p class="big" style="font-size: 32px">Settings</p>
+<div class="grp">
+<button class="r" onClick="{{ go.display }}"><span class="tx">Display &amp; attack mode</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="r" onClick="{{ go.report }}"><span class="tx">Doctor report</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="r" onClick="{{ go.states }}"><span class="tx">Empty &amp; error states (preview)</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="r" onClick="{{ a.restart }}"><span class="tx">Restart prototype</span></button>
+</div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.display }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.settings }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">Display</p><span style="width: 44px"></span></div>
+<div class="tiles two" role="radiogroup" aria-label="Theme">
+<button class="tile single {{ g.theme_light }}" style="background: #F5F2EC; color: #2A2724" role="radio" aria-checked="{{ v.lightP }}" onClick="{{ gs.theme_light }}">Light</button>
+<button class="tile single {{ g.theme_dark }}" style="background: #1B1A18; color: #E4DFD6" role="radio" aria-checked="{{ v.darkP }}" onClick="{{ gs.theme_dark }}">Dark</button>
+</div>
+<div class="tiles two" role="radiogroup" aria-label="Font">
+<button class="tile single {{ g.font_lexend }}" style="font-family: Lexend, sans-serif" role="radio" aria-checked="{{ v.lexP }}" onClick="{{ gs.font_lexend }}"><span style="font-size: 30px">Aa</span>Lexend</button>
+<button class="tile single {{ g.font_atk }}" style="font-family: 'Atkinson Hyperlegible', sans-serif" role="radio" aria-checked="{{ v.atkP }}" onClick="{{ gs.font_atk }}"><span style="font-size: 30px">Aa</span>Atkinson</button>
+</div>
+<div class="grp">
+<div class="r"><span class="tx">Attack mode when I start an attack</span><button class="tg {{ c.amAuto }}" role="switch" aria-checked="{{ p.amAuto }}" aria-label="Attack mode when I start an attack" onClick="{{ t.amAuto }}"><span class="k"></span></button></div>
+<div class="r"><span class="tx">Use iPhone text size</span><button class="tg {{ c.dynType }}" role="switch" aria-checked="{{ p.dynType }}" aria-label="Use iPhone text size" onClick="{{ t.dynType }}"><span class="k"></span></button></div>
+</div>
+<p class="sub">At large text sizes the head map switches to a list and tiles drop to two columns.</p>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ is.report }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.settings }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">Doctor report</p><span style="width: 44px"></span></div>
+<div style="align-self: center; width: 230px; background: #FBFAF7; color: #2A2724; border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.12)"><p style="margin: 0; font-size: 14px; font-weight: 600">Headache diary · Jul–Sep</p><div style="display: flex; align-items: flex-end; gap: 8px; height: 50px"><span style="width: 22px; height: 36px; background: #6E8B74"></span><span style="width: 22px; height: 50px; background: #6E8B74"></span><span style="width: 22px; height: 16px; background: #6E8B74"></span></div><span style="height: 6px; background: #D8D2C6; border-radius: 3px"></span><span style="height: 6px; width: 70%; background: #D8D2C6; border-radius: 3px"></span></div>
+</div></div>
+<div class="bar"><button class="bp" onClick="{{ go.settings }}">Share PDF</button></div>
+</sc-if>
+
+<sc-if value="{{ is.states }}" hint-placeholder-val="{{ false }}">
+<div class="scr"><div class="col" style="gap: 16px">
+<div class="hdr"><button class="icb" aria-label="Back" onClick="{{ go.settings }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><p class="ht">States</p><span style="width: 44px"></span></div>
+<p class="lbl">Empty · first open of Logs</p>
+<div class="card" style="align-items: center; text-align: center; gap: 8px; padding: 24px 16px"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"></path></svg><p style="margin: 0; font-size: 17px; font-weight: 600">Nothing logged yet</p><p class="sub" style="font-size: 15px">Add your first entry when you're ready.</p><button class="bp" style="min-height: 48px; margin-top: 6px; width: auto; padding: 0 20px">Log an attack</button></div>
+<p class="lbl">Error · save failed</p>
+<div class="warn" role="alert"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg><span style="flex: 1">That didn't save. Let's try again.</span><button class="bt" style="color: var(--tx); font-weight: 600">Retry</button></div>
+<p class="lbl">Permission off · Apple Health</p>
+<div class="card" style="flex-direction: row; align-items: center; gap: 12px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"></path></svg><span style="flex: 1; font-size: 15px">Sleep isn't shared. You can still log it by hand.</span><button class="bt">Settings</button></div>
+<p class="lbl">Not enough data · Insights</p>
+<div class="card" style="flex-direction: row; align-items: center; gap: 12px"><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--sf2)" stroke-width="4"></circle><circle cx="18" cy="18" r="15" fill="none" stroke="var(--ac)" stroke-width="4" stroke-dasharray="9.4 94.2" transform="rotate(-90 18 18)" stroke-linecap="round"></circle></svg><span style="flex: 1; font-size: 15px">Charts fill in as you log. A week or two is enough to start.</span></div>
+</div></div>
+</sc-if>
+
+<!-- ============ TABS ============ -->
+<sc-if value="{{ is.tabs }}" hint-placeholder-val="{{ false }}">
+<nav class="tabs" aria-label="Main">
+<button class="tab {{ tc.today }}" onClick="{{ go.today }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg>Today</button>
+<button class="tab {{ tc.logs }}" onClick="{{ go.logs }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"></path></svg>Logs</button>
+<sc-if value="{{ is.plus }}" hint-placeholder-val="{{ true }}"><button class="plus" aria-label="Log" onClick="{{ a.plus }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></sc-if>
+<button class="tab {{ tc.insights }}" onClick="{{ go.insights }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4v16h16"></path><path d="M7 15l4-5 3 3 5-6"></path></svg>Insights</button>
+<button class="tab {{ tc.settings }}" onClick="{{ go.settings }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>Settings</button>
+</nav>
+</sc-if>
+
+<!-- ============ SHEETS ============ -->
+<sc-if value="{{ is.sheetAdd }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.closeSheet }}"></button>
+<div class="sheet" role="dialog" aria-label="Log">
+<div class="grab" aria-hidden="true"></div>
+<button class="card" style="border: 2px solid var(--acline); background: var(--acsoft); color: inherit; font: inherit; text-align: left; flex-direction: row; align-items: center; gap: 14px" onClick="{{ go.same }}">
+<svg width="44" height="50" viewBox="0 0 30 34" aria-hidden="true"><ellipse cx="15" cy="17" rx="13" ry="15" fill="var(--bg)" stroke="var(--mu)" stroke-width="1.2"></ellipse><path d="M15 2 A13 15 0 0 1 15 32 Z" fill="var(--ac)"></path></svg>
+<span style="flex: 1"><span style="display: block; font-size: 19px; font-weight: 600">Log like last time</span><span class="sub" style="display: block">Left side · throbbing · you'll confirm first</span></span>
+</button>
+<div class="tiles">
+<button class="tile" onClick="{{ go.w1 }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2 2 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>Something's different</button>
+<button class="tile" onClick="{{ a.logHeadache }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 15h8M9 9h.01M15 9h.01"></path></svg>Just a headache</button>
+<button class="tile" onClick="{{ go.w1 }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l-3 2"></path></svg>Log an earlier attack</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.sheetPrompt }}" hint-placeholder-val="{{ false }}">
+<div class="dim" aria-hidden="true"></div>
+<div class="sheet" role="dialog" aria-label="Switch to attack mode?" style="gap: 14px">
+<div class="grab" aria-hidden="true"></div>
+<div style="display: flex; align-items: center; gap: 14px"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--acs)" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg><div><p style="margin: 0; font-size: 22px; font-weight: 600">Switch to attack mode?</p><p class="sub" style="font-size: 15px">Dimmer, bigger, only the essentials</p></div></div>
+<div class="grp"><div class="r"><span class="tx">Always when I start an attack</span><button class="tg {{ c.amAuto }}" role="switch" aria-checked="{{ p.amAuto }}" aria-label="Always switch on attack mode" onClick="{{ t.amAuto }}"><span class="k"></span></button></div></div>
+<div style="display: flex; gap: 10px"><button class="bs" onClick="{{ a.promptOff }}">Not now</button><button class="bp" onClick="{{ a.promptOn }}">Switch on</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.sheetRedflag }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.closeSheet }}"></button>
+<div class="sheet {{ v.amCls }}" role="dialog" aria-label="Feels different from usual?" style="gap: 12px">
+<div class="grab" aria-hidden="true"></div>
+<p style="margin: 0; font-size: 22px; font-weight: 600">Does any of this fit?</p>
+<div class="tiles two"><sc-for list="{{ sets.rf }}" as="it" hint-placeholder-count="4"><button class="tile multi {{ it.cls }}" style="min-height: 104px; font-size: 15px; padding: 10px" aria-pressed="{{ it.p }}" onClick="{{ it.tap }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>{{ it.l }}</button></sc-for></div>
+<sc-if value="{{ is.rfAny }}" hint-placeholder-val="{{ false }}">
+<div class="warn" role="status">This can have other causes. Please check in with a doctor. If it's sudden or you have new weakness, call 112.</div>
+<a class="bp" href="tel:112" style="flex: none">Call 112</a>
+</sc-if>
+<button class="bs" style="flex: none" onClick="{{ a.closeSheet }}">Back to logging</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.sheetDelete }}" hint-placeholder-val="{{ false }}">
+<button class="dim" aria-label="Close" onClick="{{ a.closeSheet }}"></button>
+<div class="sheet" role="alertdialog" aria-label="Delete this attack?" style="gap: 14px">
+<div class="grab" aria-hidden="true"></div>
+<p style="margin: 0; font-size: 22px; font-weight: 600">Delete this attack?</p>
+<p class="sub" style="font-size: 15px">Thu 20 Aug · 13:06. You can undo right after.</p>
+<div style="display: flex; gap: 10px"><button class="bs" onClick="{{ a.closeSheet }}">Keep</button><button class="bd" onClick="{{ a.doDelete }}">Delete</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.toast }}" hint-placeholder-val="{{ false }}">
+<div class="toast" role="status"><span>{{ v.toast }}</span><sc-if value="{{ is.toastUndo }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.undo }}">Undo</button></sc-if><sc-if value="{{ is.toastPlain }}" hint-placeholder-val="{{ true }}"><button aria-label="Dismiss" onClick="{{ a.toastClose }}">OK</button></sc-if></div>
+</sc-if>
+
+</div>
+</template>
+<script>
+// Minimal stand-in for the design canvas runtime: {{ }} holes, sc-if, sc-for, on* handlers.
+class DCLogic { constructor(props){ this.props = props; this.state = null; } setState(o){ this.state = Object.assign({}, this.state || {}, o); this._rr && this._rr(); } forceUpdate(){ this._rr && this._rr(); } }
+
+class Component extends DCLogic {
+  icons() {
+    return {
+      nausea: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 15c1.5-1 2.5-1 4 0s2.5 1 4 0M9 9h.01M15 9h.01',
+      vomit: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 9h.01M15 9h.01M10 13h4v3a2 2 0 0 1-4 0z',
+      light: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
+      sound: 'M11 5L6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13',
+      aura: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM8 12l2-2 2 4 2-2 2 2',
+      dizzy: 'M12 12a2 2 0 1 1 2-2 4 4 0 1 1-4-4 6 6 0 1 1-6 6',
+      pain: 'M12 3a7 7 0 0 0-7 7c0 2.5 1.2 3.8 2 5v4h10v-4c.8-1.2 2-2.5 2-5a7 7 0 0 0-7-7zM10 8l2 3-2 2',
+      throb: 'M3 12h4l2-6 4 12 2-6h6',
+      press: 'M12 3v6M9 6l3 3 3-3M12 21v-6M9 18l3-3 3 3M4 12h16',
+      stab: 'M13 2L4 14h7l-1 8 9-12h-7z',
+      dull: 'M3 12c3-3 6 3 9 0s6 3 9 0',
+      dark: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+      cold: 'M12 2v20M4.9 7l14.2 10M19.1 7L4.9 17',
+      rest: 'M3 18v-6h18v6M3 12V7M7 12a2 2 0 1 1 0-4h5v4M21 18v2M3 18v2',
+      mint: 'M5 19c0-8 6-14 14-14 0 8-6 14-14 14zM5 19l7-7',
+      device: 'M7 3h10v18H7zM10 7h4M12 16h.01',
+      sleep: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5zM15 3h4l-4 4h4',
+      stress: 'M3 12l3-4 3 8 3-10 3 10 3-6 3 2',
+      meal: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2 6 0 8v10',
+      alcohol: 'M8 3h8l-1 8a3 3 0 0 1-6 0zM12 14v7M9 21h6',
+      period: 'M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z',
+      weather: 'M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z',
+      yawn: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 9h2M14 9h2M12 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4z',
+      crave: 'M12 3a9 9 0 1 0 9 9 4 4 0 0 1-5-5 4 4 0 0 1-4-4zM8 12h.01M12 16h.01M15 13h.01',
+      neck: 'M9 3a3 3 0 1 0 6 0M12 6v6M6 21c1-5 3-7 6-7s5 2 6 7',
+      mood: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 16c1-1.5 2.5-2 4-2s3 .5 4 2M9 9h.01M15 9h.01',
+      tired: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 10h3M13 10h3M9 15h6',
+      foggy: 'M4 9h16M2 13h20M4 17h16',
+      fine: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12l3 3 5-6',
+      walk: 'M13 4a2 2 0 1 0 0 .01M10 21l2-6 3 3v3M9 11l3-3 3 3 3 1M12 8l-2 6',
+      still: 'M12 4a2 2 0 1 0 0 .01M12 8v7M9 21l3-6 3 6M8 11h8',
+      eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
+      tingle: 'M7 21v-6M11 21V9a2 2 0 0 1 4 0v12M15 13h2a2 2 0 0 1 2 2v6M4 4l2 2M20 4l-2 2M12 2v2',
+      words: 'M4 5h16v11H9l-5 4zM8 9h.01M12 9h.01M16 9h.01',
+      bolt: 'M13 2L4 14h7l-1 8 9-12h-7z',
+      weak: 'M12 4a2 2 0 1 0 0 .01M12 8v6M8 21l4-7 4 7M7 11h5',
+      fever: 'M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0zM12 11v6',
+      change: 'M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4'
+    };
+  }
+  defaults(preset) {
+    const pr = preset || 'onb';
+    const pad = (n) => (n < 10 ? '0' : '') + n;
+    const now = Date.now();
+    const twoH = now - 2 * 3600000 - 5 * 60000;
+    const zv0 = { top: 0, rf: 0, lf: 0, rt: 0, lt: 0, re: 0, le: 0, back: 0, neck: 0, all: 0 };
+    const clk = (ts) => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+    const base = {
+      screen: 'onb1', sheet: null, theme: 'light', font: 'lexend', attack: false, amode: false, startAt: 0, painNow: 0, painTime: '', peak: 0,
+      zv: zv0, activeZ: null, mapView: 'map', worse: null, mbs: null, startChip: 'now', endChip: 'now',
+      sumaOn: false, sumaQty: 1, treoOn: false, nothing: false, samePain: 7, sameMed: null,
+      checkinDone: false, ciPick: -1, ciMbs: null, ciLabel: '', amPick: 0,
+      ended: false, endLabel: '', headacheLogged: false, merged: false, deleted: false, toast: '', toastUndo: null, undoState: null, triptanBase: 7,
+      auLen: null, auHour: null,
+      dSleep: false, dStress: false, dMeal: false, dPeriod: false, eYawn: false, eCrave: false, eNeck: false, eMood: false, earlyOpen: false,
+      symNausea: false, symVomit: false, symLight: false, symSound: false, symAura: false, symDizzy: false, auVis: false, auSens: false, auSpeech: false,
+      ftThrob: false, ftPress: false, ftStab: false, ftDull: false,
+      trDark: false, trMint: false, trCold: false, trRest: false, trDevice: false, trSleep: false,
+      pdTired: false, pdFoggy: false, pdLight: false, pdFine: false,
+      fSleep: false, fWeather: false, fStress: false, fMeal: false, fAlcohol: false, fPeriod: false,
+      rfSudden: false, rfWeak: false, rfFever: false, rfChange: false,
+      oSuma: true, oTreo: true, oIbu: false, oPara: false, oNap: false, oRime: false,
+      oSymNausea: true, oSymVomit: false, oSymLight: true, oSymSound: false, oSymAura: false, oSymDizzy: false,
+      oHealth: false, oNotif: true, onbCycle: false, amAuto: false, dynType: true, infoFactors: false, infoDays: false
+    };
+    const attackOn = { attack: true, startAt: twoH, painNow: 8, peak: 8, painTime: clk(twoH), zv: Object.assign({}, zv0, { le: 8, lf: 5 }), worse: 'yes', mbs: 'light', sumaOn: true, screen: 'today' };
+    const P = {
+      onb: {},
+      today: { screen: 'today' },
+      todayWarn: { screen: 'today', triptanBase: 8 },
+      addSheet: { screen: 'today', sheet: 'add' },
+      same: { screen: 'same', sameMed: 'yes' },
+      where: { screen: 'w1', zv: Object.assign({}, zv0, { le: 8, lf: 5 }), activeZ: 'le' },
+      whereList: { screen: 'w1', mapView: 'list', zv: Object.assign({}, zv0, { le: 8, lf: 5 }) },
+      worse: { screen: 'w2', zv: Object.assign({}, zv0, { le: 8 }), worse: 'yes' },
+      meds: { screen: 'w4', zv: Object.assign({}, zv0, { le: 8 }), sumaOn: true, sumaQty: 3 },
+      redflag: { screen: 'w1', sheet: 'redflag', rfSudden: true },
+      attack: Object.assign({}, attackOn),
+      attackMode: Object.assign({}, attackOn, { amode: true }),
+      checkin: Object.assign({}, attackOn, { amode: true, screen: 'checkin', ciPick: 3, ciMbs: 'yes' }),
+      details: Object.assign({}, attackOn, { screen: 'details', ftThrob: true, symNausea: true, symLight: true, symAura: true, auVis: true, auLen: 'mid', auHour: 'yes', trDark: true }),
+      end: Object.assign({}, attackOn, { screen: 'end1', pdTired: true }),
+      logs: { screen: 'logs' },
+      detail: { screen: 'logDetail' },
+      delete: { screen: 'logDetail', sheet: 'delete' },
+      insights: { screen: 'insights' },
+      states: { screen: 'states' },
+      display: { screen: 'display' }
+    };
+    return Object.assign({}, base, P[pr] || {});
+  }
+  componentDidMount() { this._timer = setInterval(() => this.forceUpdate(), 30000); }
+  componentWillUnmount() { clearInterval(this._timer); }
+  renderVals() {
+    const I = this.icons();
+    const D = this.defaults(this.props.preset);
+    const s = Object.assign({}, D, this.state || {});
+    const S = (o) => () => this.setState(o);
+    const pad = (n) => (n < 10 ? '0' : '') + n;
+    const clock = (ts) => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+    const nowTs = Date.now();
+
+    const screens = ['onb1','onb2','onb3','onb4','today','same','w1','w2','w3','w4','details','end1','end2','saved','checkin','amUpdate','logs','logDetail','merge','insights','settings','display','report','states'];
+    const go = {};
+    screens.forEach((n) => { go[n] = S({ screen: n, sheet: null }); });
+
+    const keys = ['dSleep','dStress','dMeal','dPeriod','eYawn','eCrave','eNeck','eMood','earlyOpen','symNausea','symVomit','symLight','symSound','symAura','symDizzy','auVis','auSens','auSpeech','ftThrob','ftPress','ftStab','ftDull','trDark','trMint','trCold','trRest','trDevice','trSleep','pdTired','pdFoggy','pdLight','pdFine','fSleep','fWeather','fStress','fMeal','fAlcohol','fPeriod','rfSudden','rfWeak','rfFever','rfChange','oSuma','oTreo','oIbu','oPara','oNap','oRime','oSymNausea','oSymVomit','oSymLight','oSymSound','oSymAura','oSymDizzy','oHealth','oNotif','onbCycle','amAuto','dynType','infoFactors','infoDays'];
+    const t = {}, c = {}, p = {};
+    keys.forEach((k) => { t[k] = () => this.setState({ [k]: !s[k] }); c[k] = s[k] ? 'on' : ''; p[k] = s[k] ? 'true' : 'false'; });
+
+    const groups = { theme: ['light','dark'], font: ['lexend','atk'], startChip: ['now','1h','2h','woke'], endChip: ['now','1h','pick'], ciMbs: ['yes','no'], auLen: ['short','mid','long'], auHour: ['yes','no'], range: ['30d','3m','all'], mapView: ['map','list'], sameMed: ['yes','no'] };
+    const g = {}, gs = {};
+    Object.keys(groups).forEach((k) => groups[k].forEach((val) => { g[k + '_' + val] = s[k] === val ? 'on' : ''; gs[k + '_' + val] = () => this.setState({ [k]: val }); }));
+
+    const tog = (list) => list.map((x) => ({ l: x[1], d: I[x[2]], badge: x[3] || '', cls: s[x[0]] ? 'on' : '', p: s[x[0]] ? 'true' : 'false', tap: () => this.setState({ [x[0]]: !s[x[0]] }) }));
+    const pick = (key, list) => list.map((x) => ({ l: x[1], d: I[x[2]], cls: s[key] === x[0] ? 'on' : '', p: s[key] === x[0] ? 'true' : 'false', tap: () => this.setState({ [key]: x[0] }) }));
+
+    const sets = {
+      onbMeds: tog([['oSuma','Sumatriptan','', 'T'],['oTreo','Treo','', 'C'],['oIbu','Ibuprofen','', 'P'],['oPara','Paracetamol','', 'P'],['oNap','Naproxen','', 'P'],['oRime','Rimegepant','', 'G']]),
+      onbSym: tog([['oSymNausea','Nausea','nausea'],['oSymVomit','Vomiting','vomit'],['oSymLight','Light-sensitive','light'],['oSymSound','Sound-sensitive','sound'],['oSymAura','Aura','aura'],['oSymDizzy','Dizzy','dizzy']]),
+      daily: tog([['dSleep','Short sleep','sleep'],['dStress','Stressful','stress'],['dMeal','Missed meal','meal'],['dPeriod','Period','period']]),
+      early: tog([['eYawn','Yawning','yawn'],['eCrave','Cravings','crave'],['eNeck','Stiff neck','neck'],['eMood','Mood change','mood']]),
+      post: tog([['pdTired','Tired','tired'],['pdFoggy','Foggy','foggy'],['pdLight','Light-sensitive','light'],['pdFine','Back to normal','fine']]),
+      worse: pick('worse', [['yes','Yes, worse','walk'],['no','No','still']]),
+      mbs: pick('mbs', [['pain','The pain','pain'],['nausea','Nausea','nausea'],['light','Light','light'],['sound','Sound','sound']]),
+      feel: tog([['ftThrob','Throbbing','throb'],['ftPress','Pressing','press'],['ftStab','Stabbing','stab'],['ftDull','Dull ache','dull']]),
+      sym: tog([['symNausea','Nausea','nausea'],['symVomit','Vomiting','vomit'],['symLight','Light-sensitive','light'],['symSound','Sound-sensitive','sound'],['symAura','Aura','aura'],['symDizzy','Dizzy','dizzy']]),
+      aura: tog([['auVis','Visual','eye'],['auSens','Tingling','tingle'],['auSpeech','Speech','words']]),
+      tried: tog([['trDark','Dark room','dark'],['trMint','Peppermint','mint'],['trCold','Cold pack','cold'],['trRest','Rest','rest'],['trSleep','Sleep','sleep'],['trDevice','Device','device']]),
+      factors: tog([['fSleep','Short sleep','sleep'],['fStress','Stressful','stress'],['fMeal','Missed meal','meal'],['fAlcohol','Alcohol','alcohol'],['fPeriod','Period','period'],['fWeather','Weather','weather']]),
+      rf: tog([['rfSudden','Sudden, worst ever','bolt'],['rfWeak','New weakness or speech trouble','weak'],['rfFever','Fever or stiff neck','fever'],['rfChange','Not like my usual','change']]),
+      meds: [
+        { l: 'Sumatriptan', badge: 'T', cls: s.sumaOn ? 'on' : '', p: s.sumaOn ? 'true' : 'false', tap: () => this.setState({ sumaOn: !s.sumaOn, nothing: false }) },
+        { l: 'Treo', badge: 'C', cls: s.treoOn ? 'on' : '', p: s.treoOn ? 'true' : 'false', tap: () => this.setState({ treoOn: !s.treoOn, nothing: false }) },
+        { l: 'Nothing yet', badge: '–', cls: s.nothing ? 'on' : '', p: s.nothing ? 'true' : 'false', tap: () => this.setState({ nothing: !s.nothing, sumaOn: false, treoOn: false }) }
+      ]
+    };
+
+    const zv = s.zv;
+    const zoneMax = Math.max.apply(null, Object.keys(zv).map((k) => zv[k]));
+    const anyZone = zoneMax > 0;
+    const L = zv.lf > 0 || zv.lt > 0 || zv.le > 0;
+    const R = zv.rf > 0 || zv.rt > 0 || zv.re > 0;
+    const C = zv.top > 0 || zv.back > 0 || zv.neck > 0 || zv.all > 0;
+    const sideText = zv.all > 0 ? 'All over' : (L && !R && !C ? 'Left side' : (R && !L && !C ? 'Right side' : (anyZone ? 'Both sides' : '')));
+    const names = { top: 'Top of head', rf: 'Right forehead', lf: 'Left forehead', rt: 'Right temple', lt: 'Left temple', re: 'Behind right eye', le: 'Behind left eye', back: 'Back of head', neck: 'Neck', all: 'All over' };
+    const geo = {
+      top: { d: 'M118 44 Q183 -2 248 44 L234 66 Q183 44 132 66 Z', b: [150, 10, 66, 48] },
+      rf: { d: 'M132 70 Q152 54 181 52 L181 98 L100 98 Q104 82 132 70 Z', b: [116, 54, 66, 44] },
+      lf: { d: 'M234 70 Q214 54 185 52 L185 98 L266 98 Q262 82 234 70 Z', b: [184, 54, 66, 44] },
+      rt: { d: 'M78 104 L100 104 L102 150 L82 150 Q74 126 78 104 Z', b: [66, 104, 44, 46] },
+      lt: { d: 'M288 104 L266 104 L264 150 L284 150 Q292 126 288 104 Z', b: [256, 104, 44, 46] },
+      re: { d: 'M114 128 a32 21 0 1 0 64 0 a32 21 0 1 0 -64 0', b: [116, 106, 60, 44] },
+      le: { d: 'M188 128 a32 21 0 1 0 64 0 a32 21 0 1 0 -64 0', b: [190, 106, 60, 44] }
+    };
+    const shade = (n) => n > 0 ? 'color-mix(in srgb, var(--ac) ' + Math.round(10 + n * 4) + '%, var(--sf))' : 'var(--sf)';
+    const zoneTap = (k) => () => {
+      const nz = Object.assign({}, s.zv);
+      if (nz[k] > 0 && s.activeZ === k) { this.setState({ activeZ: null }); return; }
+      if (nz[k] > 0) { this.setState({ activeZ: k }); return; }
+      nz[k] = zoneMax > 0 ? zoneMax : 5;
+      this.setState({ zv: nz, activeZ: k });
+    };
+    const zoneList = Object.keys(geo).map((k) => ({
+      d: geo[k].d, fill: zv[k] > 0 ? shade(zv[k]) : 'transparent', stroke: zv[k] > 0 ? 'var(--acline)' : 'var(--mu)', dash: zv[k] > 0 ? '0' : '4 4',
+      bx: geo[k].b[0], by: geo[k].b[1], bw: geo[k].b[2], bh: geo[k].b[3],
+      num: zv[k] > 0 ? String(zv[k]) : '', act: s.activeZ === k ? 'act' : '',
+      pressed: zv[k] > 0 ? 'true' : 'false', aria: names[k] + (zv[k] > 0 ? ', pain ' + zv[k] : ', not selected'), tap: zoneTap(k)
+    }));
+    const zoneExtra = ['back','neck','all'].map((k) => ({ text: zv[k] > 0 ? names[k] + ' · ' + zv[k] : names[k], chip: zv[k] > 0 ? 'on' : '', pressed: zv[k] > 0 ? 'true' : 'false', tap: zoneTap(k) }));
+    const zoneRows = Object.keys(names).map((k) => ({ name: names[k], num: zv[k] > 0 ? String(zv[k]) : '–', pressed: zv[k] > 0 ? 'true' : 'false', tap: zoneTap(k) }));
+    const zoneGrid = [0,1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: n, bg: shade(n), cls: s.activeZ && zv[s.activeZ] === n ? 'on' : '', on: s.activeZ && zv[s.activeZ] === n ? 'true' : 'false', pick: () => { const nz = Object.assign({}, s.zv); nz[s.activeZ] = n; this.setState({ zv: nz, activeZ: n === 0 ? null : s.activeZ }); } }));
+
+    const startOffset = () => {
+      const n = Date.now();
+      if (s.startChip === '1h') return n - 3600000;
+      if (s.startChip === '2h') return n - 7200000;
+      if (s.startChip === 'woke') { const d = new Date(); d.setHours(6, 30, 0, 0); return d.getTime() < n ? d.getTime() : n - 3 * 3600000; }
+      return n;
+    };
+    const snapshot = () => ({ attack: s.attack, ended: s.ended, startAt: s.startAt, painNow: s.painNow, peak: s.peak, zv: s.zv, sumaOn: s.sumaOn, treoOn: s.treoOn, screen: 'today', amode: s.amode });
+    const afterStart = (extra) => {
+      const o = Object.assign({ attack: true, ended: false, checkinDone: false, ciPick: -1, ciMbs: null, screen: 'today', activeZ: null, undoState: snapshot(), toast: 'Attack started', toastUndo: 'start' }, extra);
+      if (s.amAuto) { o.amode = true; o.sheet = null; } else if (s.amode) { o.sheet = null; } else { o.sheet = 'prompt'; }
+      this.setState(o);
+    };
+    const mbsLabels = { pain: 'pain', nausea: 'nausea', light: 'light sensitivity', sound: 'sound sensitivity' };
+
+    const a = {
+      plus: S({ sheet: 'add' }),
+      closeSheet: S({ sheet: null }),
+      redflag: S({ sheet: 'redflag' }),
+      amodeToggle: () => this.setState({ amode: !s.amode, screen: 'today', sheet: null }),
+      zoneRemove: () => { const nz = Object.assign({}, s.zv); nz[s.activeZ] = 0; this.setState({ zv: nz, activeZ: null }); },
+      w1Next: () => { if (anyZone) this.setState({ screen: 'w2', activeZ: null }); },
+      start: () => { const st = startOffset(); afterStart({ startAt: st, painNow: zoneMax, peak: zoneMax, painTime: clock(st) }); },
+      samePainDown: () => this.setState({ samePain: Math.max(0, s.samePain - 1) }),
+      samePainUp: () => this.setState({ samePain: Math.min(10, s.samePain + 1) }),
+      sameStart: () => { if (!s.sameMed) return; afterStart({ startAt: Date.now(), painNow: s.samePain, peak: s.samePain, painTime: clock(Date.now()), zv: Object.assign({}, D.zv, { le: s.samePain, lf: Math.max(1, s.samePain - 3) }), worse: 'yes', mbs: 'light', ftThrob: true, sumaOn: s.sameMed === 'yes', treoOn: false, nothing: s.sameMed === 'no', sumaQty: 1 }); },
+      promptOn: S({ amode: true, sheet: null }),
+      promptOff: S({ sheet: null }),
+      painDown: () => this.setState({ painNow: Math.max(0, s.painNow - 1), painTime: clock(Date.now()) }),
+      painUp: () => { const n = Math.min(10, s.painNow + 1); this.setState({ painNow: n, peak: Math.max(s.peak, n), painTime: clock(Date.now()) }); },
+      qtyDown: () => this.setState({ sumaQty: Math.max(1, s.sumaQty - 1) }),
+      qtyUp: () => this.setState({ sumaQty: Math.min(6, s.sumaQty + 1) }),
+      amUpdate: S({ screen: 'amUpdate', amPick: s.painNow }),
+      amSave: () => this.setState({ painNow: s.amPick, peak: Math.max(s.peak, s.amPick), painTime: clock(Date.now()), screen: 'today', toast: 'Pain saved', toastUndo: null }),
+      ciSave: () => {
+        const pv = s.ciPick < 0 ? s.painNow : s.ciPick;
+        let lbl = pv === 0 ? 'pain-free' : 'pain ' + pv;
+        if (s.mbs && s.mbs !== 'pain' && s.ciMbs) lbl += ' · ' + mbsLabels[s.mbs] + (s.ciMbs === 'yes' ? ' better' : ' not better');
+        this.setState({ checkinDone: true, ciLabel: lbl, painNow: pv, painTime: clock(Date.now()), screen: 'today', toast: 'Check-in saved', toastUndo: null });
+      },
+      detailsSave: S({ screen: 'today', toast: 'Details saved', toastUndo: null }),
+      endSave: () => this.setState({ attack: false, ended: true, endLabel: clock(s.startAt) + ' – ' + clock(Date.now()), screen: 'saved', sheet: null, toast: '' }),
+      logHeadache: () => this.setState({ headacheLogged: true, sheet: null, screen: 'today', toast: 'Headache day saved', toastUndo: 'headache', undoState: { headacheLogged: false } }),
+      toastClose: S({ toast: '', toastUndo: null }),
+      undo: () => { const o = Object.assign({}, s.undoState || {}, { toast: '', toastUndo: null, sheet: null }); this.setState(o); },
+      merge: () => this.setState({ merged: true, screen: 'logs', toast: 'Merged into 1 attack', toastUndo: 'merge', undoState: { merged: false, screen: 'logs' } }),
+      editAttack: S({ screen: 'w1', zv: Object.assign({}, D.zv, { le: 7 }), activeZ: 'le' }),
+      askDelete: S({ sheet: 'delete' }),
+      doDelete: () => this.setState({ deleted: true, sheet: null, screen: 'logs', toast: 'Attack deleted', toastUndo: 'delete', undoState: { deleted: false, screen: 'logs' } }),
+      restart: () => this.setState(this.defaults('onb'))
+    };
+
+    const amGrid = [0,1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: n, bg: shade(n), cls: s.amPick === n ? 'on' : '', on: s.amPick === n ? 'true' : 'false', pick: S({ amPick: n }) }));
+    const ciGrid = [0,1,2,3,4,5,6,7,8,9,10].map((n) => ({ n: n, bg: shade(n), cls: s.ciPick === n ? 'on' : '', on: s.ciPick === n ? 'true' : 'false', pick: S({ ciPick: n }) }));
+
+    const logged = s.attack || s.ended;
+    const dailyAny = s.dSleep || s.dStress || s.dMeal || s.dPeriod;
+    const week = [{ l: 'M', cls: 'ck' }, { l: 'T', cls: 'ck' }, { l: 'W', cls: 'mg' }, { l: 'T', cls: 'ck' }, { l: 'F', cls: '' }, { l: 'S', cls: 'ck' }, { l: 'S', cls: (logged ? 'mg' : (dailyAny ? 'ck' : '')) + ' td' }];
+    const timeline = [{ time: s.startAt ? clock(s.startAt) : '', l: 'Started · ' + (sideText || 'location not set') }];
+    if (s.sumaOn) timeline.push({ time: s.startAt ? clock(s.startAt) : '', l: 'Sumatriptan × ' + s.sumaQty });
+    if (s.treoOn) timeline.push({ time: s.startAt ? clock(s.startAt) : '', l: 'Treo' });
+
+    const logRows = [];
+    if (s.ended) { logRows.push({ isHead: true, isRow: false, title: 'Today' }); logRows.push({ isHead: false, isRow: true, peak: s.peak, title: s.endLabel, sub: sideText, side: sideText, r: R || C ? 'var(--ac)' : 'transparent', l: L || C ? 'var(--ac)' : 'transparent' }); }
+    logRows.push({ isHead: true, isRow: false, title: s.merged ? 'Wed 19 – Thu 20 Aug' : 'Thu 20 Aug' });
+    if (s.merged) logRows.push({ isHead: false, isRow: true, peak: 9, title: '08:17 – 13:02 · 28 h 45 m', sub: 'Left side · merged', side: 'Left side', r: 'transparent', l: 'var(--ac)' });
+    else {
+      if (!s.deleted) logRows.push({ isHead: false, isRow: true, peak: 7, title: '13:06 · 1 min', sub: 'Left eye', side: 'Left side', r: 'transparent', l: 'var(--ac)' });
+      logRows.push({ isHead: false, isRow: true, peak: 6, title: '02:07 · 10 h 55 m', sub: 'Left forehead', side: 'Left side', r: 'transparent', l: 'var(--ac)' });
+    }
+    logRows.push({ isHead: true, isRow: false, title: 'Mon 17 Aug' });
+    logRows.push({ isHead: false, isRow: true, peak: 5, title: '09:15 · 2 h 30 m', sub: 'Right temple', side: 'Right side', r: 'var(--ac)', l: 'transparent' });
+
+    const detailIcons = [{ d: I.throb, l: 'Throbbing' }, { d: I.walk, l: 'Worse moving' }, { d: I.nausea, l: 'Nausea' }, { d: I.light, l: 'Light' }];
+
+    const mins = s.attack ? Math.max(0, Math.floor((nowTs - s.startAt) / 60000)) : 0;
+    const checkMed = s.sumaOn ? 'Sumatriptan' : (s.treoOn ? 'Treo' : '');
+    const triptan = s.triptanBase + (logged && s.sumaOn ? 1 : 0);
+    const combo = 1 + (logged && s.treoOn ? 1 : 0);
+
+    const v = {
+      themeCls: s.amode && s.screen === 'today' ? 't-dark' : (s.theme === 'dark' ? 't-dark' : 't-light'),
+      fontCls: s.font === 'atk' ? 'f-atk' : '',
+      amCls: s.amode ? 'am' : '',
+      elapsed: Math.floor(mins / 60) + 'h ' + pad(mins % 60) + 'm',
+      startClock: s.startAt ? clock(s.startAt) : '',
+      painNow: s.painNow, peak: s.peak,
+      sideText: sideText || 'Location not set',
+      headL: L || C ? 'var(--ac)' : 'transparent', headR: R || C ? 'var(--ac)' : 'transparent',
+      activeLabel: s.activeZ ? names[s.activeZ] : '',
+      startOff: anyZone ? '' : 'off', w1Disabled: anyZone ? 'false' : 'true',
+      mapP: s.mapView === 'map' ? 'true' : 'false', listP: s.mapView === 'list' ? 'true' : 'false',
+      w2Label: s.worse ? 'Next' : 'Skip', w3Label: s.mbs ? 'Next' : 'Skip',
+      sumaQty: s.sumaQty, checkMed: checkMed, checkinLabel: s.ciLabel,
+      mbsLabel: s.mbs ? mbsLabels[s.mbs] : '',
+      ciYesP: s.ciMbs === 'yes' ? 'true' : 'false', ciNoP: s.ciMbs === 'no' ? 'true' : 'false',
+      samePain: s.samePain, sameOff: s.sameMed ? '' : 'off', sameYesP: s.sameMed === 'yes' ? 'true' : 'false', sameNoP: s.sameMed === 'no' ? 'true' : 'false',
+      endLabel: s.endLabel,
+      checkins: 5 + (dailyAny || logged ? 1 : 0),
+      headacheDays: 4 + (logged ? 1 : 0) + (s.headacheLogged ? 1 : 0),
+      migraineDays: 3 + (logged ? 1 : 0),
+      triptanDays: triptan, triptanPct: Math.min(100, triptan * 10) + '%', triptanHi: triptan >= 8 ? 'hi' : '',
+      comboDays: combo, comboPct: (combo * 10) + '%',
+      lightP: s.theme === 'light' ? 'true' : 'false', darkP: s.theme === 'dark' ? 'true' : 'false',
+      lexP: s.font === 'lexend' ? 'true' : 'false', atkP: s.font === 'atk' ? 'true' : 'false',
+      toast: s.toast
+    };
+
+    const is = {};
+    screens.forEach((n) => { is[n] = s.screen === n; });
+    is.todayNormal = s.screen === 'today' && !s.amode && !s.attack;
+    is.todayAttack = s.screen === 'today' && !s.amode && s.attack;
+    is.amToday = s.screen === 'today' && s.amode && s.attack;
+    is.amIdle = s.screen === 'today' && s.amode && !s.attack;
+    is.tabs = ['today','logs','insights','settings'].indexOf(s.screen) >= 0 && !(s.screen === 'today' && s.amode);
+    is.plus = !s.attack;
+    is.sheetAdd = s.sheet === 'add';
+    is.sheetPrompt = s.sheet === 'prompt';
+    is.sheetRedflag = s.sheet === 'redflag';
+    is.sheetDelete = s.sheet === 'delete';
+    is.sumaOn = s.sumaOn;
+    is.sumaWarn = s.sumaOn && s.sumaQty > 2;
+    is.checkinAsk = s.attack && !!checkMed && !s.checkinDone && mins >= 115;
+    is.checkinDone = s.checkinDone;
+    is.mbsNotPain = !!s.mbs && s.mbs !== 'pain';
+    is.zoneActive = !!s.activeZ && zv[s.activeZ] > 0;
+    is.noZone = !anyZone;
+    is.mapView = s.mapView === 'map';
+    is.listView = s.mapView === 'list';
+    is.sameNoPick = !s.sameMed;
+    is.notMerged = !s.merged;
+    is.postdromeCard = s.ended;
+    is.overuse = triptan >= 8;
+    is.auraOn = s.symAura;
+    is.auraFlag = s.symAura && s.auLen === 'long';
+    is.earlyOpen = s.earlyOpen;
+    is.earlyClosed = !s.earlyOpen;
+    is.rfAny = s.rfSudden || s.rfWeak || s.rfFever || s.rfChange;
+    is.infoFactors = s.infoFactors;
+    is.infoDays = s.infoDays;
+    is.toast = !!s.toast;
+    is.toastUndo = !!s.toastUndo;
+    is.toastPlain = !s.toastUndo;
+
+    const tc = { today: s.screen === 'today' ? 'on' : '', logs: s.screen === 'logs' ? 'on' : '', insights: s.screen === 'insights' ? 'on' : '', settings: s.screen === 'settings' ? 'on' : '' };
+
+    return { go: go, a: a, t: t, c: c, p: p, g: g, gs: gs, is: is, v: v, tc: tc, sets: sets, zoneList: zoneList, zoneExtra: zoneExtra, zoneRows: zoneRows, zoneGrid: zoneGrid, amGrid: amGrid, ciGrid: ciGrid, week: week, timeline: timeline, logRows: logRows, detailIcons: detailIcons };
+  }
+}
+
+(function(){
+  const SVG = 'http://www.w3.org/2000/svg';
+  const HOLE = /\{\{\s*([^}]+?)\s*\}\}/g, ONE = /^\s*\{\{\s*([^}]+?)\s*\}\}\s*$/;
+  function res(expr, sc) {
+    if (expr === 'true') return true; if (expr === 'false') return false;
+    if (/^-?\d+(\.\d+)?$/.test(expr)) return Number(expr);
+    let v = sc; for (const p of expr.split('.')) { if (v == null) return undefined; v = v[p]; } return v;
+  }
+  function interp(s, sc) { return s.replace(HOLE, (m, e) => { const v = res(e, sc); return v == null ? '' : String(v); }); }
+  function val(s, sc) { const m = (s || '').match(ONE); return m ? res(m[1], sc) : s; }
+  function rn(n, sc, out) {
+    if (n.nodeType === 3) { out.push(document.createTextNode(interp(n.nodeValue, sc))); return; }
+    if (n.nodeType !== 1) return;
+    const tag = n.localName;
+    if (tag === 'sc-if') { if (val(n.getAttribute('value'), sc)) n.childNodes.forEach((c) => rn(c, sc, out)); return; }
+    if (tag === 'sc-for') { const list = val(n.getAttribute('list'), sc) || []; const as = n.getAttribute('as');
+      list.forEach((it) => { const s2 = Object.create(sc); s2[as] = it; n.childNodes.forEach((c) => rn(c, s2, out)); }); return; }
+    const el = n.namespaceURI === SVG ? document.createElementNS(SVG, tag) : document.createElement(tag);
+    for (const a of Array.from(n.attributes)) {
+      if (a.name.indexOf('hint-') === 0) continue;
+      const m = a.value.match(ONE);
+      if (a.name.indexOf('on') === 0 && m) { const fn = res(m[1], sc); if (typeof fn === 'function') el.addEventListener(a.name.slice(2), fn); continue; }
+      el.setAttribute(a.name, interp(a.value, sc));
+    }
+    const kids = []; n.childNodes.forEach((c) => rn(c, sc, kids)); kids.forEach((k) => el.appendChild(k));
+    out.push(el);
+  }
+  const tpl = document.getElementById('tpl').content;
+  document.querySelectorAll('.frame').forEach((frame) => {
+    const inst = new Component({ preset: frame.dataset.preset });
+    let lastScreen = null;
+    inst._rr = () => {
+      const scr = (inst.state && inst.state.screen) || inst.defaults(frame.dataset.preset).screen;
+      const keep = scr === lastScreen ? Array.from(frame.querySelectorAll('.scr')).map((e) => e.scrollTop) : [];
+      const vals = inst.renderVals(); const out = [];
+      tpl.childNodes.forEach((c) => rn(c, vals, out));
+      frame.replaceChildren(...out);
+      frame.querySelectorAll('.scr').forEach((e, i) => { if (keep[i]) e.scrollTop = keep[i]; });
+      lastScreen = scr;
+    };
+    inst._rr();
+    if (inst.componentDidMount) inst.componentDidMount();
+  });
+})();
+</script>
+</body>
+</html>

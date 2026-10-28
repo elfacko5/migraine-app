@@ -7,3 +7,11 @@ dist/
 # .dc.html working files beside it. Those files are the source; this is build
 # output, and it changes wholesale on every re-seed.
 design/lidd-widget-directions.html
+
+# Generated, not source: an icon-generator export (the real icons come from
+# assets/ via @capacitor/assets), the redesign's HTML exports for Figma import
+# (nothing links to them), and exploration renders that were never used.
+AppIcons/
+docs/redesign-v3/figma/
+illustrations/tmp*.png
+illustrations/vertical cocoon *.png
