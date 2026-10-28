@@ -54,7 +54,7 @@ export function TopBar({ title, action, control, titleHidden = false }: Props) {
           `transition-[min-height]` to have anything to interpolate. It still
           matches the 32px control's own height, so nothing changes about the
           resting layout, only how the *change* between the two now reads. */}
-      <div className={`mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-2 sm:px-6 transition-[min-height] duration-300 ease-out ${collapsed ? 'min-h-8' : 'min-h-14'}`}>
+      <div className={`mx-auto flex max-w-2xl items-center justify-between gap-3 px-gutter py-2 sm:px-gutter-wide transition-[min-height] duration-300 ease-out ${collapsed ? 'min-h-8' : 'min-h-14'}`}>
         {collapsed ? (
           <>
             <h1 className="sr-only">{title}</h1>
@@ -74,7 +74,7 @@ export function TopBar({ title, action, control, titleHidden = false }: Props) {
         // reasoning that keeps this header borderless — but sitting on the
         // title row's own 8px it was cramped against a 34px headline (Sunny,
         // 2026-09-02). `pt-3` takes the gap to 20px.
-        <div className="mx-auto max-w-2xl px-4 pb-3 pt-3 sm:px-6">{control}</div>
+        <div className="mx-auto max-w-2xl px-gutter pb-3 pt-3 sm:px-gutter-wide">{control}</div>
       )}
     </header>
   );

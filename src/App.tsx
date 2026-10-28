@@ -505,7 +505,7 @@ export default function App() {
           />
         )}
         <div
-          className="mx-auto max-w-2xl px-4 pt-5 sm:px-6"
+          className="mx-auto max-w-2xl px-gutter pt-5 sm:px-gutter-wide"
           // The reserve clears the nav and the FAB in it. It was 10rem while
           // AttackModePill floated over every tab; that pill is gone (v3,
           // 2026-10-26 — attack mode lives in Today's hero and on the Display

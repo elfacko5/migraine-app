@@ -243,7 +243,7 @@ export function DisplayPanel({
           )}
 
           {/* Live preview card — inherits root font size so it updates instantly */}
-          <div className="rounded-inset border border-bg-border/60 bg-bg-raised/40 p-4">
+          <div className="rounded-inset border border-bg-border/60 bg-bg-raised/40 p-card">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1 min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -307,7 +307,7 @@ export function DisplayPanel({
               docs/viewport-architecture.md), this mirrors its exact recipe,
               `rgba(20,20,15,brightness)`, on a small swatch that lives inside
               the panel and updates on every drag. */}
-          <div className="relative overflow-hidden rounded-inset border border-bg-border/60 bg-bg-raised/40 p-4">
+          <div className="relative overflow-hidden rounded-inset border border-bg-border/60 bg-bg-raised/40 p-card">
             <p className="text-sm font-medium text-text-primary">Preview</p>
             <p className="text-xs text-text-secondary">How the dim looks during an attack.</p>
             <div
@@ -340,7 +340,7 @@ export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: Accoun
   return (
     <ProfileSubPage title="Account & sync" onClose={onClose}>
       {auth.enabled && (
-          <div className="rounded-inset border border-bg-border bg-bg-raised/40 p-4 space-y-3">
+          <div className="rounded-inset border border-bg-border bg-bg-raised/40 p-card space-y-3">
             {auth.session ? (
               <>
                 <p className="text-sm text-text-primary">
@@ -493,7 +493,7 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
   return (
     <ProfileSubPage title="Data" onClose={onClose}>
 
-        <div className="rounded-inset border border-bg-border bg-bg-raised/40 p-4 space-y-3">
+        <div className="rounded-inset border border-bg-border bg-bg-raised/40 p-card space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"

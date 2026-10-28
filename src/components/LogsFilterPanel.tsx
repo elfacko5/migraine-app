@@ -110,7 +110,7 @@ export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onCl
     // iOS PWA (the same reason the wizards use flush), so the footer is a flex
     // sibling of the scroller rather than sticky inside it.
     <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4">
+      <div className="flex-1 overflow-y-auto px-gutter sm:px-gutter-wide py-5 space-y-4">
       {/* Period leads, because it decides the pool every other filter then
           narrows — and because it moved here from a permanent pill row above
           the list, where defaulting to 7 days meant the page opened hiding
@@ -207,13 +207,13 @@ export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onCl
           the same weight where only one continues. Up there it's also always
           reachable, instead of six groups of scrolling away. */}
       <div
-        className="border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
+        className="border-t border-bg-border bg-bg-surface px-gutter sm:px-gutter-wide py-4"
         style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
       >
         <button
           type="button"
           onClick={onClose}
-          className="btn-primary w-full rounded-control py-3 text-sm font-medium transition-colors"
+          className="btn-primary w-full rounded-control py-control-y text-sm font-medium transition-colors"
         >
           Show results
         </button>

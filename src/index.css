@@ -94,6 +94,17 @@
   --spacing-target:  calc(var(--spacing) * 11);  /* 44px touch target */
   --spacing-compact: calc(var(--spacing) * 9);   /* 36px compact control */
 
+  /* ── Padding roles (phase 3) ──────────────────────────
+     Only for structures that repeat; everything else stays on Tailwind's
+     own scale. On the spacing scale for the same reason as the sizes. */
+  --spacing-card:              calc(var(--spacing) * 4);    /* p-card */
+  --spacing-control-x:         calc(var(--spacing) * 4);    /* btn-* */
+  --spacing-control-y:         calc(var(--spacing) * 3);
+  --spacing-control-compact-x: calc(var(--spacing) * 5);    /* btn-compact */
+  --spacing-control-compact-y: calc(var(--spacing) * 2.5);
+  --spacing-gutter:            calc(var(--spacing) * 4);    /* px-gutter */
+  --spacing-gutter-wide:       calc(var(--spacing) * 6);    /* sm:px-gutter-wide */
+
   /* ── Color tokens — warm dark ────────────────────────
      Warm charcoal rather than the old blue-leaning slate: saturated blue is
      the worst hue for photophobia, and the previous palette had a blue cast
@@ -278,7 +289,7 @@
 @layer components {
   .btn-primary, .btn-secondary, .btn-tertiary {
     border-radius: var(--radius-control);
-    padding: 0.75rem 1rem;               /* py-3 px-4 */
+    padding: var(--spacing-control-y) var(--spacing-control-x);
     font-size: var(--text-sm);
     line-height: 1.5;
     font-weight: 500;                    /* font-medium */
@@ -316,7 +327,7 @@
      Giving the sizes names makes "which one" a decision you make rather than
      one you inherit — and it is the only definition of either, so the hero
      card's own buttons now use this class instead of repeating the values. */
-  .btn-compact { padding: 0.625rem 1.25rem; }
+  .btn-compact { padding: var(--spacing-control-compact-y) var(--spacing-control-compact-x); }
 
   /* A disabled primary is a *muted* button, never a faded accent one — the
      treatment the logging wizard spells out by hand at each call site. Here

@@ -276,7 +276,7 @@ function DoseTimeCard({ timing }: { timing: DoseTiming }) {
   }, [timing.mode]);
 
   return (
-    <div className="rounded-inset border border-bg-border bg-bg-raised p-4 space-y-3">
+    <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-3">
       <p id="dose-time-label" className="text-sm font-medium text-text-primary">When did you take it?</p>
       <div role="radiogroup" aria-labelledby="dose-time-label" className="flex flex-wrap gap-2">
         {options.map((m) => (

@@ -40,7 +40,7 @@ export function ProfileSubPage({ title, onClose, children, footer }: Props) {
       </div>
 
       <div
-        className="flex-1 overflow-y-auto px-4 py-5"
+        className="flex-1 overflow-y-auto px-gutter py-5"
         // With a footer below, the inset is that element's job — adding it
         // here too would reserve the home indicator's height twice.
         style={{ paddingBottom: footer ? '1.25rem' : 'calc(1.25rem + env(safe-area-inset-bottom))' }}
@@ -50,7 +50,7 @@ export function ProfileSubPage({ title, onClose, children, footer }: Props) {
 
       {footer && (
         <div
-          className="border-t border-border-subtle bg-bg-surface px-4 py-4"
+          className="border-t border-border-subtle bg-bg-surface px-gutter py-4"
           style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         >
           {footer}

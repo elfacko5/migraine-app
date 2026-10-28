@@ -288,7 +288,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
       </div>
 
       {/* Scrolling content — the only scrolling region */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-5 pb-4 flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto px-gutter sm:px-gutter-wide pt-5 pb-4 flex flex-col">
             {/* Section header — H2 title + instruction, with the text-size stepper
                 pinned to its right. */}
             <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
@@ -399,13 +399,13 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
 
       {/* Actions — flex-pinned to the bottom (above the home indicator) */}
       <div
-        className="flex gap-3 border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
+        className="flex gap-3 border-t border-bg-border bg-bg-surface px-gutter sm:px-gutter-wide py-4"
         style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
       >
             {/* Nothing behind step 1 any more — the wizard is the whole flow */}
             {step > 1 && (
               <button type="button" onClick={goBack}
-                className="btn-secondary flex-1 rounded-control py-3 text-sm font-medium transition-colors">
+                className="btn-secondary flex-1 rounded-control py-control-y text-sm font-medium transition-colors">
                 Back
               </button>
             )}
@@ -414,7 +414,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
               // Says why, for a control whose disabled state is otherwise a
               // dead end — the same title `LogForm` gives its own.
               title={nextDisabled ? 'Select a pain area first' : undefined}
-              className="btn-primary flex-1 rounded-control py-3 text-sm font-medium transition-colors">
+              className="btn-primary flex-1 rounded-control py-control-y text-sm font-medium transition-colors">
               {step === TOTAL_STEPS ? 'Save update' : 'Next'}
             </button>
       </div>

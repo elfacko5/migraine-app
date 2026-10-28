@@ -149,7 +149,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-4 pb-6 pt-2 sm:px-6">
+      <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
         <div className="grid grid-cols-3 gap-2.5">
           <Tile value={formatDuration(start, attack.end)} label={ongoing ? 'so far' : 'long'} />
           <Tile value={String(peak)} label="peak pain" />
@@ -166,13 +166,13 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
 
         <h3 className="pt-2 text-lg font-semibold text-text-primary">Medication</h3>
         {outcomes.length === 0 ? (
-          <div className="rounded-card bg-bg-surface p-4 text-xs text-text-secondary">Nothing taken for this attack.</div>
+          <div className="rounded-card bg-bg-surface p-card text-xs text-text-secondary">Nothing taken for this attack.</div>
         ) : outcomes.map((o) => {
           const timing = firstDoses.find((d) => d.name === o.name)?.timing;
           const lib = findMedication(medications, o.name);
           const amount = o.amount ? unitsLabel(o.amount, lib) : o.dose;
           return (
-            <div key={o.name} className="space-y-2 rounded-card bg-bg-surface p-4">
+            <div key={o.name} className="space-y-2 rounded-card bg-bg-surface p-card">
               <div className="flex items-center gap-3">
                 <ClassBadge large>{letterFor(o.name) ?? <MedIcon name={o.name} dose={o.dose} className="h-4 w-4" />}</ClassBadge>
                 <div className="min-w-0 flex-1">
@@ -275,7 +275,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           metadata only (docs/editing-assessment.md) and waits until the
           attack has ended; while it runs, End attack takes its place. */}
       <div
-        className="flex gap-2.5 bg-bg-base px-4 py-3 sm:px-6"
+        className="flex gap-2.5 bg-bg-base px-gutter py-3 sm:px-gutter-wide"
         style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
       >
         {ongoing && onEndAttack ? (
@@ -363,7 +363,7 @@ function PainChart({ attack, letterFor }: { attack: Attack; letterFor: (name: st
   const label = `Pain over time: ${values.join(', ')}${doses.length ? `. Doses: ${doses.map((m) => m.name).join(', ')}` : ''}`;
 
   return (
-    <div className="space-y-1.5 rounded-card bg-bg-surface p-4">
+    <div className="space-y-1.5 rounded-card bg-bg-surface p-card">
       <h3 className="text-base font-semibold text-text-primary">Pain over time</h3>
       <svg viewBox="0 0 326 132" role="img" aria-label={label} className="block h-auto w-full">
         <text x="0" y="16" className="fill-text-secondary" fontSize="14" fontFamily="Lexend, sans-serif">10</text>
@@ -437,7 +437,7 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div
-        className="flex items-center gap-3 border-b border-bg-border bg-bg-surface px-4 sm:px-6 py-3"
+        className="flex items-center gap-3 border-b border-bg-border bg-bg-surface px-gutter sm:px-gutter-wide py-3"
         style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
       >
         <button
@@ -453,7 +453,7 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
         <h2 className="min-w-0 flex-1 truncate text-base font-medium text-text-primary">Edit details</h2>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-gutter sm:px-gutter-wide py-4 space-y-6">
         <p className="text-xs text-text-secondary">
           This changes what's recorded about the attack as a whole. The readings themselves stay as they
           were logged.
@@ -505,13 +505,13 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
       </div>
 
       <div
-        className="flex flex-col gap-2 border-t border-bg-border bg-bg-surface px-4 sm:px-6 py-4"
+        className="flex flex-col gap-2 border-t border-bg-border bg-bg-surface px-gutter sm:px-gutter-wide py-4"
         style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
-        <button type="button" onClick={save} className="btn-primary w-full rounded-control py-3 text-sm font-medium transition-colors">
+        <button type="button" onClick={save} className="btn-primary w-full rounded-control py-control-y text-sm font-medium transition-colors">
           Save changes
         </button>
-        <button type="button" onClick={onCancel} className="btn-secondary w-full rounded-control py-3 text-sm font-medium transition-colors">
+        <button type="button" onClick={onCancel} className="btn-secondary w-full rounded-control py-control-y text-sm font-medium transition-colors">
           Cancel
         </button>
       </div>

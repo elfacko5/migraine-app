@@ -79,7 +79,7 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
         footer={<button type="button" onClick={onClose} className="btn-primary w-full">Done</button>}
       >
         <div className="space-y-4">
-          <div className="rounded-inset bg-bg-raised p-4">
+          <div className="rounded-inset bg-bg-raised p-card">
             <div className="text-3xl font-bold text-text-primary">{result.score}</div>
             <div className="text-sm text-text-primary">{band.label}</div>
             <p className="mt-1 text-xs text-text-secondary">{band.detail}</p>

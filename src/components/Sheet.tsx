@@ -99,7 +99,7 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
           </div>
         ) : (
           <div
-            className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-4 py-5 sm:px-6"
+            className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-gutter py-5 sm:px-gutter-wide"
             style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
           >
             {open && children}

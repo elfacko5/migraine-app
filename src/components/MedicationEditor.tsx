@@ -192,7 +192,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
         )}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-6 pt-2 sm:px-6">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
         <div className="space-y-2">
           <label htmlFor={nameId} className="block text-xs font-medium text-text-secondary">Name</label>
           <input id={nameId} type="text" placeholder="e.g. Sumatriptan" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
@@ -293,7 +293,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
             {/* Limits, folded away. They come off a leaflet the app knows
                 nothing about, so nothing here is ever pre-filled, and nothing
                 warns until the user has entered a number. */}
-            <div className="rounded-card bg-bg-raised p-4">
+            <div className="rounded-card bg-bg-raised p-card">
               <button
                 type="button"
                 aria-expanded={limitsOpen}
@@ -339,7 +339,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
       </div>
 
       <div
-        className="space-y-2 bg-bg-surface px-4 py-4 sm:px-6"
+        className="space-y-2 bg-bg-surface px-gutter py-4 sm:px-gutter-wide"
         style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         {/* Disabled rather than hidden, with the reason above it. */}

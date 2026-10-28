@@ -104,7 +104,7 @@ export function InsightSection({ title, children, note, info }: Props) {
           reads as two different apps rather than as a deliberate difference.
           The inner box stays at `p-3`: it is nested inside this one, not a
           peer of the tiles. */}
-      <div className="space-y-2 rounded-group bg-bg-surface p-4">
+      <div className="space-y-2 rounded-group bg-bg-surface p-card">
         {note ? (
           <>
             <div className="rounded-inset border border-bg-border p-3">{children}</div>

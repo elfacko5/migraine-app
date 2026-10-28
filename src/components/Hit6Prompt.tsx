@@ -30,7 +30,7 @@ interface Props {
  */
 export function Hit6Prompt({ onStart, onDismiss, first }: Props) {
   return (
-    <div className="rounded-inset bg-bg-surface p-4">
+    <div className="rounded-inset bg-bg-surface p-card">
       <p className="text-sm text-text-primary">
         {first
           ? 'How much are headaches affecting your life?'
