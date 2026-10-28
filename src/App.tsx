@@ -47,7 +47,7 @@ import { SegmentedControl } from './components/SegmentedControl';
 import { HistoryView } from './components/HistoryView';
 import { LogsFilterPanel, LogsFilterReset } from './components/LogsFilterPanel';
 import { DEFAULT_FILTERS, PERIOD_SEGMENTS, type LogFilters, type SortOrder, type Period } from './utils/logFilters';
-import { ProfileView, DisplayPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
+import { ProfileView, DisplayPanel, RemindersPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
 import { Hit6View } from './components/Hit6View';
 import { MedicationEditor } from './components/MedicationEditor';
@@ -64,6 +64,9 @@ export default function App() {
   // number of attacks.
   const [statsPeriod, setStatsPeriod] = useState<Period>('30d');
   const [logSheetOpen, setLogSheetOpen] = useState(false);
+  // Opened from the + menu's "Add a past attack": the same wizard, starting
+  // with an end time to pick rather than "Still going".
+  const [logPast, setLogPast] = useState(false);
   // The attack an "Add update" sheet targets — the ongoing one (via the FAB
   // or its Today-tab banner) or any past attack (via its detail sheet).
   // Looked up fresh from `attacks` by id rather than stashing the object, so
@@ -105,7 +108,7 @@ export default function App() {
     syncStatus: attacksSyncStatus, lastSyncedAt: attacksLastSyncedAt,
   } = useAttacks(userId);
   const {
-    triggers, symptoms, reliefs, addTrigger, addSymptom, addRelief, defaultNotifConfig,
+    triggers, symptoms, reliefs, addTrigger, addSymptom, addRelief, defaultNotifConfig, setDefaultNotifConfig,
     syncStatus: prefsSyncStatus, lastSyncedAt: prefsLastSyncedAt,
   } = useUserPrefs(userId);
   const {
@@ -394,6 +397,7 @@ export default function App() {
   // the app), unlike the `?voice=` deep link which is consumed once per load.
   function closeLogSheet() {
     setLogSheetOpen(false);
+    setLogPast(false);
     setVoiceDraft(null);
     voiceHandledRef.current = false;
   }
@@ -528,6 +532,7 @@ export default function App() {
                 attack={ongoingAttack}
                 topAction={heroAttackMode}
                 onEnd={() => setEndConfirmOpen(true)}
+                onAddUpdate={() => setUpdateAttackId(ongoingAttack.id)}
                 onOpenDetail={() => setDetailAttackId(ongoingAttack.id)}
               />
             )}
@@ -647,28 +652,34 @@ export default function App() {
         </div>
       </div>
 
-      {/* FAB opens Add-update when an attack is already ongoing — you can't
-          start a second one until the current attack ends. */}
+      {/* The + opens a menu (2026-10-28). While an attack is ongoing it
+          offers only what bears on that attack — you can't start a second one
+          until it ends, and someone mid-attack shouldn't have to think about
+          a past one. Otherwise: log one now, or add one from before. */}
       <BottomNav
         active={tab}
         onChange={setTab}
-        onAdd={() => (ongoingAttack ? setUpdateAttackId(ongoingAttack.id) : setLogSheetOpen(true))}
-        // The FAB is now the only route to both actions, so its label has to
-        // say which one it is. It was hardcoded "Log a migraine" while opening
-        // Add update whenever an attack was ongoing, which announced the wrong
-        // action to a screen reader.
-        addLabel={ongoingAttack ? 'Add update' : 'Log an attack'}
+        addActions={ongoingAttack
+          ? [
+              { label: 'Add an update', onSelect: () => setUpdateAttackId(ongoingAttack.id) },
+              { label: 'End attack', onSelect: () => setEndConfirmOpen(true) },
+            ]
+          : [
+              { label: 'Log an attack', onSelect: () => { setLogPast(false); setLogSheetOpen(true); } },
+              { label: 'Add a past attack', onSelect: () => { setLogPast(true); setLogSheetOpen(true); } },
+            ]}
       />
 
       {/* Log attack sheet */}
       <Sheet
         open={logSheetOpen}
         onClose={closeLogSheet}
-        title="Log an attack"
+        title={logPast ? 'Add a past attack' : 'Log an attack'}
         flush
         bareHeader
       >
         <LogForm
+          past={logPast}
           triggers={sortedTriggers}
           symptoms={sortedSymptoms}
           reliefs={sortedReliefs}
@@ -753,6 +764,13 @@ export default function App() {
             onAttackModeAuto={setAttackModeAuto}
             systemText={systemText}
             onSystemText={setSystemText}
+            onClose={() => setProfileSheet(null)}
+          />
+        )}
+        {profileSheet === 'reminders' && (
+          <RemindersPanel
+            value={defaultNotifConfig}
+            onChange={setDefaultNotifConfig}
             onClose={() => setProfileSheet(null)}
           />
         )}

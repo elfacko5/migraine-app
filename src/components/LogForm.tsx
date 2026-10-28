@@ -2,15 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import type { Attack, Medication, NotificationConfig, Snapshot } from '../types';
 import type { TextScale } from '../hooks/useSettings';
 import type { VoiceDraft } from '../utils/voiceParse';
-import { isoToLocalInput, localInputToIso, formatDatetime } from '../utils/format';
+import { isoToLocalInput, localInputToIso, formatDatetime, formatTime } from '../utils/format';
+import { doseAtStart, doseOptions, effectiveDoseMode, resolveDoseMs, type DoseMode } from '../utils/doseTime';
+import { FOLLOW_UP_TARGET_MS } from '../utils/stats';
+import { sevTextClass } from '../utils/severity';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationInput } from './MedicationInput';
 import { ChipSelector } from './ChipSelector';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
-import { NotificationSettings } from './NotificationSettings';
 import { TextScaleControl } from './TextScaleControl';
 import { SunriseIcon } from './icons';
+import { RadioDot } from './RadioDot';
 
 interface Props {
   triggers: string[];
@@ -42,9 +45,16 @@ interface Props {
   // prefills the wizard from the dictated transcript. The user still walks
   // every step to confirm; nothing is auto-submitted.
   voiceDraft?: VoiceDraft | null;
+  /** Opened as "Add a past attack" from the + menu: the end starts on "Pick
+   *  a time", whose picker opens on mount, instead of "Still going". The same
+   *  wizard otherwise — a dedicated past-attack flow is later work. */
+  past?: boolean;
 }
 
-type StartMode = 'now' | 'hour_ago' | 'manual';
+type StartMode = 'now' | 'min30' | 'hour_ago' | 'hours2' | 'manual';
+
+/** Minutes before now for each relative start preset. */
+const START_OFFSET_MIN: Partial<Record<StartMode, number>> = { now: 0, min30: 30, hour_ago: 60, hours2: 120 };
 type EndMode = 'ongoing' | 'just_now' | 'manual';
 
 interface FormState {
@@ -58,15 +68,24 @@ interface FormState {
   symptoms: string[];
   reliefs: string[];
   medication: { name: string; dose: string; amount?: number };
+  /** No step edits this any more (the Note step went on 2026-10-28) — it is
+   *  how a voice log's verbatim transcript still reaches the reading. */
   note: string;
+  /** Always the saved default: reminders are set in Settings now, not per
+   *  attack. Kept in the form so the save signature is unchanged. */
   notifConfig: NotificationConfig;
+  doseMode: DoseMode;
+  doseTime: string;
+  /** Severity about two hours after the dose — past attacks only. `null` is
+   *  "not answered", never "no pain". */
+  followUp: number | null;
 }
 
-function blank(defaults: NotificationConfig): FormState {
+function blank(defaults: NotificationConfig, past = false): FormState {
   return {
     startMode: 'now',
     startTime: isoToLocalInput(),
-    endMode: 'ongoing',
+    endMode: past ? 'manual' : 'ongoing',
     endTime: isoToLocalInput(),
     wokeWithMigraine: false,
     areas: {},
@@ -76,19 +95,63 @@ function blank(defaults: NotificationConfig): FormState {
     medication: { name: '', dose: '' },
     note: '',
     notifConfig: defaults,
+    doseMode: 'now',
+    doseTime: isoToLocalInput(),
+    followUp: null,
   };
+}
+
+/** The attack's start as the form currently resolves it, against `nowMs`. */
+function startMsAt(f: FormState, nowMs: number): number {
+  return f.startMode === 'manual'
+    ? new Date(localInputToIso(f.startTime)).getTime()
+    : nowMs - (START_OFFSET_MIN[f.startMode] ?? 0) * 60_000;
+}
+
+/** Its end — `null` while ongoing. */
+function endMsAt(f: FormState, nowMs: number): number | null {
+  return f.endMode === 'ongoing' ? null
+    : f.endMode === 'just_now' ? nowMs
+    : new Date(localInputToIso(f.endTime)).getTime();
+}
+
+/** The area the two-hour answer is recorded against: the worst one. The
+ *  prompt asks "how bad", singular, and the worst area is what that means —
+ *  it is also the figure `followUpReading` compares (`maxSeverity`). Other
+ *  areas are left out, which reads as *not recorded*: they weren't asked. */
+function peakArea(areas: Record<string, number>): string | null {
+  let best: string | null = null;
+  for (const [k, v] of Object.entries(areas)) if (best === null || v > areas[best]) best = k;
+  return best;
+}
+
+/**
+ * Whether the "…and about 2 hours after?" prompt applies: a past attack, a
+ * dose, and a two-hour mark that lands before the attack ended. Without a
+ * real window there is nothing honest to ask, so it is skipped silently.
+ */
+function followUpWindow(f: FormState, nowMs: number): { doseMs: number; atMs: number } | null {
+  const endMs = endMsAt(f, nowMs);
+  if (endMs === null || !f.medication.name.trim()) return null;
+  const startMs = startMsAt(f, nowMs);
+  const mode = effectiveDoseMode(f.doseMode, doseOptions(startMs, endMs, nowMs));
+  const doseMs = resolveDoseMs(mode, localInputToIso(f.doseTime), startMs, endMs, nowMs);
+  const atMs = doseMs + FOLLOW_UP_TARGET_MS;
+  return atMs < endMs ? { doseMs, atMs } : null;
 }
 
 const START_OPTIONS: { value: StartMode; label: string }[] = [
   { value: 'now',      label: 'Just now' },
+  { value: 'min30',    label: '30 min ago' },
   { value: 'hour_ago', label: '1h ago' },
-  { value: 'manual',   label: 'Other' },
+  { value: 'hours2',   label: '2h ago' },
+  { value: 'manual',   label: 'Pick a time' },
 ];
 
 const END_OPTIONS: { value: EndMode; label: string }[] = [
   { value: 'ongoing',  label: 'Still going' },
   { value: 'just_now', label: 'Just now' },
-  { value: 'manual',   label: 'Other' },
+  { value: 'manual',   label: 'Pick a time' },
 ];
 
 // A *selected* preset, not an action — so it takes the tint-and-ring treatment
@@ -115,15 +178,16 @@ const presetCls = (active: boolean) =>
       : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'
   }`;
 
+// **A flat five, for every attack** (2026-10-28, Flow 1). Relief methods
+// folded into Symptoms as "Anything else"; Note and Reminders went — Note
+// because it went unused, Reminders to Settings, where the default it always
+// was is now set once. Old notes still render on `AttackDetail`.
 const STEP_LABELS = [
   'When',
   'Pain areas',
   'Medication',
-  'Relief methods',
-  'Symptoms',
+  'Anything else',
   'Triggers',
-  'Note',
-  'Reminders',
 ];
 
 // Sentence-case instruction shown under each step's H2 title.
@@ -143,29 +207,29 @@ const STEP_SUBHEADS = [
   'When did it start, and has it ended?',
   'Tap where it hurts, then set how bad',
   'Did you take anything for it?',
-  'Did anything help?',
-  'What else are you feeling?',
+  'What else is going on?',
   'Anything that might have set it off?',
-  'Anything else you want to write down?',
-  'Want a reminder to check in later?',
 ];
 
-export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, medications, attacks, textScale, onTextScale, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave, voiceDraft }: Props) {
+export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, medications, attacks, textScale, onTextScale, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave, voiceDraft, past = false }: Props) {
   // Step 0 is the voice review screen and exists only for a voice draft; manual
   // logging starts at 1 as it always has.
   const [step, setStep] = useState(voiceDraft ? 0 : 1);
   const [form, setForm] = useState<FormState>(() => {
-    const base = blank(defaultNotifConfig);
+    const base = blank(defaultNotifConfig, past);
     if (!voiceDraft) return base;
     // "An hour ago" maps onto the preset that already exists; anything else
     // becomes an explicit time. A start Siri didn't understand leaves the
     // default alone rather than inventing one.
     const mins = voiceDraft.startMinutesAgo;
-    const startMode: StartMode = mins === null ? base.startMode : mins === 0 ? 'now' : mins === 60 ? 'hour_ago' : 'manual';
+    const preset = mins === null
+      ? undefined
+      : START_OPTIONS.find((o) => START_OFFSET_MIN[o.value] === mins)?.value;
+    const startMode: StartMode = mins === null ? base.startMode : preset ?? 'manual';
     return {
       ...base,
       startMode,
-      startTime: mins === null || mins === 0 || mins === 60
+      startTime: mins === null || preset
         ? base.startTime
         : isoToLocalInput(new Date(Date.now() - mins * 60_000).toISOString()),
       wokeWithMigraine: voiceDraft.wokeWithMigraine,
@@ -180,13 +244,20 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         ? (voiceDraft.doses.find((d) => d.minutesAgo === null) ?? base.medication)
         : (voiceDraft.medication ?? base.medication),
       note: voiceDraft.note,
+      // An untimed spoken dose stays on the first reading, as it always has.
+      doseMode: 'start',
     };
   });
 
-  // Open the native picker the instant "Other" is chosen, so the user isn't
+  // The moment the sheet opened, for anything the steps *display* relative to
+  // now — read once here rather than with `Date.now()` during render. The
+  // save itself reads the real clock.
+  const [openedAt] = useState(() => Date.now());
+
+  // Open the native picker the instant "Pick a time" is chosen, so the user isn't
   // required to tap the revealed field a second time. **It opens the time
   // half**, not the date: the day is nearly always the one already shown, and
-  // the time is what "Other" is reached for. The date sits beside it.
+  // the time is what "Pick a time" is reached for. The date sits beside it.
   const startInputRef = useRef<DateTimeFieldHandle>(null);
   const endInputRef = useRef<DateTimeFieldHandle>(null);
 
@@ -198,8 +269,8 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
     if (form.endMode === 'manual') endInputRef.current?.open();
   }, [form.endMode]);
 
-  // Step 8 (Reminders) only shown for ongoing attacks; past attacks go 1→7 then submit
-  const totalSteps = form.endMode === 'ongoing' ? 8 : 7;
+  const totalSteps = STEP_LABELS.length;
+
 
   // Next is disabled only when mandatory fields are missing
   const nextDisabled = step === 2 && Object.keys(form.areas).length === 0;
@@ -250,15 +321,46 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
   }
 
   function submit() {
-    const now = new Date().toISOString();
-    const startTime =
-      form.startMode === 'now'       ? now
-      : form.startMode === 'hour_ago' ? new Date(Date.now() - 60 * 60 * 1000).toISOString()
-      : localInputToIso(form.startTime);
-    const endTime =
-      form.endMode === 'ongoing'   ? null
-      : form.endMode === 'just_now'  ? now
-      : localInputToIso(form.endTime);
+    const nowMs = Date.now();
+    const startMs = startMsAt(form, nowMs);
+    const endMs = endMsAt(form, nowMs);
+    const startTime = new Date(startMs).toISOString();
+    const endTime = endMs === null ? null : new Date(endMs).toISOString();
+
+    const med = form.medication.name.trim()
+      ? {
+          name: form.medication.name.trim(),
+          dose: form.medication.dose,
+          // Units, when the quick-pick was used. Absent otherwise, which
+          // medGuardrails reads as one — never as zero.
+          ...(form.medication.amount ? { amount: form.medication.amount } : {}),
+        }
+      : null;
+
+    // **A dose's time is the time of the reading it sits on** — nothing on
+    // `Snapshot.medication` says otherwise, and `medCheckInDelay`,
+    // `checkDose` and `followUpReading` all read it from there. So a dose
+    // taken at the start stays on the first reading, and one taken at any
+    // other moment becomes its own reading at that moment, carrying the same
+    // pain areas (a snapshot is the full state). Never both: the same tablets
+    // would count twice.
+    const doseMode = effectiveDoseMode(form.doseMode, doseOptions(startMs, endMs, nowMs));
+    const doseMs = resolveDoseMs(doseMode, localInputToIso(form.doseTime), startMs, endMs, nowMs);
+    const onFirst = !med || doseAtStart(doseMs, startMs);
+
+    const typedDose: Array<Omit<Snapshot, 'source'>> = med && !onFirst
+      ? [{ time: new Date(doseMs).toISOString(), areas: { ...form.areas }, symptoms: [], reliefs: [], medication: med, note: null }]
+      : [];
+
+    // The backfilled two-hour reading. It is an ordinary reading at dose + 2h
+    // carrying only the answered severity — exactly what a live attack's
+    // follow-up is — so `followUpReading`/`doseHelped` score it with no
+    // special case, and there is no separate "helped" field to drift from them.
+    const fw = followUpWindow(form, nowMs);
+    const area = peakArea(form.areas);
+    const followUp: Array<Omit<Snapshot, 'source'>> = fw && form.followUp !== null && area
+      ? [{ time: new Date(fw.atMs).toISOString(), areas: { [area]: form.followUp }, symptoms: [], reliefs: [], medication: null, note: null }]
+      : [];
 
     onSave(
       {
@@ -266,42 +368,38 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         areas: form.areas,
         symptoms: form.symptoms,
         reliefs: form.reliefs,
-        medication: form.medication.name.trim()
-          ? {
-              name: form.medication.name.trim(),
-              dose: form.medication.dose,
-              // Units, when the quick-pick was used. Absent otherwise, which
-              // medGuardrails reads as one — never as zero.
-              ...(form.medication.amount ? { amount: form.medication.amount } : {}),
-            }
-          : null,
+        medication: onFirst ? med : null,
         note: form.note.trim() || null,
       },
       form.triggers,
       form.notifConfig,
       endTime,
       form.wokeWithMigraine,
-      // A dose with a time of its own is an event, not an attribute of the
-      // attack, so it becomes its own reading. It carries the same pain areas
-      // because a snapshot is the full state at that moment — only the
-      // medication is new. Clamped to the start, since nothing can be recorded
-      // as happening before the attack began.
-      (voiceDraft?.doses ?? [])
-        .filter((d) => d.minutesAgo !== null)
-        .map((d) => {
-          const at = new Date(Date.now() - (d.minutesAgo ?? 0) * 60_000).toISOString();
-          return {
-            time: at < startTime ? startTime : at,
-            areas: { ...form.areas },
-            symptoms: [],
-            reliefs: [],
-            // The quantity was already parsed out of the transcript ("two
-            // tablets of Treo") and flattened into `dose`; keeping the number
-            // means a spoken dose counts as two units, not one.
-            medication: { name: d.name, dose: d.dose, ...(d.amount ? { amount: d.amount } : {}) },
-            note: null,
-          };
-        }),
+      [
+        ...typedDose,
+        ...followUp,
+        // A dose with a time of its own is an event, not an attribute of the
+        // attack, so it becomes its own reading. It carries the same pain
+        // areas because a snapshot is the full state at that moment — only the
+        // medication is new. Clamped to the start, since nothing can be
+        // recorded as happening before the attack began.
+        ...(voiceDraft?.doses ?? [])
+          .filter((d) => d.minutesAgo !== null)
+          .map((d) => {
+            const at = new Date(nowMs - (d.minutesAgo ?? 0) * 60_000).toISOString();
+            return {
+              time: at < startTime ? startTime : at,
+              areas: { ...form.areas },
+              symptoms: [],
+              reliefs: [],
+              // The quantity was already parsed out of the transcript ("two
+              // tablets of Treo") and flattened into `dose`; keeping the
+              // number means a spoken dose counts as two units, not one.
+              medication: { name: d.name, dose: d.dose, ...(d.amount ? { amount: d.amount } : {}) },
+              note: null,
+            };
+          }),
+      ],
     );
   }
 
@@ -376,10 +474,9 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
             the smallest thing on the page. */}
         {step === 0 && voiceDraft && (() => {
           const areaNames = Object.keys(form.areas);
-          const startLabel =
-            form.startMode === 'now'      ? 'Just now'
-            : form.startMode === 'hour_ago' ? '1 hour ago'
-            : formatDatetime(localInputToIso(form.startTime));
+          const startLabel = form.startMode === 'manual'
+            ? formatDatetime(localInputToIso(form.startTime))
+            : START_OPTIONS.find((o) => o.value === form.startMode)?.label;
 
           return (
             <div className="space-y-3">
@@ -499,10 +596,9 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
 
         {/* ── Step 1: When ── */}
         {step === 1 && (() => {
-          const startDisplay =
-            form.startMode === 'now'      ? formatDatetime(new Date().toISOString())
-            : form.startMode === 'hour_ago' ? formatDatetime(new Date(Date.now() - 3600000).toISOString())
-            : form.startTime               ? formatDatetime(localInputToIso(form.startTime))
+          const startDisplay = form.startMode !== 'manual'
+            ? formatDatetime(new Date(openedAt - (START_OFFSET_MIN[form.startMode] ?? 0) * 60_000).toISOString())
+            : form.startTime ? formatDatetime(localInputToIso(form.startTime))
             : 'Pick a time';
           const endDisplay =
             form.endMode === 'ongoing'   ? 'Still going'
@@ -518,17 +614,12 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                   <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">Start time</p>
                   <p className="mt-1 text-lg font-medium text-text-primary">{startDisplay}</p>
                 </div>
-                <div className="space-y-1.5">
-                  <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">Time presets</p>
-                  <div className="flex flex-wrap gap-2">
-                    {START_OPTIONS.map(({ value, label }) => (
-                      <button key={value} type="button" onClick={() => set('startMode', value)}
-                        aria-pressed={form.startMode === value} className={presetCls(form.startMode === value)}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <PresetRadios
+                  label="Start time presets"
+                  options={START_OPTIONS}
+                  value={form.startMode}
+                  onChange={(v) => set('startMode', v)}
+                />
                 {form.startMode === 'manual' && (
                   <DateTimeField
                     label="Attack start time"
@@ -561,17 +652,12 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                   <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">End time</p>
                   <p className="mt-1 text-lg font-medium text-text-primary">{endDisplay}</p>
                 </div>
-                <div className="space-y-1.5">
-                  <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">Time presets</p>
-                  <div className="flex flex-wrap gap-2">
-                    {END_OPTIONS.map(({ value, label }) => (
-                      <button key={value} type="button" onClick={() => set('endMode', value)}
-                        aria-pressed={form.endMode === value} className={presetCls(form.endMode === value)}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <PresetRadios
+                  label="End time presets"
+                  options={END_OPTIONS}
+                  value={form.endMode}
+                  onChange={(v) => set('endMode', v)}
+                />
                 {form.endMode === 'manual' && (
                   <DateTimeField
                     label="Attack end time"
@@ -593,49 +679,85 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         )}
 
         {/* ── Step 3: Medication ── */}
-        {step === 3 && (
-          <MedicationInput
-            value={form.medication}
-            onChange={(v) => set('medication', v)}
-            recentMeds={recentMeds}
-            medications={medications}
-            attacks={attacks}
-          />
-        )}
+        {step === 3 && (() => {
+          const startMs = startMsAt(form, openedAt);
+          const endMs = endMsAt(form, openedAt);
+          const options = doseOptions(startMs, endMs, openedAt);
+          const doseMs = resolveDoseMs(
+            effectiveDoseMode(form.doseMode, options), localInputToIso(form.doseTime), startMs, endMs, openedAt,
+          );
+          const fw = followUpWindow(form, openedAt);
+          return (
+            <div className="space-y-4">
+              <MedicationInput
+                value={form.medication}
+                onChange={(v) => set('medication', v)}
+                recentMeds={recentMeds}
+                medications={medications}
+                attacks={attacks}
+                // The limits are checked at the dose's own time — a backfilled
+                // dose counts in *its* 24 hours, not today's.
+                atIso={form.medication.name ? new Date(doseMs).toISOString() : undefined}
+                doseTiming={{
+                  mode: form.doseMode,
+                  time: form.doseTime,
+                  // "Pick a time" opens on the attack's start, the earliest a
+                  // dose may be, unless a time was already picked.
+                  onMode: (m) => setForm((f) => ({
+                    ...f,
+                    doseMode: m,
+                    doseTime: m === 'manual' && f.doseMode !== 'manual'
+                      ? isoToLocalInput(new Date(startMs).toISOString())
+                      : f.doseTime,
+                  })),
+                  onTime: (t) => set('doseTime', t),
+                  startMs,
+                  endMs,
+                  nowMs: openedAt,
+                }}
+              />
+              {fw && (
+                <FollowUpPrompt
+                  at={new Date(fw.atMs).toISOString()}
+                  value={form.followUp}
+                  start={Math.max(0, ...Object.values(form.areas))}
+                  onChange={(v) => set('followUp', v)}
+                />
+              )}
+            </div>
+          );
+        })()}
 
-        {/* ── Step 4: Relief methods ── */}
+        {/* ── Step 4: Anything else — symptoms and relief methods together ──
+            They were two steps; on their own each was a short screen of chips,
+            and the wizard was long enough that "veeeery busy" was the review.
+            Both are pick-any, so they keep `ChipSelector` and its checkmarks. */}
         {step === 4 && (
-          <ChipSelector options={reliefs} selected={form.reliefs}
-            onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief}
-            renderIcon={(r) => <ReliefIcon name={r} className="h-4 w-4" />} />
+          <div className="space-y-6">
+            <section className="space-y-2" aria-labelledby="symptoms-label">
+              <h3 id="symptoms-label" className="text-sm font-medium text-text-primary">
+                Symptoms <span className="font-normal text-text-secondary">— pick any</span>
+              </h3>
+              <ChipSelector options={symptoms} selected={form.symptoms}
+                onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
+                renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
+            </section>
+            <section className="space-y-2" aria-labelledby="reliefs-label">
+              <h3 id="reliefs-label" className="text-sm font-medium text-text-primary">
+                Relief methods <span className="font-normal text-text-secondary">— pick any</span>
+              </h3>
+              <ChipSelector options={reliefs} selected={form.reliefs}
+                onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief}
+                renderIcon={(r) => <ReliefIcon name={r} className="h-4 w-4" />} />
+            </section>
+          </div>
         )}
 
-        {/* ── Step 5: Symptoms ── */}
+        {/* ── Step 5: Triggers ── */}
         {step === 5 && (
-          <ChipSelector options={symptoms} selected={form.symptoms}
-            onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
-            renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
-        )}
-
-        {/* ── Step 6: Triggers ── */}
-        {step === 6 && (
           <ChipSelector options={triggers} selected={form.triggers}
             onChange={(v) => set('triggers', v)} onAddCustom={onAddTrigger}
             renderIcon={(t) => <TriggerIcon name={t} className="h-4 w-4" />} />
-        )}
-
-        {/* ── Step 7: Note — grows to fill the remaining space, so long entries
-            never need to scroll within their own tiny box ── */}
-        {step === 7 && (
-          <textarea rows={4} value={form.note} aria-label="Note"
-            placeholder="Anything else worth noting…"
-            onChange={(e) => set('note', e.target.value)}
-            className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
-        )}
-
-        {/* ── Step 8: Reminders (ongoing only) ── */}
-        {step === 8 && (
-          <NotificationSettings value={form.notifConfig} onChange={(v) => set('notifConfig', v)} />
         )}
 
       </div>
@@ -692,6 +814,98 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * A single-choice preset row — `role="radiogroup"` with a `RadioDot` per chip
+ * (2026-10-28). These used to be `aria-pressed` toggles, which is the
+ * multi-select pattern: a screen reader heard "toggle button, pressed" on
+ * every chip and nothing said only one could be on. The visible label stays
+ * the "Time presets" kicker; the group's accessible name says which.
+ */
+function PresetRadios<T extends string>({ label, options, value, onChange }: {
+  label: string;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs uppercase tracking-wider font-medium text-text-secondary" aria-hidden="true">Time presets</p>
+      <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={value === o.value}
+            onClick={() => onChange(o.value)}
+            className={`inline-flex items-center gap-1.5 ${presetCls(value === o.value)}`}
+          >
+            <RadioDot selected={value === o.value} />
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "…and about 2 hours after?" — a past attack's stand-in for the live
+ * two-hour check-in (2026-10-28). Optional, and added rather than shown with a
+ * value: a slider always has one, and an untouched default would read as an
+ * answer. Its slider is the pain-area picker's, with 0 allowed — pain gone at
+ * two hours is the endpoint that matters most. The answer is saved as an
+ * ordinary reading at that time; see `submit`.
+ */
+function FollowUpPrompt({ at, value, start, onChange }: {
+  at: string;
+  value: number | null;
+  /** Where the slider starts when the question is opened: the reading's own
+   *  worst, so the first move is relative to something real. */
+  start: number;
+  onChange: (v: number | null) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-bg-border bg-bg-raised p-4 space-y-3">
+      <div>
+        <p className="text-sm font-medium text-text-primary">…and about 2 hours after?</p>
+        <p className="text-xs text-text-secondary">Around {formatTime(at)}. Optional.</p>
+      </div>
+      {value === null ? (
+        <button type="button" onClick={() => onChange(start)} className="btn-secondary btn-compact">
+          Add how bad it was
+        </button>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-secondary">How bad</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-bold tabular-nums ${sevTextClass(value)}`}>{value}</span>
+              <button type="button" onClick={() => onChange(null)}
+                className="text-text-secondary hover:text-text-primary transition-colors"
+                aria-label="Remove the 2-hour reading">
+                <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4"
+                  stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                  <line x1="4" y1="4" x2="12" y2="12"/>
+                  <line x1="12" y1="4" x2="4" y2="12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-text-secondary w-7">None</span>
+            <input type="range" min={0} max={10} step={1} value={value}
+              aria-label="Severity about 2 hours after the dose"
+              onChange={(e) => onChange(Number(e.target.value))}
+              className="flex-1"/>
+            <span className="text-xs text-text-secondary w-12 text-right">Severe</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

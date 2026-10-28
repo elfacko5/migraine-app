@@ -46,6 +46,8 @@ interface FormState {
   symptoms: string[];
   reliefs: string[];
   medication: { name: string; dose: string; amount?: number };
+  /** No step edits this (the Note step went on 2026-10-28); it carries a
+   *  voice draft's transcript onto the reading. */
   note: string;
 }
 
@@ -58,18 +60,19 @@ const blank = (defaultTime: string): FormState => ({
   note: '',
 });
 
-const TOTAL_STEPS = 6;
+// Four, following LogForm's Flow 1 shape (2026-10-28): relief methods folded
+// into symptoms as "Anything else", and the Note step gone from both wizards.
+// Old notes still render on the timeline.
+const TOTAL_STEPS = 4;
 
-const STEP_LABELS = ['Update time', 'Pain areas', 'Medication', 'Relief methods', 'Symptoms', 'Note'];
+const STEP_LABELS = ['Update time', 'Pain areas', 'Medication', 'Anything else'];
 // Plain register, matching LogForm's — see the note above STEP_SUBHEADS
 // there for why there is one register rather than an attack-mode variant.
 const STEP_SUBHEADS = [
   'When is this reading from?',
   'How does it feel now? This adds a reading — it doesn\'t change the last one',
   'Did you take anything for it?',
-  'Did anything help?',
-  'What else are you feeling?',
-  'Anything else you want to write down?',
+  'What else is going on?',
 ];
 
 // Small "last entry" caption text shown below each step's picker — a reference
@@ -112,16 +115,12 @@ function lastEntryCaption(step: number, prev: Snapshot, medications: Medication[
     return `Took ${prev.medication.name}${dose} at ${at} (last entry)${gap}`;
   }
   if (step === 4) {
-    if (!prev.reliefs || prev.reliefs.length === 0) return null;
-    return `Last entry (${at}): ${prev.reliefs.join(', ')}`;
-  }
-  if (step === 5) {
-    if (prev.symptoms.length === 0) return null;
-    return `Last entry (${at}): ${prev.symptoms.join(', ')}`;
-  }
-  if (step === 6) {
-    if (!prev.note) return null;
-    return `Last note (${at}): "${prev.note}"`;
+    const parts = [
+      prev.symptoms.length > 0 ? `symptoms ${prev.symptoms.join(', ')}` : null,
+      prev.reliefs && prev.reliefs.length > 0 ? `relief ${prev.reliefs.join(', ')}` : null,
+    ].filter(Boolean);
+    if (parts.length === 0) return null;
+    return `Last entry (${at}): ${parts.join(' · ')}`;
   }
   return null;
 }
@@ -351,26 +350,26 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
               />
             )}
 
-            {/* ── Step 4: Relief methods ── */}
+            {/* ── Step 4: Anything else — symptoms, then relief methods ── */}
             {step === 4 && (
-              <ChipSelector options={reliefs} selected={form.reliefs}
-                onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief}
-                renderIcon={(r) => <ReliefIcon name={r} className="h-4 w-4" />} />
-            )}
-
-            {/* ── Step 5: Symptoms ── */}
-            {step === 5 && (
-              <ChipSelector options={symptoms} selected={form.symptoms}
-                onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
-                renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
-            )}
-
-            {/* ── Step 6: Note — grows to fill the remaining space ── */}
-            {step === 6 && (
-              <textarea rows={4} value={form.note} aria-label="Note"
-                placeholder="What changed?"
-                onChange={(e) => set('note', e.target.value)}
-                className="w-full flex-1 min-h-[8rem] rounded-lg bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle resize-none" />
+              <div className="space-y-6">
+                <section className="space-y-2" aria-labelledby="qu-symptoms-label">
+                  <h3 id="qu-symptoms-label" className="text-sm font-medium text-text-primary">
+                    Symptoms <span className="font-normal text-text-secondary">— pick any</span>
+                  </h3>
+                  <ChipSelector options={symptoms} selected={form.symptoms}
+                    onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
+                    renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
+                </section>
+                <section className="space-y-2" aria-labelledby="qu-reliefs-label">
+                  <h3 id="qu-reliefs-label" className="text-sm font-medium text-text-primary">
+                    Relief methods <span className="font-normal text-text-secondary">— pick any</span>
+                  </h3>
+                  <ChipSelector options={reliefs} selected={form.reliefs}
+                    onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief}
+                    renderIcon={(r) => <ReliefIcon name={r} className="h-4 w-4" />} />
+                </section>
+              </div>
             )}
 
             {/* Reference to what was logged last time — never pre-filled, just

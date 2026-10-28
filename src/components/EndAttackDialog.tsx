@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatDatetime, isoToLocalInput, localInputToIso } from '../utils/format';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
+import { RadioDot } from './RadioDot';
 
 // One question: when did it end. This dialog used to also ask for `impact`,
 // and carrying both made it a form in an alert's shell — see the note further
@@ -96,23 +97,23 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
               dialog showed two different treatments for the same idea — and
               the solid pair was the heaviest thing on it, outweighing the
               End-attack button that actually does something. */}
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setMode('now')}
-              aria-pressed={mode === 'now'}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === 'now' ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'}`}
-            >
-              Just now
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('manual')}
-              aria-pressed={mode === 'manual'}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === 'manual' ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'}`}
-            >
-              Earlier
-            </button>
+          {/* One or the other, so a radio group with the ring-dot mark —
+              they were `aria-pressed` toggles, the multi-select pattern
+              (2026-10-28, matching the wizard's presets). */}
+          <div role="radiogroup" aria-label="When it ended" className="flex flex-wrap gap-2">
+            {([['now', 'Just now'], ['manual', 'Earlier']] as const).map(([m, label]) => (
+              <button
+                key={m}
+                type="button"
+                role="radio"
+                aria-checked={mode === m}
+                onClick={() => setMode(m)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === m ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'}`}
+              >
+                <RadioDot selected={mode === m} />
+                {label}
+              </button>
+            ))}
           </div>
           {mode === 'manual' && (
             <DateTimeField

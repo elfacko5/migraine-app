@@ -675,7 +675,10 @@ export const FOLLOW_UP_MIN_MS = 60 * 60 * 1000;
 /** Exported so the reminder scheduler can aim inside the same window it will
  *  later be measured against — two copies of "4 hours" would drift. */
 export const FOLLOW_UP_MAX_MS = 4 * 60 * 60 * 1000;
-const TARGET_MS = 2 * 60 * 60 * 1000;
+/** Dose + 2h — exported so the wizard's backfilled two-hour reading lands on
+ *  exactly the mark this measures against. */
+export const FOLLOW_UP_TARGET_MS = 2 * 60 * 60 * 1000;
+const TARGET_MS = FOLLOW_UP_TARGET_MS;
 
 /**
  * The follow-up reading for the dose at `snaps[i]`: whichever later reading

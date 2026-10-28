@@ -28,17 +28,18 @@ interface Props {
    */
   detail?: ReactNode;
   /**
-   * A control pinned to the hero's top-right corner — the attack mode button,
-   * since v3. Positioned against the hero, so it scrolls away with it.
+   * A control pinned to the hero's top-left corner — the attack mode button,
+   * since v3 (moved from the right on 2026-10-28, and icon-only since). The
+   * text block's 110px top padding still clears it. Positioned against the
+   * hero, so it scrolls away with it.
    */
   topAction?: ReactNode;
   /** When set, the text block becomes the way through to the detail view. */
   onOpenDetail?: () => void;
   /**
    * Action buttons, laid out in a row under the text. Optional, and usually
-   * absent: the nav's FAB is the way to log an attack or add a reading, so the
-   * hero carries only an action the FAB *can't* express — today that is
-   * "End attack" and nothing else. See the note in `OngoingAttackBanner`.
+   * absent on the attack-free hero. The ongoing hero carries "Add an update"
+   * and "End attack" — see the note in `OngoingAttackBanner` for why both.
    */
   children?: ReactNode;
 }
@@ -156,7 +157,7 @@ export function HomeCard({ art, label, headline, figure, detail, topAction, onOp
           grows at larger text sizes. */}
       {topAction && (
         <div
-          className="absolute right-4 z-[45]"
+          className="absolute left-4 z-[45]"
           style={{ top: 'calc(0.75rem + env(safe-area-inset-top))' }}
         >
           {topAction}

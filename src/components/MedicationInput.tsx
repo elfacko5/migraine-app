@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Attack, Medication } from '../types';
-import { formatTime } from '../utils/format';
+import { formatTime, isoToLocalInput } from '../utils/format';
 import { CHIP_ON, CHIP_OFF} from '../utils/chipStyles';
-import { ChipCheck } from './ChipCheck';
+import { RadioDot } from './RadioDot';
+import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
+import { DOSE_LABELS, doseOptions, effectiveDoseMode, type DoseMode } from '../utils/doseTime';
 import { MedIcon } from './drawnIcons';
 import {
   checkDose, doseUnits, findMedication, DEFAULT_UNIT, unitsLabel,
@@ -21,6 +23,24 @@ interface Props {
   /** When this dose is being recorded, which is the wizard's own time picker
    *  and not necessarily now: a backfilled reading counts in *its* 24 hours. */
   atIso?: string;
+  /** The dose-time card — the new-attack wizard only. `QuickUpdateForm` has
+   *  its own update-time step, and a dose there is taken at that time. */
+  doseTiming?: DoseTiming;
+}
+
+export interface DoseTiming {
+  mode: DoseMode;
+  /** Local-input form, for "Pick a time". */
+  time: string;
+  onMode: (m: DoseMode) => void;
+  onTime: (t: string) => void;
+  /** The attack's own resolved start, and its end (null while ongoing) —
+   *  the window a dose has to fall in. */
+  startMs: number;
+  endMs: number | null;
+  /** When the sheet opened, so the presets aren't measured against a clock
+   *  read during render. */
+  nowMs: number;
 }
 
 /** Units offered, not doses — the quick-pick was already 1/2/3. */
@@ -31,7 +51,7 @@ const LOOKS_LIKE_UNITS = /^\d{1,2}\s*[a-z]+s?$/i;
 const HAS_STRENGTH = /\d\s*(mg|mcg|µg|g|ml)\b/i;
 
 export function MedicationInput({
-  value, onChange, recentMeds = [], medications = [], attacks = [], atIso,
+  value, onChange, recentMeds = [], medications = [], attacks = [], atIso, doseTiming,
 }: Props) {
   const selected = recentMeds.find((m) => m.name === value.name);
   const library = findMedication(medications, value.name);
@@ -82,21 +102,28 @@ export function MedicationInput({
     <div className="space-y-3">
       {recentMeds.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">My medications</p>
-          <div className="flex flex-wrap gap-2">
+          <p id="my-meds-label" className="text-xs uppercase tracking-wider font-medium text-text-secondary">My medications</p>
+          {/* **One medication per reading, so a radio group** (2026-10-28).
+              It was `aria-pressed` with `ChipCheck` — the multi-select
+              pattern symptoms and reliefs use — for a choice that is in fact
+              single (`selected?.name === med.name`). Tapping the selected chip
+              still clears it, which a native radio can't do; that is the one
+              way back to "nothing taken" with the inputs collapsed. */}
+          <div role="radiogroup" aria-labelledby="my-meds-label" className="flex flex-wrap gap-2">
             {recentMeds.map((med) => (
               <button
                 key={med.name}
                 type="button"
+                role="radio"
                 onClick={() => pick(med)}
-                aria-pressed={selected?.name === med.name}
+                aria-checked={selected?.name === med.name}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   selected?.name === med.name ? CHIP_ON : CHIP_OFF
                 }`}
               >
                 <MedIcon name={med.name} dose={med.dose} className="h-4 w-4" />
                 {med.name}{med.dose ? ` · ${med.dose}` : ''}
-                <ChipCheck selected={selected?.name === med.name} />
+                <RadioDot selected={selected?.name === med.name} />
               </button>
             ))}
           </div>
@@ -153,20 +180,21 @@ export function MedicationInput({
           the number of units is a question either way. */}
       {value.name && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-text-secondary shrink-0">Qty:</span>
+          <div role="radiogroup" aria-label="Quantity" className="flex items-center gap-2">
+            <span className="text-xs text-text-secondary shrink-0" aria-hidden="true">Qty:</span>
             {QTY_OPTIONS.map((n) => (
               <button
                 key={n}
                 type="button"
-                aria-pressed={units === n}
+                role="radio"
+                aria-checked={units === n}
                 onClick={() => setUnits(n)}
                 className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   units === n ? CHIP_ON : CHIP_OFF
                 }`}
               >
                 {n} {n === 1 ? unit : `${unit}s`}
-                <ChipCheck selected={units === n} />
+                <RadioDot selected={units === n} />
               </button>
             ))}
           </div>
@@ -218,6 +246,70 @@ export function MedicationInput({
             </div>
           )}
         </div>
+      )}
+
+      {value.name && doseTiming && <DoseTimeCard timing={doseTiming} />}
+    </div>
+  );
+}
+
+/**
+ * "When did you take it?" — Flow 1's dose-time card (2026-10-28). Shown once a
+ * medication is picked. Anything but the attack's own start becomes a separate
+ * reading at that time (see `utils/doseTime.ts`), which is what moves the
+ * two-hour check-in: `medCheckInDelay` measures from the latest dose reading.
+ *
+ * Presets outside the attack are left out rather than disabled: a dose can't
+ * precede the attack it treats, and a greyed "1h ago" on an attack that began
+ * 20 minutes ago would only invite the question of why.
+ */
+function DoseTimeCard({ timing }: { timing: DoseTiming }) {
+  const { startMs, endMs, nowMs } = timing;
+  const options = doseOptions(startMs, endMs, nowMs);
+  const mode = effectiveDoseMode(timing.mode, options);
+  const openRef = useRef<DateTimeFieldHandle>(null);
+
+  // Same as the wizard's own "Pick a time": open the picker on the tap that
+  // revealed it.
+  useEffect(() => {
+    if (timing.mode === 'manual') openRef.current?.open();
+  }, [timing.mode]);
+
+  return (
+    <div className="rounded-xl border border-bg-border bg-bg-raised p-4 space-y-3">
+      <p id="dose-time-label" className="text-sm font-medium text-text-primary">When did you take it?</p>
+      <div role="radiogroup" aria-labelledby="dose-time-label" className="flex flex-wrap gap-2">
+        {options.map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="radio"
+            aria-checked={mode === m}
+            onClick={() => timing.onMode(m)}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              mode === m ? CHIP_ON : CHIP_OFF
+            }`}
+          >
+            <RadioDot selected={mode === m} />
+            {DOSE_LABELS[m]}
+          </button>
+        ))}
+      </div>
+      {mode === 'manual' && (
+        <DateTimeField
+          label="Dose time"
+          value={timing.time}
+          min={isoToLocalInput(new Date(startMs).toISOString())}
+          max={isoToLocalInput(new Date(endMs ?? nowMs).toISOString())}
+          onChange={timing.onTime}
+          surface="raised"
+          openRef={openRef}
+        />
+      )}
+      {/* A fact about what the app will do, not about the dose. Only while
+          the attack is ongoing — a past one has no check-in to move. */}
+      {endMs === null && (
+        <p className="text-xs text-text-secondary">With reminders on, the check-in is timed from this.</p>
       )}
     </div>
   );

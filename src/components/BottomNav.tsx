@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef, useState } from 'react';
 import type { Tab } from '../types';
 
 interface NavItem { id: Tab; label: string; icon: React.ReactNode }
@@ -51,19 +52,21 @@ const RIGHT_TABS: NavItem[] = [
   { id: 'profile', label: 'Settings', icon: <SettingsIcon /> },
 ];
 
+export interface FabAction { label: string; onSelect: () => void }
+
 interface Props {
   active: Tab;
   onChange: (tab: Tab) => void;
-  onAdd: () => void;
   /**
-   * What the FAB does right now — "Log an attack", or "Add update" while an
-   * attack is ongoing. It is a bare plus with no visible label, so this is the
-   * only thing a screen reader has to go on, and the action genuinely changes.
+   * What the + menu offers right now (2026-10-28). With no attack ongoing:
+   * Log an attack / Add a past attack. While one is ongoing: Add an update /
+   * End attack — never a past attack, since someone mid-attack shouldn't have
+   * to think about a different episode.
    */
-  addLabel: string;
+  addActions: FabAction[];
 }
 
-export function BottomNav({ active, onChange, onAdd, addLabel }: Props) {
+export function BottomNav({ active, onChange, addActions }: Props) {
   return (
     <>
       {/* `absolute` (not `fixed`) relative to App's own correctly-sized,
@@ -93,15 +96,7 @@ export function BottomNav({ active, onChange, onAdd, addLabel }: Props) {
             read as a second floating layer, and nothing else in the bar
             floats. */}
         <li className="flex flex-1 justify-center self-center">
-          <button
-            type="button"
-            aria-label={addLabel}
-            onClick={onAdd}
-            className="flex items-center justify-center rounded-full bg-accent text-bg-base transition-colors hover:bg-accent-light active:scale-95 [&_svg]:h-[min(1.625rem,30px)] [&_svg]:w-[min(1.625rem,30px)]"
-            style={{ height: 'min(3.625rem, 68px)', width: 'min(3.625rem, 68px)' }}
-          >
-            <PlusIcon />
-          </button>
+          <FabMenu actions={addActions} />
         </li>
 
         {RIGHT_TABS.map((tab) => (
@@ -135,5 +130,121 @@ function TabBtn({ tab, isActive, onClick }: { tab: NavItem; isActive: boolean; o
       <span aria-hidden="true">{tab.icon}</span>
       <span className="max-w-full truncate">{tab.label}</span>
     </button>
+  );
+}
+
+/**
+ * The + button and the small menu it opens (2026-10-28). It used to act
+ * directly — log an attack, or add an update while one was ongoing — and now
+ * offers two actions, because "Add a past attack" and "End attack" needed a
+ * home that is always within thumb reach.
+ *
+ * **Built fresh, not from `Sheet` or `ConfirmDialog`**: both are full-overlay
+ * and modal, which is far heavier than choosing between two actions. This is
+ * a menu anchored above the button, in the WAI-ARIA menu-button shape —
+ * `aria-haspopup="menu"` + `aria-expanded` on the trigger, `role="menu"` and
+ * `menuitem`s, arrow keys move, Escape or a tap outside closes and returns
+ * focus to the +.
+ *
+ * Its accessible name names the menu, not either action. One string kept
+ * accurate for two items is the drift the old dynamic `addLabel` was guarding
+ * against when there was only one action to describe.
+ *
+ * `bg-surface` with the control ring, no shadow (the palette has none): it is
+ * a set of things to press, so its edge is the control token, and it sits a
+ * step lighter than the bar beneath it. Items are plain rows, not accent
+ * buttons — the + itself stays the one solid accent target.
+ */
+function FabMenu({ actions }: { actions: FabAction[] }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const menuId = useId();
+
+  // Focus the first item on open — the menu-button contract, and what makes
+  // the arrow keys usable straight away.
+  useEffect(() => {
+    if (open) itemRefs.current[0]?.focus();
+  }, [open]);
+
+  // A tap anywhere outside closes it. `pointerdown` rather than `click`, so
+  // the tap that closes the menu doesn't also land on whatever was under it
+  // first — it does land, but the menu is already gone by then.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [open]);
+
+  function close(refocus: boolean) {
+    setOpen(false);
+    if (refocus) triggerRef.current?.focus();
+  }
+
+  function onMenuKey(e: React.KeyboardEvent) {
+    const items = itemRefs.current.filter(Boolean) as HTMLButtonElement[];
+    const i = items.indexOf(document.activeElement as HTMLButtonElement);
+    if (e.key === 'Escape') { e.preventDefault(); close(true); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length]?.focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length]?.focus(); }
+    else if (e.key === 'Home') { e.preventDefault(); items[0]?.focus(); }
+    else if (e.key === 'End') { e.preventDefault(); items[items.length - 1]?.focus(); }
+    else if (e.key === 'Tab') close(false);
+  }
+
+  return (
+    <div ref={rootRef} className="relative">
+      {open && (
+        <div
+          id={menuId}
+          role="menu"
+          aria-label="Log or update an attack"
+          onKeyDown={onMenuKey}
+          className="absolute bottom-[calc(100%+0.75rem)] left-1/2 w-max min-w-[13rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-2xl bg-bg-surface py-1 ring-1 ring-inset ring-border-control"
+          // Chrome, like the bar under it: the menu grows with the text-size
+          // setting, but only so far, so it can't outgrow a phone's width.
+          style={{ fontSize: 'min(1rem, 20px)' }}
+        >
+          {actions.map((a, i) => (
+            <button
+              key={a.label}
+              ref={(el) => { itemRefs.current[i] = el; }}
+              type="button"
+              role="menuitem"
+              tabIndex={-1}
+              onClick={() => { close(false); a.onSelect(); }}
+              className={`flex min-h-12 w-full items-center px-4 py-2.5 text-left font-medium text-text-primary transition-colors hover:bg-bg-raised focus-visible:bg-bg-raised ${
+                i > 0 ? 'border-t border-bg-border' : ''
+              }`}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-label="Log or update an attack"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); }
+        }}
+        className="flex items-center justify-center rounded-full bg-accent text-bg-base transition-[color,background-color,transform] hover:bg-accent-light active:scale-95 [&_svg]:h-[min(1.625rem,30px)] [&_svg]:w-[min(1.625rem,30px)]"
+        style={{ height: 'min(3.625rem, 68px)', width: 'min(3.625rem, 68px)' }}
+      >
+        {/* Turns to a × while open, so the same button reads as the way out. */}
+        <span className={`flex transition-transform ${open ? 'rotate-45' : ''}`} aria-hidden="true">
+          <PlusIcon />
+        </span>
+      </button>
+    </div>
   );
 }

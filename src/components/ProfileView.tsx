@@ -9,14 +9,16 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
 import { Chevron, OptionTile, SettingsGroup as Group, SwitchRow } from './settingsUi';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
-import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon } from './drawnIcons';
+import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
+import { NotificationSettings } from './NotificationSettings';
+import type { NotificationConfig } from '../types';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
 // Fixed px values used only in this picker as a visual size-comparison reference.
 const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
 
-export type ProfileSection = 'medications' | 'hit6' | 'display' | 'account' | 'data';
+export type ProfileSection = 'medications' | 'hit6' | 'display' | 'reminders' | 'account' | 'data';
 
 interface MenuProps {
   onOpen: (section: ProfileSection) => void;
@@ -46,6 +48,7 @@ const MENU_GROUPS: MenuItem[][] = [
   ],
   [
     { id: 'display', Icon: EyeIcon, label: 'Display & attack mode' },
+    { id: 'reminders', Icon: BellIcon, label: 'Reminders' },
     { id: 'account', Icon: CloudIcon, label: 'Account & sync' },
     { id: 'data', Icon: DataIcon, label: 'Data' },
   ],
@@ -445,6 +448,30 @@ function ReminderDiagnostics() {
         </ul>
       )}
     </section>
+  );
+}
+
+/**
+ * Settings → Reminders (2026-10-28). The check-in reminder default, moved here
+ * from the last step of the logging wizard — the same `NotificationSettings`
+ * control writing the same `hd_notification_default`, so this is a relocation
+ * and not new state. Every new attack takes whatever this is when it is
+ * logged; there is no per-attack override any more (Sunny never used one).
+ */
+export function RemindersPanel({ value, onChange, onClose }: {
+  value: NotificationConfig;
+  onChange: (next: NotificationConfig) => void;
+  onClose: () => void;
+}) {
+  return (
+    <ProfileSubPage title="Reminders" onClose={onClose}>
+      <div className="space-y-3">
+        <p className="text-sm text-text-secondary">
+          While an attack is ongoing, a reminder asks how it is. This applies to each attack you log from now on.
+        </p>
+        <NotificationSettings value={value} onChange={onChange} />
+      </div>
+    </ProfileSubPage>
   );
 }
 

@@ -1,6 +1,7 @@
 import { chipClass} from '../utils/chipStyles';
 import { ChipCheck } from './ChipCheck';
 import type { NotificationConfig } from '../types';
+import { BellIcon } from './drawnIcons';
 
 interface Props {
   value: NotificationConfig;
@@ -15,7 +16,9 @@ export function NotificationSettings({ value, onChange }: Props) {
       {/* Enable toggle */}
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2 text-sm text-text-primary">
-          <span>{value.enabled ? '🔔' : '🔕'}</span>
+          {/* Drawn, not 🔔/🔕: on its own Settings page the emoji was the
+              brightest thing on screen. The switch beside it carries on/off. */}
+          <BellIcon className="h-4 w-4 text-text-secondary" />
           <span>Enable reminders</span>
         </span>
         <button

@@ -10,12 +10,13 @@ import { OngoingArt } from './heroArt';
 interface Props {
   attack: Attack;
   onEnd: () => void;
+  onAddUpdate: () => void;
   onOpenDetail: () => void;
   /** The attack mode button, pinned to the hero's corner. */
   topAction?: React.ReactNode;
 }
 
-export function OngoingAttackBanner({ attack, onEnd, onOpenDetail, topAction }: Props) {
+export function OngoingAttackBanner({ attack, onEnd, onAddUpdate, onOpenDetail, topAction }: Props) {
   // Keeps the elapsed headline honest — every minute, and on every return to the
   // foreground, which is the case a bare interval silently got wrong.
   useNowTick();
@@ -53,21 +54,23 @@ export function OngoingAttackBanner({ attack, onEnd, onOpenDetail, topAction }: 
       onOpenDetail={onOpenDetail}
       topAction={topAction}
     >
-      {/* **The only action the hero carries, and the only one it should.**
-          "Add update" used to sit here as the primary, which was the FAB's
-          action repeated in a second, louder place — two solid-accent targets
-          in one viewport on a screen where accent means "press this". Ending
-          an attack is the thing the nav can't express, so it is what stays.
+      {/* **Add an update and End attack, side by side, both secondary**
+          (2026-10-28) — which reverses the 2026-10-26 call that left End
+          attack alone here. That call was right while the FAB was a direct
+          tap to "Add update": the hero's copy of it was the same action in a
+          second, louder place. Since the FAB opens a menu, adding an update
+          from it costs an extra tap, so the card's own shortcut earns its
+          place back — the card is the fast path, the + menu the consistent
+          one (Sunny's spec, deliberately duplicated).
 
-          It stays `btn-secondary` rather than being promoted into the vacated
-          primary slot: the FAB is now the one accent target on Today, and
-          giving the hero an accent fill again would rebuild the competition
-          this change exists to remove. */}
-      <button
-        type="button"
-        onClick={onEnd}
-        className="btn-secondary btn-compact"
-      >
+          Neither is promoted to `btn-primary`: the FAB is still the one solid
+          accent target on Today, and an accent fill here would rebuild the
+          competition the earlier change removed. Add an update leads because
+          it is what an ongoing attack is usually opened for. */}
+      <button type="button" onClick={onAddUpdate} className="btn-secondary btn-compact">
+        Add an update
+      </button>
+      <button type="button" onClick={onEnd} className="btn-secondary btn-compact">
         End attack
       </button>
     </HomeCard>
