@@ -63,7 +63,7 @@ export function SegmentedControl<T extends string>({
             // segments and room to spare, this one has four and has to hold
             // "3 months" at 375px. `truncate` is the backstop at the largest
             // text sizes; `min-w-0` is what lets it engage inside a flex item.
-            className={`flex h-7 min-w-0 items-center justify-center rounded-segment px-2 text-xs font-medium transition-colors ${
+            className={`tap-44-y flex h-7 min-w-0 items-center justify-center rounded-segment px-2 text-xs font-medium transition-colors ${
               fill ? 'flex-1' : ''
             } ${isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:text-text-primary'}`}
           >

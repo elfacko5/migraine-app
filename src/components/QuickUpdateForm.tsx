@@ -280,7 +280,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
         <div className="ml-auto flex items-center">
           {step >= 1 && step < TOTAL_STEPS && (
             <button type="button" onClick={() => (isBlank ? setConfirmNoChange(true) : submit())}
-              className="px-2 py-1 text-sm font-medium text-accent-light hover:text-accent transition-colors">
+              className="tap-44-y px-2 py-1 text-sm font-medium text-accent-light hover:text-accent transition-colors">
               Finish now
             </button>
           )}

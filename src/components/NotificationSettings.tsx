@@ -54,7 +54,7 @@ export function NotificationSettings({ value, onChange }: Props) {
                   key={mode}
                   type="button"
                   onClick={() => onChange({ ...value, mode })}
-                  className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-chip py-2 text-sm font-medium transition-colors ${chipClass(
+                  className={`tap-44-y flex-1 inline-flex items-center justify-center gap-1.5 rounded-chip py-2 text-sm font-medium transition-colors ${chipClass(
                     value.mode === mode,
                   )}`}
                 >
@@ -78,7 +78,7 @@ export function NotificationSettings({ value, onChange }: Props) {
                     key={min}
                     type="button"
                     onClick={() => onChange({ ...value, fixedIntervalMinutes: min })}
-                    className={`flex-1 inline-flex items-center justify-center gap-1 rounded-chip py-2 text-xs font-medium transition-colors ${chipClass(
+                    className={`tap-44-y flex-1 inline-flex items-center justify-center gap-1 rounded-chip py-2 text-xs font-medium transition-colors ${chipClass(
                       value.fixedIntervalMinutes === min,
                     )}`}
                   >

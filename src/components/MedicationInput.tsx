@@ -117,7 +117,7 @@ export function MedicationInput({
                 role="radio"
                 onClick={() => pick(med)}
                 aria-checked={selected?.name === med.name}
-                className={`flex items-center gap-1.5 rounded-chip px-3 py-2 text-sm font-medium transition-colors ${
+                className={`tap-44-y flex items-center gap-1.5 rounded-chip px-3 py-2 text-sm font-medium transition-colors ${
                   selected?.name === med.name ? CHIP_ON : CHIP_OFF
                 }`}
               >
@@ -159,7 +159,7 @@ export function MedicationInput({
             <button
               type="button"
               onClick={() => { onChange({ name: '', dose: '' }); setCustomOpen(false); }}
-              className="btn-tertiary min-h-0 rounded-control-sm py-1.5 text-sm font-medium transition-colors"
+              className="tap-44-y btn-tertiary min-h-0 rounded-control-sm py-1.5 text-sm font-medium transition-colors"
             >
               Cancel
             </button>
@@ -169,7 +169,7 @@ export function MedicationInput({
         <button
           type="button"
           onClick={() => { onChange({ name: '', dose: '' }); setCustomOpen(true); }}
-          className="btn-tertiary min-h-0 rounded-control-sm py-2 text-sm font-medium transition-colors"
+          className="tap-44-y btn-tertiary min-h-0 rounded-control-sm py-2 text-sm font-medium transition-colors"
         >
           + Add a different medication
         </button>
@@ -189,7 +189,7 @@ export function MedicationInput({
                 role="radio"
                 aria-checked={units === n}
                 onClick={() => setUnits(n)}
-                className={`inline-flex items-center gap-1 rounded-segment px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`tap-44-y inline-flex items-center gap-1 rounded-segment px-2.5 py-1 text-xs font-medium transition-colors ${
                   units === n ? CHIP_ON : CHIP_OFF
                 }`}
               >
@@ -286,7 +286,7 @@ function DoseTimeCard({ timing }: { timing: DoseTiming }) {
             role="radio"
             aria-checked={mode === m}
             onClick={() => timing.onMode(m)}
-            className={`inline-flex items-center gap-1.5 rounded-chip px-3 py-2 text-sm font-medium transition-colors ${
+            className={`tap-44-y inline-flex items-center gap-1.5 rounded-chip px-3 py-2 text-sm font-medium transition-colors ${
               mode === m ? CHIP_ON : CHIP_OFF
             }`}
           >

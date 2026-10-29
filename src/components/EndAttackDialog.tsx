@@ -108,7 +108,7 @@ export function EndAttackDialog({ open, minTime, onCancel, onConfirm }: Props) {
                 role="radio"
                 aria-checked={mode === m}
                 onClick={() => setMode(m)}
-                className={`inline-flex items-center gap-1.5 rounded-chip px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === m ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'}`}
+                className={`tap-44-y inline-flex items-center gap-1.5 rounded-chip px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${mode === m ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'}`}
               >
                 <RadioDot selected={mode === m} />
                 {label}

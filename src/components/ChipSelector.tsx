@@ -49,7 +49,7 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
             // separating these chips from the filter sheet's — both are sets
             // of options you open a screen to read and pick from — so the
             // difference was drift, not a decision.
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${chipClass(active)}`}
+            className={`tap-44-y inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${chipClass(active)}`}
           >
             {renderIcon?.(opt)}
             {opt}
@@ -70,14 +70,14 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
               placeholder="Custom…"
               className="w-28 rounded-full bg-bg-raised px-3 py-1.5 text-sm text-text-primary placeholder:text-text-secondary ring-1 ring-inset ring-border-subtle outline-none"
             />
-            <button type="button" onClick={commitCustom} className="btn-tertiary min-h-0 px-2 py-1.5 text-sm font-medium">Add</button>
+            <button type="button" onClick={commitCustom} className="tap-44-y btn-tertiary min-h-0 px-2 py-1.5 text-sm font-medium">Add</button>
             <button type="button" onClick={() => setAdding(false)} className="text-sm text-text-secondary hover:text-text-primary">✕</button>
           </div>
         ) : (
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="btn-tertiary min-h-0 rounded-full px-3 py-1.5 text-sm ring-1 ring-dashed ring-button-secondary-border transition-colors"
+            className="tap-44-y btn-tertiary min-h-0 rounded-full px-3 py-1.5 text-sm ring-1 ring-dashed ring-button-secondary-border transition-colors"
           >
             {placeholder}
           </button>

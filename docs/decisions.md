@@ -1325,6 +1325,27 @@ device end to end.
   runs off the right edge (`attack-md__42-log-step3` in `.phase3-screens/`).
   The row is a non-wrapping `flex` in `MedicationInput`. Not fixed in phase 3,
   which must not move pixels; the likely fix is `flex-wrap` on the row.
+- **Six controls are still under 44px at every text size: fix them in phase
+  4, in the package** (Sunny's call, 2026-10-29). The reminders switch
+  (`NotificationSettings`, 24px tall), the severity and dimming sliders (16px),
+  the email field (42px) and the `DateTimeField` boxes (40px), the text-size
+  stepper (`TextScaleControl`, 28×32px) and the Remove × on a selected area
+  (16px). They are phase 4's components, so fixing them while they are
+  consolidated is cheaper than fixing them here and again when they move.
+  They matter more than their size suggests: people tap this app in pain,
+  often with an unsteady hand. Measurements and method: the 2026-10-29
+  touch-target audit (`.phase3-screens/capture.mjs`, `AUDIT=1`).
+- **Check the wrapped chip rows on the phone** (2026-10-29). The chips and
+  small text buttons got `.tap-44-y`, a 44px hit area grown vertically only,
+  with no visual change. At the default size and up no two targets overlap.
+  At the smallest text size (14px root) the rows of a wrapped chip set sit
+  ~7px apart and each target grows ~6px into that gap, so neighbouring rows'
+  targets overlap by up to 5.5px (the symptom, relief and trigger chips;
+  2–3px for the When presets and the medication rows). The overlap lies only
+  in the gap, which used to be dead space, and never covers another chip's
+  own box, so no tap that used to land on a chip now lands elsewhere; in the
+  gap the later row wins. Unverified on a real finger. If it mis-taps, the
+  fix is a larger row gap at that size, not a smaller target.
 
 3. ~~**The wizard's step instructions are written denser than §9.5 asks.**~~
    **Done 2026-08-19** — all 14 rewritten across `LogForm` and

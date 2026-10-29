@@ -56,7 +56,10 @@ code. Table in CLAUDE.md, "Shape roles".
 
 **Selected states are a tint, never the solid accent.** `chipClass` /
 `CHIP_ON` / `CHIP_OFF` from `utils/chipStyles.ts`. Solid accent means *action*
-(`btn-primary`, the FAB). Both states carry a ring, never a border.
+(`btn-primary`, the FAB). Both states carry a ring, never a border. A chip or
+small text button under 44px tall takes `.tap-44-y` (invisible hit area,
+vertical only, since chips sit ~8px apart); `.tap-44` grows all sides and is
+only for a control with room around it.
 
 **Sheets come in two kinds, and the pair must agree.** A drill-down enters
 from the right with a **back chevron** (`ProfileSubPage`). Something that

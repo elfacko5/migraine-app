@@ -172,7 +172,7 @@ const END_OPTIONS: { value: EndMode; label: string }[] = [
 // grew and shrank as you toggled it. Any new state added here needs a ring,
 // not a border.
 const presetCls = (active: boolean) =>
-  `rounded-chip px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${
+  `tap-44-y rounded-chip px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${
     active
       ? 'bg-accent/20 text-accent-light ring-accent/50'
       : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'
@@ -436,7 +436,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               // Says why, for a control whose disabled state is otherwise a
               // dead end — the required step is the one it points at.
               title={canFinishEarly ? undefined : 'Select a pain area first'}
-              className={`px-2 py-1 text-sm font-medium transition-colors ${
+              className={`tap-44-y px-2 py-1 text-sm font-medium transition-colors ${
                 canFinishEarly
                   ? 'text-accent-light hover:text-accent'
                   : 'text-text-secondary/50 cursor-not-allowed'
@@ -634,7 +634,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                   type="button"
                   onClick={() => set('wokeWithMigraine', !form.wokeWithMigraine)}
                   aria-pressed={form.wokeWithMigraine}
-                  className={`inline-flex items-center gap-1.5 rounded-chip px-3 py-1.5 text-sm font-medium transition-colors ${presetCls(form.wokeWithMigraine)}`}
+                  className={`tap-44-y inline-flex items-center gap-1.5 rounded-chip px-3 py-1.5 text-sm font-medium transition-colors ${presetCls(form.wokeWithMigraine)}`}
                 >
                   {/* Drawn icon in currentColor, not 🌙 or 🌅 — see
                       SunriseIcon. It matters more here than on the card: this

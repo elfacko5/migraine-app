@@ -80,7 +80,7 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
                 // two views of one step. No ring: the segment sits inside a
                 // bordered track that already draws the boundary, and a ring
                 // on top of it reads as a box in a box.
-                className={`flex h-7 items-center gap-1.5 rounded-segment px-4 text-xs font-medium transition-colors ${
+                className={`tap-44-y flex h-7 items-center gap-1.5 rounded-segment px-4 text-xs font-medium transition-colors ${
                   isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:text-text-primary'
                 }`}
               >

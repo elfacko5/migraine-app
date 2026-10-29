@@ -419,6 +419,24 @@
   transform: translate(-50%, -50%);
 }
 
+/* `.tap-44-y` is the same invisible hit area grown **vertically only**
+   (2026-10-29). It is for chips and small text buttons that sit side by side
+   in a row about 8px apart: grown on all sides, each target would reach into
+   its neighbour's and a tap between two chips would land on the wrong one.
+   Rows are further apart than that, so height is where the room is. In a
+   *wrapped* row, two lines of chips can still meet at the smallest text size
+   — check those on the phone before trusting it. */
+.tap-44-y { position: relative; }
+.tap-44-y::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: max(100%, 44px);
+  transform: translateY(-50%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

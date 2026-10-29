@@ -230,7 +230,7 @@ export function LogsFilterReset({ filters, onChange }: { filters: LogFilters; on
       type="button"
       onClick={() => onChange(DEFAULT_FILTERS)}
       disabled={count === 0}
-      className="rounded-control-sm px-2 py-1 text-sm font-medium text-accent-light transition-colors hover:text-accent disabled:opacity-40 disabled:hover:text-accent-light"
+      className="tap-44-y rounded-control-sm px-2 py-1 text-sm font-medium text-accent-light transition-colors hover:text-accent disabled:opacity-40 disabled:hover:text-accent-light"
     >
       Clear all
     </button>
