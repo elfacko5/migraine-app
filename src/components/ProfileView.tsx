@@ -420,7 +420,7 @@ function ReminderDiagnostics() {
           type="button"
           onClick={refresh}
           disabled={busy}
-          className="btn-secondary rounded-control-sm px-3 py-1.5 text-xs font-medium transition-colors active:opacity-60 disabled:opacity-40"
+          className="btn-secondary min-h-0 rounded-control-sm px-3 py-1.5 text-xs font-medium transition-colors active:opacity-60 disabled:opacity-40"
         >
           {busy ? 'Checking…' : 'Refresh'}
         </button>

@@ -88,10 +88,13 @@
   /* ── Control-size roles (phase 3) ─────────────────────
      `size-target`, `min-h-target`, `size-compact`. Written on the spacing
      scale so a theme that rescales --spacing rescales these too. In rem, so
-     they follow the text-size setting: 44px at the default 16px root, but
-     38.5px at the smallest (14px) and 66px at 150%. `.tap-44` below is the
-     fixed-pixel hit area and deliberately does not use this. */
-  --spacing-target:  calc(var(--spacing) * 11);  /* 44px touch target */
+     they follow the text-size setting: 44px at the default 16px root and
+     66px at 150%. The target is floored at 44px, because at the smallest
+     (14px) root the bare calc measured 38.5px — under the touch-target rule
+     the role exists to meet; the floor changes nothing at 100% or above.
+     `.tap-44` below is the fixed-pixel hit area and deliberately does not
+     use this. */
+  --spacing-target:  max(44px, calc(var(--spacing) * 11));  /* 44px touch target */
   --spacing-compact: calc(var(--spacing) * 9);   /* 36px compact control */
 
   /* ── Padding roles (phase 3) ──────────────────────────
@@ -284,12 +287,19 @@
    Call sites can still override anything — these live in `@layer components`
    and Tailwind's utilities layer wins — so a deliberately smaller or
    square-cornered button is still one class away. What changed is that the
-   plain case is now correct. Existing call sites repeating `rounded-xl py-3
-   text-sm font-medium` are harmless duplicates of what they now inherit. */
+   plain case is now correct. A call site restating the radius or padding is
+   drift: write the bare class.
+
+   **They are never shorter than `--spacing-target`** (2026-10-29). At the
+   smallest text size a default button measured 42px and a compact one
+   38.5px; the floor lifts both to 44px and is a no-op from 100% up. The few
+   deliberately small buttons opt out with `min-h-0` — each is on the list of
+   controls under 44px at every size, waiting on a decision. */
 @layer components {
   .btn-primary, .btn-secondary, .btn-tertiary {
     border-radius: var(--radius-control);
     padding: var(--spacing-control-y) var(--spacing-control-x);
+    min-height: var(--spacing-target);
     font-size: var(--text-sm);
     line-height: 1.5;
     font-weight: 500;                    /* font-medium */

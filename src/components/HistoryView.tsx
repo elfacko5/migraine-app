@@ -142,7 +142,7 @@ export function HistoryView({
             <button
               type="button"
               onClick={() => onFilters(DEFAULT_FILTERS)}
-              className="btn-secondary rounded-control px-4 py-2 text-sm font-medium transition-colors"
+              className="btn-secondary min-h-0 rounded-control px-4 py-2 text-sm font-medium transition-colors"
             >
               Clear filters
             </button>

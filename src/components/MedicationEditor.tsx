@@ -298,7 +298,7 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
                 type="button"
                 aria-expanded={limitsOpen}
                 onClick={() => setLimitsOpen((v) => !v)}
-                className="flex min-h-12 w-full items-center gap-3 text-left"
+                className="flex min-h-[max(var(--spacing-target),3rem)] w-full items-center gap-3 text-left"
               >
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-text-primary">Limits from your leaflet · optional</span>

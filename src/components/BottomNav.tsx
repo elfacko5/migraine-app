@@ -217,7 +217,7 @@ function FabMenu({ actions }: { actions: FabAction[] }) {
               role="menuitem"
               tabIndex={-1}
               onClick={() => { close(false); a.onSelect(); }}
-              className={`flex min-h-12 w-full items-center px-4 py-2.5 text-left font-medium text-text-primary transition-colors hover:bg-bg-raised focus-visible:bg-bg-raised ${
+              className={`flex min-h-[max(var(--spacing-target),3rem)] w-full items-center px-4 py-2.5 text-left font-medium text-text-primary transition-colors hover:bg-bg-raised focus-visible:bg-bg-raised ${
                 i > 0 ? 'border-t border-bg-border' : ''
               }`}
             >

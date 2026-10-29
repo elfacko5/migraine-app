@@ -159,7 +159,7 @@ export function MedicationInput({
             <button
               type="button"
               onClick={() => { onChange({ name: '', dose: '' }); setCustomOpen(false); }}
-              className="btn-tertiary rounded-control-sm py-1.5 text-sm font-medium transition-colors"
+              className="btn-tertiary min-h-0 rounded-control-sm py-1.5 text-sm font-medium transition-colors"
             >
               Cancel
             </button>
@@ -169,7 +169,7 @@ export function MedicationInput({
         <button
           type="button"
           onClick={() => { onChange({ name: '', dose: '' }); setCustomOpen(true); }}
-          className="btn-tertiary rounded-control-sm py-2 text-sm font-medium transition-colors"
+          className="btn-tertiary min-h-0 rounded-control-sm py-2 text-sm font-medium transition-colors"
         >
           + Add a different medication
         </button>
