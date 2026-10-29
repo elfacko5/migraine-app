@@ -45,6 +45,15 @@ Never `disabled:opacity-40` — the disabled treatment is built in. Never a
 `border` for an outline; use a ring (`box-shadow`), or a secondary button
 renders 2px taller than the primary beside it.
 
+**Shapes take a role, never a raw step.** Radius: `rounded-control` ·
+`rounded-card` · `rounded-sheet` · `rounded-chip` · `rounded-field` ·
+`rounded-segment` · `rounded-badge`. Size: `size-target` (44px) ·
+`size-compact`. Padding: `p-card` · `px-control-x py-control-y` · the
+`control-compact` pair · `px-gutter sm:px-gutter-wide`. Not `rounded-xl`,
+`rounded-[1.25rem]`, `p-4` or `h-11` for these. `group`, `inset`,
+`control-sm`, `field-lg` and `badge-sm` are temporary drift — never in new
+code. Table in CLAUDE.md, "Shape roles".
+
 **Selected states are a tint, never the solid accent.** `chipClass` /
 `CHIP_ON` / `CHIP_OFF` from `utils/chipStyles.ts`. Solid accent means *action*
 (`btn-primary`, the FAB). Both states carry a ring, never a border.

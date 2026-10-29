@@ -108,9 +108,23 @@ The wording spec is **§9 of the research dossier** — read it before writing a
 - **Plainer the deeper into an attack** (§9.5). Today's overuse warning says what frequent use can do in everyday words; the Insights caption keeps "medication-overuse headache", the term a clinician uses, because that page is read carefully and Today is glanced at mid-attack. The tone system and attack mode are the same idea.
 - **Supportive, not diagnostic**, which the existing rules already enforce: state the count and the guideline, conclude nothing, and never read as dosing advice.
 
+## Shape roles (radius, size, padding)
+
+**Structures take a role from `@theme` in `src/index.css`, never a raw step** (phase 3 of the CODE design system, 2026-10-29). The roles are what the screens already measured, so using one changes no pixel; a raw `rounded-xl` or `p-4` that happens to match today drifts the first time the role moves.
+
+| | Role | Instead of |
+|---|---|---|
+| Radius | `rounded-control` (buttons, toggles, inputs that act like buttons) · `rounded-card` (Today/v3 cards) · `rounded-sheet` (dialogs, the FAB menu) · `rounded-chip` · `rounded-field` · `rounded-segment` (segmented control) · `rounded-badge` | `rounded-xl`, `rounded-[1.25rem]`, `rounded-2xl`, `rounded-lg`, `rounded-md` |
+| Size | `size-target` / `min-h-target` (a 44px square or row) · `size-compact` (the 36px back button and its spacer) | `h-11 w-11`, `min-h-11`, `h-9 w-9` |
+| Padding | `p-card` · `px-control-x` + `py-control-y` · `px-control-compact-x` + `py-control-compact-y` · `px-gutter` + `sm:px-gutter-wide` (screen edges) | `p-4`, `px-4 py-3`, `px-5 py-2.5`, `px-4 sm:px-6` |
+
+**`rounded-xl`, `rounded-[1.25rem]`, `p-4` and `h-11` must not be used for these structures in new code.** A raw step is still fine for something that is none of them (a bar's end cap, a gap).
+
+**`group`, `inset`, `control-sm`, `field-lg` and `badge-sm` are Lidd-local and temporary** — each names an existing drift (8px buttons beside 12px ones, 12px prompt cards beside 20px Today cards) that is kept only so the refactor moved nothing. **Never use them in new code**; they go when the drift is decided.
+
 ## Buttons
 
-**`.btn-primary` / `.btn-secondary` / `.btn-tertiary` in `src/index.css` carry their own radius, padding, type and disabled treatment.** They used to set colour only, with a comment telling call sites to add "size, radius, font" — so a bare `btn-primary` was silently *half a button* and nothing failed. That is exactly how the HIT-6 screens shipped looking like nothing else in the app. Call sites can still override anything (these are `@layer components`; Tailwind utilities win), so the existing repetitions of `rounded-xl py-3 text-sm font-medium` are harmless duplicates of what they now inherit.
+**`.btn-primary` / `.btn-secondary` / `.btn-tertiary` in `src/index.css` carry their own radius, padding, type and disabled treatment.** They used to set colour only, with a comment telling call sites to add "size, radius, font" — so a bare `btn-primary` was silently *half a button* and nothing failed. That is exactly how the HIT-6 screens shipped looking like nothing else in the app. Call sites can still override anything (these are `@layer components`; Tailwind utilities win), but a call site restating the button's own radius or padding is drift, not harmless: write the bare class and let it inherit. Where a button does need its shape spelled out, use the roles below, never `rounded-xl py-3`.
 
 **There are two sizes and the choice is explicit:**
 
@@ -444,7 +458,7 @@ Two earlier attempts at this, both recorded because they are the obvious things 
 
   **The labels are `7d / 30d / 3m / All`, and that was measured.** The long forms fit at the default size (83px a segment) and truncate at 150% — "3 mont…" on the one control that says what every figure on the page is counting. `PERIOD_SEGMENTS` in `logFilters.ts` holds them next to the sheet's own longer `PERIOD_OPTIONS`; `StatsView` used to carry a third copy of the four periods with its own `PERIOD_MS`, and that is gone.
 - **Order is fixed: the period control (in the bar) → the six stat tiles → the monthly sections → the rest.** The tiles answer the period the control sets, so nothing goes between them. The monthly sections render outside the *empty-state* branch, which is what pulled them above the tiles when that was first done — they belong after.
-- **Blocks are 32px apart** (`space-y-8` on the page, 8px between a section's heading and its card), so the grouping reads as heading-with-card rather than an even stack. **A section card's padding is `p-4`, matching the stat tiles** (2026-09-02) — it was `p-3`, so the page's two kinds of card held their content at different insets, which reads as two different apps rather than as a deliberate difference. The inner box keeps `p-3`: it is nested inside the section card, not a peer of the tiles.
+- **Blocks are 32px apart** (`space-y-8` on the page, 8px between a section's heading and its card), so the grouping reads as heading-with-card rather than an even stack. **A section card's padding is `p-card`, matching the stat tiles** (2026-09-02) — it was `p-3`, so the page's two kinds of card held their content at different insets, which reads as two different apps rather than as a deliberate difference. The inner box keeps `p-3`: it is nested inside the section card, not a peer of the tiles.
 - **The monthly sections render outside the period's empty state**, so picking "7 days" in a quiet week doesn't hide the month's medication count — the number someone would have opened the page to check. They do now follow the period itself; see above.
 - **The unmeasured doses are shown, not hidden.** A dose with no follow-up reading is reported as such rather than dropped, so the denominator is honest.
 - **The wording never concludes anything.** The app counts days and states what the guideline numbers are — "worth raising with your doctor rather than acting on alone". It must not read as a diagnosis or as dosing advice, and it says outright that doses taken without logging an attack aren't counted. The old "Medication intake" frequency bars were removed: they counted attacks-in-a-window and answered the same question worse.
@@ -490,7 +504,7 @@ prospective diary exists to avoid.
 - The Profile marker is **text, not a coloured dot** — a dot on a settings row
   reads as an alert, and this is a suggestion.
 - **One question per screen**, with **Back/Next in the logging wizard's own
-  shape** — secondary + primary, `rounded-xl py-3 text-sm font-medium`, and
+  shape** — secondary + primary, the bare `btn-secondary` / `btn-primary`, and
   the disabled primary is the muted `bg-bg-raised text-text-secondary`
   treatment, never a faded accent. Six at once is a form to get through; one
   is a question to think about, and with a four-week recall the thinking is
