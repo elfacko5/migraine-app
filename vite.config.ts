@@ -4,6 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // The design system package is linked with `file:`, so its own node_modules
+  // holds a second copy of React. Two copies break hooks. Dedupe makes every
+  // import resolve to this app's copy.
+  resolve: { dedupe: ['react', 'react-dom'] },
   // Respect an assigned PORT (e.g. when another session already holds 5173)
   // instead of Vite's own silent increment-and-retry, so tooling that proxies
   // to a specific reassigned port can actually reach the server.
