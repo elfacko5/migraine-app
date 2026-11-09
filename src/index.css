@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
-/* The design system package (code-ds, linked from ../code-design-system).
+/* The design system package (code-ds, linked from ../code-design-system-main).
    Tailwind v4 does not scan node_modules, so its source is named here. Without
    this line, classes used only inside the package's components are never
    generated and they render unstyled. */
-@source "../../code-design-system/src";
+@source "../../code-design-system-main/src";
 
 /* ── Typeface ───────────────────────────────────────────
    Lexend, self-hosted (SIL Open Font License): the app has to work offline
