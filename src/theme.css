@@ -45,7 +45,9 @@
      two must be allowed to differ if the check ever asks this one to move. */
   --color-error: #c68880;
   --color-on-error: #1b1a18;
-  --color-scrim: #00000073; /* black at about 45%, what the Swift date picker draws */
+  /* surface at 70%: the veil Lidd's Sheet and dialogs draw (bg-base/70). The black at 45% the
+     package started with stays with the Swift date picker only. */
+  --color-scrim: color-mix(in oklab, var(--color-surface) 70%, transparent);
 }
 
 :root[data-theme='light'] {
@@ -64,8 +66,11 @@
   --color-focus: #4f6b57;
   --color-error: #82423b;
   --color-on-error: #f5f2ec;
-  /* The text colour at 40%, as the package's own light does. */
-  --color-scrim: #3a373366;
+  /* surface at 70%, the same veil Lidd draws in light (bg-base/70). Was the text colour at 40%,
+     a dark veil over a light page, which Lidd never drew.
+     color-mix, not hex-with-alpha: the same expression Tailwind writes for bg-base/70, so the
+     alpha is exactly 0.7. A hex alpha of b3 is 0.702 and moved 13k pixels behind a dialog. */
+  --color-scrim: color-mix(in oklab, var(--color-surface) 70%, transparent);
 }
 
 /*
@@ -99,7 +104,7 @@
   --color-focus: #7fa187;
   --color-error: #c68880;
   --color-on-error: #14140f;
-  --color-scrim: #00000073;
+  --color-scrim: color-mix(in oklab, var(--color-surface) 70%, transparent); /* as dark */
 }
 
 /*
