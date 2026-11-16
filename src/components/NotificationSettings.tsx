@@ -1,5 +1,4 @@
-import { chipClass} from '../utils/chipStyles';
-import { ChipCheck } from './ChipCheck';
+import { Chip, ChipGroup, List, ListRow, Switch } from 'code-ds';
 import type { NotificationConfig } from '../types';
 import { BellIcon } from './drawnIcons';
 
@@ -8,85 +7,55 @@ interface Props {
   onChange: (next: NotificationConfig) => void;
 }
 
-export function NotificationSettings({ value, onChange }: Props) {
-  const FIXED_OPTIONS = [30, 60, 120, 240];
+const FIXED_OPTIONS = [30, 60, 120, 240];
 
+export function NotificationSettings({ value, onChange }: Props) {
   return (
-    <div className="rounded-inset bg-bg-raised/60 border border-bg-border px-4 py-3 space-y-4">
-      {/* Enable toggle */}
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm text-text-primary">
-          {/* Drawn, not 🔔/🔕: on its own Settings page the emoji was the
-              brightest thing on screen. The switch beside it carries on/off. */}
-          <BellIcon className="h-4 w-4 text-text-secondary" />
-          <span>Enable reminders</span>
-        </span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={value.enabled}
-          aria-label="Enable reminders"
-          onClick={() => onChange({ ...value, enabled: !value.enabled })}
-          className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-light ${
-            // The off track is the only thing that says a switch is here, so it
-            // takes the control-outline token: bg-bg-border measured 1.47:1
-            // against the page, well under the 3:1 WCAG 1.4.11 asks of a
-            // component's own visual boundary. The on state is the accent fill.
-            value.enabled ? 'bg-accent' : 'bg-border-control'
-          }`}
-        >
-          <span
-            className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-bg-surface transition-transform ${
-              value.enabled ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
-      </div>
+    <div className="space-y-4">
+      <List>
+        <ListRow bare>
+          <Switch checked={value.enabled} onCheckedChange={(enabled) => onChange({ ...value, enabled })}>
+            {/* Drawn, not 🔔/🔕: on its own Settings page the emoji was the
+                brightest thing on screen. The switch beside it carries on/off. */}
+            <span className="flex items-center gap-2">
+              <BellIcon className="h-4 w-4 shrink-0 text-content-muted" />
+              Enable reminders
+            </span>
+          </Switch>
+        </ListRow>
+      </List>
 
       {value.enabled && (
         <>
-          {/* Mode toggle */}
           <div className="space-y-2">
-            <p className="text-xs text-text-secondary uppercase tracking-wider">Timing</p>
-            <div className="flex flex-wrap gap-2">
-              {(['adaptive', 'fixed'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => onChange({ ...value, mode })}
-                  className={`tap-44-y flex-1 inline-flex items-center justify-center gap-1.5 rounded-chip py-2 text-sm font-medium transition-colors ${chipClass(
-                    value.mode === mode,
-                  )}`}
-                >
-                  {mode === 'adaptive' ? 'Adaptive' : 'Fixed'}
-                  <ChipCheck selected={value.mode === mode} />
-                </button>
-              ))}
-            </div>
+            <p id="reminder-timing" className="text-xs text-content-muted uppercase tracking-wider">Timing</p>
+            <ChipGroup
+              type="one"
+              aria-labelledby="reminder-timing"
+              value={value.mode}
+              onValueChange={(mode) => onChange({ ...value, mode: mode as NotificationConfig['mode'] })}
+            >
+              <Chip value="adaptive">Adaptive</Chip>
+              <Chip value="fixed">Fixed</Chip>
+            </ChipGroup>
             {value.mode === 'adaptive' && (
-              <p className="text-xs text-text-secondary">1h after start, then every 2h</p>
+              <p className="text-xs text-content-muted">1h after start, then every 2h</p>
             )}
           </div>
 
-          {/* Fixed interval picker */}
           {value.mode === 'fixed' && (
             <div className="space-y-2">
-              <p className="text-xs text-text-secondary uppercase tracking-wider">Interval</p>
-              <div className="flex flex-wrap gap-2">
+              <p id="reminder-interval" className="text-xs text-content-muted uppercase tracking-wider">Interval</p>
+              <ChipGroup
+                type="one"
+                aria-labelledby="reminder-interval"
+                value={String(value.fixedIntervalMinutes)}
+                onValueChange={(min) => onChange({ ...value, fixedIntervalMinutes: Number(min) })}
+              >
                 {FIXED_OPTIONS.map((min) => (
-                  <button
-                    key={min}
-                    type="button"
-                    onClick={() => onChange({ ...value, fixedIntervalMinutes: min })}
-                    className={`tap-44-y flex-1 inline-flex items-center justify-center gap-1 rounded-chip py-2 text-xs font-medium transition-colors ${chipClass(
-                      value.fixedIntervalMinutes === min,
-                    )}`}
-                  >
-                    {min < 60 ? `${min}m` : `${min / 60}h`}
-                    <ChipCheck selected={value.fixedIntervalMinutes === min} />
-                  </button>
+                  <Chip key={min} value={String(min)}>{min < 60 ? `${min}m` : `${min / 60}h`}</Chip>
                 ))}
-              </div>
+              </ChipGroup>
             </div>
           )}
         </>

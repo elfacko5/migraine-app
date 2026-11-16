@@ -2212,3 +2212,11 @@ Built against the package's throwaway integration branch `lidd-phase7-integratio
 **Font weights:** `OptionTile`'s `font-semibold` (selected tile) is emphasis on a Lidd-only control, not a control, heading or title role, so it **stays Lidd-local** at 600. The `font-bold` at `ProfileView.tsx:269` is the "7" in the live preview card, a headline numeral (bold is reserved for those in Lidd), so it also stays Lidd-local.
 
 **Scrim, for before screen 3:** the theme's scrim is black at 45% (dark, attack) and the text colour at 40% (light). Lidd's Sheet and dialogs draw `bg-base` at 70%. Fix the theme value before screen 3 and check the light one. The Swift picker's 45% is not changed.
+
+## Phase 7, screen 2: Settings > Reminders (2026-11-16)
+
+`NotificationSettings` is a package `List` > bare `ListRow` > `Switch` for Enable reminders, then two `ChipGroup type="one"` rows (Timing, Interval) of package `Chip`s. The card Lidd drew around the whole control (`bg-raised/60` with a border) is gone: the List is the card for the switch, and the chips sit on the sheet. `ChipCheck` and `chipClass` are not used here any more; they stay for the screens that still use them.
+
+**Intended differences:** the chips hug their label instead of filling the row, each carries the package's radio mark in place of the check, one height (32px at 100%, 44px hit area kept at every size) and one gap; the Enable reminders row is a List card with the 48x28 switch; the labels are 17px. Selected state, the stored `hd_notification_default` values and toggling were checked by hand in Chromium at the smallest and the 150% text size (Fixed, 2h and the switch write the expected config; the Display attack mode switch sets `data-theme="attack"`).
+
+**The same two open gaps as screen 1 apply here** (the List card is drawn in `surface`, which is the page colour in Lidd, so it reads as an outline on this `bg-surface` sheet; no hint line on the Switch, which this screen does not need).
