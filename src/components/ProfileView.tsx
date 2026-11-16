@@ -7,7 +7,8 @@ import { useNowTick } from '../hooks/useNowTick';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
-import { Chevron, OptionTile, SettingsGroup as Group, SwitchRow } from './settingsUi';
+import { List, ListRow, Switch } from 'code-ds';
+import { OptionTile } from './settingsUi';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
@@ -62,25 +63,20 @@ export function ProfileView({ onOpen, accountEnabled, hit6Due = false }: MenuPro
   return (
     <div className="space-y-4">
       {MENU_GROUPS.map((group, gi) => (
-        <Group key={gi}>
+        <List key={gi}>
           {group.filter((m) => m.id !== 'account' || accountEnabled).map((item) => (
-            <button
+            <ListRow
               key={item.id}
-              type="button"
+              leading={<item.Icon />}
+              // Text, not a coloured dot: a dot on a settings row reads as an
+              // alert, and this is a suggestion about a questionnaire.
+              value={item.id === 'hit6' && hit6Due ? 'Due' : undefined}
               onClick={() => onOpen(item.id)}
-              className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2 text-left transition-colors hover:bg-bg-raised"
             >
-              <item.Icon className="h-5 w-5 shrink-0 text-text-secondary" />
-              <span className="min-w-0 flex-1 text-sm text-text-primary">{item.label}</span>
-              {/* Text, not a coloured dot: a dot on a settings row reads as an
-                  alert, and this is a suggestion about a questionnaire. */}
-              {item.id === 'hit6' && hit6Due && (
-                <span className="shrink-0 text-xs text-text-secondary">Due</span>
-              )}
-              <Chevron />
-            </button>
+              {item.label}
+            </ListRow>
           ))}
-        </Group>
+        </List>
       ))}
     </div>
   );
@@ -168,15 +164,17 @@ export function DisplayPanel({
           nothing hurts yet. */}
       <div className="space-y-3">
         <p className="text-sm font-medium text-text-primary">Attack mode</p>
-        <Group raised>
-          <SwitchRow label="Attack mode" on={attackMode} onChange={onAttackMode} />
-          <SwitchRow
-            label="Attack mode when I start an attack"
-            hint="Turns it on as soon as you log an attack that's still going."
-            on={attackModeAuto}
-            onChange={onAttackModeAuto}
-          />
-        </Group>
+        <List>
+          <ListRow bare>
+            <Switch checked={attackMode} onCheckedChange={onAttackMode}>Attack mode</Switch>
+          </ListRow>
+          <ListRow bare>
+            <Switch checked={attackModeAuto} onCheckedChange={onAttackModeAuto}>
+              Attack mode when I start an attack
+              <span className="block text-xs text-content-muted">Turns it on as soon as you log an attack that's still going.</span>
+            </Switch>
+          </ListRow>
+        </List>
         <p className="text-xs text-text-secondary">
           Dims the screen, warms and lowers the contrast, enlarges body text and stops all animation.
           Everything you logged stays exactly as it is.
@@ -194,14 +192,14 @@ export function DisplayPanel({
             "Default" is the accurate word — see attack mode's own 20px body
             floor in CLAUDE.md, which this picker doesn't override. */}
         <p className="text-sm font-medium text-text-primary">Default text size</p>
-        <Group raised>
-          <SwitchRow
-            label="Use iPhone text size"
-            hint="Follows the size set in your iPhone's settings, from XS to XL."
-            on={systemText}
-            onChange={onSystemText}
-          />
-        </Group>
+        <List>
+          <ListRow bare>
+            <Switch checked={systemText} onCheckedChange={onSystemText}>
+              Use iPhone text size
+              <span className="block text-xs text-content-muted">Follows the size set in your iPhone's settings, from XS to XL.</span>
+            </Switch>
+          </ListRow>
+        </List>
         <div className="space-y-4 rounded-group bg-bg-surface py-4">
           {/* Moved above the picker (2026-09-23, Sunny's call) — it used to
               sit under the preview card, after the thing it explains had

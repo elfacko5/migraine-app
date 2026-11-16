@@ -2195,3 +2195,20 @@ Built against the package's throwaway integration branch `lidd-phase7-integratio
 - **Contrast:** `npm run contrast` (mode table in `src/contrast.json`) passes in all three modes with no value changed from Lidd's. `docs/palette.md` needs no edit.
 - **Not imported:** the package's `utilities.css` (its `tap-44-y` is `--spacing-target`-based and scales with text; Lidd's is a fixed 44px and keeps serving package components until Chip is adopted).
 - **Comparison with the baseline** (`.phase3-screens/phase7-before`, 313 shots, and `phase7-xs-before`, 120): every compared screen is pixel-identical. Note for later runs: this worktree needs `.env.local` (linked, ignored by git) or the Settings page has no Account row and differs.
+
+## Phase 7, screen 1: Settings menu and Display & attack mode (2026-11-16)
+
+**The plan's list was wrong and is corrected** (plan-phase-7, row 187): screen 1 is **Switch and List row only**. Lidd's `TextScaleControl` is used only in `LogForm` and `QuickUpdateForm` headers (screen 9), and Lidd's `SegmentedControl` only in the Insights period control in the Top bar (screen 6, with Top bar on screen 3). Neither is on the Display page. The Display page's own five-step text-size picker (an "A" at each size over an XS to XL label) is neither package component: the package Segmented control carries a label only, and the package Text-size control is a stepper. **It stays Lidd's and is a recorded gap**, not a screen: the choice (a package change, a stepper in its place, or Lidd keeps the picker) is open.
+
+**What changed:** the Settings menu rows are a package `List` of `ListRow`s (leading icon, "Due" as the row's value, chevron); the three switch rows on Display are `List` > bare `ListRow` > `Switch`. Lidd's `SwitchRow` and `SwitchTrack` are deleted. `SettingsGroup` and `Chevron` stay in `settingsUi.tsx` because My medications (screen 8) still uses them. `OptionTile` stays (no package tile).
+
+**Intended differences** (to be approved by June when she sees them): rows are 44px, not 56px; row label 17px, not 16px; the leading icon 24px, not 20px; the chevron is the package's; a group's corners are 20px (`radius-card`), not 16px; the switch is 48x28 with an outlined off state, not 44x24 with a solid one; pressed tint instead of hover tint.
+
+**Open gaps, not fixed and not accepted (reviewer items 111 to 118: build on the package as it is, no Lidd-local workaround):**
+1. **The List card is drawn in `surface`.** In Lidd that is the page colour, so on the Settings tab the card is no lighter than the page and shows only as an outline, and on the Display sub-page (a `bg-surface` sheet) it is darker than the sheet where Lidd's was lighter. Lidd's own groups are lighter cards. A package change (a raised fill for the card) or an accepted difference.
+2. **The Switch has no hint line.** The two hints on Display ("Turns it on as soon as you log an attack that's still going.", "Follows the size set in your iPhone's settings, from XS to XL.") are passed as a block `span` inside the Switch's children, which is what the package API allows. They are read as part of the switch's name, as before. A hint prop, or an accepted limit.
+3. The text-size picker (above).
+
+**Font weights:** `OptionTile`'s `font-semibold` (selected tile) is emphasis on a Lidd-only control, not a control, heading or title role, so it **stays Lidd-local** at 600. The `font-bold` at `ProfileView.tsx:269` is the "7" in the live preview card, a headline numeral (bold is reserved for those in Lidd), so it also stays Lidd-local.
+
+**Scrim, for before screen 3:** the theme's scrim is black at 45% (dark, attack) and the text colour at 40% (light). Lidd's Sheet and dialogs draw `bg-base` at 70%. Fix the theme value before screen 3 and check the light one. The Swift picker's 45% is not changed.

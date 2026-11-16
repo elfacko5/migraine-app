@@ -25,37 +25,6 @@ export function SettingsGroup({ children, raised = false }: { children: React.Re
   );
 }
 
-/** The app's one switch treatment — control-token track, `bg-surface` thumb
- *  (see the measured note on the attack mode switch it was lifted from). */
-export function SwitchTrack({ on }: { on: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition-colors ${on ? 'bg-accent' : 'bg-border-control'}`}
-    >
-      <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-bg-surface transition-transform ${on ? 'translate-x-5' : ''}`} />
-    </span>
-  );
-}
-
-export function SwitchRow({ label, hint, on, onChange }: { label: string; hint?: string; on: boolean; onChange: (on: boolean) => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      onClick={() => onChange(!on)}
-      className="flex min-h-14 w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-bg-elevated"
-    >
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm text-text-primary">{label}</span>
-        {hint && <span className="block text-xs text-text-secondary">{hint}</span>}
-      </span>
-      <SwitchTrack on={on} />
-    </button>
-  );
-}
-
 /**
  * A v3 radio tile. Selected is a 2px accent ring **and** a filled radio mark in
  * the corner, so the state never rests on colour — and the mark's slot is
