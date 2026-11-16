@@ -65,7 +65,7 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
         className={`absolute inset-x-0 top-0 flex flex-col bg-bg-surface transition-transform duration-300 ease-out ${
           open ? 'translate-x-0 translate-y-0' : enterFrom === 'right' ? 'translate-x-full' : 'translate-y-full'
         }`}
-        style={{ height: 'var(--app-height, 100dvh)' }}
+        style={{ height: '100%' }}
       >
         {!bareHeader && (
           <div

@@ -7,7 +7,7 @@ import { useHit6 } from './hooks/useHit6';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
 import { useAuth } from './hooks/useAuth';
-import { useViewportHeight } from './hooks/useViewportHeight';
+import { AppRoot } from 'code-ds';
 import { useScrolledFromTop } from './hooks/useScrolledFromTop';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { isRetired } from './utils/retired';
@@ -55,7 +55,6 @@ import { AttackModePill } from './components/AttackModePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
 
 export default function App() {
-  useViewportHeight();
   const [tab, setTab] = useState<Tab>('log');
   // Owned here, not in `StatsView`, because the control that sets it is
   // rendered in `TopBar` — see the comment on that control below. 30 days and
@@ -432,8 +431,9 @@ export default function App() {
     closeUpdateSheet();
   }
   return (
+    <AppRoot>
     <div
-      // `relative` + an explicit height from --app-height (rather than
+      // `relative` + a height that fills AppRoot's frame (it was --app-height), rather than
       // min-h-dvh + letting the page itself scroll) makes this div a fixed,
       // never-scrolling box: the containing block every `absolute`-positioned
       // overlay below (BottomNav, the floating pills, Sheet) anchors against.
@@ -445,16 +445,9 @@ export default function App() {
       // entirely — anchoring to this correctly-sized non-scrolling root
       // instead — actually renders past that clip.
       className="relative overflow-hidden bg-bg-base"
-      style={{
-        height: 'var(--app-height, 100dvh)',
-        // Offsets the shell onto the *visible* region when the keyboard
-        // pushes it (see useViewportHeight) — 0 the rest of the time. This is
-        // a plain translate, not the `will-change: transform` containing-block
-        // trick that broke Sheet's overlay behaviour before: every overlay is
-        // `absolute` and already anchors to this element, so nothing depends
-        // on it not establishing a containing block.
-        transform: 'translateY(var(--app-offset, 0px))',
-      }}
+      // Height and the keyboard offset belong to the package's AppRoot now
+      // (see the mount in the return below); this fills the frame it gives.
+      style={{ height: '100%' }}
     >
       <BrightnessOverlay brightness={brightness} attackMode={attackMode} />
 
@@ -876,5 +869,6 @@ export default function App() {
         />
       )}
     </div>
+    </AppRoot>
   );
 }

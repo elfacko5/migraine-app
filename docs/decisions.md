@@ -2232,3 +2232,9 @@ Built against the package's throwaway integration branch `lidd-phase7-integratio
 **Intended difference added: the switch shape.** 48x28 with an outlined off state, where Lidd's was 44x24 with a solid off track. The contrast script checks tokens, not the drawing, so the off switch has to be looked at on the phone. Not checked on the phone.
 
 **Pressed tint** replaces the hover tint on List rows. No recording was made; it is dropped from the list June approves rather than shown from a still image.
+
+## Phase 7, row 0: AppRoot mounted, Lidd's own frame code removed (2026-11-16)
+
+`App` now renders inside the package `AppRoot` (package `lidd-phase7-integration`, `01966af`, local only). In the same commit `src/hooks/useViewportHeight.ts` is deleted, the `translateY(var(--app-offset))` on App's root is gone, and that root is `height: 100%` of AppRoot's frame; Lidd's `Sheet` panel was the one other reader of `--app-height` and is `100%` too. Nothing else read `--app-height` or `--app-offset` in `src/` (the other hits are comments in `index.css` and prose in `docs/viewport-architecture.md` and `CLAUDE.md`, left as they are; `CLAUDE.md`'s Known limit untouched). Lidd has no toast layer, so `ToastHost` is unused. Pixel diff of all 433 baseline shots against the pre-change run: zero.
+
+**Lost with the hook, not replaced:** the `window.screen` fallback for the cold-PWA-relaunch short viewport (`docs/viewport-architecture.md`). `AppRoot` measures a `100dvh` probe and has no such fallback. Not checked on a device. **Not checked on the phone at all**: keyboard behaviour, and whether `visualViewport.offsetTop` is above 0 at rest in the native shell (the translucent status bar case), which would translate the frame at rest.
