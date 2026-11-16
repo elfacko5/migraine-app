@@ -2273,7 +2273,7 @@ Next: wait for June's go-ahead before any of this is built.
 
 ### Built: the keyboard plugin (2026-11-16)
 
-June, 2026-11-16: **"go ahead with building the plugin"**. Built on `code-ds` in one commit, so it reverts with one `git revert`:
+June, 2026-11-16: **"go ahead with building the plugin"**. Built on `code-ds` in one commit, `48f2d83`, so it reverts with one `git revert 48f2d83`:
 - `@capacitor/keyboard` ^8.0.6 added (`package.json`, lockfile), `plugins.Keyboard.resize: 'native'` in `capacitor.config.ts`.
 - `src/utils/keyboardBar.ts` calls `Keyboard.setAccessoryBarVisible({ isVisible: true })`, native only, once at startup from `src/main.tsx`. No button of Lidd's own.
 - `cap sync ios` (Node 22, UTF-8 locale) added the pod to `ios/App/Podfile` and `Podfile.lock`. `project.pbxproj` is unchanged, so no signing-team change to undo.
