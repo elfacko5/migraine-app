@@ -18,12 +18,15 @@ const config: CapacitorConfig = {
   },
   plugins: {
     Keyboard: {
-      // 'native' is the plugin default, written out so it is a stated choice.
-      // The webview itself shrinks when the keyboard opens, so the page's
-      // 100dvh shrinks with it. See docs/decisions.md, "Requirement: the
-      // keyboard plugin". To revert, remove this block, the call in
-      // src/utils/keyboardBar.ts and the dependency.
-      resize: 'native',
+      // 'none': the webview is not resized, and the package's AppRoot alone
+      // follows the visible area (frame height and offset), as it did before
+      // the plugin. 'native' was tried first and made the Save button slide in
+      // about a second late on the phone, where the build without the plugin
+      // was perfectly still. The plugin is here for the keyboard's own bar
+      // (see src/utils/keyboardBar.ts), not for resizing. Reasons and June's
+      // words: docs/decisions.md, "Keyboard plugin: resize 'none'". To revert,
+      // `git revert` that commit.
+      resize: 'none',
     },
   },
 };

@@ -2258,7 +2258,7 @@ These close the three open gaps and the intended-differences list from the entri
 For the history, Lidd's own record (the "accessory-bar wrong turn" entry above) says `@capacitor/keyboard` came out because it **did not fix the date picker's Reset button and check**, which live inside the picker's own popover. That is a different job from this one; this is not a reversal of that finding.
 
 What Lidd needs:
-1. The `@capacitor/keyboard` dependency, with `resize: 'native'` set in `capacitor.config.ts` (`plugins.Keyboard.resize`), and the shell change that goes with it. The package branch `native-build` trial `7337c38` ("keyboard plugin trial (resize native), shell only, never to main") is the only run so far; Lidd has not taken it.
+1. The `@capacitor/keyboard` dependency, with `resize: 'native'` set in `capacitor.config.ts` (`plugins.Keyboard.resize`), and the shell change that goes with it. **[Superseded 2026-11-16: the setting is now `'none'`; see "Keyboard plugin: resize 'none'" below. The earlier wording stays as written.]** The package branch `native-build` trial `7337c38` ("keyboard plugin trial (resize native), shell only, never to main") is the only run so far; Lidd has not taken it.
 2. **The close control is the plugin's own keyboard bar (the arrows and the check), switched on with `setAccessoryBarVisible`. Lidd does not draw its own button.** She asked whether that bar meets her condition ("a close button needs to be available in the plug if the keboard does not close when tapping outside of it") and answered: **"yes it does"** (source: the package's `docs/decisions.md`, "Keyboard plugin with the close bar switched on: native result", and review item 144).
    - *Superseded wording, kept for the record:* an earlier version of this item said "a close-keyboard control that Lidd draws, which calls the plugin's `hide`". That is no longer the requirement.
    - Note the shape of the earlier wrong turn in this file (the accessory-bar entry above) was the opposite: there the bar was to be hidden to get rid of the date picker's Reset button and check, which live in the picker's own popover and were not touched. Here the bar is wanted on.
@@ -2271,7 +2271,7 @@ What is **not known yet**:
 
 Next: wait for June's go-ahead before any of this is built.
 
-### Built: the keyboard plugin (2026-11-16)
+### Built: the keyboard plugin (2026-11-16) [the `'native'` setting named below is superseded by `'none'`; see the entry at the end]
 
 June, 2026-11-16: **"go ahead with building the plugin"**. Built on `code-ds` in one commit, `48f2d83`, so it reverts with one `git revert 48f2d83`:
 - `@capacitor/keyboard` ^8.0.6 added (`package.json`, lockfile), `plugins.Keyboard.resize: 'native'` in `capacitor.config.ts`.
@@ -2293,3 +2293,17 @@ In her words:
 - **Her choice about the slide:** **"Ask the Lidd session to look"**. Cause and options are in the next entry; nothing has been changed.
 
 **Toast does not exist in Lidd yet.** Lidd has no toast layer (it never had one), so "Toast 3" cannot be checked here and waits for the screen that adopts the package's Toast.
+
+### Keyboard plugin: resize 'none' (2026-11-16)
+
+**Why it came up.** With `resize: 'native'` in Lidd's build the Save button on the Add medication sheet took about a second to slide in, on a cold launch and on a second open. The build without the plugin (`c65e431`) she called **"perfectly still"**; she was not asked then about Save, so whether it slid there is not known. The cause was not measured on the phone; the likely one is the webview shortening in one step and the footer, which sits at the bottom of the sheet, jumping to the new bottom. Options A to E were put to her.
+
+**Her choice: "lets do A".** Option A: `plugins.Keyboard.resize` is `'none'`, so the webview is not resized and `AppRoot` follows the visible area as before; `setAccessoryBarVisible({ isVisible: true })` stays, so the keyboard's bar with the check is still on. It supersedes her earlier **"lets go with native"** for the resize setting only; "Take the plugin" and the bar (**"yes it does"**) are unchanged. Built as its own commit, which reverts with one `git revert`.
+
+**What `AppRoot` does on `'none'` (read from the code, not run).** The layout viewport stays full height and WebKit reports the visible part through `visualViewport` (smaller height, and an offset). `AppRoot` sees `vv.height` below its `100dvh` probe, sets `--app-frame-height` to `vv.height` and translates the frame by `vv.offsetTop`: this is the path that ran at `c65e431` [certain from the code]. That the bar's own height is inside `vv.height`, so Save is not covered by the bar, is [likely]. That `'none'` leaves WKWebView untouched in every other way is [guessing]. **Not run on a phone.**
+
+**Phone steps, in order:** see the report of this commit; the five checks are the Add medication sheet and Name field (Name and Save both visible, sheet still, does Save slide), the bar and its check, the Delete confirm with the keyboard open, and a cold launch after force-quit.
+
+**Answers to the two display follow-ups, recorded:**
+- **Offsets on `attack-md__34-display__3` and `attack-xs__34-display__3` against the baseline:** one uniform shift, not a layout change. Measured with the old build (`e976f86`) beside HEAD, scrolled to the bottom: every element below the "Use iPhone text size" row sits 0.62 to 0.63 CSS px lower (caption, picker box, sample card, brightness heading, Overlay, caption), and none changed height. The page above them is about 30.4 px shorter (screen 1's 44 px rows), and `scrollHeight` rounds to a whole number (2074 to 2043 for a real 30.4), so a bottom-scrolled view slides 0.6 px. In attack mode the 20 px body floor makes the smallest size render the same as default, so the two shots are alike.
+- **`attack-xl__03-end-attack-dialog` repeated on HEAD:** 12 runs, 12 filled, 0 blank, 0 split, all pixel-identical to the clean image. The one blank frame seen earlier was inside a long full capture and did not recur; its cause is unknown.
