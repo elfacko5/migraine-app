@@ -2282,3 +2282,14 @@ June, 2026-11-16: **"go ahead with building the plugin"**. Built on `code-ds` in
 **On `AppRoot` and `resize: 'native'` (read from the code, not run):** `AppRoot` only shrinks its frame when `visualViewport.height` is below a `100dvh` probe. In native mode the webview itself shrinks, so the probe shrinks with it and the two should agree, leaving `AppRoot` nothing to subtract. That is a reading of the code and of the package's own note, not a result: if iOS keeps `100dvh` at full height while the visual viewport shrinks, the frame would shrink on top of the native resize, which is the double subtract. If the phone shows that, it gets reported, not fixed here.
 
 **Not run on a phone.** The typecheck, lint and contrast check pass and the web build still builds; none of that exercises the keyboard. Not verified: the bar appears, the check closes the keyboard, a field in a Sheet and one on the page stay visible, and the date picker's own popover is unchanged.
+
+### Keyboard plugin: June's phone results (2026-11-16, `code-ds` `b28ac44`, plugin commit `48f2d83`)
+
+In her words:
+- **Add medication sheet, Name field:** Name and Save both above the keyboard: **"yes, i can see both"**; the sheet **"stayed still"**; the keyboard's bar with two arrows and a check appeared. Tapping the check: **"keyboard closes, sheet stays in place, does not move"**.
+- **Confirm dialog** (Delete this medication?) with the keyboard open: **"dialog fully on screen and both buttons fully visible, the kb did slide out before the dialog opened"**.
+- **Force-quit and reopen:** Save visible, **"yes they are, but the save button takes a second to slide in"**. On a second open without a cold launch: **"yes, it still takes a second to slide in"**.
+- **Without the plugin (`c65e431`)** she said the sheet was **"perfectly still"**. She was not asked about the Save button there, so whether it slid then is **not known**.
+- **Her choice about the slide:** **"Ask the Lidd session to look"**. Cause and options are in the next entry; nothing has been changed.
+
+**Toast does not exist in Lidd yet.** Lidd has no toast layer (it never had one), so "Toast 3" cannot be checked here and waits for the screen that adopts the package's Toast.
