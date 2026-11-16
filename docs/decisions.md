@@ -2220,3 +2220,15 @@ Built against the package's throwaway integration branch `lidd-phase7-integratio
 **Intended differences:** the chips hug their label instead of filling the row, each carries the package's radio mark in place of the check, one height (32px at 100%, 44px hit area kept at every size) and one gap; the Enable reminders row is a List card with the 48x28 switch; the labels are 17px. Selected state, the stored `hd_notification_default` values and toggling were checked by hand in Chromium at the smallest and the 150% text size (Fixed, 2h and the switch write the expected config; the Display attack mode switch sets `data-theme="attack"`).
 
 **The same two open gaps as screen 1 apply here** (the List card is drawn in `surface`, which is the page colour in Lidd, so it reads as an outline on this `bg-surface` sheet; no hint line on the Switch, which this screen does not need).
+
+## Phase 7, screens 1 and 2: review items 123 to 127 (2026-11-16)
+
+**Switch hint line is a temporary workaround, not a fix.** The package `Switch` has no hint slot, so the two hints on Display & attack mode (and "Use iPhone text size") are a block `span` passed as the Switch's children. The package allows children, but it puts them inside the control's label, so **VoiceOver reads the hint as part of the switch's name** ("Attack mode when I start an attack, Turns it on as soon as you log an attack that's still going"), where Lidd's old row announced it separately. Open gap, to be settled by a package change (`switch-hint`, cut from package `main`) or by accepting it. Not decided.
+
+**List card colour, open gap.** The page now shows two card styles side by side: package `List` cards drawn in `surface` (darker than the sheet) and Lidd's own tiles and the Preview card in `bg-raised` (lighter). Package change (`list-card-surface`, cut from package `main`) or accept. Not decided.
+
+**Text-size picker, open gap.** The five-step picker stays Lidd's. The only open question is whether a package component is wanted for it; otherwise it stays Lidd's.
+
+**Intended difference added: the switch shape.** 48x28 with an outlined off state, where Lidd's was 44x24 with a solid off track. The contrast script checks tokens, not the drawing, so the off switch has to be looked at on the phone. Not checked on the phone.
+
+**Pressed tint** replaces the hover tint on List rows. No recording was made; it is dropped from the list June approves rather than shown from a still image.
