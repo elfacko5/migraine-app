@@ -1,0 +1,9 @@
+{
+  "look": "lidd",
+  "theme": "theme.css",
+  "modes": [
+    { "name": "dark", "themes": [null, "dark"], "scheme": "dark" },
+    { "name": "light", "themes": ["light"], "scheme": "light" },
+    { "name": "attack", "themes": ["attack"], "scheme": "dark" }
+  ]
+}

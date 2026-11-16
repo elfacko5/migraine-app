@@ -8,6 +8,7 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "lint": "eslint .",
+    "contrast": "node_modules/code-ds/node_modules/.bin/tsx node_modules/code-ds/scripts/contrast-check.ts --app src/contrast.json",
     "preview": "vite preview",
     "ios": "vite build && cap copy ios"
   },

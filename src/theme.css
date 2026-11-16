@@ -1,0 +1,125 @@
+/*
+ * Lidd's theme file: a value for every role of the design system package
+ * (code-ds, src/tokens/roles.css) in each of Lidd's three modes. Imported by
+ * index.css after tailwindcss and the package's roles.css.
+ *
+ * Why these blocks are unlayered `:root` rules and not `@theme`: the package's
+ * roles live in `@theme` (a lower layer), so any unlayered rule wins over them,
+ * whatever its specificity. Why dark is under `:root, :root[data-theme='dark']`:
+ * the package's own `:root[data-theme='dark']` block is more specific than a bare
+ * `[data-theme]` selector. Lidd deletes the attribute for dark (useSettings.ts,
+ * applyTheme), so that block never matches today, but if it ever did the package's
+ * blue-grey dark would override this warm one. Light and attack use the
+ * `:root[data-theme='x']` form because the contrast check only reads that form.
+ *
+ * Every mode sets color-scheme, itself: dark `dark`, light `light`, attack `dark`.
+ * (It was `html { color-scheme: dark }` in index.css, which left attack inheriting.)
+ *
+ * Each value is Lidd's own colour for the job the role does. The check that gates
+ * every edit of this file is `npm run contrast` (contrast.json is its mode table).
+ * The role -> Lidd token map, and what stays Lidd-only, is in docs/decisions.md.
+ *
+ * Lidd-only tokens (bg-raised, bg-elevated, border-subtle, severity-*, warning,
+ * positive, ill-*) stay in index.css. They are not package roles.
+ */
+
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-surface: #1b1a18; /* was bg-base: the page */
+  --color-surface-raised: #262421; /* was bg-surface: a card on the page, a sheet */
+  --color-content: #cdc7bb; /* was text-primary */
+  --color-content-muted: #a39d92; /* was text-secondary */
+  --color-accent: #7fa187;
+  --color-on-accent: #1b1a18; /* btn-primary's label was bg-base */
+  /* Opaque. Lidd draws a selected chip as accent at 20% (bg-accent/20); the package
+     needs a fill it can test. This is #7fa187 at 20% over surface-raised (#262421),
+     the surface most chips sit on (the wizard's sheet). */
+  --color-selected: #383d35;
+  --color-on-selected: #9bb9a1; /* was accent-light */
+  --color-line: #7d7669; /* was border-control */
+  --color-divider: #3a3733; /* was bg-border */
+  --color-focus: #7fa187;
+  /* Lidd has no error colour. Terracotta stays terracotta (severity-high). A separate
+     value, not a reference: the severity ramp is also drawn in SVG by hand, and the
+     two must be allowed to differ if the check ever asks this one to move. */
+  --color-error: #c68880;
+  --color-on-error: #1b1a18;
+  --color-scrim: #00000073; /* black at about 45%, what the Swift date picker draws */
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-surface: #f5f2ec;
+  --color-surface-raised: #ece7dd;
+  --color-content: #3a3733;
+  --color-content-muted: #5a554c;
+  --color-accent: #4f6b57;
+  --color-on-accent: #f5f2ec;
+  /* #4f6b57 at 20% over surface-raised (#ece7dd). */
+  --color-selected: #cdcec2;
+  --color-on-selected: #3c5544;
+  --color-line: #827966;
+  --color-divider: #d5cec0;
+  --color-focus: #4f6b57;
+  --color-error: #82423b;
+  --color-on-error: #f5f2ec;
+  /* The text colour at 40%, as the package's own light does. */
+  --color-scrim: #3a373366;
+}
+
+/*
+ * Font weight roles (package branch font-weight-roles, in the integration branch
+ * Lidd renders against). Lidd's own weights: buttons and sheet/dialog titles are
+ * font-medium (500), the Top bar title is font-bold (700). The package defaults
+ * are 600 / 600 / 700, which would make package buttons look heavier than Lidd's.
+ * Control and heading are the same number in Lidd today; the package keeps them as
+ * two roles. Not a colour, so the same in every mode.
+ */
+:root {
+  --font-weight-control: 500;
+  --font-weight-heading: 500;
+  --font-weight-title: 700;
+}
+
+/* Attack mode is dark and always wins over the light/dark choice (applyTheme). */
+:root[data-theme='attack'] {
+  color-scheme: dark;
+  --color-surface: #14140f;
+  --color-surface-raised: #1e1e17;
+  --color-content: #c9c4b8;
+  --color-content-muted: #9a9689;
+  --color-accent: #7fa187;
+  --color-on-accent: #14140f;
+  /* #7fa187 at 20% over surface-raised (#1e1e17). */
+  --color-selected: #31382d;
+  --color-on-selected: #93ae99;
+  --color-line: #736d5a;
+  --color-divider: #34322a;
+  --color-focus: #7fa187;
+  --color-error: #c68880;
+  --color-on-error: #14140f;
+  --color-scrim: #00000073;
+}
+
+/*
+ * Notes that sat beside these values in index.css before they moved here.
+ *
+ * Attack's content-muted (#9a9689). Lifted from #8e8a7e (2026-08-25). 14px
+ * secondary text on bg-elevated, which is where InsightSection puts a chart's
+ * own labels once the section has a note, measured 4.14:1, under AA. The dark
+ * palette fixed the same bug by nudging bg-elevated; that route is closed here:
+ * attack's elevated is only 1.11 from bg-raised, and darkening it far enough
+ * collapses the two. Attack mode is still the lower-contrast of the two themes,
+ * which is the property that matters. Don't take this brighter: the mode's whole
+ * claim is a quieter screen.
+ *
+ * Light's on-selected (#3c5544, it was accent-light) is darker than the accent,
+ * not lighter: a wart inherited from the dark palette, where accent as text
+ * wanted more contrast, which in dark means lighter and in light darker. Don't
+ * swap these as a "fix".
+ *
+ * The rest of the measured reasoning (text-primary is not #e4dfd6; border-control
+ * is 3.04 on bg-raised and must not go below 3.0 there) is in docs/palette.md
+ * and in CLAUDE.md, "Dark-first design".
+ */

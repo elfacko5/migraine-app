@@ -1,4 +1,10 @@
 @import "tailwindcss";
+/* The package's roles (neutral defaults), then Lidd's values for every one of
+   them in src/theme.css. Order matters: theme.css is unlayered and has to come
+   after, and the @theme block below (Lidd's scale, the old token names) comes
+   after both so Lidd's radius, size and padding values win over the defaults. */
+@import "code-ds/roles.css";
+@import "./theme.css";
 
 /* The design system package (code-ds, linked from ../code-design-system-main).
    Tailwind v4 does not scan node_modules, so its source is named here. Without
@@ -128,8 +134,32 @@
      value was working against the rule it was given under. #cdc7bb measures
      10.3:1 and 8.1:1, still past AAA (7:1) for body text, with the glare
      gone. Don't "restore" #e4dfd6 as a spec correction. */
-  --color-bg-base:        #1b1a18;  /* warm charcoal */
-  --color-bg-surface:     #262421;
+  /* ── Temporary mapping: old token names -> package roles ──
+     Unadopted screens still say bg-bg-base, text-text-primary and so on. Each
+     of those names is the role that now holds its value (src/theme.css), so a
+     call site moves with the theme and nothing is edited by hand. Deleted in
+     phase 7's last step, when the last call site has been adopted.
+
+     Not one to one, checked per call site (2026-11-16): bg-raised and
+     bg-elevated are NOT mapped. Lidd has four surface tones and the package
+     two (surface = the page, surface-raised = a card or sheet), so the two
+     extra tones have no role to point at and stay Lidd-only values below.
+     bg-raised is never replaced by `selected` either: a selected chip is
+     bg-accent/20 (an alpha), which is a different thing from bg-raised, the
+     card-on-a-card tone (and the unselected chip, the disabled button).
+     accent-light is the on-selected role: one hex, in theme.css. */
+  --color-bg-base:        var(--color-surface);
+  --color-bg-surface:     var(--color-surface-raised);
+  --color-bg-border:      var(--color-divider);
+  --color-border-control: var(--color-line);
+  --color-text-primary:   var(--color-content);
+  --color-text-secondary: var(--color-content-muted);
+  --color-accent-light:   var(--color-on-selected);
+  --color-button-secondary-bg:     var(--color-surface-raised);
+  --color-button-secondary-border: var(--color-line);
+
+  /* ── Lidd-only colour tokens (not package roles) ─────
+     Dark values. Attack and light override below. */
   --color-bg-raised:      #302d29;
   /* One step lighter again, for a card nested inside a section that is
      itself a card — Insights stacks three surfaces and the middle one needs
@@ -141,34 +171,7 @@
      stack — the same "check it against the tighter surface, not the page"
      rule the severity colours already follow. */
   --color-bg-elevated:    #383430;
-  --color-bg-border:      #3a3733;
   --color-border-subtle:  #47433d;
-  /* **The outline of something you press, as opposed to a hairline between
-     two things you read.** WCAG 1.4.11 wants 3:1 for the visual information
-     that identifies a control; every author-drawn edge in this app measured
-     1.15-1.8:1 (audit in docs/palette.md, 2026-08-25).
-
-     It is a separate token rather than a brighter --color-bg-border because
-     that one has 73 call sites and only ~17 are controls: 47 are decorative
-     dividers, info-box outlines and section cards. Raising it globally would
-     turn every one of those into a visible grid line, which *would* be a
-     photophobia regression under §8.1. Confined to controls it is a 1px
-     hairline on things meant to be pressed, and adds negligible luminance.
-
-     #7d7669 measures 3.04 against bg-raised (the tightest surface a chip sits
-     on), 3.44 on bg-surface and 3.87 on the page. Don't lower it below 3.0 on
-     bg-raised — that is the number the whole token exists for. */
-  --color-border-control: #7d7669;
-  --color-text-primary:   #cdc7bb;  /* soft, never #fff — see the note below */
-  --color-text-secondary: #a39d92;
-  --color-accent:         #7fa187;  /* muted sage — the safest hue */
-  --color-accent-light:   #9bb9a1;
-  --color-button-secondary-bg:     #262421;
-  /* The same 3:1 control-outline value as --color-border-control. A
-     secondary button's ring is the only thing that says it is a button;
-     #47433d measured 1.58:1 against its own fill and 1.77 against the page.
-     Now 3.44 and 3.87. */
-  --color-button-secondary-border: #7d7669;
   /* Lifted off the spec's literal values so severity text clears AA on a
      raised card. #7fa187/#b07a3c/#a65a52 measured 4.8 / 3.7 / 2.7:1 against
      bg-raised — meaning the higher the severity, the dimmer it rendered, and
@@ -194,38 +197,9 @@
    contrast, and paired with an enforced dim floor and no motion. Toggled by
    the floating pill; `data-theme="attack"` on <html>. */
 [data-theme="attack"] {
-  --color-bg-base:        #14140f;
-  --color-bg-surface:     #1e1e17;
   --color-bg-raised:      #262218;
   --color-bg-elevated:    #2f2a1f;
-  --color-bg-border:      #34322a;
   --color-border-subtle:  #403d33;
-  /* 3.07 against attack's bg-raised, 3.24 on bg-surface, 3.58 on the page. */
-  --color-border-control: #736d5a;
-  --color-text-primary:   #c9c4b8;  /* deliberately not the brightest option */
-  /* Lifted from #8e8a7e (2026-08-25). 14px secondary text on bg-elevated —
-     which is where InsightSection puts a chart's own labels once the section
-     has a note, so the frequency-bar counts and the migraine-days month
-     labels — measured 4.14:1, under AA. Insights is untouched by attack mode,
-     so that text was rendering below AA whenever the mode was on.
-
-     The dark palette hit the identical bug and fixed it by nudging
-     bg-elevated instead; that route is closed here. Attack's elevated is only
-     1.11 from bg-raised, and darkening it far enough to clear 4.5 collapses
-     the two into each other (1.03 apart at #28241b, and still only 4.48) —
-     dark had room because its elevated goes *lighter* than raised, so
-     darkening it bought contrast without losing the stack.
-
-     #9a9689 measures 4.82 on elevated and 6.24 on the page. Attack mode is
-     still the lower-contrast of the two themes, which is the property that
-     matters: dark's secondary reads 6.46 on its own page. Don't take this
-     brighter — the mode's whole claim is a quieter screen. */
-  --color-text-secondary: #9a9689;
-  --color-accent:         #7fa187;
-  --color-accent-light:   #93ae99;
-  --color-button-secondary-bg:     #1e1e17;
-  /* 3:1 control outline — see the dark theme's note. */
-  --color-button-secondary-border: #736d5a;
   /* Dark's values for now: this palette is being redesigned separately. */
   --color-ill-1:          #8c735e;
   --color-ill-2:          #5e7363;
@@ -251,24 +225,9 @@
    getting darker — the light page is already a warm off-white one step below
    white, so "raise toward white" runs out of room immediately. */
 [data-theme="light"] {
-  color-scheme: light;
-  --color-bg-base:        #f5f2ec;
-  --color-bg-surface:     #ece7dd;
   --color-bg-raised:      #e2dcd0;
   --color-bg-elevated:    #d8d1c3;
-  --color-bg-border:      #d5cec0;
   --color-border-subtle:  #bfb7a6;
-  --color-border-control: #827966;
-  --color-text-primary:   #3a3733;
-  --color-text-secondary: #5a554c;
-  --color-accent:         #4f6b57;
-  /* Darker than --color-accent, not lighter — a wart inherited from the dark
-     palette, where "accent as text, and the primary button's hover" both
-     wanted *more* contrast against their background, which in dark means
-     lighter and in light means darker. Don't swap these as a "fix". */
-  --color-accent-light:   #3c5544;
-  --color-button-secondary-bg:     #ece7dd;
-  --color-button-secondary-border: #827966;
   --color-severity-low:   #3f6249;
   --color-severity-mid:   #7b5020;
   --color-severity-high:  #82423b;
@@ -460,7 +419,6 @@
 
 /* ── Typography baseline ───────────────────────────── */
 html {
-  color-scheme: dark;
   /* Belt-and-suspenders: a stray negative-margin or absolutely-positioned
      element (e.g. a chart's Y-axis offset) can otherwise make the whole
      page horizontally scrollable on iOS, forcing a manual pinch/scroll to
