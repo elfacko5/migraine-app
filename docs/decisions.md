@@ -2242,3 +2242,29 @@ Built against the package's throwaway integration branch `lidd-phase7-integratio
 ## Phase 7: scrim role reproduces Lidd's veil (2026-11-16)
 
 `--color-scrim` in `theme.css` is now `color-mix(in oklab, var(--color-surface) 70%, transparent)` in dark, light and attack: exactly what `bg-bg-base/70` draws behind Lidd's Sheet, `ConfirmDialog` and `EndAttackDialog`. The package's 45% black stays with the Swift date picker only. **Light changes visibly if a package component draws it**: the package's light scrim was the text colour at 40% (a dark veil over a light page); Lidd's veil in light has always been the light page colour at 70%, so the role now matches Lidd, not the package default. Nothing in Lidd reads the role yet (Lidd's own Sheet and dialogs still use `bg-base/70`), so no Lidd screen changes today. A hex alpha (`b3` = 0.702) was tried first and moved 13,154 pixels behind a dialog in dark; color-mix is the same expression Tailwind writes, so the alpha is exactly 0.7.
+
+## Phase 7: June's answers to the screens 1 and 2 review sheet (2026-11-16)
+
+These close the three open gaps and the intended-differences list from the entries above. Her words are quoted; anything else here is a note by the builder.
+
+- **List card colour.** She first asked: "in this context what is a package?" Her answer: **"Accept the difference"**. The package `List` card stays drawn in `surface`, next to Lidd's lighter tiles and Preview card. No package change (`list-card-surface` is not started).
+- **Switch hint.** She listened to VoiceOver read the Display page row: "Attack mode when I start an attack turns it on as soon you log an attack thats still going switch button off double tap to toggle setting". Her choice: **"Accept it as read now"**. So the hint inside the Switch's children is **accepted, not temporary**; the earlier entry that calls it a temporary workaround is superseded. No package change (`switch-hint` is not started). VoiceOver still reads the hint as part of the switch's name, which is what she heard.
+- **Off switch on the phone, Display & attack mode** (the 48x28 outlined off state; the contrast script checks tokens, not the drawing): dark **"Yes"**, light **"Yes"**, attack **"Yes"**.
+- **Text-size picker.** **"Add to the kit"**. The package session handles it; until it exists the picker stays Lidd's.
+- **Keyboard plugin.** **"Take the plugin"**. Her words: "a close button needs to be available in the plug if the keboard does not close when tapping outside of it", and **"lets go with native"** (the plugin's `resize: 'native'`). Requirement below; nothing is built.
+
+### Requirement: the keyboard plugin (not built, waiting for June's go-ahead)
+
+For the history, Lidd's own record (the "accessory-bar wrong turn" entry above) says `@capacitor/keyboard` came out because it **did not fix the date picker's Reset button and check**, which live inside the picker's own popover. That is a different job from this one; this is not a reversal of that finding.
+
+What Lidd needs:
+1. The `@capacitor/keyboard` dependency, with `resize: 'native'` set in `capacitor.config.ts` (`plugins.Keyboard.resize`), and the shell change that goes with it. The package branch `native-build` trial `7337c38` ("keyboard plugin trial (resize native), shell only, never to main") is the only run so far; Lidd has not taken it.
+2. A **close-keyboard control that Lidd draws**, which calls the plugin's `hide`, for the case where the keyboard does not close when someone taps outside the field (her requirement above). Where it sits, what it looks like and which screens show it are not decided; it follows the `lidd-ui` checklist when built.
+3. The `ios/` side changes (plugin pod via `cap sync`) are Swift/Xcode project territory and are done with the project's own rules, not by hand-editing `project.pbxproj`.
+
+What is **not known yet**:
+- The native result for the shell Lidd ships. Only the trial `7337c38` has been run, on the package's own shell, not on Lidd's.
+- How `resize: 'native'` interacts with `AppRoot`. `AppRoot` now follows `visualViewport` (height and offset) itself; in `native` mode the webview itself shrinks, so the two could both act (the double-subtract the old `docs/viewport-architecture.md` describes). The package decisions note says native resize was designed so the Sheet adds nothing and never compensates twice, but "not checked in the native build" for Lidd's frame.
+- Whether the close control is needed at all once native resize is on, and where the existing `Sheet`'s footer and the wizards' pinned footers sit with the keyboard up.
+
+Next: wait for June's go-ahead before any of this is built.
