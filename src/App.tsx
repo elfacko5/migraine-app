@@ -433,8 +433,8 @@ export default function App() {
   return (
     <AppRoot>
     <div
-      // `relative` + a height that fills AppRoot's frame (it was --app-height), rather than
-      // min-h-dvh + letting the page itself scroll) makes this div a fixed,
+      // `relative` + a height that fills AppRoot's frame (it was --app-height),
+      // rather than min-h-dvh + letting the page itself scroll, makes this div a fixed,
       // never-scrolling box: the containing block every `absolute`-positioned
       // overlay below (BottomNav, the floating pills, Sheet) anchors against.
       // Confirmed via live Safari Web Inspector testing on-device: after a

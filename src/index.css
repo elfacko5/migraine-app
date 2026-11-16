@@ -428,11 +428,12 @@ html {
   /* The document itself must never scroll: the app root is sized to the
      viewport and owns its own nested scroll region. If the two ever disagree
      — as they did when the keyboard's accessory bar shrank the viewport while
-     --app-height still held the full height — the surplus makes the document
-     scrollable, and WebKit scrolls it to reveal the focused field, dragging
-     the absolutely-positioned BottomNav up off the bottom of the screen.
-     useViewportHeight now keeps the two in step; this stops a page-level
-     scroll from being possible at all if they ever drift again. */
+     the old --app-height still held the full height — the surplus makes the
+     document scrollable, and WebKit scrolls it to reveal the focused field,
+     dragging the absolutely-positioned BottomNav up off the bottom of the
+     screen. The package's AppRoot now keeps the frame in step with the visible
+     area; this stops a page-level scroll from being possible at all if they
+     ever drift again. */
   overflow-y: hidden;
   height: 100%;
 }
