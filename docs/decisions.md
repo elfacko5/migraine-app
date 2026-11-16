@@ -2267,6 +2267,18 @@ What Lidd needs:
 What is **not known yet**:
 - The native result for the shell Lidd ships. Only the trial `7337c38` has been run, on the package's own shell, not on Lidd's.
 - How `resize: 'native'` interacts with `AppRoot`. `AppRoot` now follows `visualViewport` (height and offset) itself; in `native` mode the webview itself shrinks, so the two could both act (the double-subtract the old `docs/viewport-architecture.md` describes). The package decisions note says native resize was designed so the Sheet adds nothing and never compensates twice, but "not checked in the native build" for Lidd's frame.
-- Whether the close control is needed at all once native resize is on, and where the existing `Sheet`'s footer and the wizards' pinned footers sit with the keyboard up.
+- ~~Whether the close control is needed at all once native resize is on.~~ Answered: the plugin's own bar is the close control (June: "yes it does"; see item 2). What stays open is where the existing `Sheet`'s footer and the wizards' pinned footers sit with the keyboard up.
 
 Next: wait for June's go-ahead before any of this is built.
+
+### Built: the keyboard plugin (2026-11-16)
+
+June, 2026-11-16: **"go ahead with building the plugin"**. Built on `code-ds` in one commit, so it reverts with one `git revert`:
+- `@capacitor/keyboard` ^8.0.6 added (`package.json`, lockfile), `plugins.Keyboard.resize: 'native'` in `capacitor.config.ts`.
+- `src/utils/keyboardBar.ts` calls `Keyboard.setAccessoryBarVisible({ isVisible: true })`, native only, once at startup from `src/main.tsx`. No button of Lidd's own.
+- `cap sync ios` (Node 22, UTF-8 locale) added the pod to `ios/App/Podfile` and `Podfile.lock`. `project.pbxproj` is unchanged, so no signing-team change to undo.
+- `AppRoot` and the package are untouched.
+
+**On `AppRoot` and `resize: 'native'` (read from the code, not run):** `AppRoot` only shrinks its frame when `visualViewport.height` is below a `100dvh` probe. In native mode the webview itself shrinks, so the probe shrinks with it and the two should agree, leaving `AppRoot` nothing to subtract. That is a reading of the code and of the package's own note, not a result: if iOS keeps `100dvh` at full height while the visual viewport shrinks, the frame would shrink on top of the native resize, which is the double subtract. If the phone shows that, it gets reported, not fixed here.
+
+**Not run on a phone.** The typecheck, lint and contrast check pass and the web build still builds; none of that exercises the keyboard. Not verified: the bar appears, the check closes the keyboard, a field in a Sheet and one on the page stay visible, and the date picker's own popover is unchanged.

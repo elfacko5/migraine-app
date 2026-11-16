@@ -16,6 +16,16 @@ const config: CapacitorConfig = {
     // "No change" and "Snooze" reminder buttons.
     handleApplicationNotifications: false,
   },
+  plugins: {
+    Keyboard: {
+      // 'native' is the plugin default, written out so it is a stated choice.
+      // The webview itself shrinks when the keyboard opens, so the page's
+      // 100dvh shrinks with it. See docs/decisions.md, "Requirement: the
+      // keyboard plugin". To revert, remove this block, the call in
+      // src/utils/keyboardBar.ts and the dependency.
+      resize: 'native',
+    },
+  },
 };
 
 export default config;
