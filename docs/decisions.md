@@ -2259,7 +2259,9 @@ For the history, Lidd's own record (the "accessory-bar wrong turn" entry above) 
 
 What Lidd needs:
 1. The `@capacitor/keyboard` dependency, with `resize: 'native'` set in `capacitor.config.ts` (`plugins.Keyboard.resize`), and the shell change that goes with it. The package branch `native-build` trial `7337c38` ("keyboard plugin trial (resize native), shell only, never to main") is the only run so far; Lidd has not taken it.
-2. A **close-keyboard control that Lidd draws**, which calls the plugin's `hide`, for the case where the keyboard does not close when someone taps outside the field (her requirement above). Where it sits, what it looks like and which screens show it are not decided; it follows the `lidd-ui` checklist when built.
+2. **The close control is the plugin's own keyboard bar (the arrows and the check), switched on with `setAccessoryBarVisible`. Lidd does not draw its own button.** She asked whether that bar meets her condition ("a close button needs to be available in the plug if the keboard does not close when tapping outside of it") and answered: **"yes it does"** (source: the package's `docs/decisions.md`, "Keyboard plugin with the close bar switched on: native result", and review item 144).
+   - *Superseded wording, kept for the record:* an earlier version of this item said "a close-keyboard control that Lidd draws, which calls the plugin's `hide`". That is no longer the requirement.
+   - Note the shape of the earlier wrong turn in this file (the accessory-bar entry above) was the opposite: there the bar was to be hidden to get rid of the date picker's Reset button and check, which live in the picker's own popover and were not touched. Here the bar is wanted on.
 3. The `ios/` side changes (plugin pod via `cap sync`) are Swift/Xcode project territory and are done with the project's own rules, not by hand-editing `project.pbxproj`.
 
 What is **not known yet**:
