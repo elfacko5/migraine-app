@@ -7,7 +7,7 @@ import { useNowTick } from '../hooks/useNowTick';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
-import { List, ListRow, Switch } from 'code-ds';
+import { Button, List, ListRow, Switch, TextField } from 'code-ds';
 import { OptionTile } from './settingsUi';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
@@ -338,26 +338,22 @@ export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: Accoun
   return (
     <ProfileSubPage title="Account & sync" onClose={onClose}>
       {auth.enabled && (
-          <div className="rounded-inset border border-bg-border bg-bg-raised/40 p-card space-y-3">
-            {auth.session ? (
-              <>
-                <p className="text-sm text-text-primary">
-                  Signed in as <span className="font-medium">{auth.user?.email}</span>
-                </p>
-                <p className="text-xs text-text-secondary">Your attacks and lists sync automatically across devices.</p>
-                <SyncIndicator status={syncStatus} lastSyncedAt={lastSyncedAt} />
-                <button
-                  type="button"
-                  onClick={() => auth.signOut()}
-                  className="btn-secondary w-full rounded-control-sm py-2.5 text-sm font-medium transition-colors"
-                >
-                  Sign out
-                </button>
-              </>
-            ) : (
-              <SignInForm auth={auth} />
-            )}
-          </div>
+        <div className="space-y-4">
+          {auth.session ? (
+            <>
+              <p className="text-sm text-text-primary">
+                Signed in as <span className="font-medium">{auth.user?.email}</span>
+              </p>
+              <p className="text-xs text-text-secondary">Your attacks and lists sync automatically across devices.</p>
+              <SyncIndicator status={syncStatus} lastSyncedAt={lastSyncedAt} />
+              <Button variant="secondary" fullWidth onClick={() => auth.signOut()}>
+                Sign out
+              </Button>
+            </>
+          ) : (
+            <SignInForm auth={auth} />
+          )}
+        </div>
       )}
     </ProfileSubPage>
   );
@@ -622,63 +618,49 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
 
   if (status === 'sent') {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         <p className="text-sm text-text-primary">Check your email for a sign-in link.</p>
         {/* Tapping the emailed link always opens Safari on iOS, never a
             standalone home-screen app — entering the 6-digit code from the
             same email works from inside the installed app instead. */}
-        <form onSubmit={verifyCode} className="space-y-2">
+        <form onSubmit={verifyCode} className="space-y-4">
           <p className="text-xs text-text-secondary">
             On the home-screen app? Tapping the link opens Safari instead — enter the 6-digit code from the email here.
           </p>
-          <input
-            type="text"
+          {/* Marked up as a one-time code so both password managers and iOS's
+              own SMS/email autofill offer to fill it. */}
+          <TextField
+            label="6-digit sign-in code"
             inputMode="numeric"
-            // Named, and marked up as a one-time code so both password
-            // managers and iOS's own SMS/email autofill offer to fill it.
-            aria-label="6-digit sign-in code"
             autoComplete="one-time-code"
             required
             value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="123456"
-            className="w-full rounded-field bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+            onValueChange={setCode}
+            error={error ?? undefined}
           />
-          <button
-            type="submit"
-            disabled={verifying}
-            className="btn-secondary w-full rounded-control-sm py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            {verifying ? 'Verifying…' : 'Verify code'}
-          </button>
+          <Button type="submit" variant="secondary" fullWidth loading={verifying} loadingLabel="Verifying">
+            Verify code
+          </Button>
         </form>
-        {error && <p className="text-xs text-severity-high">{error}</p>}
       </div>
     );
   }
 
   return (
-    <form onSubmit={sendLink} className="space-y-3">
-      <p className="text-xs text-text-secondary">
-        Sign in to sync your attacks across devices. No password — we'll email you a link.
-      </p>
-      <input
+    <form onSubmit={sendLink} className="space-y-4">
+      <TextField
+        label="Email address"
         type="email"
-        aria-label="Email address"
+        autoComplete="email"
         required
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="you@example.com"
-        className="w-full rounded-field bg-bg-surface border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-border-subtle"
+        onValueChange={setEmail}
+        hint="Sign in to sync your attacks across devices. No password — we'll email you a link."
+        error={error ?? undefined}
       />
-      <button
-        type="submit"
-        disabled={status === 'sending'}
-        className="btn-primary w-full rounded-control-sm py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
-      >
-        {status === 'sending' ? 'Sending…' : 'Send sign-in link'}
-      </button>
-      {error && <p className="text-xs text-severity-high">{error}</p>}
+      <Button type="submit" fullWidth loading={status === 'sending'} loadingLabel="Sending">
+        Send sign-in link
+      </Button>
     </form>
   );
 }
