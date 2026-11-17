@@ -272,7 +272,7 @@
   }
 
   .btn-primary { background-color: var(--color-accent); color: var(--color-bg-base); }
-  .btn-primary:hover:not(:disabled) { background-color: var(--color-accent-light); }
+  .btn-primary:hover:not(:disabled):not([aria-disabled="true"]) { background-color: var(--color-accent-light); }
 
   /* **The outline is a ring (inset box-shadow), never a `border`.** A border
      takes layout space, so a secondary button rendered 2px taller than the
@@ -316,7 +316,8 @@
      own surface rather than given an alpha, so it stays a real colour on any
      background; WCAG 1.4.3 exempts disabled controls from the contrast floor,
      and looking unavailable is the entire job. */
-  .btn-primary:disabled, .btn-secondary:disabled {
+  .btn-primary:disabled, .btn-secondary:disabled,
+  .btn-primary[aria-disabled="true"], .btn-secondary[aria-disabled="true"] {
     background-color: var(--color-bg-raised);
     box-shadow: none;
     color: color-mix(in srgb, var(--color-text-secondary) 55%, var(--color-bg-raised));

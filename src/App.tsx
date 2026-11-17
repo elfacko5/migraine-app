@@ -3,7 +3,7 @@ import type { Tab, Snapshot, Medication } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useMedications } from './hooks/useMedications';
-import { stampSnapshot } from './utils/medResolve';
+import { medLabel, stampSnapshot } from './utils/medResolve';
 import { useHit6 } from './hooks/useHit6';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
@@ -52,6 +52,8 @@ import { ProfileView, DisplayPanel, RemindersPanel, AccountPanel, DataPanel, typ
 import { MedicationsView } from './components/MedicationsView';
 import { Hit6View } from './components/Hit6View';
 import { MedicationEditor } from './components/MedicationEditor';
+import { AddMedicationWizard } from './components/AddMedicationWizard';
+import { Toast } from './components/Toast';
 import { AttackModePill } from './components/AttackModePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
 
@@ -96,6 +98,7 @@ export default function App() {
   // one of a given kind. Kept here rather than inside MedicationsView because
   // Sheet anchors to the app root — see the Profile tab notes in CLAUDE.md.
   const [medEditor, setMedEditor] = useState<{ med: Medication } | { isNew: true } | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   // Set when either sheet below was opened by voice — the Siri App Intent or
   // the Shortcut deep link (see the voice effect below) — and cleared whenever
   // that sheet closes so a stray prefill never leaks into a later manual open.
@@ -812,25 +815,50 @@ export default function App() {
           drill-down, with Sheet's own header and close X: it interrupts the
           list rather than being another level of it. */}
       <Sheet
-        open={medEditor !== null}
+        open={medEditor !== null && 'med' in medEditor}
         onClose={() => setMedEditor(null)}
-        title={medEditor && 'med' in medEditor ? 'Edit medication' : 'Add medication'}
+        title="Edit medication"
         flush
         bareHeader
       >
-        {medEditor && (
+        {medEditor && 'med' in medEditor && (
           <MedicationEditor
-            medication={'med' in medEditor ? medEditor.med : undefined}
+            medication={medEditor.med}
             onSave={(next) => {
-              if ('med' in medEditor) updateMedication(medEditor.med.id, next);
-              else addMedication(next);
+              updateMedication(medEditor.med.id, next);
               setMedEditor(null);
             }}
-            onDelete={'med' in medEditor ? () => { removeMedication(medEditor.med.id); setMedEditor(null); } : undefined}
+            onDelete={() => { removeMedication(medEditor.med.id); setMedEditor(null); }}
             onClose={() => setMedEditor(null)}
           />
         )}
       </Sheet>
+
+      {/* Add a medicine — the three-step wizard. Its own sheet, so editing
+          stays on the editor above until the edit flow is rebuilt. */}
+      <Sheet
+        open={medEditor !== null && 'isNew' in medEditor}
+        onClose={() => setMedEditor(null)}
+        title="Add a medicine"
+        flush
+        bareHeader
+      >
+        {medEditor && 'isNew' in medEditor && (
+          <AddMedicationWizard
+            library={medications}
+            guides={guides}
+            onAdd={(next) => {
+              addMedication(next);
+              setMedEditor(null);
+              setToastMessage(`${medLabel(next)} was added to your medicines.`);
+            }}
+            onEditExisting={(med) => setMedEditor({ med })}
+            onClose={() => setMedEditor(null)}
+          />
+        )}
+      </Sheet>
+
+      <Toast message={toastMessage} onDone={() => setToastMessage(null)} />
 
       {/* Attack detail sheet — flush/bareHeader because AttackDetail brings
           its own top bar and pins its own footer. */}

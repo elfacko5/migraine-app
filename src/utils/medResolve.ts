@@ -134,6 +134,10 @@ export function sameMedicine(
   return sameStrengthText(a.strength ?? a.dose, b.strength ?? b.dose);
 }
 
+/** "Sumatriptan 50 mg tablet" — a medicine told back as name, strength, form. */
+export const medLabel = (m: Pick<Medication, 'name' | 'form' | 'unitLabel' | 'strength' | 'dose'>) =>
+  [m.name.trim(), (m.strength ?? m.dose)?.trim(), formOf(m).toLowerCase()].filter(Boolean).join(' ');
+
 /** The library entry `candidate` duplicates, or null. The first, when several do. */
 export function findDuplicate(
   candidate: Pick<Medication, 'name' | 'form' | 'unitLabel' | 'strength' | 'dose'>,
