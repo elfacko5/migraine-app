@@ -11,12 +11,12 @@
 import { library } from './seed.mts';
 
 import { planM3 as m3, type M3Result } from '../../src/utils/medMigrations.ts';
+import { GUIDELINE } from '../../src/utils/medGuardrails.ts';
+import { isCountedClass as isKey } from '../../src/utils/medClasses.ts';
 import type { Medication } from '../../src/types/index.ts';
 
 type Med = Medication;
 type Key = 'triptan' | 'combination' | 'simple';
-const GUIDELINE: Record<Key, number> = { triptan: 10, combination: 10, simple: 15 };
-const isKey = (c: unknown): c is Key => c === 'triptan' || c === 'combination' || c === 'simple';
 
 // ── output ────────────────────────────────────────────────────────────────
 

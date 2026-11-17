@@ -10,9 +10,9 @@ import { MedIcon } from './drawnIcons';
 import { ClassBadge } from './ClassBadge';
 import { WarningIcon } from './icons';
 import {
-  checkDose, doseUnits, findMedication, guideFor, guideForName, lastDoseSnapshot, unitsInWindow, unitsLabel,
+  checkDose, doseUnits, findMedication, guideFor, guideForName, guideKeyOf, lastDoseSnapshot, unitsInWindow, unitsLabel,
 } from '../utils/medGuardrails';
-import { countingOf } from '../utils/medResolve';
+import { countingFor } from '../utils/medResolve';
 
 // What belongs under the hero on Today: figures that need no interpretation,
 // and one warning that has to arrive before it's too late to act on. Anything
@@ -31,10 +31,8 @@ interface Props {
   guides?: MedGuides;
   /** Attack mode strips this down to what's actionable — see below. */
   attackMode?: boolean;
-  /** The tiles and the medication card open Insights. */
+  /** The tiles open Insights. */
   onOpenInsights?: () => void;
-  /** "Set type" on an untyped medication opens My medications. */
-  onOpenMedications?: () => void;
 }
 
 // Warn at 70% of whichever overuse reference point applies, not at it. The
@@ -144,7 +142,7 @@ function MedRow({ name, icon, figure, detail, warning = false }: {
 //   - **The last dose stays as-is.** One line, and it's the question people
 //     actually open the app mid-attack to answer.
 export function TodaySummary({
-  attacks, ongoing, medications = [], guides = {}, attackMode = false, onOpenInsights, onOpenMedications,
+  attacks, ongoing, medications = [], guides = {}, attackMode = false, onOpenInsights,
 }: Props) {
   // The 24-hour figure and the rolling 30 days both go stale on their own as
   // doses age out — the same reason every live duration in the app ticks. All
@@ -196,7 +194,7 @@ export function TodaySummary({
   }
 
   // ── The class bars ─────────────────────────────────────────────────────
-  const cd = classDaysInWindow(attacks, (dose) => countingOf(dose, medications));
+  const cd = classDaysInWindow(attacks, countingFor(medications));
   // A row per class the user actually has: an acute medication of that class
   // in the library, or a dose of one in the window. A class nobody takes is
   // an empty bar that says nothing.
@@ -236,7 +234,11 @@ export function TodaySummary({
   // card, under a divider, rather than repeating above it: its class's.
   const lastClass = lastLibrary?.class;
   const lastWarning = lastDose
-    ? warnings.find((w) => w.cls && w.cls === lastClass)
+    ? (guideKeyOf(lastClass) === 'any'
+        // An untyped (or not-in-library) drug is measured against Any, so that
+        // is the warning that belongs to it.
+        ? warnings.find((w) => w.key === 'mixed')
+        : warnings.find((w) => w.cls && w.cls === lastClass))
     : undefined;
   const banners = warnings.filter((w) => w !== lastWarning);
 
@@ -290,35 +292,6 @@ export function TodaySummary({
         <NumberTile value={attackCount} label={`${attackCount === 1 ? 'attack' : 'attacks'} · last 30 days`} onClick={onOpenInsights} />
       </div>
 
-      {rows.length > 0 && (
-        // **Days per class, not per drug** — the threshold is about how often a
-        // class is taken, so two triptans on one day are one triptan day. The
-        // card replaced the single "Medication days · this month" tile, which
-        // summed every drug into one number with no threshold to read it by.
-        <div className={`${TODAY_CARD} space-y-2.5`}>
-          <button type="button" onClick={onOpenInsights} className="block w-full space-y-2.5 text-left">
-            <p className="text-xs text-text-secondary">Last 30 days</p>
-            {rows.map((c) => (
-              <ClassBar key={c.value} letter={c.letter} label={`${c.label} days`} days={cd[c.value]} limit={guideFor(c.value, guides)} />
-            ))}
-            {showMixed && <ClassBar letter="+" label="Any attack medicine" days={cd.any} limit={anyLimit} />}
-          </button>
-          {/* Outside the button: "Set type" is its own action, and a button
-              can't hold another. Only names logged in the window count —
-              an untyped drug nobody took is nothing to fix today. */}
-          {cd.untyped.length > 0 && (
-            <p className="text-xs text-text-secondary">
-              {/* DRAFT wording (June, 2026-11-17: use the drafts; marked as a draft in the PR). */}
-              {cd.untyped.length === 1
-                ? `${cd.untyped[0]} has no type set, so it only counts under Any attack medicine.`
-                : `${cd.untyped.slice(0, -1).join(', ')} and ${cd.untyped[cd.untyped.length - 1]} have no type set, so they only count under Any attack medicine.`}{' '}
-              <button type="button" onClick={onOpenMedications} className="font-medium text-accent-light underline-offset-2 hover:underline">
-                Set type
-              </button>
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 
@@ -355,37 +328,5 @@ function NumberTile({ value, label, onClick }: { value: number; label: string; o
       <span className="block text-[2.125rem] font-semibold leading-[1.1] text-text-primary">{value}</span>
       <span className="mt-1 block text-xs text-text-secondary">{label}</span>
     </button>
-  );
-}
-
-/**
- * One class row: badge, label, "4 of 10", and an 8px bar under it. At 70% of
- * the limit the fill turns amber **and** a triangle sits before the figure —
- * never colour alone, since FL-41 lenses shift exactly the hues that would
- * carry it. The bar is `aria-hidden`; the figure and an `sr-only` phrase carry
- * the same facts as text.
- */
-function ClassBar({ letter, label, days, limit }: { letter: string; label: string; days: number; limit: number }) {
-  const warn = days >= warnAt(limit);
-  return (
-    <span className="block">
-      <span className="flex items-center gap-2.5">
-        <ClassBadge>{letter}</ClassBadge>
-        <span className="min-w-0 flex-1 text-sm text-text-primary">
-          {label}<span className="sr-only">,</span>
-        </span>
-        <span className="flex shrink-0 items-center gap-1 text-xs text-text-secondary">
-          {warn && <WarningIcon className="h-4 w-4 text-severity-mid" />}
-          {days} of {limit}
-          {warn && <span className="sr-only">, {days >= limit ? 'at or over the guideline' : 'close to the guideline'}</span>}
-        </span>
-      </span>
-      <span aria-hidden="true" className="mt-2 block h-2 overflow-hidden rounded bg-bg-raised">
-        <span
-          className={`block h-full rounded ${warn ? 'bg-severity-mid' : 'bg-accent'}`}
-          style={{ width: `${Math.min(100, (days / limit) * 100)}%` }}
-        />
-      </span>
-    </span>
   );
 }

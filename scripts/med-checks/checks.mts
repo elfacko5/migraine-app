@@ -7,7 +7,7 @@ import type { Attack, Medication } from '../../src/types/index.ts';
 import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
 import { GUIDELINE, guideFor, guideKeyOf } from '../../src/utils/medGuardrails.ts';
 import { classDaysInWindow } from '../../src/utils/stats.ts';
-import { M3_MARKER_KEY, planM3, runM3 } from '../../src/utils/medMigrations.ts';
+import { M3_MARKER_KEY, markM3Done, planM3, runM3 } from '../../src/utils/medMigrations.ts';
 import { guidesForPush, medicationsUpsertRow, mergeMedicationPrefs, type StoredMedications } from '../../src/utils/medPrefsMerge.ts';
 
 let n = 0;
@@ -44,6 +44,22 @@ t('remote newer, guides column is junk: cleaned away, local kept', () => {
   });
   assert.equal(m.kind, 'adopt-remote');
   if (m.kind === 'adopt-remote') assert.deepEqual(m.stored.guides, { simple: 14 });
+});
+t('adopt-remote says whether the guides came from the remote (so M3 is not run over a clear)', () => {
+  const at = '2026-03-01T00:00:00Z';
+  const flag = (g: unknown) => {
+    const m = mergeMedicationPrefs(local('2026-02-01T00:00:00Z', { triptan: 8 }), { medications: [A], medications_updated_at: at, ...(g === undefined ? {} : { medication_guides: g }) });
+    return m.kind === 'adopt-remote' ? m.guidesFromRemote : 'not adopted';
+  };
+  assert.equal(flag({}), true);                 // a deliberate clear
+  assert.equal(flag({ triptan: 12 }), true);
+  assert.equal(flag(undefined), false);         // older client: M3 may still run
+  assert.equal(flag({ triptan: -1 }), false);   // junk: local kept, nothing from the remote
+});
+t('markM3Done sets the marker without running M3', () => {
+  const store = new Map<string, string>();
+  markM3Done({ setItem: (k: string, v: string) => { store.set(k, v); } });
+  assert.equal(store.get(M3_MARKER_KEY), '1');
 });
 t('local newer: push local', () => {
   const m = mergeMedicationPrefs(local('2026-04-01T00:00:00Z'), { medications: [A], medications_updated_at: '2026-03-01T00:00:00Z' });

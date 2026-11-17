@@ -585,7 +585,6 @@ export default function App() {
                 guides={guides}
                 attackMode={attackMode}
                 onOpenInsights={() => setTab('stats')}
-                onOpenMedications={() => { setTab('profile'); setProfileSheet('medications'); }}
               />
             )}
 

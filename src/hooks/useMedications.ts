@@ -3,7 +3,7 @@ import type { MedGuides, Medication, SyncStatus } from '../types';
 import { pullUserPrefs, pushMedications } from '../lib/sync';
 import { cleanGuides } from '../utils/medResolve';
 import { guidesForPush, mergeMedicationPrefs, type StoredMedications } from '../utils/medPrefsMerge';
-import { runM3 } from '../utils/medMigrations';
+import { markM3Done, runM3 } from '../utils/medMigrations';
 
 const KEY = 'hd_medications';
 
@@ -103,11 +103,17 @@ export function useMedications(userId: string | null) {
         // A library that has just arrived may be the first one this device has
         // seen, so M3 is given its chance here too (it does nothing on an
         // empty library, and sets no marker then).
-        const adopted = migrate(merge.stored);
+        // **Not when the remote row wrote the guides itself** (a set, or a
+        // deliberate clear to `{}`): M3 is done for this library, and running
+        // it would refill a cleared guide from stale per-medicine limits.
+        if (merge.guidesFromRemote) markM3Done(localStorage);
+        const adopted = merge.guidesFromRemote ? merge.stored : migrate(merge.stored);
         localStorage.setItem(KEY, JSON.stringify(adopted));
         setMedicationsState(adopted.items);
         setGuidesState(adopted.guides);
-        remoteHadGuidesRef.current = Object.keys(adopted.guides).length > 0;
+        // What the remote row held, not what is kept: when its guides were not
+        // adopted (missing, junk) or M3 just wrote some, the remote had none.
+        remoteHadGuidesRef.current = merge.guidesFromRemote && Object.keys(adopted.guides).length > 0;
       } else if (merge.kind === 'push-local') {
         remoteHadGuidesRef.current = merge.remoteHadGuides;
         const sending = guidesForPush(local.guides, merge.remoteHadGuides);

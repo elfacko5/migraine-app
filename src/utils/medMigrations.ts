@@ -1,5 +1,6 @@
 import type { MedGuides, Medication } from '../types';
 import { GUIDELINE, type GuideKey } from './medGuardrails';
+import { isCountedClass } from './medClasses';
 
 // M3 — the one-time move of per-medicine limits into guides (0b of the
 // medication flows; docs/plan-medication-0b.md section 2.4).
@@ -16,7 +17,6 @@ import { GUIDELINE, type GuideKey } from './medGuardrails';
 // result, and `scripts/med-checks/m3.mts` prints it as a plain table.
 
 type CountedKey = Exclude<GuideKey, 'any'>;
-const isKey = (c: unknown): c is CountedKey => c === 'triptan' || c === 'combination' || c === 'simple';
 
 /** The device-local marker. Not synced: Export backs it up like any `hd_` key. */
 export const M3_MARKER_KEY = 'hd_med_guides_m3';
@@ -54,7 +54,7 @@ export function planM3(items: Medication[], guides: MedGuides, markerSet: boolea
   for (const m of items) {
     const limit = m.maxDaysPerMonth;
     if (m.kind !== 'acute' || !limit || limit <= 0) continue;
-    if (isKey(m.class)) {
+    if (isCountedClass(m.class)) {
       if (limit >= GUIDELINE[m.class]) notCopied.push({ name: m.name, type: m.class, limit, guideline: GUIDELINE[m.class] });
       else below.set(m.class, [...(below.get(m.class) ?? []), { name: m.name, limit }]);
     } else if (m.class === 'gepant') {
@@ -69,6 +69,14 @@ export function planM3(items: Medication[], guides: MedGuides, markerSet: boolea
   const out: MedGuides = {};
   for (const w of writes) out[w.type] = w.value;
   return { gate: 'run', guides: out, writes, notCopied, inert, setsMarker: true };
+}
+
+/** Record that M3 is done without running it — for a library that arrived with
+ *  guides another device already wrote (a set, or a deliberate clear to `{}`).
+ *  Running M3 over it would refill a cleared guide from stale per-medicine
+ *  limits. */
+export function markM3Done(storage: Pick<Storage, 'setItem'>): void {
+  try { storage.setItem(M3_MARKER_KEY, '1'); } catch { /* best effort */ }
 }
 
 /**

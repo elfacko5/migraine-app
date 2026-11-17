@@ -21,6 +21,9 @@ export function classLetter(cls: MedClass | undefined): string | null {
 /** The three classes with an overuse threshold, in the order Today lists them. */
 export type CountedClass = 'triptan' | 'combination' | 'simple';
 
+/** The one test for "this class has its own guide" — used by `guideKeyOf`, M3 and its script. */
+export const isCountedClass = (c: unknown): c is CountedClass => c === 'triptan' || c === 'combination' || c === 'simple';
+
 // No limit here any more: it comes from `guideFor(value, guides)` at the call
 // site, so a constant cannot go stale when a guide changes (0b).
 export const COUNTED_CLASSES: { value: CountedClass; label: string; letter: string }[] = [

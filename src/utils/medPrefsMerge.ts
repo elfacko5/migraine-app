@@ -25,7 +25,7 @@ export interface RemoteMedications {
 
 export type MedicationMerge =
   /** The remote copy is newer: store it. */
-  | { kind: 'adopt-remote'; stored: StoredMedications }
+  | { kind: 'adopt-remote'; stored: StoredMedications; /** The guides came from the remote row itself (a set, or a clear). */ guidesFromRemote: boolean }
   /** Push the local copy up. `remoteHadGuides` is whether the remote row last
    *  pulled held any guides: it is what lets an emptied local list be pushed as
    *  an explicit `{}` (see `guidesForPush`). */
@@ -77,6 +77,7 @@ export function mergeMedicationPrefs(local: StoredMedications, remote: RemoteMed
         guides: adoptedGuides ?? local.guides,
         updatedAt: remoteAt,
       },
+      guidesFromRemote: adoptedGuides !== null,
     };
   }
   if (local.items.length > 0 || remoteItems) {

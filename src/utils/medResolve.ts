@@ -148,6 +148,19 @@ export function countingOf(
   return { bar: null, any: candidates.some((m) => classOfEntry(m) !== 'gepant'), untyped: false };
 }
 
+/** `countingOf` for one library, remembering answers: a diary logs the same
+ *  drug over and over, so each distinct (name, dose, id) is resolved once
+ *  instead of rescanning the library for every snapshot. */
+export function countingFor(library: Medication[]) {
+  const cache = new Map<string, DoseCounting>();
+  return (dose: { name: string; dose?: string; medId?: string }): DoseCounting => {
+    const key = `${dose.medId ?? ''}|${norm(dose.name)}|${norm(dose.dose)}`;
+    let c = cache.get(key);
+    if (!c) { c = countingOf(dose, library); cache.set(key, c); }
+    return c;
+  };
+}
+
 /**
  * The class every library entry named `name` shares, for the per-name rows
  * (Insights, Today's attack mode). `undefined` = untyped or in no entry;

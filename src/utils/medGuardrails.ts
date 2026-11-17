@@ -1,6 +1,7 @@
 import type { Attack, MedClass, MedGuides, Medication, Snapshot } from '../types';
 import { isRetired } from './retired';
 import { typeOfName } from './medResolve';
+import { isCountedClass } from './medClasses';
 import { MOH_DAYS_COMBINATION, MOH_DAYS_MIXED, MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from './stats';
 
 // Acute medications carry limits that come from the prescription, not from
@@ -183,7 +184,7 @@ export function guideFor(key: GuideKey, guides: MedGuides): number {
  * are measured against "Any attack medicine".
  */
 export function guideKeyOf(cls: MedClass | undefined): GuideKey | null {
-  if (cls === 'triptan' || cls === 'combination' || cls === 'simple') return cls;
+  if (isCountedClass(cls)) return cls;
   if (cls === 'gepant') return null;
   return 'any';
 }
