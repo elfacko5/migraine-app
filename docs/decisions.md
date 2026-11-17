@@ -2339,3 +2339,12 @@ June ran `f9f1763` (resize `'none'`, bar on) on her iPhone. Her words: **"i cann
 **Still true, not decided by her:** with `'native'` the Save button slides in about a second after the keyboard (the plugin waits the animation time plus 0.2 s before resizing). She has **not** said she accepts that; it is the known cost of this setting and stays open for her. Her remark that Save under the keyboard is acceptable here is about the layout, not about the slide.
 
 **Built** as its own commit (the config and this entry). `AppRoot` and the package are untouched. **Not run on a phone.** The temporary probe (`VITE_VIEWPORT_PROBE=1`) is still in the tree for one run on `'native'`.
+
+**Measured on the phone, resize `'native'`, bar on, probe build (June, 2026-11-17, 10.11 to 10.12).**
+- **Cold launch, before focus:** `iH 844  vv 844/0/x1  dvh 844  frame 844  var unset  tf none  plugin native  kbH 0`.
+- **Name focused, keyboard and bar up:** `iH 468  vv 468/0/x1  dvh 468  frame 468  var unset  tf none  plugin native  kbH 376`. 844 minus 376 is 468: the plugin shortened the webview, so the page's own height, `visualViewport` and the frame all follow it. `AppRoot` sets nothing (`var unset`, `tf none`) because the visible area and the full height are both 468 [certain from the numbers].
+- **Screenshot, Name focused:** the Add medication sheet fits above the bar and keyboard, and the Save button and its line ("Add a name and the strength to save") are visible.
+- **"Max in 24 hours" focused:** the sheet had been scrolled to the leaflet limits; the field is on screen above the keyboard and focused, with Save below it still on screen.
+- **After the check on the bar:** `now` returns to 844 and `kbH 0`; `kb` keeps the last keyboard-up values. The sheet is whole again with Save visible.
+- **Not reported by her in this run:** whether Save still slid in late. The slide stays open; she has not said she accepts it.
+- **Flag removal.** `.env.local` in this worktree is a **symlink to `/Users/sunny/migraine-app/.env.local`**, so `sed -i` on it fails ("in-place editing only works for regular files", her terminal), and the flag line (line 7 of 7) lives in the file the main checkout uses too. Nothing was removed by the Lidd session. Remove it by naming the real file.
