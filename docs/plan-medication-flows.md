@@ -11,7 +11,7 @@ Tags: [certain] read in code or docs this session, [likely] read but not run, [g
 ## What I read, and what I did not
 
 - Read as text: every frame note in `medications.html` (898 lines of notes). No frame image was opened; nothing here depends on a pixel.
-- Read: review items 180 to 184 only, in `/Users/sunny/code-design-system/docs/review-questions.md`. Her decisions are used exactly as stated there. **Standing rule (June, 2026-11-17): on every "check", read that file from the last item acted on to the end, and act on each item addressed to the code session. Write results (tables, gate output) into the plan files, not only into the reply.** Last item acted on: 225. **Replaced from item 226 on (2026-11-17):** review now runs inside the code session through the `reviewer` agent (see `CLAUDE.md`). Items 1 to 225 stay in that file as the record; no new items are read from it.
+- Read: review items 180 to 184 only, in `/Users/sunny/code-design-system/docs/review-questions.md`. Her decisions are used exactly as stated there. **Review is the `reviewer` agent now (see `CLAUDE.md`). On "review" or "check", do not read that file: items 1 to 225 in it are the record only, and no new items are read from it. Write results (tables, gate output) into the plan files, not only into the reply.**
 - Read in Lidd: `types/index.ts`, `useMedications.ts`, `MedicationsView.tsx`, the head of `MedicationEditor.tsx`, `medGuardrails.ts`, `medClasses.ts`, `stats.ts` (class days), `TodaySummary.tsx` (warnings), `lib/sync.ts` (columns), `retired.ts`, `capacitor.config.ts`, `docs/editing-assessment.md`, and the Save-slide entry in `docs/decisions.md`.
 - Read in the package (`/Users/sunny/code-design-system-main`, read only, on `lidd-phase7-integration`): `ToastHost`, `List`, `Chip`, `ConfirmDialog`, `Sheet`, `TopBar`, `Button` (props), `AppRoot` (keyboard part), and the matching requirement texts in `component-requirements.md`.
 - Not read: the rest of `MedicationEditor.tsx` (body), `MedicationInsights`, `useAttacks` internals beyond its writer list, the other docs.
@@ -360,4 +360,36 @@ June, in chat: the "medication X, 2 of 10" figures should not be shown on Today.
 
 **Build note, not started:** the `deleted` list, the warning and marker filter and the new column are built with commit 4 (Remove), not now. The 0b code that counts a deleted medicine under "Any" stays until then, so the review finding about it stays skipped until that commit. Re-adding a medicine with a name in `deleted` removes the name from `deleted`.
 
-**Answered (June, 2026-11-17, "yes"): a plain message with no button shows after Add and after Delete.** It uses Lidd's existing toast, no Undo. Draft wording, hers to reword: after Add, "Sumatriptan 50 mg tablet was added to your medicines."; after Delete, "Sumatriptan 50 mg tablet was removed from your medicines. Its earlier doses stay in your diary." The medicine is named in full (name, strength, form). With this, the open items from items 210 to 225 are all answered; the lighter review rules are still undecided.
+**Answered (June, 2026-11-17, "yes"): a plain message with no button shows after Add and after Delete.** **Correction (2026-11-17): Lidd has no toast component** (nothing in `src/` mentions one; the package `Toast` is not used by Lidd). It is a small new Lidd component in commit 1, message only. Draft wording, hers to reword: after Add, "Sumatriptan 50 mg tablet was added to your medicines."; after Delete, "Sumatriptan 50 mg tablet was removed from your medicines. Its earlier doses stay in your diary." The medicine is named in full (name, strength, form). With this, the open items from items 210 to 225 are all answered; the lighter review rules are still undecided.
+
+
+## Commit 1 build plan: the add wizard (2026-11-17, for June's approval; nothing built)
+
+**Source of the frames:** `medications.html` in the repo root (untracked, 15a "Add: name & type", 15a-2 "already added", and the 15b and 15c frames after them). I read it screen by screen as I build; this plan is from the plan file and the current code, so frame details such as 15c-5 may move a step.
+
+**What it is.** A three-step add flow on Lidd's own parts: **1 Name and type** (15a, 15a-2) → **2 Form and strength** (15b) → **3 One dose and limits** (15c). It replaces the *add* path only. The edit path keeps today's `MedicationEditor` until commit 3, so nothing about editing changes in this commit.
+
+**Parts (all Lidd's, nothing new from the package):** `Sheet` with `flush bareHeader` (like the log wizard, with Back and Cancel in its own top bar and "Step N of 3" as plain text, not the heading); `OptionTile` for type and form; the editor's existing stepper for one dose; `RadioDot` rows for pick-one; `btn-primary` / `btn-secondary` pinned in a footer; Lidd's `ConfirmDialog` is not needed here. **One thing Lidd lacks: an inline notice** (the amber/neutral message for 15a-2, 15b-2, 15c-4). I add one small `InlineNote` component, built from the existing info-box pattern, used by the three notices.
+
+**New logic, pure and checked first** (`medResolve.ts` and `med-checks`): `sameMedicine(a, b)` per Q4 item 1 (name, `formOf`, `parseStrength`-aware strength); `usualDoseExceedsMax(quantity, maxPerDay)`; a shared-type helper for Q10 (names matching existing entries pre-select the type they share, and pre-select nothing when those entries disagree). With "stop using" gone (item 214) the stopped-match case and "Use it again" are not built. Each gets checks before any screen uses it.
+
+**Behaviour to build, from your answers:**
+- Step 1: name required; a name that matches an existing entry shows the 15a-2 notice and pre-selects the shared type, and the type step says why. Type tiles: T, C, P, G and "Not sure", none pre-selected for a brand-new name.
+- Step 2: the exact duplicate (same name, form and strength) is a plain block on **Next**, which stays focusable and announces why. Different form, or same form with a different strength, is allowed.
+- Step 3: one dose (stepper) and the optional limits, never pre-filled; the usual-dose-above-max notice blocks nothing.
+- Add writes the entry with `form` stored (M1 stops being only read-time for new entries), then shows the plain message "Sumatriptan 50 mg tablet was added to your medicines." (no Undo).
+- **The plain message needs a small new Lidd toast component** (message only, at least 5 s, `aria-live`, pauses while the page is hidden). I corrected my earlier note: Lidd has none today.
+
+**State in `App.tsx`:** the single `medEditor` state splits into an add-wizard state and the existing edit state. `recentMeds`, the widget and sync are untouched.
+
+**The keyboard (section 4), in order:**
+1. **Spike on your phone first, before any wizard code.** A throwaway probe measuring footer-visible time with the keyboard up, for `'native'` (as now), `'body'` and `'none'` plus the plugin's `keyboardWillShow` height. This needs a native build installed on your phone: **same bundle id, so it replaces the app from the other worktree.** I ask before doing it, and you run it from Xcode.
+2. If `'none'` + `keyboardWillShow` wins, a Lidd hook (`keyboardOverride.ts`) switches the resize mode while a wizard is open and always restores `'native'`, and the footer rises with the keyboard. **This is Lidd's own Sheet footer, so it is not a package gap any more.** If the numbers do not beat `'native'`, the wizard stays on `'native'` and I report the slide with numbers.
+
+**Checks before you see it:** `typecheck` 0, `lint` 0, `med-checks` (new checks for `sameMedicine`, the dose notice and the shared type), the preview on port 5176 signed out, each step at 87.5%, 100% and 150% text and in dark, light and attack mode, with the neighbours in frame (the lidd-ui rule).
+
+**Checks on your phone (one set for the flow):** VoiceOver (heading is "Add a medicine", never "Step 2 of 3"; disabled Next announces its reason); 150% and "Use iPhone text size"; 44pt targets; contrast; the keyboard on Name and on Strength (footer above the keyboard, field not hidden); the plain message appears and goes.
+
+**Order of work:** (1) pure functions and checks; (2) `InlineNote` and the toast; (3) the wizard on the web build, verified in the preview; (4) the keyboard spike and, if it wins, the override; (5) wiring in `App.tsx`; (6) gates and your phone checks. Steps 1 to 3 and 5 need no phone. Step 4 needs your yes to install a build.
+
+**What I would not do:** change the edit path, `MedicationsView`, Today or Insights, or touch the package.

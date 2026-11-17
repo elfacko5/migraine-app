@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Independent review of a finished Lidd change before June checks it on her phone. Use after a commit that changes stored data, sync, counts or warnings, or when June says "review". Reads the diff and the rules, runs the checks, and reports defects. Never edits files.
+description: Independent review of a finished Lidd change before June checks it on her phone. Use after a commit that changes stored data, sync, counts or warnings, or when June says "review" or "check". Reads the diff and the rules, runs the checks, and reports defects. Never edits files.
 tools: Read, Grep, Glob, Bash
 model: opus
 ---
