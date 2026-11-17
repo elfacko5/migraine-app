@@ -8,6 +8,10 @@ cd "$(dirname "$0")/../.."
 BASE="${1:-HEAD}"
 TSX=node_modules/code-ds/node_modules/.bin/tsx
 OUT="${OUT_DIR:-$(mktemp -d)}"
+# The real path, not the /var/... symlink mktemp returns: tsx matches a file to
+# the tsconfig `include` by real path, and on a mismatch the extracted tree loses
+# the automatic JSX runtime ("React is not defined").
+OUT="$(cd "$OUT" && pwd -P)"
 mkdir -p "$OUT/base"
 git archive "$BASE" src package.json tsconfig.json tsconfig.app.json tsconfig.node.json | tar -x -C "$OUT/base"
 ln -sfn "$PWD/node_modules" "$OUT/base/node_modules"

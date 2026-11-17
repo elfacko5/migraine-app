@@ -1,6 +1,7 @@
-import type { Attack, Medication, Snapshot } from '../types';
+import type { Attack, MedClass, MedGuides, Medication, Snapshot } from '../types';
 import { isRetired } from './retired';
-import { MOH_DAYS_COMBINATION, MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from './stats';
+import { typeOfName } from './medResolve';
+import { MOH_DAYS_COMBINATION, MOH_DAYS_MIXED, MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from './stats';
 
 // Acute medications carry limits that come from the prescription, not from
 // migraine guidelines: how many units in one intake, how many in 24 hours, and
@@ -151,24 +152,55 @@ export function findMedication(medications: Medication[], name: string): Medicat
   return medications.find((m) => m.name.trim().toLowerCase() === wanted) ?? null;
 }
 
+/** The four things a guide can be set for: three classes, and "Any attack
+ *  medicine" (the mixed-use line). */
+export type GuideKey = 'triptan' | 'combination' | 'simple' | 'any';
+
+/** The guideline numbers (ICHD-3 medication-overuse thresholds). Pre-filled:
+ *  `guideFor` falls back to them, so a guide nobody set is the guideline. */
+export const GUIDELINE: Record<GuideKey, number> = {
+  triptan: MOH_DAYS_TRIPTAN,
+  combination: MOH_DAYS_COMBINATION,
+  simple: MOH_DAYS_SIMPLE,
+  any: MOH_DAYS_MIXED,
+};
+
 /**
- * The medication-overuse reference point in days per month that applies to one
- * drug: the label's own `maxDaysPerMonth` first, then the ICHD-3 number for
- * its class, and 10 when nothing is known.
- *
- * **The unknown case stays at 10**, which is the behaviour that shipped: it
- * warns earlier rather than later, and warning early about a simple analgesic
- * is a much smaller failure than staying quiet about a triptan.
+ * Days a month for one guide: the stored number, else the guideline. The one
+ * way to ask for a limit — `mohDaysFor` is gone. A stored value that is not a
+ * positive whole number is ignored (`cleanGuides` already drops junk on read;
+ * this is the second guard), so a hand-edited backup cannot make a warning
+ * fire at 0 or never.
  */
-export function mohDaysFor(name: string, medications: Medication[]): number | null {
-  const med = findMedication(medications, name);
-  if (med?.maxDaysPerMonth && med.maxDaysPerMonth > 0) return med.maxDaysPerMonth;
-  // A gepant has no overuse guideline, so it has no threshold unless the
-  // user entered one of their own above (v3, 2026-10-26).
-  if (med?.class === 'gepant') return null;
-  if (med?.class === 'simple') return MOH_DAYS_SIMPLE;
-  if (med?.class === 'combination') return MOH_DAYS_COMBINATION;
-  return MOH_DAYS_TRIPTAN;
+export function guideFor(key: GuideKey, guides: MedGuides): number {
+  const n = guides[key];
+  return typeof n === 'number' && Number.isInteger(n) && n > 0 ? n : GUIDELINE[key];
+}
+
+/**
+ * Which guide a class is measured against. **A gepant has none** (`null`: no
+ * guideline, no marker, no warning); no class, "Not sure" and the old `other`
+ * are measured against "Any attack medicine".
+ */
+export function guideKeyOf(cls: MedClass | undefined): GuideKey | null {
+  if (cls === 'triptan' || cls === 'combination' || cls === 'simple') return cls;
+  if (cls === 'gepant') return null;
+  return 'any';
+}
+
+/**
+ * The guide limit that applies to a **logged drug name**, for the per-name
+ * rows (Insights, Today's attack mode): the shared class of every library
+ * entry of that name, through `guideFor`. `null` when there is no limit to say:
+ * a gepant, or old same-name entries that disagree on class (never the first
+ * entry's). An untyped name, or one in no entry, is measured against "Any
+ * attack medicine".
+ */
+export function guideForName(name: string, library: Medication[], guides: MedGuides): number | null {
+  const cls = typeOfName(name, library);
+  if (cls === null) return null;
+  const key = guideKeyOf(cls);
+  return key ? guideFor(key, guides) : null;
 }
 
 /** The plural unit label for a count — "1 tablet" / "2 tablets". */

@@ -104,7 +104,6 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
   const [maxPerIntake, setMaxPerIntake] = useState(medication?.maxPerIntake?.toString() ?? '');
   const [maxPerDay, setMaxPerDay] = useState(medication?.maxPerDay?.toString() ?? '');
   const [minHoursBetween, setMinHoursBetween] = useState(medication?.minHoursBetween?.toString() ?? '');
-  const [maxDaysPerMonth, setMaxDaysPerMonth] = useState(medication?.maxDaysPerMonth?.toString() ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const acute = kind === 'acute';
@@ -115,16 +114,16 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
     : (FORMS.find((f) => f.value === form)!.unit ?? (initialForm === 'other' && medication?.unitLabel ? medication.unitLabel : 'dose'));
   const complete = !!name.trim() && !!strength.trim();
 
-  // A guideline is a placeholder hint only — never written in, so a figure the
-  // app invented can't end up stored as though it came off the label.
-  const guideline = medClass === 'simple' ? MOH_DAYS_SIMPLE : medClass === 'gepant' ? null : MOH_DAYS_TRIPTAN;
   // "Max in one go" isn't in the v3 design; it is kept for a medication that
   // already has one, so the figure can still be seen and cleared.
+  // No "Max days a month" row (0b, June 2026-11-17): the monthly number is a
+  // guide per type now, not a limit per medicine. The stored `maxDaysPerMonth`
+  // is left exactly as it is — the patch below does not name it, so saving
+  // never clears it — and nothing reads it after M3.
   const limits = [
     ...(medication?.maxPerIntake ? [{ key: 'intake', label: 'Max in one go', hint: 'From the leaflet', unit: plural(unit), value: maxPerIntake, set: setMaxPerIntake }] : []),
     { key: 'day', label: 'Max in 24 hours', hint: 'From the leaflet', unit: plural(unit), value: maxPerDay, set: setMaxPerDay },
     { key: 'gap', label: 'Time between doses', hint: 'Shortest gap allowed', unit: 'hours', value: minHoursBetween, set: setMinHoursBetween },
-    { key: 'month', label: 'Max days a month', hint: guideline ? `Guideline for this type: ${guideline}` : 'No overuse guideline for gepants', unit: 'days', value: maxDaysPerMonth, set: setMaxDaysPerMonth },
   ];
   const limitsSet = limits.filter((l) => l.value.trim() !== '').length;
 
@@ -151,7 +150,6 @@ export function MedicationEditor({ medication, onSave, onDelete, onClose }: Prop
       maxPerIntake: acute ? toNumber(maxPerIntake) : undefined,
       maxPerDay: acute ? toNumber(maxPerDay) : undefined,
       minHoursBetween: acute ? toNumber(minHoursBetween) : undefined,
-      maxDaysPerMonth: acute ? toNumber(maxDaysPerMonth) : undefined,
       startedOn: acute ? undefined : medication?.startedOn,
     };
   }

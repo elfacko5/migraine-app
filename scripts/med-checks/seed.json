@@ -1,0 +1,3313 @@
+{
+  "hd_medications": {
+    "items": [
+      {
+        "id": "m1",
+        "name": "Sumatriptan",
+        "dose": "50mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "50mg",
+        "quantity": 1,
+        "class": "triptan",
+        "maxPerDay": 2,
+        "minHoursBetween": 2
+      },
+      {
+        "id": "m2",
+        "name": "Treo",
+        "dose": "1 tablet · 500/50mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "class": "combination",
+        "maxDaysPerMonth": 8,
+        "maxPerDay": 4
+      },
+      {
+        "id": "m3",
+        "name": "Ibuprofen",
+        "dose": "400mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "class": "simple",
+        "maxPerDay": 3,
+        "minHoursBetween": 4
+      },
+      {
+        "id": "m4",
+        "name": "Rizalief",
+        "dose": "200mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "maxDaysPerMonth": 7
+      },
+      {
+        "id": "m5",
+        "name": "Nurtec",
+        "dose": "75mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "class": "gepant",
+        "maxDaysPerMonth": 8
+      },
+      {
+        "id": "m6",
+        "name": "Old thing",
+        "dose": "1 tablet",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "class": "other"
+      },
+      {
+        "id": "m7",
+        "name": "Propranolol",
+        "dose": "40mg",
+        "kind": "preventive",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet"
+      },
+      {
+        "id": "m8",
+        "name": "Naproxen",
+        "dose": "250mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "250mg",
+        "class": "simple",
+        "maxDaysPerMonth": 15
+      },
+      {
+        "id": "m9",
+        "name": "Rizatriptan",
+        "dose": "10mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "10mg",
+        "class": "triptan",
+        "maxDaysPerMonth": 6
+      },
+      {
+        "id": "m10",
+        "name": "Zolmitriptan",
+        "dose": "2.5mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "2.5mg",
+        "class": "triptan",
+        "maxDaysPerMonth": 9
+      },
+      {
+        "id": "m11",
+        "name": "Sumatriptan",
+        "dose": "100mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "100mg",
+        "quantity": 1,
+        "class": "triptan"
+      },
+      {
+        "id": "m12",
+        "name": "Migraleve",
+        "dose": "2 tablets",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "class": "combination"
+      },
+      {
+        "id": "m13",
+        "name": "Migraleve",
+        "dose": "1 tablet",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "class": "simple"
+      },
+      {
+        "id": "m14",
+        "name": "Imigran",
+        "dose": "50mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "50mg",
+        "class": "triptan",
+        "stoppedAt": "2026-11-08T09:00:00Z"
+      },
+      {
+        "id": "m15",
+        "name": "Diclofenac",
+        "dose": "50 mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "50 mg",
+        "class": "simple"
+      },
+      {
+        "id": "m16",
+        "name": "Diclofenac",
+        "dose": "25 mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "25 mg",
+        "class": "simple"
+      },
+      {
+        "id": "m17",
+        "name": "Eletriptan",
+        "dose": "40mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "40mg",
+        "class": "triptan",
+        "maxDaysPerMonth": 12
+      },
+      {
+        "id": "m18",
+        "name": "Aspirin",
+        "dose": "500mg",
+        "kind": "acute",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "unitLabel": "tablet",
+        "strength": "500mg",
+        "class": "simple",
+        "maxDaysPerMonth": 20
+      }
+    ],
+    "updatedAt": "2026-11-01T00:00:00Z"
+  },
+  "hd_attacks": [
+    {
+      "id": 1000,
+      "snapshots": [
+        {
+          "time": "2026-11-09T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m1"
+          }
+        },
+        {
+          "time": "2026-11-09T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-09T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1001,
+      "snapshots": [
+        {
+          "time": "2026-11-08T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-11-08T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-08T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1002,
+      "snapshots": [
+        {
+          "time": "2026-11-07T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m1"
+          }
+        },
+        {
+          "time": "2026-11-07T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-07T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1003,
+      "snapshots": [
+        {
+          "time": "2026-11-06T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-11-06T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-06T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1004,
+      "snapshots": [
+        {
+          "time": "2026-11-05T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m1"
+          }
+        },
+        {
+          "time": "2026-11-05T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-05T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1005,
+      "snapshots": [
+        {
+          "time": "2026-11-04T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-11-04T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-04T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1006,
+      "snapshots": [
+        {
+          "time": "2026-11-03T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m1"
+          }
+        },
+        {
+          "time": "2026-11-03T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-03T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1007,
+      "snapshots": [
+        {
+          "time": "2026-11-02T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-11-02T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-02T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1008,
+      "snapshots": [
+        {
+          "time": "2026-10-31T09:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Treo",
+            "dose": "",
+            "amount": 1,
+            "medId": "m2"
+          }
+        },
+        {
+          "time": "2026-10-31T12:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-31T12:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1009,
+      "snapshots": [
+        {
+          "time": "2026-10-30T09:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Treo",
+            "dose": "",
+            "amount": 1,
+            "medId": "m2"
+          }
+        },
+        {
+          "time": "2026-10-30T12:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-30T12:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1010,
+      "snapshots": [
+        {
+          "time": "2026-10-29T09:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Treo",
+            "dose": "",
+            "amount": 1,
+            "medId": "m2"
+          }
+        },
+        {
+          "time": "2026-10-29T12:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-29T12:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1011,
+      "snapshots": [
+        {
+          "time": "2026-10-28T09:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Treo",
+            "dose": "",
+            "amount": 1,
+            "medId": "m2"
+          }
+        },
+        {
+          "time": "2026-10-28T12:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-28T12:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1012,
+      "snapshots": [
+        {
+          "time": "2026-10-27T09:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Treo",
+            "dose": "",
+            "amount": 1,
+            "medId": "m2"
+          }
+        },
+        {
+          "time": "2026-10-27T12:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-27T12:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1013,
+      "snapshots": [
+        {
+          "time": "2026-10-26T09:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Treo",
+            "dose": "",
+            "amount": 1,
+            "medId": "m2"
+          }
+        },
+        {
+          "time": "2026-10-26T12:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-26T12:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1014,
+      "snapshots": [
+        {
+          "time": "2026-10-25T09:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Treo",
+            "dose": "",
+            "amount": 1,
+            "medId": "m2"
+          }
+        },
+        {
+          "time": "2026-10-25T12:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-25T12:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1015,
+      "snapshots": [
+        {
+          "time": "2026-10-24T09:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Treo",
+            "dose": "",
+            "amount": 1,
+            "medId": "m2"
+          }
+        },
+        {
+          "time": "2026-10-24T12:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-24T12:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1016,
+      "snapshots": [
+        {
+          "time": "2026-10-23T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-23T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-23T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1017,
+      "snapshots": [
+        {
+          "time": "2026-10-22T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-22T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-22T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1018,
+      "snapshots": [
+        {
+          "time": "2026-10-21T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-21T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-21T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1019,
+      "snapshots": [
+        {
+          "time": "2026-10-20T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-20T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-20T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1020,
+      "snapshots": [
+        {
+          "time": "2026-10-19T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-19T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-19T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1021,
+      "snapshots": [
+        {
+          "time": "2026-10-18T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-18T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-18T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1022,
+      "snapshots": [
+        {
+          "time": "2026-10-17T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-17T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-17T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1023,
+      "snapshots": [
+        {
+          "time": "2026-10-16T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-16T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-16T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1024,
+      "snapshots": [
+        {
+          "time": "2026-10-15T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-15T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-15T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1025,
+      "snapshots": [
+        {
+          "time": "2026-10-14T10:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Ibuprofen",
+            "dose": "",
+            "amount": 2
+          }
+        },
+        {
+          "time": "2026-10-14T13:00:00.000Z",
+          "areas": {
+            "Temple left": 4
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-14T13:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1026,
+      "snapshots": [
+        {
+          "time": "2026-11-08T14:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizalief",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-08T17:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-08T17:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1027,
+      "snapshots": [
+        {
+          "time": "2026-11-07T14:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizalief",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-07T17:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-07T17:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1028,
+      "snapshots": [
+        {
+          "time": "2026-11-06T14:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizalief",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-06T17:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-06T17:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1029,
+      "snapshots": [
+        {
+          "time": "2026-11-05T14:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizalief",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-05T17:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-05T17:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1030,
+      "snapshots": [
+        {
+          "time": "2026-11-04T14:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizalief",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-04T17:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-04T17:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1031,
+      "snapshots": [
+        {
+          "time": "2026-11-03T14:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizalief",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-03T17:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-03T17:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1032,
+      "snapshots": [
+        {
+          "time": "2026-11-02T14:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizalief",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-02T17:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-02T17:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1033,
+      "snapshots": [
+        {
+          "time": "2026-11-01T14:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizalief",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-01T17:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-01T17:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1034,
+      "snapshots": [
+        {
+          "time": "2026-10-21T15:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Nurtec",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-21T18:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-21T18:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1035,
+      "snapshots": [
+        {
+          "time": "2026-10-20T15:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Nurtec",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-20T18:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-20T18:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1036,
+      "snapshots": [
+        {
+          "time": "2026-10-19T15:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Nurtec",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-19T18:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-19T18:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1037,
+      "snapshots": [
+        {
+          "time": "2026-10-18T15:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Nurtec",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-18T18:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-18T18:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1038,
+      "snapshots": [
+        {
+          "time": "2026-10-17T15:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Nurtec",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-17T18:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-17T18:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1039,
+      "snapshots": [
+        {
+          "time": "2026-10-15T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Old thing",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-15T11:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-15T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1040,
+      "snapshots": [
+        {
+          "time": "2026-10-29T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Typed by hand",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-29T11:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-29T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1041,
+      "snapshots": [
+        {
+          "time": "2026-11-05T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "a beer",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-05T11:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-05T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1042,
+      "snapshots": [
+        {
+          "time": "2026-10-01T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-10-01T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-01T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1043,
+      "snapshots": [
+        {
+          "time": "2026-09-28T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-28T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-28T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1044,
+      "snapshots": [
+        {
+          "time": "2026-09-25T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-25T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-25T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1045,
+      "snapshots": [
+        {
+          "time": "2026-09-22T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-22T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-22T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1046,
+      "snapshots": [
+        {
+          "time": "2026-09-19T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-19T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-19T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1047,
+      "snapshots": [
+        {
+          "time": "2026-09-16T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-16T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-16T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1048,
+      "snapshots": [
+        {
+          "time": "2026-09-13T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-13T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-13T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1049,
+      "snapshots": [
+        {
+          "time": "2026-09-10T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-10T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-10T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1050,
+      "snapshots": [
+        {
+          "time": "2026-09-07T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-07T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-07T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1051,
+      "snapshots": [
+        {
+          "time": "2026-09-04T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-04T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-04T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1052,
+      "snapshots": [
+        {
+          "time": "2026-09-01T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-09-01T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-09-01T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1053,
+      "snapshots": [
+        {
+          "time": "2026-08-29T08:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-08-29T11:00:00.000Z",
+          "areas": {
+            "Temple left": 2
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-08-29T11:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1054,
+      "snapshots": [
+        {
+          "time": "2026-10-30T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "100mg",
+            "amount": 1,
+            "medId": "m11"
+          }
+        },
+        {
+          "time": "2026-10-30T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-30T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1055,
+      "snapshots": [
+        {
+          "time": "2026-10-29T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "100mg",
+            "amount": 1,
+            "medId": "m11"
+          }
+        },
+        {
+          "time": "2026-10-29T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-29T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1056,
+      "snapshots": [
+        {
+          "time": "2026-10-28T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "100mg",
+            "amount": 1,
+            "medId": "m11"
+          }
+        },
+        {
+          "time": "2026-10-28T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-28T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1057,
+      "snapshots": [
+        {
+          "time": "2026-10-27T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Migraleve",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-27T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-27T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1058,
+      "snapshots": [
+        {
+          "time": "2026-10-26T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Migraleve",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-26T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-26T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1059,
+      "snapshots": [
+        {
+          "time": "2026-10-25T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Migraleve",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-25T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-25T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1060,
+      "snapshots": [
+        {
+          "time": "2026-10-13T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Migraleve",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-13T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-13T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1061,
+      "snapshots": [
+        {
+          "time": "2026-10-12T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Migraleve",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-10-12T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-12T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1062,
+      "snapshots": [
+        {
+          "time": "2026-11-05T16:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Imigran",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-05T19:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-05T19:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1063,
+      "snapshots": [
+        {
+          "time": "2026-11-04T16:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Imigran",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-04T19:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-04T19:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1064,
+      "snapshots": [
+        {
+          "time": "2026-11-03T16:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Imigran",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-03T19:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-03T19:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1065,
+      "snapshots": [
+        {
+          "time": "2026-11-02T16:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Imigran",
+            "dose": ""
+          }
+        },
+        {
+          "time": "2026-11-02T19:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-02T19:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1066,
+      "snapshots": [
+        {
+          "time": "2026-10-23T16:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Diclofenac",
+            "dose": "50mg",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-10-23T19:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-23T19:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1067,
+      "snapshots": [
+        {
+          "time": "2026-10-22T16:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Diclofenac",
+            "dose": "50mg",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-10-22T19:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-22T19:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1068,
+      "snapshots": [
+        {
+          "time": "2026-10-21T16:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Diclofenac",
+            "dose": "50mg",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-10-21T19:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-21T19:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1069,
+      "snapshots": [
+        {
+          "time": "2026-10-20T16:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Diclofenac",
+            "dose": "50mg",
+            "amount": 1
+          }
+        },
+        {
+          "time": "2026-10-20T19:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-20T19:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1070,
+      "snapshots": [
+        {
+          "time": "2026-11-09T20:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Naproxen",
+            "dose": "",
+            "amount": 1,
+            "medId": "m8"
+          }
+        },
+        {
+          "time": "2026-11-09T23:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-09T23:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1071,
+      "snapshots": [
+        {
+          "time": "2026-11-08T20:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Naproxen",
+            "dose": "",
+            "amount": 1,
+            "medId": "m8"
+          }
+        },
+        {
+          "time": "2026-11-08T23:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-08T23:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1072,
+      "snapshots": [
+        {
+          "time": "2026-11-07T20:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Naproxen",
+            "dose": "",
+            "amount": 1,
+            "medId": "m8"
+          }
+        },
+        {
+          "time": "2026-11-07T23:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-07T23:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1073,
+      "snapshots": [
+        {
+          "time": "2026-11-06T20:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Naproxen",
+            "dose": "",
+            "amount": 1,
+            "medId": "m8"
+          }
+        },
+        {
+          "time": "2026-11-06T23:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-11-06T23:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1074,
+      "snapshots": [
+        {
+          "time": "2026-10-19T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizatriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m9"
+          }
+        },
+        {
+          "time": "2026-10-19T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-19T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1075,
+      "snapshots": [
+        {
+          "time": "2026-10-18T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizatriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m9"
+          }
+        },
+        {
+          "time": "2026-10-18T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-18T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1076,
+      "snapshots": [
+        {
+          "time": "2026-10-17T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizatriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m9"
+          }
+        },
+        {
+          "time": "2026-10-17T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-17T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1077,
+      "snapshots": [
+        {
+          "time": "2026-10-16T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Rizatriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m9"
+          }
+        },
+        {
+          "time": "2026-10-16T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-16T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1078,
+      "snapshots": [
+        {
+          "time": "2026-10-15T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Zolmitriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m10"
+          }
+        },
+        {
+          "time": "2026-10-15T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-15T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1079,
+      "snapshots": [
+        {
+          "time": "2026-10-14T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Zolmitriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m10"
+          }
+        },
+        {
+          "time": "2026-10-14T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-14T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1080,
+      "snapshots": [
+        {
+          "time": "2026-10-13T07:00:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Zolmitriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m10"
+          }
+        },
+        {
+          "time": "2026-10-13T10:00:00.000Z",
+          "areas": {
+            "Temple left": 3
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        }
+      ],
+      "end": "2026-10-13T10:00:00.000Z",
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    },
+    {
+      "id": 1081,
+      "snapshots": [
+        {
+          "time": "2026-11-10T06:00:00.000Z",
+          "areas": {
+            "Temple left": 7
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "medication": null,
+          "note": null,
+          "source": "manual"
+        },
+        {
+          "time": "2026-11-10T11:20:00.000Z",
+          "areas": {
+            "Temple left": 6
+          },
+          "symptoms": [],
+          "reliefs": [],
+          "note": null,
+          "source": "manual",
+          "medication": {
+            "name": "Sumatriptan",
+            "dose": "",
+            "amount": 1,
+            "medId": "m1"
+          }
+        }
+      ],
+      "end": null,
+      "triggers": [],
+      "notificationConfig": {
+        "enabled": false,
+        "mode": "adaptive",
+        "fixedIntervalMinutes": 60
+      }
+    }
+  ]
+}

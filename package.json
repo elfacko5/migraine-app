@@ -11,7 +11,8 @@
     "contrast": "node_modules/code-ds/node_modules/.bin/tsx node_modules/code-ds/scripts/contrast-check.ts --app src/contrast.json",
     "preview": "vite preview",
     "ios": "vite build && cap copy ios",
-    "med-checks": "TZ=UTC node_modules/code-ds/node_modules/.bin/tsx scripts/med-checks/checks.mts"
+    "med-checks": "TZ=UTC node_modules/code-ds/node_modules/.bin/tsx scripts/med-checks/checks.mts",
+    "med-m3": "TZ=UTC node_modules/code-ds/node_modules/.bin/tsx scripts/med-checks/m3.mts"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.0",

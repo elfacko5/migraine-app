@@ -112,7 +112,7 @@ export default function App() {
     syncStatus: prefsSyncStatus, lastSyncedAt: prefsLastSyncedAt,
   } = useUserPrefs(userId);
   const {
-    medications, addMedication, updateMedication, removeMedication,
+    medications, guides, addMedication, updateMedication, removeMedication,
     syncStatus: medsSyncStatus, lastSyncedAt: medsLastSyncedAt,
   } = useMedications(userId);
   const {
@@ -582,6 +582,7 @@ export default function App() {
                 attacks={attacks}
                 ongoing={ongoingAttack}
                 medications={medications}
+                guides={guides}
                 attackMode={attackMode}
                 onOpenInsights={() => setTab('stats')}
                 onOpenMedications={() => { setTab('profile'); setProfileSheet('medications'); }}
@@ -639,7 +640,7 @@ export default function App() {
         {/* ── Insights tab ─────────────────────────── */}
         {tab === 'stats' && (
           <section className="space-y-4">
-            <StatsView attacks={attacks} medications={medications} period={statsPeriod} />
+            <StatsView attacks={attacks} medications={medications} guides={guides} period={statsPeriod} />
           </section>
         )}
 

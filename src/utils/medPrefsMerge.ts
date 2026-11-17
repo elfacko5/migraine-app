@@ -26,44 +26,82 @@ export interface RemoteMedications {
 export type MedicationMerge =
   /** The remote copy is newer: store it. */
   | { kind: 'adopt-remote'; stored: StoredMedications }
-  /** Push the local copy up (with `guides` only if it has any). */
-  | { kind: 'push-local' }
+  /** Push the local copy up. `remoteHadGuides` is whether the remote row last
+   *  pulled held any guides: it is what lets an emptied local list be pushed as
+   *  an explicit `{}` (see `guidesForPush`). */
+  | { kind: 'push-local'; remoteHadGuides: boolean }
   /** Nothing to do. */
   | { kind: 'nothing' };
+
+/** Is this the raw column value an explicit object (including `{}`)? Missing,
+ *  null and anything that is not a plain object are "this client did not write
+ *  guides", not "there are none". */
+const isGuidesObject = (v: unknown): v is Record<string, unknown> =>
+  !!v && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * The guides to take from a newer remote row, or `null` for "keep the local
+ * ones whole". Adopted only when the raw value is **a literal empty `{}`** (a
+ * clear another device pushed) or **every key in it cleans to a valid number**.
+ * Anything else — missing, null, a non-object, or an object with any key that
+ * does not clean (a junk value, an unknown key) — is not a trustworthy
+ * statement about the guides, and adopting its cleaned remainder could wipe
+ * guides that are really set: a guide gone back to the guideline moves a
+ * warning later, the direction that must not happen by accident.
+ */
+function guidesFromRemote(raw: unknown): MedGuides | null {
+  if (!isGuidesObject(raw)) return null;
+  const keys = Object.keys(raw);
+  if (keys.length === 0) return {};
+  const cleaned = cleanGuides(raw);
+  return Object.keys(cleaned).length === keys.length ? cleaned : null;
+}
 
 export function mergeMedicationPrefs(local: StoredMedications, remote: RemoteMedications | null): MedicationMerge {
   const remoteItems = remote?.medications ?? null;
   const remoteAt = remote?.medications_updated_at ?? null;
+  const rawGuides = remote?.medication_guides;
+  const remoteGuides = cleanGuides(rawGuides);
+  const adoptedGuides = guidesFromRemote(rawGuides);
 
   if (remoteItems && remoteAt && remoteAt > local.updatedAt) {
-    const remoteGuides = cleanGuides(remote?.medication_guides);
     return {
       kind: 'adopt-remote',
       stored: {
         items: remoteItems,
-        // A remote row written by an older client has no guides. That is "this
-        // client did not know about them", not "there are none", so the local
-        // ones are kept rather than wiped by a newer-stamped copy.
-        guides: Object.keys(remoteGuides).length > 0 ? remoteGuides : local.guides,
+        // **The raw column decides, not its cleaned value** (see
+        // `guidesFromRemote`): missing or null is a row written by an older
+        // client or a table that predates the column; a literal `{}` is a clear
+        // and is adopted, so a second device does not put its old guides back;
+        // an object that does not fully clean keeps the local guides whole.
+        guides: adoptedGuides ?? local.guides,
         updatedAt: remoteAt,
       },
     };
   }
-  if (local.items.length > 0 || remoteItems) return { kind: 'push-local' };
+  if (local.items.length > 0 || remoteItems) {
+    return { kind: 'push-local', remoteHadGuides: Object.keys(remoteGuides).length > 0 };
+  }
   return { kind: 'nothing' };
 }
 
 /**
  * The `medication_guides` value to include in a push, or `undefined` to leave
- * the column out of the upsert entirely. **Empty means omit, never `{}`**:
- * omitting leaves whatever the remote holds untouched, and — the reason it
- * matters now — a push that names the column fails outright on a table that
- * has not had the `alter table` run yet, which would break every medications
- * sync for anyone who updates before running it. Nothing writes guides in 0a,
- * so nothing sends the column.
+ * the column out of the upsert entirely.
+ *  - local guides non-empty → send them;
+ *  - local guides empty **and the remote row last pulled held guides** → send
+ *    an explicit `{}`, the only way a clear reaches the remote (omitting the
+ *    column leaves the old values in place);
+ *  - otherwise omit: a push that names the column fails outright on a table
+ *    that has not had the `alter table` run, which would break every
+ *    medications sync. A remote row without the column never holds guides, so
+ *    that case never sends one.
+ * Decided from the pulled row, not from "what was just cleared", so a clear
+ * whose push failed is retried by the next sync.
  */
-export function guidesForPush(guides: MedGuides): MedGuides | undefined {
-  return Object.keys(guides).length > 0 ? guides : undefined;
+export function guidesForPush(guides: MedGuides, remoteHadGuides = false): MedGuides | undefined {
+  if (Object.keys(guides).length > 0) return guides;
+  return remoteHadGuides ? {} : undefined;
 }
 
 /** The `user_prefs` row `pushMedications` upserts — separate from the I/O so

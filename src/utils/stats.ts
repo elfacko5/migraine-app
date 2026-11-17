@@ -1,4 +1,4 @@
-import type { Attack, MedClass, Snapshot } from '../types';
+import type { Attack, Snapshot } from '../types';
 import { isRetired } from './retired';
 
 export function maxSeverity(snapshot: Snapshot): number {
@@ -490,33 +490,44 @@ export function attacksInWindow(attacks: Attack[], windowMs: number = TODAY_WIND
   }).length;
 }
 
+/** Where one logged dose is counted: which bar (if any), whether it is in the
+ *  "Any" count, and whether it is untyped (listed by name). Decided per dose by
+ *  `countingOf` in `medResolve.ts`. */
+export interface DoseCounting {
+  bar: 'triptan' | 'combination' | 'simple' | null;
+  any: boolean;
+  untyped: boolean;
+}
+
 export interface ClassDays {
   triptan: number;
   combination: number;
   simple: number;
-  /** Distinct days with a triptan, combination or simple dose — the mixed-use count. */
+  /** Distinct days with a triptan, combination, simple or **untyped** dose
+   *  (not a gepant) — the "Any attack medicine" count. A union of days, never
+   *  a sum of the bars. */
   any: number;
-  /** Names logged in the window whose class is `other` or unset — counted in no bar.
-   *  A gepant is neither counted nor listed here. */
+  /** Names logged in the window that count under "Any" only because they have
+   *  no type (or no library entry). A gepant is neither counted nor listed. */
   untyped: string[];
 }
 
 /**
  * Medication days per overuse class in a rolling window ending now — Today's
- * T / C / P bars.
+ * T / C / P bars and the "Any attack medicine" line.
  *
  * **Days per class, never a sum of per-drug days.** Two triptans on one day
  * are one triptan day, because the class threshold is about how often that
- * class is taken, not about which drug. `any` is the same rule across all
- * three, for ICHD-3's mixed-use line.
+ * class is taken, not about which drug. `any` is the same rule across every
+ * counted dose, untyped ones included, for ICHD-3's mixed-use line.
  *
  * Filtered on the snapshot's own time like `medicationDaysInWindow`, with
- * retired names skipped. `classOf` resolves a logged name against the library
- * — passed in rather than imported, since `medGuardrails` imports from here.
+ * retired names skipped. `countingOf` decides, **per dose**, where it counts —
+ * passed in rather than imported, since `medResolve` imports from here.
  */
 export function classDaysInWindow(
   attacks: Attack[],
-  classOf: (name: string) => MedClass | undefined,
+  countingOf: (dose: NonNullable<Snapshot['medication']>) => DoseCounting,
   windowMs: number = TODAY_WINDOW_MS,
   now: number = Date.now(),
 ): ClassDays {
@@ -526,21 +537,14 @@ export function classDaysInWindow(
   for (const a of attacks) {
     for (const snap of a.snapshots) {
       const name = snap.medication?.name?.trim();
-      if (!name || isRetired(name)) continue;
+      if (!snap.medication || !name || isRetired(name)) continue;
       const t = new Date(snap.time).getTime();
       if (t > now || t < since) continue;
       const day = localDayKey(new Date(t));
-      const cls = classOf(name);
-      if (cls === 'triptan' || cls === 'combination' || cls === 'simple') {
-        days[cls].add(day);
-        days.any.add(day);
-      } else if (cls === 'gepant') {
-        // No overuse guideline for gepants: counted in no bar, and not
-        // "untyped" either — the user did set its type.
-        continue;
-      } else {
-        untyped.add(name);
-      }
+      const c = countingOf(snap.medication);
+      if (c.bar) days[c.bar].add(day);
+      if (c.any) days.any.add(day);
+      if (c.untyped) untyped.add(name);
     }
   }
   return {

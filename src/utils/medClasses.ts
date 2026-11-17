@@ -1,5 +1,4 @@
 import type { MedClass } from '../types';
-import { MOH_DAYS_COMBINATION, MOH_DAYS_SIMPLE, MOH_DAYS_TRIPTAN } from './stats';
 
 // The types the v3 editor offers (2026-10-26), with the letter each wears on
 // every screen — My medications, Today's medication card, Attack detail and
@@ -22,8 +21,10 @@ export function classLetter(cls: MedClass | undefined): string | null {
 /** The three classes with an overuse threshold, in the order Today lists them. */
 export type CountedClass = 'triptan' | 'combination' | 'simple';
 
-export const COUNTED_CLASSES: { value: CountedClass; label: string; letter: string; limit: number }[] = [
-  { value: 'triptan', label: 'Triptan', letter: 'T', limit: MOH_DAYS_TRIPTAN },
-  { value: 'combination', label: 'Combination painkiller', letter: 'C', limit: MOH_DAYS_COMBINATION },
-  { value: 'simple', label: 'Simple painkiller', letter: 'P', limit: MOH_DAYS_SIMPLE },
+// No limit here any more: it comes from `guideFor(value, guides)` at the call
+// site, so a constant cannot go stale when a guide changes (0b).
+export const COUNTED_CLASSES: { value: CountedClass; label: string; letter: string }[] = [
+  { value: 'triptan', label: 'Triptan', letter: 'T' },
+  { value: 'combination', label: 'Combination painkiller', letter: 'C' },
+  { value: 'simple', label: 'Simple painkiller', letter: 'P' },
 ];

@@ -3,6 +3,7 @@ import type { MedGuides, Medication, SyncStatus } from '../types';
 import { pullUserPrefs, pushMedications } from '../lib/sync';
 import { cleanGuides } from '../utils/medResolve';
 import { guidesForPush, mergeMedicationPrefs, type StoredMedications } from '../utils/medPrefsMerge';
+import { runM3 } from '../utils/medMigrations';
 
 const KEY = 'hd_medications';
 
@@ -28,6 +29,18 @@ function load(): Stored {
   }
 }
 
+// M3 (0b): the one-time move of per-medicine limits into guides, applied to
+// what was just loaded. Written back with the **same `updatedAt`** — it is a
+// migration, not an edit — so it neither wins nor loses a sync merge by being
+// run. See `utils/medMigrations.ts` for the rule and the marker.
+function migrate(stored: Stored): Stored {
+  const r = runM3(stored.items, stored.guides, localStorage);
+  if (!r.changed) return stored;
+  const next = { ...stored, guides: r.guides };
+  try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* the in-memory guides still apply */ }
+  return next;
+}
+
 function save(items: Medication[], guides: MedGuides): Stored {
   const next = { items, guides, updatedAt: new Date().toISOString() };
   localStorage.setItem(KEY, JSON.stringify(next));
@@ -35,14 +48,19 @@ function save(items: Medication[], guides: MedGuides): Stored {
 }
 
 export function useMedications(userId: string | null) {
-  const [initial] = useState(load);
+  const [initial] = useState(() => migrate(load()));
   const [medications, setMedicationsState] = useState<Medication[]>(initial.items);
-  // Held and kept in step with the list, and synced with it, but read by
-  // nothing yet: `guideFor` and its callers arrive in 0b.
+  // Held and kept in step with the list, and synced with it. Read through
+  // `guideFor` by Today and Insights (0b).
   const [guides, setGuidesState] = useState<MedGuides>(initial.guides);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const syncingRef = useRef(false);
+  // Whether the remote row held guides at the last pull. In memory, one sync
+  // run is enough: every sync pulls first, and a push outside a run (a local
+  // edit) uses the last run's answer, defaulting to "no" so a clear never sends
+  // a `{}` it cannot justify.
+  const remoteHadGuidesRef = useRef(false);
 
   // Wraps a fire-and-forget remote push so its outcome also feeds the Profile
   // sync indicator, not just the console — same contract as useUserPrefs.
@@ -60,7 +78,7 @@ export function useMedications(userId: string | null) {
   const commit = useCallback((items: Medication[]) => {
     const stored = save(items, guides);
     setMedicationsState(items);
-    if (userId) trackPush(pushMedications(stored.items, stored.updatedAt, userId, guidesForPush(stored.guides)));
+    if (userId) trackPush(pushMedications(stored.items, stored.updatedAt, userId, guidesForPush(stored.guides, remoteHadGuidesRef.current)));
   }, [userId, trackPush, guides]);
 
   // Unlike the trigger/symptom/relief lists — which are add-only, so
@@ -82,11 +100,19 @@ export function useMedications(userId: string | null) {
       // tested without a network.
       const merge = mergeMedicationPrefs(local, remote);
       if (merge.kind === 'adopt-remote') {
-        localStorage.setItem(KEY, JSON.stringify(merge.stored));
-        setMedicationsState(merge.stored.items);
-        setGuidesState(merge.stored.guides);
+        // A library that has just arrived may be the first one this device has
+        // seen, so M3 is given its chance here too (it does nothing on an
+        // empty library, and sets no marker then).
+        const adopted = migrate(merge.stored);
+        localStorage.setItem(KEY, JSON.stringify(adopted));
+        setMedicationsState(adopted.items);
+        setGuidesState(adopted.guides);
+        remoteHadGuidesRef.current = Object.keys(adopted.guides).length > 0;
       } else if (merge.kind === 'push-local') {
-        await pushMedications(local.items, local.updatedAt, uid, guidesForPush(local.guides));
+        remoteHadGuidesRef.current = merge.remoteHadGuides;
+        const sending = guidesForPush(local.guides, merge.remoteHadGuides);
+        await pushMedications(local.items, local.updatedAt, uid, sending);
+        remoteHadGuidesRef.current = !!sending && Object.keys(sending).length > 0;
       }
       setSyncStatus('synced');
       setLastSyncedAt(new Date().toISOString());

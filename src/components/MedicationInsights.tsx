@@ -1,10 +1,10 @@
-import type { Attack, Medication } from '../types';
+import type { Attack, MedGuides, Medication } from '../types';
 import {
   medicationDaysInWindow, medicationResponse,
   MOH_DAYS_TRIPTAN, MOH_DAYS_SIMPLE,
 } from '../utils/stats';
 import { MedIcon } from './drawnIcons';
-import { mohDaysFor } from '../utils/medGuardrails';
+import { guideForName } from '../utils/medGuardrails';
 import { InsightSection } from './InsightSection';
 
 // Two questions a clinician asks about medication, and neither of them is
@@ -23,10 +23,12 @@ interface Props {
   /** Whether the window is close enough to a calendar month for the overuse
    *  thresholds to mean anything against it. See the note on `nearing`. */
   monthScale: boolean;
+  /** The monthly guides (a stored number per type, else the guideline). */
+  guides?: MedGuides;
 }
 
 export function MedicationInsights({
-  attacks, medications = [], since, windowLabel, monthScale,
+  attacks, medications = [], guides = {}, since, windowLabel, monthScale,
 }: Props) {
   const days = medicationDaysInWindow(attacks, since);
   const response = medicationResponse(attacks, since);
@@ -55,7 +57,7 @@ export function MedicationInsights({
               a caption that withholds a figure without explaining reads as the
               app having lost it. */}
           {monthScale
-            ? ' Each drug is measured against the number for its own type, or the limit you entered for it in My medications.'
+            ? ' Each drug is measured against the number for its own type.'
             : ' Those numbers are per month, and this period is longer than one — so nothing here is marked against them. Pick 30 days for that.'}
           {' '}Doses taken without logging an attack aren't counted.
         </>
@@ -70,16 +72,17 @@ export function MedicationInsights({
       <div>
         {days.map((med, i) => {
           const r = byName.get(med.name);
-          // Marked against *this* drug's reference point: the limit off its
-          // label if one was entered, else the ICHD number for its class, else
-          // 10. It used to be 10 for everything, because nothing knew a drug's
-          // class — so a simple analgesic was flagged five days early.
+          // Marked against the guide for *this* drug's type (a stored number,
+          // else the ICHD guideline; "Any" when untyped; none for a gepant or
+          // for old same-name entries that disagree on type). It used to be 10
+          // for everything, because nothing knew a drug's class — so a simple
+          // analgesic was flagged five days early.
           // **Only when the window is month-scale.** The thresholds are stated
           // per month; over 3 months or all time a count will sail past 10
           // without meaning anything, and an amber figure that says "overuse"
           // when it doesn't is the one direction this page must not fail in.
           // Under a month it can only ever under-warn, which is safe.
-          const limit = mohDaysFor(med.name, medications);
+          const limit = guideForName(med.name, medications, guides);
           const nearing = monthScale && limit !== null && med.days >= limit;
           return (
             <div

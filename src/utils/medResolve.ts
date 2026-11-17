@@ -1,11 +1,12 @@
-import type { Attack, MedGuides, Medication, Snapshot } from '../types';
+import type { Attack, MedClass, MedGuides, Medication, Snapshot } from '../types';
 import { isRetired } from './retired';
-import { localDayKey } from './stats';
+import { localDayKey, type DoseCounting } from './stats';
 
 // Reading the medication library, without writing anything. Everything here is
-// a pure function of the library and the diary, added in 0a of the medication
-// flows and **not yet called by any screen or count** — the callers move in 0b
-// and the flows after it. See docs/plan-medication-flows.md.
+// a pure function of the library and the diary. Added in 0a of the medication
+// flows; 0b moves the counts onto `resolveDose` / `countingOf`, and the screens
+// that use `isLogged` / `daysTakenOf` arrive with the flows after it. See
+// docs/plan-medication-flows.md and docs/plan-medication-0b.md.
 
 // ── Form (migration M1, read-time) ─────────────────────────────────────────
 
@@ -67,17 +68,33 @@ export interface ResolvedDose {
 
 const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
 
+/** Do two strength texts name the same strength? Where **both** parse as one
+ *  number and one unit (`parseStrength`), they match when number and unit are
+ *  equal — "50mg" and "50 mg" are the same. Otherwise the trimmed text is
+ *  compared, case ignored. A unit is never converted ("0.05 g" is not
+ *  "50 mg"): a different spelling of another unit can only fail to match,
+ *  which leaves a dose ambiguous rather than giving it to the wrong entry. */
+export function sameStrengthText(a: string | null | undefined, b: string | null | undefined): boolean {
+  const pa = parseStrength(a);
+  const pb = parseStrength(b);
+  if (pa && pb) return pa.value === pb.value && pa.unit === pb.unit;
+  return norm(a) === norm(b);
+}
+
 /**
  * Which library entry a logged dose belongs to. Order:
- *  1. the dose's own `medId`, when that entry still exists;
+ *  1. the dose's own `medId`, when that entry exists;
+ *  1b. **a `medId` that matches no entry is not an answer: it falls through to
+ *     the name.** The diary can reach a device before the medication list does
+ *     (they sync and merge separately), so a dose stamped with an id this
+ *     device has not received yet must still count by its name. A dose whose
+ *     own entry was deleted therefore matches a same-name entry that still
+ *     exists, and nothing at all when none does;
  *  2. else the entries whose name matches — exactly one wins;
- *  3. else, among same-name entries, the one whose derived `dose` text equals
- *     the dose's own text — exactly one wins;
+ *  3. else, among same-name entries, the one whose dose text matches the
+ *     dose's own (`sameStrengthText`: parsed strengths compare as a number and
+ *     a unit, anything else as trimmed text) — exactly one wins;
  *  4. else **ambiguous**: it is never silently given to the first entry.
- *
- * A `medId` whose entry has been deleted resolves to nothing and is **not**
- * ambiguous, and does not fall back to the name: the id said which one it was,
- * and that one is gone.
  */
 export function resolveDose(
   dose: { name: string; dose?: string; medId?: string } | null | undefined,
@@ -86,16 +103,62 @@ export function resolveDose(
   if (!dose || !norm(dose.name)) return { med: null, ambiguous: false, candidates: [] };
   if (dose.medId) {
     const byId = library.find((m) => m.id === dose.medId);
-    return byId
-      ? { med: byId, ambiguous: false, candidates: [byId] }
-      : { med: null, ambiguous: false, candidates: [] };
+    if (byId) return { med: byId, ambiguous: false, candidates: [byId] };
+    // 1b: fall through to the name.
   }
   const named = library.filter((m) => norm(m.name) === norm(dose.name));
   if (named.length === 0) return { med: null, ambiguous: false, candidates: [] };
   if (named.length === 1) return { med: named[0], ambiguous: false, candidates: named };
-  const sameDose = named.filter((m) => norm(m.dose) === norm(dose.dose));
+  const sameDose = named.filter((m) => sameStrengthText(m.dose, dose.dose));
   if (sameDose.length === 1) return { med: sameDose[0], ambiguous: false, candidates: sameDose };
   return { med: null, ambiguous: true, candidates: named };
+}
+
+// ── What a dose counts under (0b) ──────────────────────────────────────────
+
+/** A class with the pre-v3 `'other'` read as no class at all. */
+const classOfEntry = (m: Medication): Exclude<MedClass, 'other'> | undefined =>
+  m.class === 'other' ? undefined : m.class;
+
+/**
+ * Where one logged dose is counted, from the entries `resolveDose` says it
+ * could belong to. **Per dose, never "the first entry with that name".**
+ *  - no entry at all (a typed-in drug, or a deleted one): **untyped** — counts
+ *    under "Any" only;
+ *  - every candidate shares one class: that class's bar if it is triptan /
+ *    combination / simple, and "Any" unless it is a gepant (no guideline);
+ *    "Not sure" or the old `other` is untyped;
+ *  - candidates of **different** classes (old same-name pairs): in **no bar**,
+ *    and under "Any" when at least one candidate is not a gepant. Nothing is
+ *    given to the first entry.
+ */
+export function countingOf(
+  dose: { name: string; dose?: string; medId?: string } | null | undefined,
+  library: Medication[],
+): DoseCounting {
+  const { candidates } = resolveDose(dose, library);
+  if (candidates.length === 0) return { bar: null, any: true, untyped: true };
+  const classes = new Set(candidates.map(classOfEntry));
+  if (classes.size === 1) {
+    const [cls] = [...classes];
+    if (cls === 'triptan' || cls === 'combination' || cls === 'simple') return { bar: cls, any: true, untyped: false };
+    if (cls === 'gepant') return { bar: null, any: false, untyped: false };
+    return { bar: null, any: true, untyped: true };
+  }
+  return { bar: null, any: candidates.some((m) => classOfEntry(m) !== 'gepant'), untyped: false };
+}
+
+/**
+ * The class every library entry named `name` shares, for the per-name rows
+ * (Insights, Today's attack mode). `undefined` = untyped or in no entry;
+ * `null` = old same-name entries that **disagree**, so no limit can be said to
+ * apply and no marker is drawn. Never the first entry's class.
+ */
+export function typeOfName(name: string, library: Medication[]): Exclude<MedClass, 'other'> | undefined | null {
+  const named = library.filter((m) => norm(m.name) === norm(name));
+  if (named.length === 0) return undefined;
+  const classes = new Set(named.map(classOfEntry));
+  return classes.size === 1 ? [...classes][0] : null;
 }
 
 /** `medication` with the library entry's id added, when exactly one entry owns
@@ -163,19 +226,20 @@ export function daysTakenOf(med: Medication, library: Medication[], attacks: Att
   return { days: days.size, ambiguousDoses };
 }
 
-// ── Guides (stored shape only; nothing reads them yet) ─────────────────────
+// ── Guides (stored shape) ──────────────────────────────────────────────────
 
 const GUIDE_KEYS = ['triptan', 'combination', 'simple', 'any'] as const;
 
 /** A stored `guides` value cleaned to what the type allows: only the four
- *  known keys, only positive finite numbers. Anything else is dropped, so a
+ *  known keys, only positive whole numbers (the same test `guideFor` applies, so the two
+ *  guards agree and a decimal cannot be adopted and then ignored). Anything else is dropped, so a
  *  hand-edited or future-shaped value cannot reach a reader. */
 export function cleanGuides(value: unknown): MedGuides {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const out: MedGuides = {};
   for (const key of GUIDE_KEYS) {
     const n = (value as Record<string, unknown>)[key];
-    if (typeof n === 'number' && Number.isFinite(n) && n > 0) out[key] = n;
+    if (typeof n === 'number' && Number.isInteger(n) && n > 0) out[key] = n;
   }
   return out;
 }

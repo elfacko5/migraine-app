@@ -1,7 +1,7 @@
-import type { Attack, Medication } from '../types';
+import type { Attack, MedGuides, Medication } from '../types';
 import { useNowTick } from '../hooks/useNowTick';
 import {
-  attacksInWindow, classDaysInWindow, medicationDaysLastWindow, migraineDaysInWindow, MOH_DAYS_MIXED,
+  attacksInWindow, classDaysInWindow, medicationDaysLastWindow, migraineDaysInWindow,
 } from '../utils/stats';
 import { formatTime } from '../utils/format';
 import { classLetter, COUNTED_CLASSES, type CountedClass } from '../utils/medClasses';
@@ -10,8 +10,9 @@ import { MedIcon } from './drawnIcons';
 import { ClassBadge } from './ClassBadge';
 import { WarningIcon } from './icons';
 import {
-  checkDose, doseUnits, findMedication, lastDoseSnapshot, mohDaysFor, unitsInWindow, unitsLabel,
+  checkDose, doseUnits, findMedication, guideFor, guideForName, lastDoseSnapshot, unitsInWindow, unitsLabel,
 } from '../utils/medGuardrails';
+import { countingOf } from '../utils/medResolve';
 
 // What belongs under the hero on Today: figures that need no interpretation,
 // and one warning that has to arrive before it's too late to act on. Anything
@@ -26,6 +27,8 @@ interface Props {
   /** The library — for each drug's class, its overuse reference point, and
    *  its own per-intake / per-day / minimum-gap limits. */
   medications?: Medication[];
+  /** The monthly guides (a stored number per type, else the guideline). */
+  guides?: MedGuides;
   /** Attack mode strips this down to what's actionable — see below. */
   attackMode?: boolean;
   /** The tiles and the medication card open Insights. */
@@ -56,8 +59,6 @@ interface Warning {
   key: string;
   count: string;
   note: string;
-  /** The drug it belongs to, when the ongoing dose card can carry it instead. */
-  drug?: string;
   cls?: CountedClass;
 }
 
@@ -143,7 +144,7 @@ function MedRow({ name, icon, figure, detail, warning = false }: {
 //   - **The last dose stays as-is.** One line, and it's the question people
 //     actually open the app mid-attack to answer.
 export function TodaySummary({
-  attacks, ongoing, medications = [], attackMode = false, onOpenInsights, onOpenMedications,
+  attacks, ongoing, medications = [], guides = {}, attackMode = false, onOpenInsights, onOpenMedications,
 }: Props) {
   // The 24-hour figure and the rolling 30 days both go stale on their own as
   // doses age out — the same reason every live duration in the app ticks. All
@@ -152,8 +153,6 @@ export function TodaySummary({
   useNowTick(60_000);
 
   const perDrug = medicationDaysLastWindow(attacks);
-  const classOf = (name: string) => findMedication(medications, name)?.class;
-
   // Mid-attack, the question is "when did I last take something" — the one
   // thing here that changes what you do in the next hour — with the running
   // 24-hour total beside it: not just when, but how much is already in.
@@ -166,10 +165,11 @@ export function TodaySummary({
   const position = lastDose ? checkDose(lastLibrary, attacks, lastName, 0) : null;
 
   if (attackMode) {
-    // Per drug, against each drug's own reference point — the attack-mode
-    // branch is unchanged apart from the window (its redesign is separate).
+    // Per drug, against the guide for that drug's type (a gepant, or old
+    // same-name entries that disagree, have none) — the attack-mode branch is
+    // unchanged in shape apart from where the number comes from.
     const nearing = perDrug
-      .map((m) => ({ ...m, threshold: mohDaysFor(m.name, medications) }))
+      .map((m) => ({ ...m, threshold: guideForName(m.name, medications, guides) }))
       .filter((m) => m.threshold !== null && m.days >= warnAt(m.threshold));
     if (nearing.length === 0 && !lastDose) return null;
     return (
@@ -196,61 +196,47 @@ export function TodaySummary({
   }
 
   // ── The class bars ─────────────────────────────────────────────────────
-  const cd = classDaysInWindow(attacks, classOf);
+  const cd = classDaysInWindow(attacks, (dose) => countingOf(dose, medications));
   // A row per class the user actually has: an acute medication of that class
   // in the library, or a dose of one in the window. A class nobody takes is
   // an empty bar that says nothing.
   const rows = COUNTED_CLASSES.filter((c) =>
     cd[c.value] > 0 || medications.some((m) => m.kind === 'acute' && m.class === c.value));
-  // The mixed-use line only when two or more classes were taken: with one, it
-  // would repeat that class's own row.
-  const showMixed = COUNTED_CLASSES.filter((c) => cd[c.value] > 0).length >= 2;
+  // "Any attack medicine" (the mixed-use line) is shown when it says something
+  // a class row does not: two or more classes had days; **an untyped medicine
+  // had days** (it is in no bar, so this is its only row — including when it
+  // is the only thing taken, which is what keeps its warning from going
+  // quiet); or doses counted under Any only (old same-name entries of
+  // different types) pushed it past the single class shown.
+  const barsWithDays = COUNTED_CLASSES.filter((c) => cd[c.value] > 0);
+  const showMixed = cd.untyped.length > 0 || barsWithDays.length >= 2
+    || (cd.any > 0 && (barsWithDays.length === 0 || cd.any > cd[barsWithDays[0].value]));
+  const anyLimit = guideFor('any', guides);
 
   // ── Warnings ───────────────────────────────────────────────────────────
-  // **From the class bars, naming the class**, since the bars are what the
-  // threshold is about. A drug's own entered limit is the exception: it is
-  // the user's number, about that drug, so its warning names the drug and
-  // quotes the limit back rather than a guideline. An untyped drug is in no
-  // bar, so it keeps a per-drug warning against the default reference point.
+  // **From the class bars and "Any attack medicine", naming the class.** There
+  // is no per-drug warning any more: a drug has no limit of its own (the
+  // guide is per type), and an untyped drug counts under Any, whose warning
+  // takes its place at the same number.
   const warnings: Warning[] = [];
   for (const c of rows) {
     const days = cd[c.value];
-    if (days >= warnAt(c.limit)) {
-      warnings.push({ key: c.value, cls: c.value, count: `${days} of ${c.limit} ${CLASS_NOUN[c.value]} days in the last 30 days.`, note: GUIDELINE_NOTE });
+    const limit = guideFor(c.value, guides);
+    if (days >= warnAt(limit)) {
+      warnings.push({ key: c.value, cls: c.value, count: `${days} of ${limit} ${CLASS_NOUN[c.value]} days in the last 30 days.`, note: GUIDELINE_NOTE });
     }
   }
-  if (showMixed && cd.any >= warnAt(MOH_DAYS_MIXED)) {
-    warnings.push({ key: 'mixed', count: `${cd.any} of ${MOH_DAYS_MIXED} acute medication days in the last 30 days.`, note: GUIDELINE_NOTE });
-  }
-  for (const m of perDrug) {
-    const lib = findMedication(medications, m.name);
-    const own = lib?.maxDaysPerMonth && lib.maxDaysPerMonth > 0 ? lib.maxDaysPerMonth : null;
-    // A gepant has a type but no overuse guideline, so it counts as typed
-    // here and draws no default warning.
-    const typed = lib?.class === 'triptan' || lib?.class === 'combination' || lib?.class === 'simple' || lib?.class === 'gepant';
-    if (own !== null) {
-      if (m.days >= warnAt(own)) {
-        warnings.push({
-          key: `drug:${m.name}`, drug: m.name,
-          count: `${m.name} on ${m.days} days in the last 30 days.`,
-          note: `You entered a limit of ${own} days a month for this one. Worth raising at your next appointment.`,
-        });
-      }
-    } else if (!typed) {
-      const threshold = mohDaysFor(m.name, medications);
-      if (threshold !== null && m.days >= warnAt(threshold)) {
-        warnings.push({ key: `drug:${m.name}`, drug: m.name, count: `${m.name} on ${m.days} days in the last 30 days.`, note: GUIDELINE_NOTE });
-      }
-    }
+  if (showMixed && cd.any >= warnAt(anyLimit)) {
+    // DRAFT wording (marked as such in the PR; June may change it): the
+    // existing sentence, used for the line whether or not a class row is shown.
+    warnings.push({ key: 'mixed', count: `${cd.any} of ${anyLimit} acute medication days in the last 30 days.`, note: GUIDELINE_NOTE });
   }
 
   // The warning that belongs to the drug being taken now rides inside its
-  // card, under a divider, rather than repeating above it: the drug's own
-  // limit first, else its class's.
+  // card, under a divider, rather than repeating above it: its class's.
   const lastClass = lastLibrary?.class;
   const lastWarning = lastDose
-    ? warnings.find((w) => w.drug && w.drug.toLowerCase() === lastName.trim().toLowerCase())
-      ?? warnings.find((w) => w.cls && w.cls === lastClass)
+    ? warnings.find((w) => w.cls && w.cls === lastClass)
     : undefined;
   const banners = warnings.filter((w) => w !== lastWarning);
 
@@ -313,18 +299,19 @@ export function TodaySummary({
           <button type="button" onClick={onOpenInsights} className="block w-full space-y-2.5 text-left">
             <p className="text-xs text-text-secondary">Last 30 days</p>
             {rows.map((c) => (
-              <ClassBar key={c.value} letter={c.letter} label={`${c.label} days`} days={cd[c.value]} limit={c.limit} />
+              <ClassBar key={c.value} letter={c.letter} label={`${c.label} days`} days={cd[c.value]} limit={guideFor(c.value, guides)} />
             ))}
-            {showMixed && <ClassBar letter="+" label="Any of these" days={cd.any} limit={MOH_DAYS_MIXED} />}
+            {showMixed && <ClassBar letter="+" label="Any attack medicine" days={cd.any} limit={anyLimit} />}
           </button>
           {/* Outside the button: "Set type" is its own action, and a button
               can't hold another. Only names logged in the window count —
               an untyped drug nobody took is nothing to fix today. */}
           {cd.untyped.length > 0 && (
             <p className="text-xs text-text-secondary">
+              {/* DRAFT wording (June, 2026-11-17: use the drafts; marked as a draft in the PR). */}
               {cd.untyped.length === 1
-                ? `${cd.untyped[0]} has no type set, so it isn't counted here.`
-                : `${cd.untyped.slice(0, -1).join(', ')} and ${cd.untyped[cd.untyped.length - 1]} have no type set, so they aren't counted here.`}{' '}
+                ? `${cd.untyped[0]} has no type set, so it only counts under Any attack medicine.`
+                : `${cd.untyped.slice(0, -1).join(', ')} and ${cd.untyped[cd.untyped.length - 1]} have no type set, so they only count under Any attack medicine.`}{' '}
               <button type="button" onClick={onOpenMedications} className="font-medium text-accent-light underline-offset-2 hover:underline">
                 Set type
               </button>

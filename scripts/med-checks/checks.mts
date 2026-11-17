@@ -4,7 +4,10 @@
 // no network, no localStorage and no account.
 import assert from 'node:assert/strict';
 import type { Attack, Medication } from '../../src/types/index.ts';
-import { cleanGuides, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, stampMedId, stampSnapshot } from '../../src/utils/medResolve.ts';
+import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
+import { GUIDELINE, guideFor, guideKeyOf } from '../../src/utils/medGuardrails.ts';
+import { classDaysInWindow } from '../../src/utils/stats.ts';
+import { M3_MARKER_KEY, planM3, runM3 } from '../../src/utils/medMigrations.ts';
 import { guidesForPush, medicationsUpsertRow, mergeMedicationPrefs, type StoredMedications } from '../../src/utils/medPrefsMerge.ts';
 
 let n = 0;
@@ -119,9 +122,18 @@ const lib = [s50, s100, twin1, twin2, med('i', 'Ibuprofen', '400 mg')];
 t('resolveDose 1: medId wins, even against the name', () => {
   assert.equal(resolveDose({ name: 'Sumatriptan', dose: '50 mg', medId: 's100' }, lib).med?.id, 's100');
 });
-t('resolveDose 1: a medId whose entry is gone is nothing, not a name fallback', () => {
-  const r = resolveDose({ name: 'Sumatriptan', dose: '50 mg', medId: 'deleted' }, lib);
+t('resolveDose 1b: an unknown medId + one name match counts under that entry', () => {
+  const r = resolveDose({ name: 'Ibuprofen', dose: '', medId: 'not-synced-yet' }, lib);
+  assert.deepEqual([r.med?.id, r.ambiguous], ['i', false]);
+});
+t('resolveDose 1b: an unknown medId + no name match resolves to nothing', () => {
+  const r = resolveDose({ name: 'Nope', dose: '', medId: 'deleted' }, lib);
   assert.deepEqual([r.med, r.ambiguous, r.candidates.length], [null, false, 0]);
+});
+t('resolveDose 1b: an unknown medId + two same-name entries goes to step 3, then ambiguous', () => {
+  assert.equal(resolveDose({ name: 'Sumatriptan', dose: '100 mg', medId: 'gone' }, lib).med?.id, 's100');
+  const r = resolveDose({ name: 'Sumatriptan', dose: '25 mg', medId: 'gone' }, lib);
+  assert.deepEqual([r.med, r.ambiguous], [null, true]);
 });
 t('resolveDose 2: one entry of that name', () => {
   assert.equal(resolveDose({ name: ' ibuprofen ', dose: '' }, lib).med?.id, 'i');
@@ -191,6 +203,214 @@ t('isLogged: conservative about ambiguous doses; retired names are not doses', (
   assert.equal(isLogged(twin1, lib, diary), true);   // could be this one
   assert.equal(isLogged(lib[4], lib, diary), false); // Ibuprofen never logged
   assert.equal(isLogged(med('b', 'A beer', ''), [med('b', 'A beer', '')], diary), false);
+});
+
+
+// ── 0b: step 3 compares strengths with parseStrength ──────────────────────
+t('resolveDose 3: "50mg" in the diary matches a library "50 mg"', () => {
+  assert.equal(resolveDose({ name: 'Sumatriptan', dose: '50mg' }, lib).med?.id, 's50');
+  assert.equal(resolveDose({ name: 'Sumatriptan', dose: '100  mg' }, lib).med?.id, 's100');
+});
+t('sameStrengthText: parsed → number and unit; unparsed → trimmed text, case ignored; no unit conversion', () => {
+  assert.equal(sameStrengthText('50mg', '50 mg'), true);
+  assert.equal(sameStrengthText('0.05 g', '50 mg'), false);
+  assert.equal(sameStrengthText(' 1 Tablet · 500/50 mg ', '1 tablet · 500/50 mg'), true);
+  assert.equal(sameStrengthText('500/50 mg', '500/50mg'), false);
+  assert.equal(sameStrengthText('', ''), true);
+});
+
+// ── 0b: guideFor / guideKeyOf ─────────────────────────────────────────────
+t('guideFor: stored number, else the guideline; junk is ignored', () => {
+  assert.equal(guideFor('triptan', { triptan: 6 }), 6);
+  assert.equal(guideFor('triptan', {}), 10);
+  assert.deepEqual((['triptan', 'combination', 'simple', 'any'] as const).map((k) => guideFor(k, {})), [10, 10, 15, 10]);
+  for (const bad of [0, -3, 2.5, NaN, '7' as never, null as never]) assert.equal(guideFor('simple', { simple: bad }), 15);
+  assert.equal(GUIDELINE.any, 10);
+});
+t('guideKeyOf: classes map to themselves, a gepant has none, no class and "other" are Any', () => {
+  assert.deepEqual(['triptan', 'combination', 'simple', 'gepant', 'other', undefined].map((c) => guideKeyOf(c as never)),
+    ['triptan', 'combination', 'simple', null, 'any', 'any']);
+});
+
+// ── 0b: countingOf, typeOfName, classDaysInWindow ─────────────────────────
+const cl = [
+  med('t', 'Trip', '50 mg', { class: 'triptan' }), med('c', 'Combo', '1', { class: 'combination' }),
+  med('p', 'Pain', '1', { class: 'simple' }), med('g', 'Gep', '1', { class: 'gepant' }),
+  med('u', 'Unsure', '1'), med('o', 'Old', '1', { class: 'other' }),
+  med('d1', 'Dup', '10 mg', { class: 'triptan' }), med('d2', 'Dup', '20 mg', { class: 'triptan' }),
+  med('x1', 'Mixed', '10 mg', { class: 'triptan' }), med('x2', 'Mixed', '20 mg', { class: 'simple' }),
+  med('y1', 'GepMix', '10 mg', { class: 'gepant' }), med('y2', 'GepMix', '20 mg', { class: 'gepant' }),
+  med('z1', 'GepOnly', '10 mg', { class: 'gepant' }), med('z2', 'GepOnly', '20 mg', { class: 'combination' }),
+];
+const co = (name: string, dose = '', medId?: string) => countingOf({ name, dose, ...(medId ? { medId } : {}) }, cl);
+t('countingOf: each class counts in its bar and under Any', () => {
+  assert.deepEqual(co('Trip'), { bar: 'triptan', any: true, untyped: false });
+  assert.deepEqual(co('Combo'), { bar: 'combination', any: true, untyped: false });
+  assert.deepEqual(co('Pain'), { bar: 'simple', any: true, untyped: false });
+});
+t('countingOf: untyped, "other" and a dose in no library entry count under Any only', () => {
+  for (const n of ['Unsure', 'Old', 'Typed by hand']) assert.deepEqual(co(n), { bar: null, any: true, untyped: true });
+});
+t('countingOf: a gepant is in no bar and not under Any, and is not "untyped"', () => {
+  assert.deepEqual(co('Gep'), { bar: null, any: false, untyped: false });
+});
+t('countingOf: same-name entries of one class count under it (nothing lost)', () => {
+  assert.deepEqual(co('Dup', '99 mg'), { bar: 'triptan', any: true, untyped: false });
+});
+t('countingOf: same-name entries of different classes → no bar, under Any, never the first entry', () => {
+  assert.deepEqual(co('Mixed', '99 mg'), { bar: null, any: true, untyped: false });
+  assert.deepEqual(co('GepMix', '99 mg'), { bar: null, any: false, untyped: false });   // two gepants: still no Any
+  assert.deepEqual(co('GepOnly', '99 mg'), { bar: null, any: true, untyped: false });   // one candidate is not a gepant
+});
+t('countingOf: a medId picks its entry; an unknown id falls to the name', () => {
+  assert.deepEqual(co('Mixed', '', 'x2'), { bar: 'simple', any: true, untyped: false });
+  assert.deepEqual(co('Trip', '', 'never-synced'), { bar: 'triptan', any: true, untyped: false });
+});
+t('typeOfName: shared class, untyped, absent, and null when same-name entries disagree', () => {
+  assert.equal(typeOfName('trip', cl), 'triptan');
+  assert.equal(typeOfName('Dup', cl), 'triptan');
+  assert.equal(typeOfName('Unsure', cl), undefined);
+  assert.equal(typeOfName('Old', cl), undefined);
+  assert.equal(typeOfName('Nobody', cl), undefined);
+  assert.equal(typeOfName('Mixed', cl), null);
+});
+t('classDaysInWindow: per dose; Any is a union of days (two untyped drugs on one day = one day)', () => {
+  const NOW = Date.parse('2026-11-10T12:00:00Z');
+  const at = (dayAgo: number, name: string, dose = '', medId?: string) => ({
+    time: new Date(NOW - dayAgo * 86400000).toISOString(), areas: {}, symptoms: [], reliefs: [], note: null, source: 'manual' as const,
+    medication: { name, dose, ...(medId ? { medId } : {}) },
+  });
+  const atk = (...snaps: ReturnType<typeof at>[]): Attack => ({ id: 1, snapshots: snaps, end: null, triggers: [], notificationConfig: { enabled: false, mode: 'adaptive', fixedIntervalMinutes: 60 } } as unknown as Attack);
+  const r = classDaysInWindow([
+    atk(at(1, 'Unsure'), at(1, 'Typed by hand'), at(2, 'Old')),      // 2 untyped days, 3 untyped doses
+    atk(at(3, 'Trip'), at(3, 'Pain')),                               // one day in two bars and Any
+    atk(at(4, 'Mixed', '99 mg')),                                    // ambiguous types: Any only
+    atk(at(5, 'Gep')),                                               // gepant: nothing
+    atk(at(40, 'Trip')),                                             // outside the window
+    atk(at(6, 'a beer')),                                            // retired
+  ], (d) => countingOf(d, cl), 30 * 86400000, NOW);
+  assert.deepEqual([r.triptan, r.combination, r.simple, r.any], [1, 0, 1, 4]);
+  assert.deepEqual(r.untyped, ['Old', 'Typed by hand', 'Unsure']);
+});
+
+
+// ── 0b: M3 (the rule, and how it is run) ──────────────────────────────────
+const lim = (id: string, cls: Medication['class'], limit?: number, extra: Partial<Medication> = {}) =>
+  med(id, id, '1', { class: cls, ...(limit ? { maxDaysPerMonth: limit } : {}), ...extra });
+const fakeStorage = (init: Record<string, string> = {}) => {
+  const m = new Map(Object.entries(init));
+  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), has: (k: string) => m.has(k) };
+};
+t('M3: only ever lowers a guide — the lowest limit below the guideline is written', () => {
+  const p = planM3([lim('a', 'triptan', 6), lim('b', 'triptan', 9), lim('c', 'combination', 8)], {}, false);
+  assert.deepEqual(p.guides, { triptan: 6, combination: 8 });
+});
+t('M3: a limit at or above the guideline writes nothing and is listed', () => {
+  const p = planM3([lim('a', 'triptan', 12), lim('b', 'simple', 15), lim('c', 'simple', 20)], {}, false);
+  assert.deepEqual(p.guides, {});
+  assert.deepEqual(p.notCopied.map((n) => [n.name, n.limit]), [['a', 12], ['b', 15], ['c', 20]]);
+});
+t('M3: 12 beside 8 → guide 8, the 12 listed; 12 alone → no write, listed', () => {
+  const both = planM3([lim('a', 'triptan', 12), lim('b', 'triptan', 8)], {}, false);
+  assert.deepEqual([both.guides, both.notCopied.map((n) => n.limit)], [{ triptan: 8 }, [12]]);
+  const alone = planM3([lim('a', 'triptan', 12)], {}, false);
+  assert.deepEqual([alone.guides, alone.notCopied.length], [{}, 1]);
+});
+t('M3: gepant and untyped limits are inert and listed; preventives are ignored', () => {
+  const p = planM3([lim('g', 'gepant', 4), lim('u', undefined, 3), lim('o', 'other', 3), lim('p', 'triptan', 2, { kind: 'preventive' })], {}, false);
+  assert.deepEqual([p.guides, p.inert.map((i) => i.name)], [{}, ['g', 'u', 'o']]);
+});
+t('M3: an EMPTY library does nothing and sets NO marker; it runs once a medicine exists', () => {
+  const st = fakeStorage();
+  const r = runM3([], {}, st);
+  assert.deepEqual([r.changed, r.plan.gate, st.has(M3_MARKER_KEY)], [false, 'empty-library', false]);
+  const later = runM3([lim('a', 'triptan', 6)], {}, st);
+  assert.deepEqual([later.changed, later.guides, st.has(M3_MARKER_KEY)], [true, { triptan: 6 }, true]);
+});
+t('M3: non-empty guides are not run over, and M3 is marked done', () => {
+  const st = fakeStorage();
+  const r = runM3([lim('a', 'triptan', 6)], { triptan: 9 }, st);
+  assert.deepEqual([r.changed, r.guides, r.plan.gate, st.has(M3_MARKER_KEY)], [false, { triptan: 9 }, 'guides-not-empty', true]);
+});
+t('M3: runs once — the marker stops a second run, and stops a refill after a clear', () => {
+  const st = fakeStorage();
+  const items = [lim('a', 'triptan', 6)];
+  assert.equal(runM3(items, {}, st).changed, true);
+  assert.equal(runM3(items, {}, st).changed, false);     // guides were cleared, M3 does not come back
+});
+t('M3: nothing below a guideline writes nothing but marks M3 done (provided the library was not empty)', () => {
+  const st = fakeStorage();
+  const r = runM3([lim('a', 'simple', 15)], {}, st);
+  assert.deepEqual([r.changed, st.has(M3_MARKER_KEY)], [false, true]);
+});
+
+// ── 0b: the merge tells a missing column from an explicit {} ──────────────
+const L = (updatedAt: string, guides: Record<string, number>): StoredMedications => ({ items: [A], guides, updatedAt });
+const R = (updatedAt: string, guides?: unknown) => ({ medications: [A], medications_updated_at: updatedAt, ...(guides === undefined ? {} : { medication_guides: guides }) });
+const guidesAfter = (m: ReturnType<typeof mergeMedicationPrefs>) => (m.kind === 'adopt-remote' ? m.stored.guides : 'not adopted');
+t('merge: remote newer with explicit {} and local guides → adopts {} (the clear propagates)', () => {
+  assert.deepEqual(guidesAfter(mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), R('2026-03-01T00:00:00Z', {}))), {});
+});
+t('merge: remote newer with null → keeps local guides', () => {
+  assert.deepEqual(guidesAfter(mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), R('2026-03-01T00:00:00Z', null))), { triptan: 6 });
+});
+t('merge: remote newer with the column absent → keeps local guides', () => {
+  assert.deepEqual(guidesAfter(mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), R('2026-03-01T00:00:00Z'))), { triptan: 6 });
+});
+t('merge: remote newer with a MIXED object (one valid key, one junk) → keeps local guides whole', () => {
+  assert.deepEqual(guidesAfter(mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), R('2026-03-01T00:00:00Z', { triptan: 7, any: 'x' }))), { triptan: 6 });
+  assert.deepEqual(guidesAfter(mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), R('2026-03-01T00:00:00Z', { triptan: 'abc' }))), { triptan: 6 });
+  assert.deepEqual(guidesAfter(mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), R('2026-03-01T00:00:00Z', { triptan: 7, futureKey: 3 }))), { triptan: 6 });
+});
+t('merge: remote newer { triptan: 7.5 } over local { triptan: 6 } → keeps { triptan: 6 } (a decimal is not a valid guide)', () => {
+  assert.deepEqual(guidesAfter(mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), R('2026-03-01T00:00:00Z', { triptan: 7.5 }))), { triptan: 6 });
+  assert.deepEqual(cleanGuides({ triptan: 7.5, simple: 12 }), { simple: 12 });
+});
+t('merge: remote newer with an object whose every key is valid → adopted', () => {
+  assert.deepEqual(guidesAfter(mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), R('2026-03-01T00:00:00Z', { triptan: 7, any: 9 }))), { triptan: 7, any: 9 });
+});
+t('merge: remote newer with a non-object value → treated as missing, keeps local guides', () => {
+  assert.deepEqual(guidesAfter(mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), R('2026-03-01T00:00:00Z', 'junk'))), { triptan: 6 });
+});
+t('push rule: remote older with {} and local guides non-empty → local wins and the push sends the local guides', () => {
+  const m = mergeMedicationPrefs(L('2026-03-01T00:00:00Z', { triptan: 6 }), R('2026-02-01T00:00:00Z', {}));
+  assert.equal(m.kind, 'push-local');
+  if (m.kind === 'push-local') assert.deepEqual(guidesForPush({ triptan: 6 }, m.remoteHadGuides), { triptan: 6 });
+});
+t('push rule: remote older with {} and local empty → local wins and the column is omitted', () => {
+  const m = mergeMedicationPrefs(L('2026-03-01T00:00:00Z', {}), R('2026-02-01T00:00:00Z', {}));
+  assert.equal(m.kind, 'push-local');
+  if (m.kind === 'push-local') assert.equal(guidesForPush({}, m.remoteHadGuides), undefined);
+});
+t('push rule: local empty and the remote row last pulled had guides → an explicit {} is sent', () => {
+  const m = mergeMedicationPrefs(L('2026-03-01T00:00:00Z', {}), R('2026-02-01T00:00:00Z', { triptan: 6 }));
+  assert.equal(m.kind, 'push-local');
+  if (m.kind === 'push-local') assert.deepEqual(guidesForPush({}, m.remoteHadGuides), {});
+});
+t('push rule: a remote row without the column (no alter table, or an older client) never gets one', () => {
+  const m = mergeMedicationPrefs(L('2026-03-01T00:00:00Z', {}), R('2026-02-01T00:00:00Z'));
+  if (m.kind === 'push-local') assert.equal(guidesForPush({}, m.remoteHadGuides), undefined);
+  assert.equal(m.kind, 'push-local');
+});
+t('push rule: a clear whose push failed is retried by the next sync from the pulled row (same answer twice)', () => {
+  const remote = R('2026-02-01T00:00:00Z', { triptan: 6 });
+  const first = mergeMedicationPrefs(L('2026-03-01T00:00:00Z', {}), remote);
+  const second = mergeMedicationPrefs(L('2026-03-01T00:00:00Z', {}), remote);   // the first push threw; nothing was recorded
+  assert.deepEqual(first, second);
+  if (second.kind === 'push-local') assert.deepEqual(guidesForPush({}, second.remoteHadGuides), {});
+});
+t('two devices: A clears and pushes {}; B pulls it, ends with empty guides and does not push its old ones back', () => {
+  // A (guides cleared, newer) → remote row after A's push
+  const remoteAfterA = { medications: [A], medications_updated_at: '2026-03-01T00:00:00Z', medication_guides: guidesForPush({}, true) };
+  assert.deepEqual(remoteAfterA.medication_guides, {});
+  // B still holds the old guides under the older stamp
+  const b = mergeMedicationPrefs(L('2026-02-01T00:00:00Z', { triptan: 6 }), remoteAfterA);
+  assert.equal(b.kind, 'adopt-remote');                       // adopts, so no push of its own
+  assert.deepEqual(guidesAfter(b), {});
+  // and a sync straight after, from B's now-adopted state, sends nothing new
+  const again = mergeMedicationPrefs({ items: [A], guides: {}, updatedAt: '2026-03-01T00:00:00Z' }, remoteAfterA);
+  assert.equal(again.kind, 'push-local');
+  if (again.kind === 'push-local') assert.equal(guidesForPush({}, again.remoteHadGuides), undefined);
 });
 
 console.log(`\n${n} checks passed`);
