@@ -344,3 +344,20 @@ June, in chat: the "medication X, 2 of 10" figures should not be shown on Today.
 **Done 2026-11-17 (June said yes, and confirmed from a screenshot that she means the "Last 30 days" card):** the card and its "Set type" line are removed from `TodaySummary.tsx`, with the `onOpenMedications` prop and its `App.tsx` pass-through. The overuse warning banners stay. `typecheck` and `lint` are 0. `CLAUDE.md` and `docs/today-cards.md` are updated. Not committed.
 
 **Commit hashes (2026-11-17):** 0b review fixes and the removal of the Today "Last 30 days" card are in `12dccfd` on `medication-flows` (on top of `17de309`, 0b). The plan edits for items 210 to 225 are in that commit or the one before it; the plan itself was committed before that. Not pushed.
+
+**R5 done (2026-11-17, June):** `alter table user_prefs add column if not exists medication_guides jsonb;` was run in her Supabase project and the check query returned one row, `medication_guides` / `jsonb` (her screenshot). 0b can now sync guides. I did not touch Supabase.
+
+## June's answers, 2026-11-17 (chosen from the options in chat; the options and recommendations are mine, the choices are hers)
+
+| Question | Her choice | Effect |
+|---|---|---|
+| Item 224: should Insights' overuse marker count a deleted medicine's doses? | **No, the marker skips deleted medicines.** | Today's warnings and Insights' overuse marker count medicines in the library only (with the typed-in rule below). Insights history (days a month, dose counts, response line) keeps the doses, under "Any" only, class unknown. |
+| Item 215: the deleted-names list | **Sync it.** | `deleted: { name, deletedAt }[]` is stored inside `hd_medications` under the same `updatedAt` and the same whole-list last-write-wins merge, with one new `user_prefs` column (`medication_deleted jsonb`), the same `alter table` step and send-only-when-needed rule as `medication_guides`. It filters only the wizard chips, the voice-parse list and the warning counts, never a stored dose. |
+| Typed-in names never in the library | **Still count** toward the "Any attack medicine" warning. | Unchanged from 0b. Only names in `deleted` (and in no library entry) are skipped. |
+| Item 220: delete wording | **Approved as written:** title "Remove Sumatriptan 50 mg tablet?", body "It leaves your list. The 6 doses stay in your diary and in Insights.", buttons "Remove" and "Keep it". | Item 223's hold is lifted. The body stays true: history in Insights keeps the doses. It does not claim the overuse marker keeps them. |
+
+**Still open:** whether a plain message (no button) shows after Add and after Delete.
+
+**Build note, not started:** the `deleted` list, the warning and marker filter and the new column are built with commit 4 (Remove), not now. The 0b code that counts a deleted medicine under "Any" stays until then, so the review finding about it stays skipped until that commit. Re-adding a medicine with a name in `deleted` removes the name from `deleted`.
+
+**Answered (June, 2026-11-17, "yes"): a plain message with no button shows after Add and after Delete.** It uses Lidd's existing toast, no Undo. Draft wording, hers to reword: after Add, "Sumatriptan 50 mg tablet was added to your medicines."; after Delete, "Sumatriptan 50 mg tablet was removed from your medicines. Its earlier doses stay in your diary." The medicine is named in full (name, strength, form). With this, the open items from items 210 to 225 are all answered; the lighter review rules are still undecided.
