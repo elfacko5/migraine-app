@@ -4,7 +4,7 @@
 // no network, no localStorage and no account.
 import assert from 'node:assert/strict';
 import type { Attack, Medication } from '../../src/types/index.ts';
-import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
+import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
 import { GUIDELINE, guideFor, guideKeyOf } from '../../src/utils/medGuardrails.ts';
 import { classDaysInWindow } from '../../src/utils/stats.ts';
 import { M3_MARKER_KEY, markM3Done, planM3, runM3 } from '../../src/utils/medMigrations.ts';
@@ -427,6 +427,43 @@ t('two devices: A clears and pushes {}; B pulls it, ends with empty guides and d
   const again = mergeMedicationPrefs({ items: [A], guides: {}, updatedAt: '2026-03-01T00:00:00Z' }, remoteAfterA);
   assert.equal(again.kind, 'push-local');
   if (again.kind === 'push-local') assert.equal(guidesForPush({}, again.remoteHadGuides), undefined);
+});
+
+// ── add wizard (commit 1) ──────────────────────────────────────────────────
+const S50 = med('s1', 'Sumatriptan', '50mg', { strength: '50mg', form: 'Tablet', class: 'triptan' });
+t('sameMedicine: name case and spaces, "50 mg" vs "50mg" are the same', () => {
+  assert.equal(sameMedicine({ name: ' sumatriptan ', strength: '50 mg', form: 'Tablet', dose: '' }, S50), true);
+});
+t('sameMedicine: a different form or a different strength is a different medicine', () => {
+  assert.equal(sameMedicine({ name: 'Sumatriptan', strength: '50mg', form: 'Nasal spray', dose: '' }, S50), false);
+  assert.equal(sameMedicine({ name: 'Sumatriptan', strength: '100mg', form: 'Tablet', dose: '' }, S50), false);
+  assert.equal(sameMedicine({ name: 'Rizatriptan', strength: '50mg', form: 'Tablet', dose: '' }, S50), false);
+});
+t('sameMedicine: an old record with no stored form compares as its derived form, strength from dose', () => {
+  const old = med('o', 'Treo', '500mg', { unitLabel: 'tablet' });
+  assert.equal(sameMedicine({ name: 'treo', strength: '500 mg', form: 'Tablet', dose: '' }, old), true);
+  assert.equal(sameMedicine({ name: 'treo', strength: '500 mg', form: 'Capsule', dose: '' }, old), false);
+});
+t('sameMedicine: an empty name is never a duplicate', () => {
+  assert.equal(sameMedicine({ name: '  ', strength: '50mg', form: 'Tablet', dose: '' }, med('e', '', '50mg')), false);
+});
+t('findDuplicate returns the matching entry, else null', () => {
+  assert.equal(findDuplicate({ name: 'Sumatriptan', strength: '50mg', form: 'Tablet', dose: '' }, [med('x', 'Other', '1mg'), S50])?.id, 's1');
+  assert.equal(findDuplicate({ name: 'Sumatriptan', strength: '25mg', form: 'Tablet', dose: '' }, [S50]), null);
+});
+t('usualDoseExceedsMax: only when both are set and the dose is larger', () => {
+  assert.equal(usualDoseExceedsMax(3, 2), true);
+  assert.equal(usualDoseExceedsMax(2, 2), false);
+  assert.equal(usualDoseExceedsMax(2, undefined), false);
+  assert.equal(usualDoseExceedsMax(undefined, 2), false);
+  assert.equal(usualDoseExceedsMax(1, 0), false);
+});
+t('sharedTypeForName: the shared class, nothing when entries disagree or none exist', () => {
+  const S100 = med('s2', 'Sumatriptan', '100mg', { class: 'triptan' });
+  assert.equal(sharedTypeForName('sumatriptan', [S50, S100]), 'triptan');
+  assert.equal(sharedTypeForName('Sumatriptan', [S50, med('s3', 'Sumatriptan', '25mg', { class: 'simple' })]), undefined);
+  assert.equal(sharedTypeForName('Nurofen', [S50]), undefined);
+  assert.equal(sharedTypeForName('Sumatriptan', [med('s4', 'Sumatriptan', '50mg')]), undefined);
 });
 
 console.log(`\n${n} checks passed`);

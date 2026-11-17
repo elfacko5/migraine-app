@@ -114,6 +114,54 @@ export function resolveDose(
   return { med: null, ambiguous: true, candidates: named };
 }
 
+// ── Adding a medicine (commit 1, the add wizard) ───────────────────────────
+
+/**
+ * Is `candidate` the same medicine as an entry already in the library? Same
+ * name (case and outer spaces ignored), same form (`formOf`, so an old record
+ * that never stored one still compares as its derived form), and the same
+ * strength (`sameStrengthText`: "50mg" and "50 mg" match, "0.05 g" does not).
+ * A different form, or the same form at a different strength, is a different
+ * medicine and is allowed. Strength falls back to the derived `dose` text on
+ * an old record that has no `strength`.
+ */
+export function sameMedicine(
+  a: Pick<Medication, 'name' | 'form' | 'unitLabel' | 'strength' | 'dose'>,
+  b: Pick<Medication, 'name' | 'form' | 'unitLabel' | 'strength' | 'dose'>,
+): boolean {
+  if (!norm(a.name) || norm(a.name) !== norm(b.name)) return false;
+  if (formOf(a).toLowerCase() !== formOf(b).toLowerCase()) return false;
+  return sameStrengthText(a.strength ?? a.dose, b.strength ?? b.dose);
+}
+
+/** The library entry `candidate` duplicates, or null. The first, when several do. */
+export function findDuplicate(
+  candidate: Pick<Medication, 'name' | 'form' | 'unitLabel' | 'strength' | 'dose'>,
+  library: Medication[],
+): Medication | null {
+  return library.find((m) => sameMedicine(candidate, m)) ?? null;
+}
+
+/**
+ * Is the usual dose more units than the most the leaflet allows in 24 hours?
+ * Only when both are set and positive: a missing limit says nothing. It is a
+ * notice, never a block, and it is about the numbers typed in, not dosing.
+ */
+export function usualDoseExceedsMax(quantity: number | null | undefined, maxPerDay: number | null | undefined): boolean {
+  if (typeof quantity !== 'number' || typeof maxPerDay !== 'number') return false;
+  return quantity > 0 && maxPerDay > 0 && quantity > maxPerDay;
+}
+
+/**
+ * The type to pre-select on the add wizard's type step for a name that already
+ * has entries: the class they all share, else `undefined` (select nothing).
+ * "Entries disagree" and "no entry" and "entries untyped" all give `undefined`:
+ * a guess from one of two disagreeing entries would be the first one's class.
+ */
+export function sharedTypeForName(name: string, library: Medication[]): Exclude<MedClass, 'other'> | undefined {
+  return typeOfName(name, library) ?? undefined;
+}
+
 // ── What a dose counts under (0b) ──────────────────────────────────────────
 
 /** A class with the pre-v3 `'other'` read as no class at all. */
