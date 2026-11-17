@@ -2294,7 +2294,7 @@ In her words:
 
 **Toast does not exist in Lidd yet.** Lidd has no toast layer (it never had one), so "Toast 3" cannot be checked here and waits for the screen that adopts the package's Toast.
 
-### Keyboard plugin: resize 'none' (2026-11-16)
+### Keyboard plugin: resize 'none' (2026-11-16) **[Superseded 2026-11-17: the setting is `'native'` again; see "Back to 'native'" at the end. The text below stays as written.]**
 
 **Why it came up.** With `resize: 'native'` in Lidd's build the Save button on the Add medication sheet took about a second to slide in, on a cold launch and on a second open. The build without the plugin (`c65e431`) she called **"perfectly still"**; she was not asked then about Save, so whether it slid there is not known. The cause was not measured on the phone; the likely one is the webview shortening in one step and the footer, which sits at the bottom of the sheet, jumping to the new bottom. Options A to E were put to her.
 
@@ -2329,3 +2329,13 @@ June ran `f9f1763` (resize `'none'`, bar on) on her iPhone. Her words: **"i cann
 - **After the check on the bar:** keyboard down, `kbH 0`, the sheet whole with Save visible, still full height.
 - **Reading.** With the plugin on `'none'`, `window.innerHeight` and `visualViewport` do not move when the keyboard opens, so `AppRoot`'s test (`vv.height < probe - 1 || vv.offsetTop > 0`) is never true and it correctly leaves the frame alone [certain from the numbers and the code]. The page is not told, which confirms the source reading above: the plugin's removal of WKWebView's own keyboard observers leaves nothing that shrinks the visual viewport [likely now; the removal is certain from the source, that it is the cause is the best fit for these numbers, not separately tested]. The frame is 844 tall with a 376-tall keyboard (and the bar) over its lower part.
 - **So `'none'` cannot work without something telling the page the keyboard height.** The plugin does report it (`kbH 376`). Nothing was changed. Ways forward, none built: back to `'native'` (works, Save slid in about a second late); `'none'` plus `AppRoot` (or Lidd) setting the frame height from the plugin's `keyboardWillShow` height, which touches the package or adds Lidd code that follows the keyboard itself, the thing `AppRoot` was meant to be the only one doing [guessing that it would be stable]; or dropping the plugin and the bar, back to `c65e431`. That is June's call.
+
+### Back to 'native' (2026-11-17)
+
+**Her words, in order.** On the Save slide with `'native'`: she asked for A, **"lets do A"** (resize `'none'`). On A in the phone: **"i cannot see the save button"** (Save behind the keyboard). Then, about a field low in the Add medication sheet ("Max in 24 hours"): **"the field is obstructed. and i can also not scroll the page up to see the field."** Her view on Save was that it is fine for Save to sit under the keyboard in this flow, because fields below the scroll point may be mandatory. Asked what the Lidd session recommends: **"what do you recommend?"**, followed by agreement with going back to `'native'`.
+
+**Decision: `plugins.Keyboard.resize` is `'native'`; the bar (`setAccessoryBarVisible`) stays on.** Why `'none'` was rejected: the phone numbers above show `innerHeight`, `visualViewport` and the frame unchanged with the keyboard up (only the plugin's `kbH` moved), so the page is never told, and a field low in a sheet is covered and cannot be scrolled to. `'native'` shortens the webview itself, so the sheet's scroll area ends where the keyboard begins.
+
+**Still true, not decided by her:** with `'native'` the Save button slides in about a second after the keyboard (the plugin waits the animation time plus 0.2 s before resizing). She has **not** said she accepts that; it is the known cost of this setting and stays open for her. Her remark that Save under the keyboard is acceptable here is about the layout, not about the slide.
+
+**Built** as its own commit (the config and this entry). `AppRoot` and the package are untouched. **Not run on a phone.** The temporary probe (`VITE_VIEWPORT_PROBE=1`) is still in the tree for one run on `'native'`.

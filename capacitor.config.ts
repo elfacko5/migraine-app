@@ -18,15 +18,15 @@ const config: CapacitorConfig = {
   },
   plugins: {
     Keyboard: {
-      // 'none': the webview is not resized, and the package's AppRoot alone
-      // follows the visible area (frame height and offset), as it did before
-      // the plugin. 'native' was tried first and made the Save button slide in
-      // about a second late on the phone, where the build without the plugin
-      // was perfectly still. The plugin is here for the keyboard's own bar
-      // (see src/utils/keyboardBar.ts), not for resizing. Reasons and June's
-      // words: docs/decisions.md, "Keyboard plugin: resize 'none'". To revert,
-      // `git revert` that commit.
-      resize: 'none',
+      // 'native': the plugin shortens the webview by the keyboard's height, so
+      // everything below the field can be scrolled into view. 'none' was tried
+      // after 'native' (to stop the Save button sliding in about a second late)
+      // and rejected on the phone: the page is not told the keyboard is up
+      // (innerHeight and visualViewport do not move), so a low field is covered
+      // and cannot be scrolled to. The slide is the known cost of 'native'. The
+      // plugin is also here for the keyboard's own bar (src/utils/keyboardBar.ts).
+      // Reasons and June's words: docs/decisions.md, "Back to 'native'".
+      resize: 'native',
     },
   },
 };
