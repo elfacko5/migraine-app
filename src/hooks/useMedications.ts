@@ -1,34 +1,45 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { Medication, SyncStatus } from '../types';
+import type { MedGuides, Medication, SyncStatus } from '../types';
 import { pullUserPrefs, pushMedications } from '../lib/sync';
+import { cleanGuides } from '../utils/medResolve';
+import { guidesForPush, mergeMedicationPrefs, type StoredMedications } from '../utils/medPrefsMerge';
 
 const KEY = 'hd_medications';
 
-interface Stored {
-  items: Medication[];
-  updatedAt: string;
-}
+type Stored = StoredMedications;
 
+const EMPTY = (): Stored => ({ items: [], guides: {}, updatedAt: new Date(0).toISOString() });
+
+// A stored object with no `guides` (everything written before 0a) reads as
+// `guides: {}` — migration M2, read-time, nothing written back.
 function load(): Stored {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { items: [], updatedAt: new Date(0).toISOString() };
+    if (!raw) return EMPTY();
     const parsed = JSON.parse(raw);
-    if (!parsed || !Array.isArray(parsed.items)) return { items: [], updatedAt: new Date(0).toISOString() };
-    return { items: parsed.items, updatedAt: parsed.updatedAt ?? new Date(0).toISOString() };
+    if (!parsed || !Array.isArray(parsed.items)) return EMPTY();
+    return {
+      items: parsed.items,
+      guides: cleanGuides(parsed.guides),
+      updatedAt: parsed.updatedAt ?? new Date(0).toISOString(),
+    };
   } catch {
-    return { items: [], updatedAt: new Date(0).toISOString() };
+    return EMPTY();
   }
 }
 
-function save(items: Medication[]): Stored {
-  const next = { items, updatedAt: new Date().toISOString() };
+function save(items: Medication[], guides: MedGuides): Stored {
+  const next = { items, guides, updatedAt: new Date().toISOString() };
   localStorage.setItem(KEY, JSON.stringify(next));
   return next;
 }
 
 export function useMedications(userId: string | null) {
-  const [medications, setMedicationsState] = useState<Medication[]>(() => load().items);
+  const [initial] = useState(load);
+  const [medications, setMedicationsState] = useState<Medication[]>(initial.items);
+  // Held and kept in step with the list, and synced with it, but read by
+  // nothing yet: `guideFor` and its callers arrive in 0b.
+  const [guides, setGuidesState] = useState<MedGuides>(initial.guides);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const syncingRef = useRef(false);
@@ -47,10 +58,10 @@ export function useMedications(userId: string | null) {
   }, []);
 
   const commit = useCallback((items: Medication[]) => {
-    const stored = save(items);
+    const stored = save(items, guides);
     setMedicationsState(items);
-    if (userId) trackPush(pushMedications(stored.items, stored.updatedAt, userId));
-  }, [userId, trackPush]);
+    if (userId) trackPush(pushMedications(stored.items, stored.updatedAt, userId, guidesForPush(stored.guides)));
+  }, [userId, trackPush, guides]);
 
   // Unlike the trigger/symptom/relief lists — which are add-only, so
   // useUserPrefs can merge them with a plain union() — medications are
@@ -67,14 +78,15 @@ export function useMedications(userId: string | null) {
       // Read fresh from localStorage rather than closing over state — this
       // runs again on every foreground, not just at mount.
       const local = load();
-      const remoteItems = remote?.medications ?? null;
-      const remoteAt = remote?.medications_updated_at ?? null;
-
-      if (remoteItems && remoteAt && remoteAt > local.updatedAt) {
-        localStorage.setItem(KEY, JSON.stringify({ items: remoteItems, updatedAt: remoteAt }));
-        setMedicationsState(remoteItems);
-      } else if (local.items.length > 0 || remoteItems) {
-        await pushMedications(local.items, local.updatedAt, uid);
+      // The decision is a pure function (utils/medPrefsMerge.ts) so it can be
+      // tested without a network.
+      const merge = mergeMedicationPrefs(local, remote);
+      if (merge.kind === 'adopt-remote') {
+        localStorage.setItem(KEY, JSON.stringify(merge.stored));
+        setMedicationsState(merge.stored.items);
+        setGuidesState(merge.stored.guides);
+      } else if (merge.kind === 'push-local') {
+        await pushMedications(local.items, local.updatedAt, uid, guidesForPush(local.guides));
       }
       setSyncStatus('synced');
       setLastSyncedAt(new Date().toISOString());
@@ -117,5 +129,5 @@ export function useMedications(userId: string | null) {
     commit(medications.filter((m) => m.id !== id));
   }, [medications, commit]);
 
-  return { medications, addMedication, updateMedication, removeMedication, syncStatus, lastSyncedAt };
+  return { medications, guides, addMedication, updateMedication, removeMedication, syncStatus, lastSyncedAt };
 }

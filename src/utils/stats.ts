@@ -459,7 +459,7 @@ export const MOH_DAYS_MIXED = 10;
 /** Today's window for every figure it shows, since v3: a rolling 30 days. */
 export const TODAY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
-const localDayKey = (d: Date) =>
+export const localDayKey = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 /**

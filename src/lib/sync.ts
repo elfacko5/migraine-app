@@ -1,5 +1,6 @@
-import type { Attack, NotificationConfig, Medication, Hit6Entry } from '../types';
+import type { Attack, NotificationConfig, Medication, MedGuides, Hit6Entry } from '../types';
 import { supabase } from './supabase';
+import { medicationsUpsertRow } from '../utils/medPrefsMerge';
 
 interface AttackRow {
   id: number;
@@ -68,6 +69,8 @@ interface UserPrefsRow {
   notification_default: NotificationConfig | null;
   medications: Medication[] | null;
   medications_updated_at: string | null;
+  /** Absent on a table that predates it. */
+  medication_guides?: MedGuides | null;
   hit6: Hit6Entry[] | null;
   hit6_updated_at: string | null;
 }
@@ -83,14 +86,15 @@ export async function pullUserPrefs(): Promise<UserPrefsRow | null> {
 // path: useMedications owns them and must not clobber the trigger/symptom/
 // relief lists it doesn't hold (upsert would null out any column it omits if
 // they were pushed together from two hooks).
-export async function pushMedications(items: Medication[], updatedAt: string, userId: string): Promise<void> {
+//
+// `guides` is included **only when given**: an upsert that names a column the
+// table does not have fails the whole push, so until the `alter table` in
+// supabase/schema.sql has been run, nothing may send `medication_guides`.
+export async function pushMedications(items: Medication[], updatedAt: string, userId: string, guides?: MedGuides): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.from('user_prefs').upsert({
-    user_id: userId,
-    medications: items,
-    medications_updated_at: updatedAt,
-    updated_at: new Date().toISOString(),
-  });
+  const { error } = await supabase.from('user_prefs').upsert(
+    medicationsUpsertRow(items, updatedAt, userId, guides, new Date().toISOString()),
+  );
   if (error) throw error;
 }
 

@@ -3,6 +3,7 @@ import type { Tab, Snapshot, Medication } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useMedications } from './hooks/useMedications';
+import { stampSnapshot } from './utils/medResolve';
 import { useHit6 } from './hooks/useHit6';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
@@ -418,7 +419,13 @@ export default function App() {
     if (wantsReminders && shouldPrompt) {
       try { await requestPermission(); } catch (err) { console.error('Notification permission request failed:', err); }
     }
-    startAttack(snapshot, triggersSel, notifConfig, end, wokeWithMigraine, doseReadings);
+    // New doses carry the library entry's id, so a dose can later be told from
+    // another entry of the same name. Only written when exactly one entry owns
+    // the name (and dose text); typed-in names stay as they were.
+    startAttack(
+      stampSnapshot(snapshot, medications), triggersSel, notifConfig, end, wokeWithMigraine,
+      doseReadings.map((r) => stampSnapshot(r, medications)),
+    );
     // "Attack mode when I start an attack" (Display page, opt-in). Only for
     // an attack that's still going — a retrospective log is someone looking
     // back, not someone in the middle of one.
@@ -427,7 +434,7 @@ export default function App() {
   }
 
   function handleUpdateSave(snapshot: Omit<Snapshot, 'source'>, source: Snapshot['source'] = 'manual') {
-    if (updateAttackId !== null) addSnapshot(updateAttackId, snapshot, source);
+    if (updateAttackId !== null) addSnapshot(updateAttackId, stampSnapshot(snapshot, medications), source);
     closeUpdateSheet();
   }
   return (

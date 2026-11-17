@@ -9,7 +9,13 @@ export interface Snapshot {
   // is back-filled, because you can't know now whether an old "1 tablet" meant
   // one unit or two. See src/utils/medGuardrails.ts for how a legacy dose is
   // read when `amount` is absent.
-  medication: { name: string; dose: string; amount?: number } | null;
+  //
+  // `medId` is the library entry's id, written on **new doses only** (0a of the
+  // medication flows). It exists because two library entries can share a name
+  // ("Add another version"), and a dose that carries only a name cannot say
+  // which one it was. Nothing is back-filled: an older dose has no `medId` and
+  // is matched by name through `resolveDose` (src/utils/medResolve.ts).
+  medication: { name: string; dose: string; amount?: number; medId?: string } | null;
   note: string | null;
   source: 'manual' | 'notification_yes' | 'notification_no_change';
 }
@@ -95,6 +101,17 @@ export interface Medication {
    *  Beats the class-derived ICHD number when set. */
   maxDaysPerMonth?: number;
 
+  /** The form it is taken in: one of the standard forms ('Tablet', 'Melt',
+   *  'Capsule', 'Effervescent', 'Nasal spray', 'Injection', 'Suppository',
+   *  'Liquid') or the medicine's own text. Absent on records that predate it;
+   *  `formOf` (src/utils/medResolve.ts) derives it from `unitLabel` at read
+   *  time, and it is written on the next save of that medicine. */
+  form?: string;
+  /** Set when the medicine is stopped (ISO). It stays in the library so past
+   *  doses keep their type and name; it leaves the wizard's chips. Absent
+   *  means in use. Nothing writes it yet. */
+  stoppedAt?: string;
+
   /** What one unit is called — 'tablet' | 'spray' | 'capsule' … Defaults to
    *  'tablet' when unset. Not limited to acute: it labels the quantity of a
    *  single dose, which every medication has. */
@@ -107,6 +124,11 @@ export interface Medication {
    *  it" — is a separate and later question, and isn't needed for this. */
   startedOn?: string;
 }
+
+/** Days a month per type, set by the user. A missing key means "use the
+ *  guideline number" (pre-filled, June 2026-11-17). No gepant key: there is no
+ *  guideline for one. Nothing reads this yet (0a); `guideFor` arrives in 0b. */
+export type MedGuides = Partial<Record<'triptan' | 'combination' | 'simple' | 'any', number>>;
 
 export type Tab = 'log' | 'history' | 'stats' | 'profile';
 
