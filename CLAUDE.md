@@ -20,6 +20,8 @@ Nearly every rule in both places was paid for with a round of device testing. A 
 
 **There is also a skill: `.claude/skills/lidd-ui/SKILL.md`.** Invoke it *before* building any user-facing UI — a screen, card, button, chip, sheet, icon, wizard step or user-facing string. It is the short version of the sections below, ordered as a checklist, and it exists because the same class of mistake kept recurring: a new piece of UI built from first principles instead of from the pattern already shipping, which then costs one round to spot and another to fix. Most "new" UI here is an existing pattern applied again.
 
+**Review runs inside the code session, through the `reviewer` agent** (`.claude/agents/reviewer.md`, set up 2026-11-17). It replaces the separate reviewer chat and its `review-questions.md` file for Lidd work. Run it after a commit that changes stored data, sync, counts or warnings, and when June says "review". It gets a fresh context, reads the diff and the rules, runs the checks, and reports; it cannot edit files. The session that wrote the code then fixes each finding or explains why not, with a commit hash, in the same reply. Screens with no data change go straight to June's phone check. Findings are answered in the reply, not collected in a file.
+
 ## Commands
 
 `npm` is not on the default PATH — source nvm first:

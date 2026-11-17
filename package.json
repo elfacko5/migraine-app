@@ -11,8 +11,8 @@
     "contrast": "node_modules/code-ds/node_modules/.bin/tsx node_modules/code-ds/scripts/contrast-check.ts --app src/contrast.json",
     "preview": "vite preview",
     "ios": "vite build && cap copy ios",
-    "med-checks": "TZ=UTC node_modules/code-ds/node_modules/.bin/tsx scripts/med-checks/checks.mts",
-    "med-m3": "TZ=UTC node_modules/code-ds/node_modules/.bin/tsx scripts/med-checks/m3.mts"
+    "med-checks": "TZ=UTC tsx scripts/med-checks/checks.mts",
+    "med-m3": "TZ=UTC tsx scripts/med-checks/m3.mts"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.0",
@@ -40,6 +40,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "tsx": "^4.23.15",
     "typescript-eslint": "^8.62.0",
     "vite": "^8.0.12"
   }
