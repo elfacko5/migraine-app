@@ -437,3 +437,5 @@ June, in chat: the "medication X, 2 of 10" figures should not be shown on Today.
 **Needs from June before a signed-in phone check:** run `alter table user_prefs add column if not exists medication_deleted jsonb;` in Supabase. Until then nothing breaks: the column is only sent once something has been deleted, and the first signed-in Remove would then fail to sync ("Sync failed") until it exists.
 
 **Wording still drafts, hers to reword:** the no-doses confirm line ("Nothing has been logged with it."), the generic line for ambiguous doses ("Its doses stay in your diary and in Insights."), and the message after a delete.
+
+**`medication_deleted` added (June, 2026-11-18):** `alter table user_prefs add column if not exists medication_deleted jsonb;` was run in her Supabase project ("Success. No rows returned"). Sync can now carry the deleted names list. I did not touch Supabase.
