@@ -238,7 +238,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
                       );
                     })}
                   </div>
-                  <button type="button" onClick={() => { setOwnOpen(true); }} className="btn-tertiary min-h-target">+ Add a different form</button>
+                  <button type="button" onClick={() => { setOwnOpen(true); }} className="btn-tertiary min-h-target"><span aria-hidden="true">+ </span>Add a different form</button>
                 </>
               ) : (
                 <div className="space-y-2">

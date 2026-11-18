@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface Props {
   open: boolean;
@@ -25,7 +25,46 @@ interface Props {
   enterFrom?: 'bottom' | 'right';
 }
 
+// **An open sheet makes everything behind it unreachable to assistive tech.**
+// `aria-modal` alone is not honoured reliably by iOS VoiceOver in a WKWebView:
+// with the add-medicine wizard open over My medications, VoiceOver could still
+// select the page behind it (its Back button, its "My medications" title).
+// So while any sheet is open, every sibling of the topmost one — the app
+// content, the nav, and any sheet lower in the stack — is `inert` and
+// `aria-hidden`. Closed sheets are left to their own React-managed `inert`.
+// `inert` landed in iOS 15.5 and the target is 15, hence both attributes.
+const openSheets: HTMLElement[] = [];
+const touched = new Map<Element, { inert: boolean; hidden: string | null }>();
+function syncModal() {
+  touched.forEach((v, el) => {
+    (el as HTMLElement).inert = v.inert;
+    if (v.hidden === null) el.removeAttribute('aria-hidden'); else el.setAttribute('aria-hidden', v.hidden);
+  });
+  touched.clear();
+  const top = openSheets[openSheets.length - 1];
+  if (!top?.parentElement) return;
+  for (const c of Array.from(top.parentElement.children)) {
+    if (c === top) continue;
+    if (c.hasAttribute('data-sheet') && !openSheets.includes(c as HTMLElement)) continue;
+    touched.set(c, { inert: (c as HTMLElement).inert, hidden: c.getAttribute('aria-hidden') });
+    (c as HTMLElement).inert = true;
+    c.setAttribute('aria-hidden', 'true');
+  }
+}
+
 export function Sheet({ open, onClose, title, children, flush = false, headerRight, bareHeader = false, enterFrom = 'bottom' }: Props) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!open || !el) return;
+    openSheets.push(el);
+    syncModal();
+    return () => {
+      openSheets.splice(openSheets.indexOf(el), 1);
+      syncModal();
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -47,6 +86,8 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
     // and it is delayed by the transition's own length so the close still
     // animates instead of vanishing.
     <div
+      ref={wrapRef}
+      data-sheet=""
       className={`absolute inset-0 z-50 ${open ? '' : 'pointer-events-none'}`}
       aria-hidden={!open}
       inert={!open}
