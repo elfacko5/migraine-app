@@ -1,4 +1,4 @@
-import type { Attack, NotificationConfig, Medication, MedGuides, Hit6Entry } from '../types';
+import type { Attack, DeletedMedName, NotificationConfig, Medication, MedGuides, Hit6Entry } from '../types';
 import { supabase } from './supabase';
 import { medicationsUpsertRow } from '../utils/medPrefsMerge';
 
@@ -71,6 +71,8 @@ interface UserPrefsRow {
   medications_updated_at: string | null;
   /** Absent on a table that predates it. */
   medication_guides?: MedGuides | null;
+  /** Absent on a table that predates it. */
+  medication_deleted?: DeletedMedName[] | null;
   hit6: Hit6Entry[] | null;
   hit6_updated_at: string | null;
 }
@@ -90,10 +92,10 @@ export async function pullUserPrefs(): Promise<UserPrefsRow | null> {
 // `guides` is included **only when given**: an upsert that names a column the
 // table does not have fails the whole push, so until the `alter table` in
 // supabase/schema.sql has been run, nothing may send `medication_guides`.
-export async function pushMedications(items: Medication[], updatedAt: string, userId: string, guides?: MedGuides): Promise<void> {
+export async function pushMedications(items: Medication[], updatedAt: string, userId: string, guides?: MedGuides, deleted?: DeletedMedName[]): Promise<void> {
   if (!supabase) return;
   const { error } = await supabase.from('user_prefs').upsert(
-    medicationsUpsertRow(items, updatedAt, userId, guides, new Date().toISOString()),
+    medicationsUpsertRow(items, updatedAt, userId, guides, new Date().toISOString(), deleted),
   );
   if (error) throw error;
 }

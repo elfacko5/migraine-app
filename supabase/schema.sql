@@ -42,6 +42,7 @@ create table if not exists user_prefs (
   medications jsonb,
   medications_updated_at timestamptz,
   medication_guides jsonb,
+  medication_deleted jsonb,
   hit6 jsonb,
   hit6_updated_at timestamptz,
   updated_at timestamptz not null default now()
@@ -56,6 +57,9 @@ create table if not exists user_prefs (
 -- alter table user_prefs add column if not exists medication_guides jsonb;
 --   (medication_guides is only ever sent once a guide has been set, so a table
 --   without it keeps syncing normally until this is run.)
+-- alter table user_prefs add column if not exists medication_deleted jsonb;
+--   (medication_deleted is only ever sent once a medicine has been deleted, so a
+--   table without it keeps syncing normally until this is run.)
 -- alter table user_prefs add column if not exists hit6 jsonb;
 -- alter table user_prefs add column if not exists hit6_updated_at timestamptz;
 

@@ -1,5 +1,5 @@
-import type { MedGuides, Medication } from '../types';
-import { cleanGuides } from './medResolve';
+import type { DeletedMedName, MedGuides, Medication } from '../types';
+import { cleanDeleted, cleanGuides } from './medResolve';
 
 // The medications half of a sync, as a pure function so it can be tested with
 // fixtures and no network (0a of the medication flows). `useMedications.sync`
@@ -12,6 +12,8 @@ import { cleanGuides } from './medResolve';
 export interface StoredMedications {
   items: Medication[];
   guides: MedGuides;
+  /** Names deleted from the library (June: synced). Absent reads as none. */
+  deleted?: DeletedMedName[];
   updatedAt: string;
 }
 
@@ -21,15 +23,17 @@ export interface RemoteMedications {
   medications?: Medication[] | null;
   medications_updated_at?: string | null;
   medication_guides?: unknown;
+  /** Absent on a table that predates it, or a row an older client wrote. */
+  medication_deleted?: unknown;
 }
 
 export type MedicationMerge =
   /** The remote copy is newer: store it. */
-  | { kind: 'adopt-remote'; stored: StoredMedications; /** The guides came from the remote row itself (a set, or a clear). */ guidesFromRemote: boolean }
+  | { kind: 'adopt-remote'; stored: StoredMedications; /** The guides came from the remote row itself (a set, or a clear). */ guidesFromRemote: boolean; /** Likewise for the deleted names. */ deletedFromRemote: boolean }
   /** Push the local copy up. `remoteHadGuides` is whether the remote row last
    *  pulled held any guides: it is what lets an emptied local list be pushed as
    *  an explicit `{}` (see `guidesForPush`). */
-  | { kind: 'push-local'; remoteHadGuides: boolean }
+  | { kind: 'push-local'; remoteHadGuides: boolean; remoteHadDeleted: boolean }
   /** Nothing to do. */
   | { kind: 'nothing' };
 
@@ -57,12 +61,29 @@ function guidesFromRemote(raw: unknown): MedGuides | null {
   return Object.keys(cleaned).length === keys.length ? cleaned : null;
 }
 
+/**
+ * The deleted names to take from a newer remote row, or `null` for "keep the
+ * local ones". Adopted only when the raw value is **an array that cleans to
+ * itself** (including a literal `[]`, a clear another device pushed, which is
+ * what lets a re-add reach the second device). Missing, null, not an array, or
+ * an array with any entry that does not clean is not a trustworthy statement:
+ * adopting its remainder could bring back a name that was cleared, or drop one
+ * that is really deleted.
+ */
+function deletedFromRemote(raw: unknown): DeletedMedName[] | null {
+  if (!Array.isArray(raw)) return null;
+  const cleaned = cleanDeleted(raw);
+  return cleaned.length === raw.length ? cleaned : null;
+}
+
 export function mergeMedicationPrefs(local: StoredMedications, remote: RemoteMedications | null): MedicationMerge {
   const remoteItems = remote?.medications ?? null;
   const remoteAt = remote?.medications_updated_at ?? null;
   const rawGuides = remote?.medication_guides;
   const remoteGuides = cleanGuides(rawGuides);
   const adoptedGuides = guidesFromRemote(rawGuides);
+  const rawDeleted = remote?.medication_deleted;
+  const adoptedDeleted = deletedFromRemote(rawDeleted);
 
   if (remoteItems && remoteAt && remoteAt > local.updatedAt) {
     return {
@@ -75,13 +96,15 @@ export function mergeMedicationPrefs(local: StoredMedications, remote: RemoteMed
         // and is adopted, so a second device does not put its old guides back;
         // an object that does not fully clean keeps the local guides whole.
         guides: adoptedGuides ?? local.guides,
+        deleted: adoptedDeleted ?? local.deleted ?? [],
         updatedAt: remoteAt,
       },
       guidesFromRemote: adoptedGuides !== null,
+      deletedFromRemote: adoptedDeleted !== null,
     };
   }
   if (local.items.length > 0 || remoteItems) {
-    return { kind: 'push-local', remoteHadGuides: Object.keys(remoteGuides).length > 0 };
+    return { kind: 'push-local', remoteHadGuides: Object.keys(remoteGuides).length > 0, remoteHadDeleted: cleanDeleted(rawDeleted).length > 0 };
   }
   return { kind: 'nothing' };
 }
@@ -105,6 +128,16 @@ export function guidesForPush(guides: MedGuides, remoteHadGuides = false): MedGu
   return remoteHadGuides ? {} : undefined;
 }
 
+/** The `medication_deleted` value to include in a push, or `undefined` to leave
+ *  the column out. Same rule as `guidesForPush`: names present → send them;
+ *  none, and the remote row last pulled held some → an explicit `[]` (the only
+ *  way a re-add's clear reaches the remote); otherwise omit, because a push that
+ *  names a column the table does not have fails the whole upsert. */
+export function deletedForPush(deleted: DeletedMedName[], remoteHadDeleted = false): DeletedMedName[] | undefined {
+  if (deleted.length > 0) return deleted;
+  return remoteHadDeleted ? [] : undefined;
+}
+
 /** The `user_prefs` row `pushMedications` upserts — separate from the I/O so
  *  the column names and the omit-when-empty rule can be checked without a
  *  client. `medication_guides` is present only when `guides` is. */
@@ -114,12 +147,14 @@ export function medicationsUpsertRow(
   userId: string,
   guides: MedGuides | undefined,
   nowIso: string,
+  deleted?: DeletedMedName[],
 ) {
   return {
     user_id: userId,
     medications: items,
     medications_updated_at: updatedAt,
     ...(guides ? { medication_guides: guides } : {}),
+    ...(deleted ? { medication_deleted: deleted } : {}),
     updated_at: nowIso,
   };
 }

@@ -1,4 +1,4 @@
-import type { Attack, MedClass, MedGuides, Medication, Snapshot } from '../types';
+import type { Attack, DeletedMedName, MedClass, MedGuides, Medication, Snapshot } from '../types';
 import { isRetired } from './retired';
 import { localDayKey, type DoseCounting } from './stats';
 
@@ -282,8 +282,12 @@ const classOfEntry = (m: Medication): Exclude<MedClass, 'other'> | undefined =>
 export function countingOf(
   dose: { name: string; dose?: string; medId?: string } | null | undefined,
   library: Medication[],
+  deleted: DeletedMedName[] = [],
 ): DoseCounting {
   const { candidates } = resolveDose(dose, library);
+  // A name that was deleted and is in no entry now counts nowhere: Today's bars
+  // and warnings skip it (June, item 216). Insights' history keeps the doses.
+  if (candidates.length === 0 && dose && isDeletedName(dose.name, library, deleted)) return { bar: null, any: false, untyped: false };
   if (candidates.length === 0) return { bar: null, any: true, untyped: true };
   const classes = new Set(candidates.map(classOfEntry));
   if (classes.size === 1) {
@@ -298,12 +302,12 @@ export function countingOf(
 /** `countingOf` for one library, remembering answers: a diary logs the same
  *  drug over and over, so each distinct (name, dose, id) is resolved once
  *  instead of rescanning the library for every snapshot. */
-export function countingFor(library: Medication[]) {
+export function countingFor(library: Medication[], deleted: DeletedMedName[] = []) {
   const cache = new Map<string, DoseCounting>();
   return (dose: { name: string; dose?: string; medId?: string }): DoseCounting => {
     const key = `${dose.medId ?? ''}|${norm(dose.name)}|${norm(dose.dose)}`;
     let c = cache.get(key);
-    if (!c) { c = countingOf(dose, library); cache.set(key, c); }
+    if (!c) { c = countingOf(dose, library, deleted); cache.set(key, c); }
     return c;
   };
 }
@@ -412,4 +416,55 @@ export function withGuide(guides: MedGuides, key: keyof MedGuides, days: number 
   if (typeof days === 'number' && Number.isInteger(days) && days > 0) next[key] = days;
   else delete next[key];
   return next;
+}
+
+// ── Deleted names (commit 4) ───────────────────────────────────────────────
+
+/** A stored `deleted` value cleaned to what the type allows: only entries with
+ *  a non-empty name and a text `deletedAt`, one per name (the first kept, case
+ *  and outer or doubled spaces ignored). Anything else is dropped, so a
+ *  hand-edited or future-shaped value cannot reach a reader. */
+export function cleanDeleted(value: unknown): DeletedMedName[] {
+  if (!Array.isArray(value)) return [];
+  const out: DeletedMedName[] = [];
+  for (const v of value) {
+    if (!v || typeof v !== 'object') continue;
+    const { name, deletedAt } = v as Record<string, unknown>;
+    if (typeof name !== 'string' || typeof deletedAt !== 'string' || !norm(name)) continue;
+    if (out.some((d) => norm(d.name) === norm(name))) continue;
+    out.push({ name: name.trim(), deletedAt });
+  }
+  return out;
+}
+
+/** `deleted` with this name added (once), stamped `deletedAt`. */
+export function withDeleted(deleted: DeletedMedName[], name: string, deletedAt: string): DeletedMedName[] {
+  if (!norm(name) || deleted.some((d) => norm(d.name) === norm(name))) return deleted;
+  return [...deleted, { name: name.trim(), deletedAt }];
+}
+
+/** `deleted` without this name (a re-add, Q4 item 216). The same array when it
+ *  was not there, so a caller can tell nothing changed. */
+export function withoutDeleted(deleted: DeletedMedName[], name: string): DeletedMedName[] {
+  return deleted.some((d) => norm(d.name) === norm(name)) ? deleted.filter((d) => norm(d.name) !== norm(name)) : deleted;
+}
+
+/** Was this name deleted, and is it in no library entry now? Only that case is
+ *  kept out of the chips, the voice list and the warnings: a name that was
+ *  deleted and added again has an entry, and an entry wins. */
+export function isDeletedName(name: string, library: Medication[], deleted: DeletedMedName[]): boolean {
+  if (!norm(name)) return false;
+  return deleted.some((d) => norm(d.name) === norm(name)) && !library.some((m) => norm(m.name) === norm(name));
+}
+
+/** How many logged doses belong to this medicine: the ones `resolveDose` gives
+ *  to it alone. A dose that could be either of two same-name entries is not
+ *  counted for either, which makes the figure an under-count rather than a
+ *  claim. Retired names are skipped, like every other count. */
+export function doseCountOf(med: Medication, library: Medication[], attacks: Attack[]): number {
+  let n = 0;
+  for (const { snap } of dosesInDiary(attacks)) {
+    if (resolveDose(snap.medication, library).med?.id === med.id) n++;
+  }
+  return n;
 }

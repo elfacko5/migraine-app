@@ -4,11 +4,11 @@
 // no network, no localStorage and no account.
 import assert from 'node:assert/strict';
 import type { Attack, Medication } from '../../src/types/index.ts';
-import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, sameMedName, withGuide, strengthNeedsCheck, seedFromDose, editMakesDuplicate, otherVersionsWithOtherType, unitForForm, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
+import { cleanDeleted, withDeleted, withoutDeleted, isDeletedName, doseCountOf, cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, sameMedName, withGuide, strengthNeedsCheck, seedFromDose, editMakesDuplicate, otherVersionsWithOtherType, unitForForm, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
 import { GUIDELINE, guideFor, guideKeyOf } from '../../src/utils/medGuardrails.ts';
 import { classDaysInWindow } from '../../src/utils/stats.ts';
 import { M3_MARKER_KEY, markM3Done, planM3, runM3 } from '../../src/utils/medMigrations.ts';
-import { guidesForPush, medicationsUpsertRow, mergeMedicationPrefs, type StoredMedications } from '../../src/utils/medPrefsMerge.ts';
+import { deletedForPush, guidesForPush, medicationsUpsertRow, mergeMedicationPrefs, type StoredMedications } from '../../src/utils/medPrefsMerge.ts';
 
 let n = 0;
 const t = (name: string, fn: () => void) => { fn(); n++; console.log(`ok  ${name}`); };
@@ -527,6 +527,64 @@ t('sharedTypeForName: the shared class, nothing when entries disagree or none ex
   assert.equal(sharedTypeForName('Sumatriptan', [S50, med('s3', 'Sumatriptan', '25mg', { class: 'simple' })]), undefined);
   assert.equal(sharedTypeForName('Nurofen', [S50]), undefined);
   assert.equal(sharedTypeForName('Sumatriptan', [med('s4', 'Sumatriptan', '50mg')]), undefined);
+});
+
+// ── deleted names (commit 4) ───────────────────────────────────────────────
+const DEL = (name: string) => ({ name, deletedAt: '2026-11-18T10:00:00Z' });
+t('cleanDeleted: junk dropped, one entry per name, names trimmed', () => {
+  assert.deepEqual(cleanDeleted([DEL(' Sumatriptan '), DEL('sumatriptan'), { name: '', deletedAt: 'x' }, { name: 'Treo' }, 7, null]), [DEL('Sumatriptan')]);
+  assert.deepEqual(cleanDeleted('nope'), []);
+  assert.deepEqual(cleanDeleted(undefined), []);
+});
+t('withDeleted adds once; withoutDeleted removes and returns the same array when absent', () => {
+  const d = withDeleted([], 'Sumatriptan', '2026-11-18T10:00:00Z');
+  assert.equal(d.length, 1);
+  assert.equal(withDeleted(d, ' sumatriptan ', 'later'), d);
+  assert.deepEqual(withoutDeleted(d, 'SUMATRIPTAN'), []);
+  assert.equal(withoutDeleted(d, 'Treo'), d);
+});
+t('isDeletedName: deleted and in no entry only; an entry wins; a typed-in name was never deleted', () => {
+  const lib = [med('t', 'Treo', '500mg')];
+  assert.equal(isDeletedName('Sumatriptan', lib, [DEL('Sumatriptan')]), true);
+  assert.equal(isDeletedName('Treo', lib, [DEL('Treo')]), false);
+  assert.equal(isDeletedName('Ibuprofen', lib, [DEL('Sumatriptan')]), false);
+});
+t('countingOf: a deleted name counts nowhere; a typed-in name never in the library still counts under Any', () => {
+  const lib = [med('t', 'Treo', '500mg', { class: 'combination' })];
+  assert.deepEqual(countingOf({ name: 'Sumatriptan', dose: '50mg' }, lib, [DEL('Sumatriptan')]), { bar: null, any: false, untyped: false });
+  assert.deepEqual(countingOf({ name: 'Ibuprofen', dose: '400mg' }, lib, [DEL('Sumatriptan')]), { bar: null, any: true, untyped: true });
+  // added again: it has an entry, so it counts under its class
+  const again = [med('s', 'Sumatriptan', '50mg', { class: 'triptan' })];
+  assert.deepEqual(countingOf({ name: 'Sumatriptan', dose: '50mg' }, again, [DEL('Sumatriptan')]), { bar: 'triptan', any: true, untyped: false });
+});
+t('doseCountOf: the doses that belong to this medicine alone', () => {
+  const a1 = med('a', 'Treo', '500mg'); const a2 = med('b', 'Treo', '250mg');
+  const snap = (time: string, dose: string, medId?: string) => ({ time, areas: {}, symptoms: [], reliefs: [], medication: { name: 'Treo', dose, ...(medId ? { medId } : {}) }, note: null, source: 'manual' as const });
+  const attacks = [{ id: 1, end: null, triggers: [], notificationConfig: { enabled: false, interval: 60 }, snapshots: [snap('2026-11-01T08:00:00Z', '500mg'), snap('2026-11-02T08:00:00Z', '250mg'), snap('2026-11-03T08:00:00Z', '1 tablet', 'b')] }] as unknown as Attack[];
+  assert.equal(doseCountOf(a1, [a1, a2], attacks), 1);
+  assert.equal(doseCountOf(a2, [a1, a2], attacks), 2);
+});
+t('merge: remote deleted names are adopted when newer, a clear included; junk or missing keeps local', () => {
+  const at = '2026-03-01T00:00:00Z';
+  const base = (d?: unknown) => mergeMedicationPrefs({ items: [A], guides: {}, deleted: [DEL('Old')], updatedAt: '2026-02-01T00:00:00Z' }, { medications: [A], medications_updated_at: at, ...(d === undefined ? {} : { medication_deleted: d }) });
+  const names = (m: ReturnType<typeof base>) => (m.kind === 'adopt-remote' ? (m.stored.deleted ?? []).map((x) => x.name) : 'not adopted');
+  assert.deepEqual(names(base([DEL('Sumatriptan')])), ['Sumatriptan']);
+  assert.deepEqual(names(base([])), []);                 // a clear (a re-add on the other device)
+  assert.deepEqual(names(base(undefined)), ['Old']);     // an older client: keep local
+  assert.deepEqual(names(base([DEL('X'), { name: 7 }])), ['Old']);   // junk entry: keep local whole
+  assert.deepEqual(names(base('nope')), ['Old']);
+  const flag = (d?: unknown) => { const m = base(d); return m.kind === 'adopt-remote' ? m.deletedFromRemote : 'not adopted'; };
+  assert.equal(flag([]), true); assert.equal(flag(undefined), false); assert.equal(flag([{ name: 7 }]), false);
+});
+t('push rule for deleted names: send when there are some, an explicit [] only to clear what the remote held, else omit', () => {
+  assert.deepEqual(deletedForPush([DEL('Sumatriptan')], false), [DEL('Sumatriptan')]);
+  assert.deepEqual(deletedForPush([], true), []);
+  assert.equal(deletedForPush([], false), undefined);
+  const row = medicationsUpsertRow([A], '2026-03-01T00:00:00Z', 'u', undefined, 'now', deletedForPush([], false));
+  assert.equal('medication_deleted' in row, false);
+  assert.deepEqual((medicationsUpsertRow([A], '2026-03-01T00:00:00Z', 'u', undefined, 'now', [DEL('Sumatriptan')]) as Record<string, unknown>).medication_deleted, [DEL('Sumatriptan')]);
+  const m = mergeMedicationPrefs({ items: [A], guides: {}, updatedAt: '2026-03-01T00:00:00Z' }, { medications: [A], medications_updated_at: '2026-02-01T00:00:00Z', medication_deleted: [DEL('Sumatriptan')] });
+  assert.equal(m.kind === 'push-local' && m.remoteHadDeleted, true);
 });
 
 console.log(`\n${n} checks passed`);

@@ -38,7 +38,7 @@ export const library: Rec[] = [
   med('m11', 'Sumatriptan', '100mg', { strength: '100mg', quantity: 1, class: 'triptan' }),                    // case 7: second Sumatriptan, same type
   med('m12', 'Migraleve', '2 tablets', { class: 'combination' }),                                              // case 8: two old same-name versions,
   med('m13', 'Migraleve', '1 tablet', { class: 'simple' }),                                                    //         different types
-  med('m14', 'Imigran', '50mg', { strength: '50mg', class: 'triptan', stoppedAt: '2026-11-08T09:00:00Z' }),    // case 9: stopped, doses still in the window
+  med('m14', 'Imigran', '50mg', { strength: '50mg', class: 'triptan' }),    // case 9: was the stopped one; stop using was dropped (item 214), doses still in the window
   med('m15', 'Diclofenac', '50 mg', { strength: '50 mg', class: 'simple' }),                                   // case 10: library "50 mg" ...
   med('m16', 'Diclofenac', '25 mg', { strength: '25 mg', class: 'simple' }),                                   //          ... old doses stored "50mg"
   med('m17', 'Eletriptan', '40mg', { strength: '40mg', class: 'triptan', maxDaysPerMonth: 12 }),               // case 11: a triptan at 12, ABOVE its guideline, beside lower ones: not copied

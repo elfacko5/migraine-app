@@ -142,8 +142,7 @@
         "createdAt": "2026-01-01T00:00:00Z",
         "unitLabel": "tablet",
         "strength": "50mg",
-        "class": "triptan",
-        "stoppedAt": "2026-11-08T09:00:00Z"
+        "class": "triptan"
       },
       {
         "id": "m15",

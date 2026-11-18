@@ -107,11 +107,6 @@ export interface Medication {
    *  `formOf` (src/utils/medResolve.ts) derives it from `unitLabel` at read
    *  time, and it is written on the next save of that medicine. */
   form?: string;
-  /** Set when the medicine is stopped (ISO). It stays in the library so past
-   *  doses keep their type and name; it leaves the wizard's chips. Absent
-   *  means in use. Nothing writes it yet. */
-  stoppedAt?: string;
-
   /** What one unit is called — 'tablet' | 'spray' | 'capsule' … Defaults to
    *  'tablet' when unset. Not limited to acute: it labels the quantity of a
    *  single dose, which every medication has. */
@@ -124,6 +119,11 @@ export interface Medication {
    *  it" — is a separate and later question, and isn't needed for this. */
   startedOn?: string;
 }
+
+/** A name that was deleted from the library (June, 2026-11-17: "Sync it"). It
+ *  keeps the name out of the wizard's chips, the voice-parse list and the
+ *  overuse warnings; it never removes a dose from a diary or from Insights. */
+export interface DeletedMedName { name: string; deletedAt: string }
 
 /** What a medication flow hands back: everything but the fields the hook owns. */
 export type MedicationDraft = Omit<Medication, 'id' | 'createdAt'>;
