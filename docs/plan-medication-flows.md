@@ -393,3 +393,15 @@ June, in chat: the "medication X, 2 of 10" figures should not be shown on Today.
 **Order of work:** (1) pure functions and checks; (2) `InlineNote` and the toast; (3) the wizard on the web build, verified in the preview; (4) the keyboard spike and, if it wins, the override; (5) wiring in `App.tsx`; (6) gates and your phone checks. Steps 1 to 3 and 5 need no phone. Step 4 needs your yes to install a build.
 
 **What I would not do:** change the edit path, `MedicationsView`, Today or Insights, or touch the package.
+
+## Commit 1 built and checked on June's phone (2026-11-18)
+
+**Built:** the add wizard (`AddMedicationWizard`), `InlineNote`, `Toast`, the pure functions in `medResolve.ts`, and the keyboard override (`keyboardOverride.ts`). Commits `3a0ae2a`, `72b7d96`, `5161f3a`, review fixes `7cb05d2`, then `28a5007`, `b5db0fe`, `aa868b3`, `d9f5a42` after her VoiceOver and layout checks. Reviewed by the `reviewer` agent; all findings answered, the step-1 notice stays amber (June).
+
+**Keyboard spike (measured, her phone, Name / Strength / Low field):** footer clear of the keyboard after `native` 948 / 740 / 659 ms, `body` never, `none` + `keyboardWillShow` height 78 / 78 / 75 ms. `none` is used while a flow is open and `native` is always restored. Confirmed on the phone in the real wizard: the footer rises with the keyboard on Name, the own-form field and Strength, the focused field stays visible, and the keyboard behaves as before in the Log an attack flow afterwards. The throwaway `keyboard-spike` branch is not merged.
+
+**Phone checks passed:** keyboard; text at large, extra large and "Use iPhone text size"; VoiceOver (heading, disabled Next and its reason, focus on step change, value sheet, nothing behind the wizard reachable); the plain message after Add shows over My medications.
+
+**Two bugs the phone found, both in code from this commit:** VoiceOver could reach the page behind a stacked sheet (fixed in `Sheet`: everything behind an open sheet is inert and aria-hidden), and focusing the heading during the slide-in scrolled the app shell (fixed: every programmatic focus uses `preventScroll`, and fields are centred in the wizard's own body, never with `scrollIntoView`).
+
+**Not done:** the "+ Add a medication" button on the overview reads "plus" (commit 2 rebuilds that screen); the overview and the edit form are still the old screens (commits 2 and 3).
