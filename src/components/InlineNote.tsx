@@ -15,12 +15,15 @@ import { WarningIcon } from './icons';
 export function InlineNote({
   tone = 'neutral',
   children,
+  id,
 }: {
+  id?: string;
   tone?: 'neutral' | 'amber';
   children: ReactNode;
 }) {
   return (
     <div
+      id={id}
       role="status"
       className="flex items-start gap-2.5 rounded-field border border-bg-border bg-bg-raised/50 px-3 py-2.5"
     >

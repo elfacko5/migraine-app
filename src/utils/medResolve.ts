@@ -66,7 +66,11 @@ export interface ResolvedDose {
   candidates: Medication[];
 }
 
-const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
+/** Trimmed, lower-cased, runs of spaces inside collapsed to one (Q4 item 1). */
+const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+/** Do two names name the same medicine? (`norm`: case, outer and doubled spaces.) */
+export const sameMedName = (a: string | null | undefined, b: string | null | undefined) => norm(a) !== '' && norm(a) === norm(b);
 
 /** Do two strength texts name the same strength? Where **both** parse as one
  *  number and one unit (`parseStrength`), they match when number and unit are

@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 // - `role="status"` + `aria-live="polite"`: announced without taking focus.
 // - `absolute`, never `fixed`, against the app root (viewport-architecture),
 //   offset from the bottom the way the nav is measured — 4.5rem of nav plus a
-//   gap, growing with the home-indicator inset — and above the dim scrim.
+//   gap, growing with the home-indicator inset — and above every `Sheet` (z-50): the message appears after a flow closes, over the page it returns to.
 // - Quiet: the raised surface and the control ring, no accent, no shadow.
 export const TOAST_MS = 5000;
 
@@ -34,7 +34,7 @@ export function Toast({ message, onDone }: { message: string | null; onDone: () 
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none absolute inset-x-0 z-[46] flex justify-center px-gutter"
+      className="pointer-events-none absolute inset-x-0 z-[60] flex justify-center px-gutter"
       style={{ bottom: 'calc(4.5rem + 1rem + env(safe-area-inset-bottom))' }}
     >
       {message && (

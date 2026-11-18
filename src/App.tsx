@@ -848,9 +848,9 @@ export default function App() {
             library={medications}
             guides={guides}
             onAdd={(next) => {
-              addMedication(next);
+              const added = addMedication(next);
               setMedEditor(null);
-              setToastMessage(`${medLabel(next)} was added to your medicines.`);
+              setToastMessage(added ? `${medLabel(next)} was added to your medicines.` : `You already have ${medLabel(next)}.`);
             }}
             onEditExisting={(med) => setMedEditor({ med })}
             onClose={() => setMedEditor(null)}

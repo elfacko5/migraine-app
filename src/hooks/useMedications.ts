@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { MedGuides, Medication, SyncStatus } from '../types';
 import { pullUserPrefs, pushMedications } from '../lib/sync';
-import { cleanGuides } from '../utils/medResolve';
+import { cleanGuides, findDuplicate } from '../utils/medResolve';
 import { guidesForPush, mergeMedicationPrefs, type StoredMedications } from '../utils/medPrefsMerge';
 import { markM3Done, runM3 } from '../utils/medMigrations';
 
@@ -149,8 +149,13 @@ export function useMedications(userId: string | null) {
     };
   }, [userId, sync]);
 
-  const addMedication = useCallback((med: Omit<Medication, 'id' | 'createdAt'>) => {
+  /** Adds a medicine. **Refuses an exact duplicate** (same name, form and strength,
+   *  `sameMedicine`) and returns false: the wizard checks on step 2, but a sync can
+   *  bring in a twin after that (plan, Q4 item 2). */
+  const addMedication = useCallback((med: Omit<Medication, 'id' | 'createdAt'>): boolean => {
+    if (findDuplicate(med, medications)) return false;
     commit([...medications, { ...med, id: crypto.randomUUID(), createdAt: new Date().toISOString() }]);
+    return true;
   }, [medications, commit]);
 
   const updateMedication = useCallback((id: string, patch: Partial<Omit<Medication, 'id' | 'createdAt'>>) => {

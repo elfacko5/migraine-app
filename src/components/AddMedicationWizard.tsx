@@ -5,7 +5,7 @@ import { ClassBadge } from './ClassBadge';
 import { InlineNote } from './InlineNote';
 import { RadioDot } from './RadioDot';
 import { TYPE_OPTIONS } from '../utils/medClasses';
-import { STANDARD_FORMS, findDuplicate, medLabel, parseStrength, sharedTypeForName, usualDoseExceedsMax } from '../utils/medResolve';
+import { STANDARD_FORMS, findDuplicate, medLabel, parseStrength, sameMedName, sharedTypeForName, typeOfName, usualDoseExceedsMax } from '../utils/medResolve';
 import { guideFor, guideKeyOf, type GuideKey } from '../utils/medGuardrails';
 import { chipClass } from '../utils/chipStyles';
 import { useKeyboardInset } from '../utils/keyboardOverride';
@@ -30,16 +30,19 @@ const FORM_UNIT: Record<string, string> = {
   'Nasal spray': 'spray', Injection: 'injection', Suppository: 'suppository', Liquid: 'dose',
 };
 const QTY = [0.5, 1, 1.5, 2, 3, 4, 5, 6];
+// A leaflet's 24-hour maximum goes higher than one dose does (paracetamol: 8).
+const DAY_STEPS = [0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 20, 24];
 const GUIDE_LABEL: Record<GuideKey, string> = { triptan: 'Triptan', combination: 'Combination', simple: 'Painkiller', any: 'Any attack medicine' };
 const GUIDE_SHARED: Record<GuideKey, string> = {
   triptan: 'shared by all triptans', combination: 'shared by all combinations', simple: 'shared by all painkillers', any: 'shared by all attack medicines',
 };
 
-const plural = (unit: string) => `${unit}s`;
+/** suppository → suppositories; spray → sprays. */
+const plural = (unit: string) => (/[^aeiou]y$/.test(unit) ? `${unit.slice(0, -1)}ies` : `${unit}s`);
 const unitText = (q: number, unit: string) => `${q} ${q <= 1 ? unit : plural(unit)}`;
 
 const inputClass =
-  'w-full min-h-[3.25rem] rounded-field bg-bg-surface px-4 text-sm text-text-primary ring-1 ring-inset ring-border-control ' +
+  'w-full min-h-[3.25rem] rounded-field bg-bg-surface px-control-x text-sm text-text-primary ring-1 ring-inset ring-border-control ' +
   'placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent';
 
 type LimitKey = 'qty' | 'day' | 'gap';
@@ -63,6 +66,10 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   // scroll area by the keyboard's height, and keeps the focused field in view.
   const inset = useKeyboardInset();
   const rootRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const reasonId = useId();
+  const dupId = useId();
+  const firstStep = useRef(true);
   useEffect(() => {
     if (inset === 0) return;
     const a = document.activeElement;
@@ -83,11 +90,19 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   const [gap, setGap] = useState<number | undefined>(undefined);
   const [editing, setEditing] = useState<LimitKey | null>(null);
 
+  // Focus moves to the heading when the step changes, so Back or Next never
+  // leaves it on a button that has just been removed.
+  useEffect(() => {
+    if (firstStep.current) { firstStep.current = false; return; }
+    headingRef.current?.focus();
+  }, [step]);
+
   // ── step 1 ───────────────────────────────────────────────────────────────
   const trimmed = name.trim();
-  const sameName = trimmed
-    ? library.filter((m) => m.name.trim().toLowerCase() === trimmed.toLowerCase())
-    : [];
+  const sameName = trimmed ? library.filter((m) => sameMedName(m.name, trimmed)) : [];
+  // Old same-name entries of different types (Q10): nothing is pre-selected and
+  // the step says why.
+  const typesDisagree = sameName.length > 1 && typeOfName(trimmed, library) === null;
   // A name that matches existing entries brings the type they share, until a
   // tile has been chosen by hand. Entries that disagree bring nothing.
   const suggested = trimmed ? sharedTypeForName(trimmed, library) : undefined;
@@ -155,7 +170,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
         <div>
-          <h2 className="text-[1.5rem] font-semibold leading-tight text-text-primary">{heading}</h2>
+          <h2 ref={headingRef} tabIndex={-1} className="text-[1.5rem] font-semibold leading-tight text-text-primary outline-none">{heading}</h2>
           {sub && <p className="mt-1 text-sm text-text-secondary">{sub}</p>}
         </div>
 
@@ -197,8 +212,9 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
                 })}
               </div>
               <p className="text-xs text-text-secondary">It's on the box or the leaflet. Decides which monthly guide it counts toward.</p>
-              {typeFromName && (
-                <InlineNote>Same type as your other {trimmed}. Change it if this one is different.</InlineNote>
+              {typeFromName && <InlineNote>Same type as your other {trimmed}.</InlineNote>}
+              {typesDisagree && (
+                <InlineNote>Your earlier {trimmed} entries have different types, so earlier doses can't be told apart.</InlineNote>
               )}
             </div>
           </>
@@ -241,10 +257,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
             </div>
 
             {duplicate && (
-              <InlineNote tone="amber">
-                You already have {medLabel(duplicate)}.{' '}
-                <button type="button" onClick={() => onEditExisting(duplicate)} className="font-medium text-text-primary underline underline-offset-2">Edit it instead</button>
-              </InlineNote>
+              <InlineNote tone="amber" id={dupId}>You already have {medLabel(duplicate)}. Change the form or the strength to add another.</InlineNote>
             )}
           </>
         )}
@@ -288,18 +301,16 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
         style={{ paddingBottom: inset > 0 ? '1rem' : 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         {step === 1 && !step1Ready && (
-          <p className="text-center text-xs text-text-secondary">{!trimmed ? 'Add the name to continue' : 'Choose a type to continue'}</p>
+          <p id={reasonId} className="text-center text-xs text-text-secondary">{!trimmed ? 'Add the name to continue' : 'Choose a type to continue'}</p>
         )}
         {step === 2 && !step2Ready && (
-          <p className="text-center text-xs text-text-secondary">{!effectiveForm ? 'Choose or type a form to continue' : 'Add the strength to continue'}</p>
-        )}
-        {step === 2 && step2Ready && duplicate && (
-          <p className="text-center text-xs text-text-secondary">You already have this exact medicine.</p>
+          <p id={reasonId} className="text-center text-xs text-text-secondary">{!effectiveForm ? 'Choose or type a form to continue' : 'Add the strength to continue'}</p>
         )}
         {step < 3 ? (
           <button
             type="button"
             aria-disabled={step === 1 ? !step1Ready : !step2Ready || !!duplicate}
+            aria-describedby={(step === 1 && !step1Ready) || (step === 2 && !step2Ready) ? reasonId : step === 2 && duplicate ? dupId : undefined}
             onClick={() => {
               if (step === 1 && step1Ready) setStep(2);
               else if (step === 2 && step2Ready && !duplicate) setStep(3);
@@ -319,11 +330,12 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
           title={editing === 'qty' ? 'Usual dose' : editing === 'day' ? 'Max in 24 hours' : 'Time between doses'}
           hint={editing === 'day' ? 'On the leaflet, under “How much to take”' : editing === 'gap' ? 'Shortest gap the leaflet allows between two doses' : `${plural(unit[0].toUpperCase() + unit.slice(1))} you take at once`}
           unit={editing === 'gap' ? 'hours' : plural(unit)}
-          steps={editing === 'gap' ? GAP_STEPS : QTY}
+          steps={editing === 'gap' ? GAP_STEPS : editing === 'day' ? DAY_STEPS : QTY}
           value={editing === 'qty' ? qty : editing === 'day' ? maxPerDay : gap}
           fallback={editing === 'qty' ? 1 : editing === 'day' ? 2 : 2}
           total={editing === 'gap' ? null : totalMg}
           onClear={editing === 'qty' ? undefined : () => { if (editing === 'day') setMaxPerDay(undefined); else setGap(undefined); setEditing(null); }}
+          onClose={() => setEditing(null)}
           onDone={(v) => { if (editing === 'qty') setQty(v); else if (editing === 'day') setMaxPerDay(v); else setGap(v); setEditing(null); }}
         />
       )}
@@ -358,15 +370,29 @@ function LimitRow({ label, hint, value, extra, onOpen }: { label: string; hint?:
 /** One number at a time, set with − and +, over the wizard (frames 15c-2 and
  *  15c-3). Lidd has no bottom sheet smaller than a full `Sheet`, so this is the
  *  nearest pattern: a panel anchored to the bottom of the wizard on a scrim. */
-function ValueSheet({ title, hint, unit, steps, value, fallback, total, onClear, onDone }: {
+function ValueSheet({ title, hint, unit, steps, value, fallback, total, onClear, onDone, onClose }: {
   title: string; hint: string; unit: string; steps: number[]; value: number | undefined; fallback: number;
-  total: ((n: number) => string | null) | null; onClear?: () => void; onDone: (v: number) => void;
+  total: ((n: number) => string | null) | null; onClear?: () => void; onDone: (v: number) => void; onClose: () => void;
 }) {
   const [v, setV] = useState(value ?? fallback);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // A dialog takes focus when it opens and gives it back to the row that
+  // opened it; Escape closes without saving.
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.focus();
+    return () => opener?.focus();
+  }, []);
   const i = Math.max(0, steps.indexOf(v));
   const t = total ? total(v) : null;
   return (
-    <div className="absolute inset-0 z-10 flex items-end bg-bg-base/70" role="dialog" aria-modal="true" aria-label={title}>
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
+      className="absolute inset-0 z-10 flex items-end bg-bg-base/70 outline-none"
+      role="dialog" aria-modal="true" aria-label={title}
+    >
       <div className="w-full space-y-4 rounded-t-sheet bg-bg-surface px-gutter pt-5 sm:px-gutter-wide" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
         <div>
           <h3 className="text-base font-semibold text-text-primary">{title}</h3>
@@ -374,14 +400,14 @@ function ValueSheet({ title, hint, unit, steps, value, fallback, total, onClear,
         </div>
         <div className="flex items-center justify-center gap-4">
           <button type="button" aria-label="Less" disabled={i === 0} onClick={() => setV(steps[i - 1])}
-            className="flex size-14 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:text-text-secondary/50">−</button>
+            className="flex size-14 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:[color:color-mix(in_srgb,var(--color-text-secondary)_55%,var(--color-bg-surface))]">−</button>
           <div className="min-w-[6rem] text-center" aria-live="polite">
             <span className="block text-[2.5rem] font-semibold tabular-nums leading-none text-text-primary">{v}</span>
             <span className="block text-sm text-text-secondary">{unit}</span>
             {t && <span className="block text-xs text-text-secondary">= {t}</span>}
           </div>
           <button type="button" aria-label="More" disabled={i === steps.length - 1} onClick={() => setV(steps[i + 1])}
-            className="flex size-14 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:text-text-secondary/50">+</button>
+            className="flex size-14 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:[color:color-mix(in_srgb,var(--color-text-secondary)_55%,var(--color-bg-surface))]">+</button>
         </div>
         <div className="flex flex-wrap gap-2">
           {onClear && <button type="button" onClick={onClear} className="btn-secondary flex-1">Clear</button>}

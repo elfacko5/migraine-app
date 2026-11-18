@@ -4,7 +4,7 @@
 // no network, no localStorage and no account.
 import assert from 'node:assert/strict';
 import type { Attack, Medication } from '../../src/types/index.ts';
-import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
+import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, sameMedName, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
 import { GUIDELINE, guideFor, guideKeyOf } from '../../src/utils/medGuardrails.ts';
 import { classDaysInWindow } from '../../src/utils/stats.ts';
 import { M3_MARKER_KEY, markM3Done, planM3, runM3 } from '../../src/utils/medMigrations.ts';
@@ -446,6 +446,11 @@ t('sameMedicine: an old record with no stored form compares as its derived form,
 });
 t('sameMedicine: an empty name is never a duplicate', () => {
   assert.equal(sameMedicine({ name: '  ', strength: '50mg', form: 'Tablet', dose: '' }, med('e', '', '50mg')), false);
+});
+t('names compare with doubled inner spaces collapsed', () => {
+  assert.equal(sameMedName('Sumatriptan  succinate', ' sumatriptan succinate '), true);
+  assert.equal(sameMedicine({ name: 'Sumatriptan  succinate', strength: '50mg', form: 'Tablet', dose: '' }, med('x', 'sumatriptan succinate', '50mg', { form: 'Tablet' })), true);
+  assert.equal(sameMedName('', ' '), false);
 });
 t('findDuplicate returns the matching entry, else null', () => {
   assert.equal(findDuplicate({ name: 'Sumatriptan', strength: '50mg', form: 'Tablet', dose: '' }, [med('x', 'Other', '1mg'), S50])?.id, 's1');
