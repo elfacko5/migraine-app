@@ -547,7 +547,8 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
           </p>
           {importErr && <p className="text-xs text-severity-high">{importErr}</p>}
           {/* Amber, not the alarm colour: the data is untouched, only the file was not made. */}
-          {exportErr && <p role="status" className="text-xs text-severity-mid">The backup couldn't be saved. Your data is still on this device.</p>}
+          {/* The live region stays in the page and only its text comes and goes: VoiceOver often skips a region that is added already holding text. */}
+          <p role="status" className="text-xs text-severity-mid">{exportErr ? "The backup couldn't be saved. Your data is still on this device." : ''}</p>
         </div>
 
         <ReminderDiagnostics />
