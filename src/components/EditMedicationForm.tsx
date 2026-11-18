@@ -129,12 +129,11 @@ export function EditMedicationForm({ medication: original, library, guides, atta
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Focus goes to the heading of whichever screen is showing, except the text
-  // screens, whose field takes it (and the keyboard) on its own.
-  useEffect(() => {
-    if (screen === 'name' || screen === 'strength') return;
-    headingRef.current?.focus({ preventScroll: true });
-  }, [screen]);
+  // Focus goes to the heading of whichever screen is showing, the text screens
+  // included (June, 2026-11-18): the screen is announced first, then the field
+  // is a swipe and a tap away. The field is not autofocused, so the keyboard
+  // opens when it is tapped, not as the screen appears.
+  useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, [screen]);
 
   const ownForm = !(STANDARD_FORMS as readonly string[]).includes(form);
   const unit = form === initialForm ? (original.unitLabel || unitForForm(form)) : unitForForm(form);
@@ -355,7 +354,7 @@ export function EditMedicationForm({ medication: original, library, guides, atta
         <div ref={bodyRef} className={bodyClass}>
           <div className="space-y-2">
             <label htmlFor={isName ? nameId : strengthId} className="block text-xs font-medium text-text-secondary">{isName ? 'As it’s written on the box' : 'As printed on the box, e.g. 500/50 mg or 100 mg/5 ml'}</label>
-            <input id={isName ? nameId : strengthId} autoFocus type="text" value={draftText} onChange={(e) => setDraftText(e.target.value)} className={inputClass} />
+            <input id={isName ? nameId : strengthId} type="text" value={draftText} onChange={(e) => setDraftText(e.target.value)} className={inputClass} />
             <p className="text-xs text-text-secondary">{isName ? 'Doses already logged keep the name they were logged under.' : 'A new strength applies from today; past doses keep theirs.'}</p>
           </div>
         </div>
