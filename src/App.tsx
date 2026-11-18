@@ -3,7 +3,7 @@ import type { Tab, Snapshot, Medication } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useMedications } from './hooks/useMedications';
-import { isDeletedName, medLabel, stampSnapshot } from './utils/medResolve';
+import { isDeletedName, isLogged, medLabel, stampSnapshot } from './utils/medResolve';
 import { useHit6 } from './hooks/useHit6';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
@@ -853,7 +853,8 @@ export default function App() {
             onDelete={() => {
               removeMedication(medEditor.med.id);
               setMedEditor(null);
-              setToastMessage(`${medLabel(medEditor.med)} was removed from your medicines. Its earlier doses stay in your diary.`);
+              // The second sentence only when there are doses for it to be about.
+              setToastMessage(`${medLabel(medEditor.med)} was removed from your medicines.${isLogged(medEditor.med, medications, attacks) ? ' Its earlier doses stay in your diary.' : ''}`);
             }}
             onClose={() => setMedEditor(null)}
           />

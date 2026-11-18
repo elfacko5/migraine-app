@@ -6,7 +6,7 @@ import { chipClass } from '../utils/chipStyles';
 import { useKeyboardFlow } from '../utils/keyboardOverride';
 import { TYPE_OPTIONS, classLetter } from '../utils/medClasses';
 import {
-  DAY_STEPS, GAP_STEPS, QTY_STEPS, STANDARD_FORMS, daysTakenOf, derivedDose, doseCountOf, editMakesDuplicate, formOf, medLabel,
+  DAY_STEPS, GAP_STEPS, QTY_STEPS, STANDARD_FORMS, daysTakenOf, derivedDose, doseCountOf, editMakesDuplicate, formOf, isLogged, medLabel,
   otherVersionsWithOtherType, parseStrength, pluralUnit, seedFromDose, strengthNeedsCheck, unitForForm, unitText,
 } from '../utils/medResolve';
 import { BinIcon } from './icons';
@@ -205,10 +205,17 @@ export function EditMedicationForm({ medication: original, library, guides, atta
 
   // Remove (commit 4): the library entry leaves, nothing else does. The wording
   // is June's (2026-11-17); the line for a medicine with no doses is a draft.
+  // "Nothing has been logged" is only said when no dose could be this medicine
+  // (`isLogged` counts an ambiguous one); a figure is only shown when none is
+  // ambiguous, since `doseCountOf` leaves those out and would under-state it.
   const loggedDoses = doseCountOf(original, library, attacks);
-  const removeMessage = loggedDoses > 0
-    ? `It leaves your list. The ${loggedDoses} ${loggedDoses === 1 ? 'dose stays' : 'doses stay'} in your diary and in Insights.`
-    : 'It leaves your list. Nothing has been logged with it.';
+  const everLogged = isLogged(original, library, attacks);
+  const ambiguousDoses = everLogged ? daysTakenOf(original, library, attacks).ambiguousDoses : 0;
+  const removeMessage = !everLogged
+    ? 'It leaves your list. Nothing has been logged with it.'
+    : loggedDoses > 0 && ambiguousDoses === 0
+      ? `It leaves your list. The ${loggedDoses} ${loggedDoses === 1 ? 'dose stays' : 'doses stay'} in your diary and in Insights.`
+      : 'It leaves your list. Its doses stay in your diary and in Insights.';
 
   const guideKey = guideKeyOf(cls);
   const gl = guideKey ? guideLine(guideKey, guides) : null;

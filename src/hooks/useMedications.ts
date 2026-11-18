@@ -193,9 +193,14 @@ export function useMedications(userId: string | null) {
       const twin = editMakesDuplicate(m, { name: after.name, form: formOf(after), strength: after.strength, dose: after.dose }, medications);
       if (twin) return twin;
     }
-    commit(medications.map((m) => (byId.has(m.id) ? { ...m, ...byId.get(m.id) } : m)));
+    // A rename to a name on the deleted list is a re-add in effect: the name
+    // leaves the list, or it would count as deleted again if the entry were
+    // ever renamed away.
+    let nextDeleted = deleted;
+    for (const u of updates) if (u.patch.name) nextDeleted = withoutDeleted(nextDeleted, u.patch.name);
+    commit(medications.map((m) => (byId.has(m.id) ? { ...m, ...byId.get(m.id) } : m)), nextDeleted);
     return null;
-  }, [medications, commit]);
+  }, [medications, deleted, commit]);
 
   const updateMedication = useCallback((id: string, patch: Patch) => {
     updateMedications([{ id, patch }]);
