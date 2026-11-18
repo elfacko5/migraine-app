@@ -66,13 +66,24 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   // scroll area by the keyboard's height, and keeps the focused field in view.
   const inset = useKeyboardInset();
   const rootRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  // Scrolls the wizard's own body so `el` is centred in it. Not `scrollIntoView`:
+  // that scrolls every ancestor too, including the app shell, which is how a
+  // focus during the sheet's slide-in left the whole app scrolled up.
+  const centerInBody = (el: HTMLElement) => {
+    const body = bodyRef.current;
+    if (!body) return;
+    const b = body.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    body.scrollTop += r.top + r.height / 2 - (b.top + b.height / 2);
+  };
   const headingRef = useRef<HTMLHeadingElement>(null);
   const reasonId = useId();
   const dupId = useId();
   useEffect(() => {
     if (inset === 0) return;
     const a = document.activeElement;
-    if (a instanceof HTMLInputElement && rootRef.current?.contains(a)) a.scrollIntoView({ block: 'center' });
+    if (a instanceof HTMLInputElement && rootRef.current?.contains(a)) centerInBody(a);
   }, [inset]);
 
   const [name, setName] = useState('');
@@ -93,7 +104,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   // so VoiceOver starts at the title and Back or Next never leaves it on a
   // button that has just been removed.
   useEffect(() => {
-    headingRef.current?.focus();
+    headingRef.current?.focus({ preventScroll: true });
   }, [step]);
 
   // ── step 1 ───────────────────────────────────────────────────────────────
@@ -152,7 +163,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
 
   return (
     <div ref={rootRef} className="relative flex min-h-0 flex-1 flex-col" style={{ paddingBottom: inset }}
-      onFocus={(e) => { if (inset > 0 && e.target instanceof HTMLInputElement) e.target.scrollIntoView({ block: 'center' }); }}>
+      onFocus={(e) => { if (inset > 0 && e.target instanceof HTMLInputElement) centerInBody(e.target); }}>
       <div
         className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4"
         style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
@@ -167,7 +178,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
         <button type="button" onClick={onClose} className="btn-tertiary min-h-target px-2">Cancel</button>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
+      <div ref={bodyRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
         <div>
           <h2 ref={headingRef} tabIndex={-1} className="text-[1.5rem] font-semibold leading-tight text-text-primary outline-none">{heading}</h2>
           {sub && <p className="mt-1 text-sm text-text-secondary">{sub}</p>}
@@ -380,8 +391,8 @@ function ValueSheet({ title, hint, unit, unitOne, steps, value, fallback, total,
   // opened it; Escape closes without saving.
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialogRef.current?.focus();
-    return () => opener?.focus();
+    dialogRef.current?.focus({ preventScroll: true });
+    return () => opener?.focus({ preventScroll: true });
   }, []);
   const i = Math.max(0, steps.indexOf(v));
   const t = total ? total(v) : null;
