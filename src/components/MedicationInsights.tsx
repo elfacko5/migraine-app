@@ -1,10 +1,11 @@
-import type { Attack, MedGuides, Medication } from '../types';
+import type { Attack, DeletedMedName, MedGuides, Medication } from '../types';
 import {
   medicationDaysInWindow, medicationResponse,
   MOH_DAYS_TRIPTAN, MOH_DAYS_SIMPLE,
 } from '../utils/stats';
 import { MedIcon } from './drawnIcons';
 import { guideForName } from '../utils/medGuardrails';
+import { isDeletedName } from '../utils/medResolve';
 import { InsightSection } from './InsightSection';
 
 // Two questions a clinician asks about medication, and neither of them is
@@ -25,10 +26,12 @@ interface Props {
   monthScale: boolean;
   /** The monthly guides (a stored number per type, else the guideline). */
   guides?: MedGuides;
+  /** Names deleted from the library: their days are shown, never marked as overuse. */
+  deleted?: DeletedMedName[];
 }
 
 export function MedicationInsights({
-  attacks, medications = [], guides = {}, since, windowLabel, monthScale,
+  attacks, medications = [], guides = {}, deleted = [], since, windowLabel, monthScale,
 }: Props) {
   const days = medicationDaysInWindow(attacks, since);
   const response = medicationResponse(attacks, since);
@@ -83,7 +86,9 @@ export function MedicationInsights({
           // when it doesn't is the one direction this page must not fail in.
           // Under a month it can only ever under-warn, which is safe.
           const limit = guideForName(med.name, medications, guides);
-          const nearing = monthScale && limit !== null && med.days >= limit;
+          // A deleted medicine's days stay in the history above, but the overuse
+          // marker skips it (June, item 224): nothing in the library to measure.
+          const nearing = monthScale && limit !== null && med.days >= limit && !isDeletedName(med.name, medications, deleted);
           return (
             <div
               key={med.name}

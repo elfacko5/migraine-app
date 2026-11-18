@@ -3,7 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import type { Attack, MedGuides, Medication } from '../types';
+import type { Attack, DeletedMedName, MedGuides, Medication } from '../types';
 import { formatDateShort } from '../utils/format';
 import {
   attackMaxSeverity, consecutiveMigraineDays, daysSinceLastMigraine,
@@ -68,6 +68,8 @@ interface Props {
   medications?: Medication[];
   /** The monthly guides, passed through to MedicationInsights. */
   guides?: MedGuides;
+  /** Passed through to MedicationInsights: deleted names are not marked as overuse. */
+  deleted?: DeletedMedName[];
   /** Owned by `App`, because the control that sets it is rendered in the top
    *  bar rather than on this page. Defaults there to 30 days, not 7: every
    *  clinical figure here is monthly — the overuse thresholds, the 15-day
@@ -127,7 +129,7 @@ function FreqSection({ title, data, color, info }: { title: string; data: Freq[]
   );
 }
 
-export function StatsView({ attacks, medications = [], guides = {}, period }: Props) {
+export function StatsView({ attacks, medications = [], guides = {}, deleted = [], period }: Props) {
   const theme = useUiTheme();
   const chartColors = CHART_COLORS[theme];
 
@@ -278,6 +280,7 @@ export function StatsView({ attacks, medications = [], guides = {}, period }: Pr
         attacks={attacks}
         medications={medications}
         guides={guides}
+        deleted={deleted}
         since={since}
         windowLabel={PERIOD_SUB[period]}
         monthScale={monthScale}

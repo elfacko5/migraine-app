@@ -3,7 +3,7 @@ import type { Tab, Snapshot, Medication } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useMedications } from './hooks/useMedications';
-import { medLabel, stampSnapshot } from './utils/medResolve';
+import { isDeletedName, medLabel, stampSnapshot } from './utils/medResolve';
 import { useHit6 } from './hooks/useHit6';
 import { useNotifications } from './hooks/useNotifications';
 import { useSettings } from './hooks/useSettings';
@@ -118,7 +118,7 @@ export default function App() {
     syncStatus: prefsSyncStatus, lastSyncedAt: prefsLastSyncedAt,
   } = useUserPrefs(userId);
   const {
-    medications, guides, setGuide, addMedication, updateMedications, removeMedication,
+    medications, guides, deleted, setGuide, addMedication, updateMedications, removeMedication,
     syncStatus: medsSyncStatus, lastSyncedAt: medsLastSyncedAt,
   } = useMedications(userId);
   const {
@@ -191,13 +191,15 @@ export default function App() {
         // it isn't in the library, so nothing else filters it, and it would
         // be offered as a chip on every log from now on.
         const name = snap.medication?.name?.trim();
-        if (name && !isRetired(name) && !seen.has(name)) {
+        // A deleted medicine's doses stay in the diary, but its name is not
+        // offered again: it is in no entry and on the deleted list.
+        if (name && !isRetired(name) && !seen.has(name) && !isDeletedName(name, medications, deleted)) {
           seen.set(name, snap.medication!.dose);
         }
       }
     }
     return Array.from(seen.entries()).map(([name, dose]) => ({ name, dose }));
-  }, [attacks, medications]);
+  }, [attacks, medications, deleted]);
 
   // Most recent attack end (ISO strings compare chronologically) — for the
   // "attack-free" card shown when nothing is ongoing.
@@ -589,6 +591,7 @@ export default function App() {
                 ongoing={ongoingAttack}
                 medications={medications}
                 guides={guides}
+                deleted={deleted}
                 attackMode={attackMode}
                 onOpenInsights={() => setTab('stats')}
               />
@@ -645,7 +648,7 @@ export default function App() {
         {/* ── Insights tab ─────────────────────────── */}
         {tab === 'stats' && (
           <section className="space-y-4">
-            <StatsView attacks={attacks} medications={medications} guides={guides} period={statsPeriod} />
+            <StatsView attacks={attacks} medications={medications} guides={guides} deleted={deleted} period={statsPeriod} />
           </section>
         )}
 
@@ -847,7 +850,11 @@ export default function App() {
               if (twin) { setToastMessage(`You already have ${medLabel(twin)}.`); return; }
               setMedEditor(null);
             }}
-            onDelete={() => { removeMedication(medEditor.med.id); setMedEditor(null); }}
+            onDelete={() => {
+              removeMedication(medEditor.med.id);
+              setMedEditor(null);
+              setToastMessage(`${medLabel(medEditor.med)} was removed from your medicines. Its earlier doses stay in your diary.`);
+            }}
             onClose={() => setMedEditor(null)}
           />
         )}

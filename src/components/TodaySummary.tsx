@@ -1,4 +1,4 @@
-import type { Attack, MedGuides, Medication } from '../types';
+import type { Attack, DeletedMedName, MedGuides, Medication } from '../types';
 import { useNowTick } from '../hooks/useNowTick';
 import {
   attacksInWindow, classDaysInWindow, medicationDaysLastWindow, migraineDaysInWindow,
@@ -12,7 +12,7 @@ import { WarningIcon } from './icons';
 import {
   checkDose, doseUnits, findMedication, guideFor, guideForName, guideKeyOf, lastDoseSnapshot, unitsInWindow, unitsLabel,
 } from '../utils/medGuardrails';
-import { countingFor } from '../utils/medResolve';
+import { countingFor, isDeletedName } from '../utils/medResolve';
 
 // What belongs under the hero on Today: figures that need no interpretation,
 // and one warning that has to arrive before it's too late to act on. Anything
@@ -29,6 +29,8 @@ interface Props {
   medications?: Medication[];
   /** The monthly guides (a stored number per type, else the guideline). */
   guides?: MedGuides;
+  /** Names deleted from the library: their doses are not warned about. */
+  deleted?: DeletedMedName[];
   /** Attack mode strips this down to what's actionable — see below. */
   attackMode?: boolean;
   /** The tiles open Insights. */
@@ -142,7 +144,7 @@ function MedRow({ name, icon, figure, detail, warning = false }: {
 //   - **The last dose stays as-is.** One line, and it's the question people
 //     actually open the app mid-attack to answer.
 export function TodaySummary({
-  attacks, ongoing, medications = [], guides = {}, attackMode = false, onOpenInsights,
+  attacks, ongoing, medications = [], guides = {}, deleted = [], attackMode = false, onOpenInsights,
 }: Props) {
   // The 24-hour figure and the rolling 30 days both go stale on their own as
   // doses age out — the same reason every live duration in the app ticks. All
@@ -167,6 +169,9 @@ export function TodaySummary({
     // same-name entries that disagree, have none) — the attack-mode branch is
     // unchanged in shape apart from where the number comes from.
     const nearing = perDrug
+      // A deleted medicine is not warned about (June, item 216): its doses stay
+      // in the diary, but nothing here counts them against a limit.
+      .filter((m) => !isDeletedName(m.name, medications, deleted))
       .map((m) => ({ ...m, threshold: guideForName(m.name, medications, guides) }))
       .filter((m) => m.threshold !== null && m.days >= warnAt(m.threshold));
     if (nearing.length === 0 && !lastDose) return null;
@@ -194,7 +199,7 @@ export function TodaySummary({
   }
 
   // ── The class bars ─────────────────────────────────────────────────────
-  const cd = classDaysInWindow(attacks, countingFor(medications));
+  const cd = classDaysInWindow(attacks, countingFor(medications, deleted));
   // A row per class the user actually has: an acute medication of that class
   // in the library, or a dose of one in the window. A class nobody takes is
   // an empty bar that says nothing.

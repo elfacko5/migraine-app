@@ -6,7 +6,7 @@ import { chipClass } from '../utils/chipStyles';
 import { useKeyboardFlow } from '../utils/keyboardOverride';
 import { TYPE_OPTIONS, classLetter } from '../utils/medClasses';
 import {
-  DAY_STEPS, GAP_STEPS, QTY_STEPS, STANDARD_FORMS, daysTakenOf, derivedDose, editMakesDuplicate, formOf, medLabel,
+  DAY_STEPS, GAP_STEPS, QTY_STEPS, STANDARD_FORMS, daysTakenOf, derivedDose, doseCountOf, editMakesDuplicate, formOf, medLabel,
   otherVersionsWithOtherType, parseStrength, pluralUnit, seedFromDose, strengthNeedsCheck, unitForForm, unitText,
 } from '../utils/medResolve';
 import { BinIcon } from './icons';
@@ -203,6 +203,13 @@ export function EditMedicationForm({ medication: original, library, guides, atta
     return () => { closeRef.current = null; };
   });
 
+  // Remove (commit 4): the library entry leaves, nothing else does. The wording
+  // is June's (2026-11-17); the line for a medicine with no doses is a draft.
+  const loggedDoses = doseCountOf(original, library, attacks);
+  const removeMessage = loggedDoses > 0
+    ? `It leaves your list. The ${loggedDoses} ${loggedDoses === 1 ? 'dose stays' : 'doses stay'} in your diary and in Insights.`
+    : 'It leaves your list. Nothing has been logged with it.';
+
   const guideKey = guideKeyOf(cls);
   const gl = guideKey ? guideLine(guideKey, guides) : null;
   const typeLabel = TYPE_OPTIONS.find((t) => t.value === cls)?.label ?? 'Not sure';
@@ -224,7 +231,7 @@ export function EditMedicationForm({ medication: original, library, guides, atta
       <>
         <Bar headingRef={headingRef}
           left={<button type="button" onClick={cancel} className="btn-tertiary min-h-target px-2">Cancel</button>}
-          right={<button type="button" onClick={() => setConfirmDelete(true)} aria-label="Delete medicine"
+          right={<button type="button" onClick={() => setConfirmDelete(true)} aria-label="Remove medicine"
             className="flex size-target items-center justify-center rounded-full text-text-primary transition-colors hover:bg-severity-high/15 hover:text-severity-high"><BinIcon className="h-6 w-6" /></button>}
           title="Edit medicine"
           sub={dirty ? 'Unsaved changes' : null}
@@ -400,9 +407,10 @@ export function EditMedicationForm({ medication: original, library, guides, atta
       <ConfirmDialog
         open={confirmDelete}
         danger
-        title="Delete this medication?"
-        message={`${original.name} will no longer be suggested when you log. Attacks that already record it are not affected.`}
-        confirmLabel="Delete"
+        title={`Remove ${medLabel(original)}?`}
+        message={removeMessage}
+        confirmLabel="Remove"
+        cancelLabel="Keep it"
         onConfirm={() => { setConfirmDelete(false); onDelete(); }}
         onCancel={() => setConfirmDelete(false)}
       />
