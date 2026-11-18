@@ -92,7 +92,9 @@ export function ConfirmDialog({
             // `--color-bg-base` text: a saturated-enough fill in this palette
             // always carries dark text. A light-on-light pairing here was the
             // odd one out, not the house style.
-            className={`flex-1 rounded-control py-2.5 text-sm font-medium transition-colors ${
+            // The danger fill is not a `btn-*` class, so it carries no horizontal padding
+            // of its own: without `px-control-x` its label ran to the button's edges.
+            className={`flex-1 rounded-control px-control-x py-2.5 text-sm font-medium transition-colors ${
               danger
                 ? 'bg-severity-high text-bg-base hover:opacity-90'
                 : 'btn-primary'

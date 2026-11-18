@@ -80,16 +80,17 @@ function Row({ label, value, extra, onOpen, note }: { label: string; value: stri
 }
 
 function Bar({ left, title, sub, right, headingRef }: { left: React.ReactNode; title: string; sub?: string | null; right?: React.ReactNode; headingRef: React.RefObject<HTMLHeadingElement | null> }) {
+  // One row: the left control, the title centred between, the right control.
+  // Both sides reserve the same minimum width, so the title sits in the middle
+  // whatever is on either side; at large text the title wraps within its column.
   return (
-    <div className="px-3 py-3 sm:px-4" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {left}
-        {right ?? <span />}
-      </div>
-      <div className="mt-1 text-center">
+    <div className="grid grid-cols-[minmax(4.5rem,auto)_1fr_minmax(4.5rem,auto)] items-center gap-x-2 px-3 py-3 sm:px-4" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}>
+      <div className="flex items-center justify-start">{left}</div>
+      <div className="min-w-0 text-center">
         <h2 ref={headingRef} tabIndex={-1} className="text-base font-semibold text-text-primary outline-none">{title}</h2>
         {sub && <p className="text-xs text-text-secondary">{sub}</p>}
       </div>
+      <div className="flex items-center justify-end">{right}</div>
     </div>
   );
 }
