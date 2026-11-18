@@ -405,3 +405,11 @@ June, in chat: the "medication X, 2 of 10" figures should not be shown on Today.
 **Two bugs the phone found, both in code from this commit:** VoiceOver could reach the page behind a stacked sheet (fixed in `Sheet`: everything behind an open sheet is inert and aria-hidden), and focusing the heading during the slide-in scrolled the app shell (fixed: every programmatic focus uses `preventScroll`, and fields are centred in the wizard's own body, never with `scrollIntoView`).
 
 **Not done:** the "+ Add a medication" button on the overview reads "plus" (commit 2 rebuilds that screen); the overview and the edit form are still the old screens (commits 2 and 3).
+
+## Commit 2 built and checked on June's phone (2026-11-18)
+
+**Built:** the overview (`MedicationsView`: "+ Add a medicine", a Monthly guides row), `GuidesView` (one row per type with a medicine, plus Any; gepants have no row), the shared `ValueSheet` (extracted from the wizard), `setGuide` / `withGuide` with a check, and `ProfileSubPage` focusing its title so a swap inside one sheet leaves VoiceOver at the new page. Commits `58397c2`, review fixes `cdd68d3`, then `b02e0c4` after her phone check. Reviewed by the `reviewer` agent; all four findings fixed (no write when nothing changed, singular "1 day", a stored guide above 31 kept as a step, Escape goes back one level).
+
+**Phone checks passed:** Done without changing the number leaves a guide unset; VoiceOver reads the page in order. **Two changes from her check:** the Any row takes the "+" badge (the combined line's existing mark), and the value sheet says what Clear does ("Clear goes back to the guideline: 10 days."; in the wizard, "Clear leaves it not set."). Both strings are drafts.
+
+**Still held for June:** the guides wording (the "Agree these with your doctor" lines, the Any row's "All types together" against Q6, labelling the number as a guideline). Placeholder text from the frames stays until she rewords it.
