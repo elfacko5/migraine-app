@@ -1,9 +1,34 @@
 // Export / import all app data (everything lives under the `hd_` localStorage
 // prefix: attacks, triggers, symptoms, reliefs, notification + UI settings).
 
+import { Capacitor } from '@capacitor/core';
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+
 const PREFIX = 'hd_';
 
-export function exportData(): void {
+/** Did the share sheet get dismissed rather than fail? The iOS plugin rejects
+ *  with a "Share canceled" style message when the sheet is closed. Matched on
+ *  "cancel", case-insensitively, not on the full string, since the exact wording
+ *  was not read from the plugin source: if it differs, a cancel shows the failure
+ *  line, which is visible and wrong rather than silent. */
+const isShareCancel = (e: unknown) => /cancel/i.test(e instanceof Error ? e.message : String(e));
+
+/**
+ * Saves every `hd_` key as one JSON file.
+ *
+ * **Native (iOS):** the file is written to the cache directory and handed to the
+ * share sheet, where "Save to Files" keeps it. The web build's trick — a blob
+ * URL clicked on an `<a download>` — does nothing in a WKWebView, silently,
+ * which is why Export used to do nothing in the app. **Web:** unchanged.
+ *
+ * Resolves when the file is saved or handed over; a dismissed share sheet is
+ * not an error. The file write has its own `try` boundary on purpose: only an
+ * error from `Share.share` itself is examined for "cancelled", so a failed
+ * write can never be swallowed as one. Anything else rejects, and the caller
+ * shows a line — a failure must never be silent again.
+ */
+export async function exportData(): Promise<void> {
   const data: Record<string, string> = {};
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -19,12 +44,25 @@ export function exportData(): void {
     exportedAt: new Date().toISOString(),
     data,
   };
+  const json = JSON.stringify(payload, null, 2);
+  const filename = `migraine-backup-${new Date().toISOString().slice(0, 10)}.json`;
 
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  if (Capacitor.isNativePlatform()) {
+    const { uri } = await Filesystem.writeFile({ path: filename, data: json, directory: Directory.Cache, encoding: Encoding.UTF8 });
+    try {
+      await Share.share({ title: 'Migraine backup', url: uri });
+    } catch (e) {
+      if (isShareCancel(e)) return;
+      throw e;
+    }
+    return;
+  }
+
+  const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `migraine-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
