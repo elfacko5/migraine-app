@@ -65,13 +65,17 @@ export function ConfirmDialog({
       >
         <h2 className="text-base font-medium text-text-primary">{title}</h2>
         {message && <p className="mt-1.5 text-sm text-text-secondary leading-relaxed">{message}</p>}
-        <div className="mt-5 flex gap-3">
+        {/* Wraps: two `flex-1` buttons cannot shrink below their longest word, so at
+            150% text the second one ran past the panel's edge. Each takes a 9rem
+            basis (it scales with the text), so a pair that no longer fits stacks, full
+            width, the safe choice on top. */}
+        <div className="mt-5 flex flex-wrap gap-3">
           {!dismissOnly && (
           <button
             ref={cancelRef}
             type="button"
             onClick={onCancel}
-            className="btn-secondary flex-1 rounded-control py-2.5 text-sm font-medium transition-colors"
+            className="btn-secondary min-w-0 flex-1 basis-[9rem] rounded-control py-2.5 text-sm font-medium transition-colors"
           >
             {cancelLabel}
           </button>
@@ -94,7 +98,7 @@ export function ConfirmDialog({
             // odd one out, not the house style.
             // The danger fill is not a `btn-*` class, so it carries no horizontal padding
             // of its own: without `px-control-x` its label ran to the button's edges.
-            className={`flex-1 rounded-control px-control-x py-2.5 text-sm font-medium transition-colors ${
+            className={`min-w-0 flex-1 basis-[9rem] rounded-control px-control-x py-2.5 text-sm font-medium transition-colors ${
               danger
                 ? 'bg-severity-high text-bg-base hover:opacity-90'
                 : 'btn-primary'
