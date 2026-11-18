@@ -180,7 +180,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
               <input id={nameId} type="text" placeholder="As it's written on the box" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
               {sameName.length > 0 && (
                 <InlineNote tone="amber">
-                  You already have {sameName.map(medLabel).join(', ')}.{' '}
+                  {`You already have ${sameName.map(medLabel).join(', ')}.`}{' '}
                   <button type="button" onClick={() => onEditExisting(sameName[0])} className="font-medium text-text-primary underline underline-offset-2">Edit it instead</button>
                 </InlineNote>
               )}
@@ -211,9 +211,9 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
                 })}
               </div>
               <p className="text-xs text-text-secondary">It's on the box or the leaflet. Decides which monthly guide it counts toward.</p>
-              {typeFromName && <InlineNote>Same type as your other {trimmed}.</InlineNote>}
+              {typeFromName && <InlineNote>{`Same type as your other ${trimmed}.`}</InlineNote>}
               {typesDisagree && (
-                <InlineNote>Your earlier {trimmed} entries have different types, so earlier doses can't be told apart.</InlineNote>
+                <InlineNote>{`Your earlier ${trimmed} entries have different types, so earlier doses can't be told apart.`}</InlineNote>
               )}
             </div>
           </>
@@ -256,7 +256,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
             </div>
 
             {duplicate && (
-              <InlineNote tone="amber" id={dupId}>You already have {medLabel(duplicate)}. Change the form or the strength to add another.</InlineNote>
+              <InlineNote tone="amber" id={dupId}>{`You already have ${medLabel(duplicate)}. Change the form or the strength to add another.`}</InlineNote>
             )}
           </>
         )}
@@ -289,7 +289,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
             )}
 
             {aboveMax && (
-              <InlineNote tone="amber">Your usual dose ({qty}) is more than the max in 24 hours ({maxPerDay}). Check the leaflet.</InlineNote>
+              <InlineNote tone="amber">{`Your usual dose (${qty}) is more than the max in 24 hours (${maxPerDay}). Check the leaflet.`}</InlineNote>
             )}
           </>
         )}
@@ -329,6 +329,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
           title={editing === 'qty' ? 'Usual dose' : editing === 'day' ? 'Max in 24 hours' : 'Time between doses'}
           hint={editing === 'day' ? 'On the leaflet, under “How much to take”' : editing === 'gap' ? 'Shortest gap the leaflet allows between two doses' : `${plural(unit[0].toUpperCase() + unit.slice(1))} you take at once`}
           unit={editing === 'gap' ? 'hours' : plural(unit)}
+          unitOne={editing === 'gap' ? 'hour' : unit}
           steps={editing === 'gap' ? GAP_STEPS : editing === 'day' ? DAY_STEPS : QTY}
           value={editing === 'qty' ? qty : editing === 'day' ? maxPerDay : gap}
           fallback={editing === 'qty' ? 1 : editing === 'day' ? 2 : 2}
@@ -369,8 +370,8 @@ function LimitRow({ label, hint, value, extra, onOpen }: { label: string; hint?:
 /** One number at a time, set with − and +, over the wizard (frames 15c-2 and
  *  15c-3). Lidd has no bottom sheet smaller than a full `Sheet`, so this is the
  *  nearest pattern: a panel anchored to the bottom of the wizard on a scrim. */
-function ValueSheet({ title, hint, unit, steps, value, fallback, total, onClear, onDone, onClose }: {
-  title: string; hint: string; unit: string; steps: number[]; value: number | undefined; fallback: number;
+function ValueSheet({ title, hint, unit, unitOne, steps, value, fallback, total, onClear, onDone, onClose }: {
+  title: string; hint: string; unit: string; unitOne: string; steps: number[]; value: number | undefined; fallback: number;
   total: ((n: number) => string | null) | null; onClear?: () => void; onDone: (v: number) => void; onClose: () => void;
 }) {
   const [v, setV] = useState(value ?? fallback);
@@ -402,7 +403,7 @@ function ValueSheet({ title, hint, unit, steps, value, fallback, total, onClear,
             className="flex size-14 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:[color:color-mix(in_srgb,var(--color-text-secondary)_55%,var(--color-bg-surface))]">−</button>
           <div className="min-w-[6rem] text-center" aria-live="polite">
             <span className="block text-[2.5rem] font-semibold tabular-nums leading-none text-text-primary">{v}</span>
-            <span className="block text-sm text-text-secondary">{unit}</span>
+            <span className="block text-sm text-text-secondary">{v <= 1 ? unitOne : unit}</span>
             {t && <span className="block text-xs text-text-secondary">= {t}</span>}
           </div>
           <button type="button" aria-label="More" disabled={i === steps.length - 1} onClick={() => setV(steps[i + 1])}
