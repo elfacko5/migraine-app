@@ -8,10 +8,10 @@ import { Share } from '@capacitor/share';
 const PREFIX = 'hd_';
 
 /** Did the share sheet get dismissed rather than fail? The iOS plugin rejects
- *  with a "Share canceled" style message when the sheet is closed. Matched on
- *  "cancel", case-insensitively, not on the full string, since the exact wording
- *  was not read from the plugin source: if it differs, a cancel shows the failure
- *  line, which is visible and wrong rather than silent. */
+ *  with exactly "Share canceled" when the sheet is closed or the Save to Files
+ *  picker is backed out of (`SharePlugin.swift`, 8.0.3), and its other two
+ *  rejections ("Error sharing item", "Can't share while sharing is in progress")
+ *  contain no "cancel". Matched on "cancel", case-insensitively. */
 const isShareCancel = (e: unknown) => /cancel/i.test(e instanceof Error ? e.message : String(e));
 
 /**
@@ -23,9 +23,9 @@ const isShareCancel = (e: unknown) => /cancel/i.test(e instanceof Error ? e.mess
  * which is why Export used to do nothing in the app. **Web:** unchanged.
  *
  * Resolves when the file is saved or handed over; a dismissed share sheet is
- * not an error. The file write has its own `try` boundary on purpose: only an
- * error from `Share.share` itself is examined for "cancelled", so a failed
- * write can never be swallowed as one. Anything else rejects, and the caller
+ * not an error. The file write is deliberately outside the `try`: only an error
+ * from `Share.share` itself is examined for "cancelled", so a failed write
+ * rejects straight to the caller and can never be swallowed as one. The caller
  * shows a line — a failure must never be silent again.
  */
 export async function exportData(): Promise<void> {

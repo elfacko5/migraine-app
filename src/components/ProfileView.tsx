@@ -480,17 +480,24 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
   const [importErr, setImportErr] = useState<string | null>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
   const [exportErr, setExportErr] = useState(false);
+  const exporting = useRef(false);
 
   // Export used to fail silently in the iOS app (a blob download does nothing in
   // a WKWebView). It now says so when it cannot save; a dismissed share sheet is
   // not a failure and shows nothing.
   async function onExport() {
+    // A second tap while the share sheet is open would be rejected by the plugin
+    // ("Can't share while sharing is in progress") and show a false failure.
+    if (exporting.current) return;
+    exporting.current = true;
     setExportErr(false);
     try {
       await exportData();
     } catch (e) {
       console.error('Export failed:', e);
       setExportErr(true);
+    } finally {
+      exporting.current = false;
     }
   }
 
