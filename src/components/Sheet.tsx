@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 
 interface Props {
   open: boolean;
@@ -33,6 +33,16 @@ interface Props {
 // content, the nav, and any sheet lower in the stack — is `inert` and
 // `aria-hidden`. Closed sheets are left to their own React-managed `inert`.
 // `inert` landed in iOS 15.5 and the target is 15, hence both attributes.
+// Safari does not focus a button on tap, so `activeElement` is `body` when a
+// sheet is opened by touch (or by VoiceOver's double-tap). The last pressed
+// control is remembered instead, to give focus back to on close.
+let lastPressed: HTMLElement | null = null;
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', (e) => {
+    const t = e.target instanceof Element ? e.target.closest<HTMLElement>('button, a, [role="button"]') : null;
+    if (t) lastPressed = t;
+  }, true);
+}
 const openSheets: HTMLElement[] = [];
 const touched = new Map<Element, { inert: boolean; hidden: string | null }>();
 function syncModal() {
@@ -54,14 +64,33 @@ function syncModal() {
 
 export function Sheet({ open, onClose, title, children, flush = false, headerRight, bareHeader = false, enterFrom = 'bottom' }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  // Recorded in a layout effect, which runs before any child's passive effect
+  // has moved focus (the wizard focuses its heading), so this is the control
+  // that actually opened the sheet.
+  const openerRef = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (!open) return;
+    // A click (or a keyboard press, which also clicks) is the truest record of
+    // what opened the sheet; `activeElement` may be the panel of the sheet below.
+    const a = document.activeElement;
+    openerRef.current = lastPressed?.isConnected ? lastPressed : a instanceof HTMLElement && a !== document.body ? a : null;
+  }, [open]);
   useEffect(() => {
     const el = wrapRef.current;
     if (!open || !el) return;
     openSheets.push(el);
     syncModal();
+    // Focus goes into the sheet when it opens (unless something inside already
+    // took it, such as a heading or an autofocused field) and back to whatever
+    // opened it when it closes. Without this VoiceOver's cursor stays on the
+    // button that was pressed, which is now hidden, and drifts from there.
+    const opener = openerRef.current;
+    const panel = el.querySelector<HTMLElement>('[role="dialog"]');
+    if (panel && !panel.contains(document.activeElement)) panel.focus({ preventScroll: true });
     return () => {
       openSheets.splice(openSheets.indexOf(el), 1);
       syncModal();
+      if (opener && opener.isConnected) opener.focus({ preventScroll: true });
     };
   }, [open]);
 
@@ -103,7 +132,8 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute inset-x-0 top-0 flex flex-col bg-bg-surface transition-transform duration-300 ease-out ${
+        tabIndex={-1}
+        className={`outline-none absolute inset-x-0 top-0 flex flex-col bg-bg-surface transition-transform duration-300 ease-out ${
           open ? 'translate-x-0 translate-y-0' : enterFrom === 'right' ? 'translate-x-full' : 'translate-y-full'
         }`}
         style={{ height: '100%' }}

@@ -69,7 +69,6 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   const headingRef = useRef<HTMLHeadingElement>(null);
   const reasonId = useId();
   const dupId = useId();
-  const firstStep = useRef(true);
   useEffect(() => {
     if (inset === 0) return;
     const a = document.activeElement;
@@ -90,10 +89,10 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   const [gap, setGap] = useState<number | undefined>(undefined);
   const [editing, setEditing] = useState<LimitKey | null>(null);
 
-  // Focus moves to the heading when the step changes, so Back or Next never
-  // leaves it on a button that has just been removed.
+  // Focus moves to the heading when the wizard opens and when the step changes,
+  // so VoiceOver starts at the title and Back or Next never leaves it on a
+  // button that has just been removed.
   useEffect(() => {
-    if (firstStep.current) { firstStep.current = false; return; }
     headingRef.current?.focus();
   }, [step]);
 
