@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { MedGuides, Medication, SyncStatus } from '../types';
 import { pullUserPrefs, pushMedications } from '../lib/sync';
-import { cleanGuides, findDuplicate, withGuide } from '../utils/medResolve';
+import { cleanGuides, editMakesDuplicate, findDuplicate, formOf, withGuide } from '../utils/medResolve';
 import { guidesForPush, mergeMedicationPrefs, type StoredMedications } from '../utils/medPrefsMerge';
 import { markM3Done, runM3 } from '../utils/medMigrations';
 
@@ -162,9 +162,22 @@ export function useMedications(userId: string | null) {
   /** Several edits as one write, one stamp and one push: two `updateMedication`
    *  calls in a row would each map the list from the same render and the second
    *  would drop the first. */
-  const updateMedications = useCallback((updates: { id: string; patch: Patch }[]) => {
+  /** **Refuses an edit that would make an exact twin** (Q4 item 2, write time:
+   *  the form checks while open, but a sync can bring a twin in afterwards) and
+   *  returns the entry it would duplicate. An entry that already matched before
+   *  the edit does not count, so an existing pair is never trapped. Returns
+   *  null when written. */
+  const updateMedications = useCallback((updates: { id: string; patch: Patch }[]): Medication | null => {
     const byId = new Map(updates.map((u) => [u.id, u.patch]));
+    for (const m of medications) {
+      const patch = byId.get(m.id);
+      if (!patch) continue;
+      const after = { ...m, ...patch };
+      const twin = editMakesDuplicate(m, { name: after.name, form: formOf(after), strength: after.strength, dose: after.dose }, medications);
+      if (twin) return twin;
+    }
     commit(medications.map((m) => (byId.has(m.id) ? { ...m, ...byId.get(m.id) } : m)));
+    return null;
   }, [medications, commit]);
 
   const updateMedication = useCallback((id: string, patch: Patch) => {

@@ -135,7 +135,7 @@ export function sameMedicine(
 ): boolean {
   if (!norm(a.name) || norm(a.name) !== norm(b.name)) return false;
   if (formOf(a).toLowerCase() !== formOf(b).toLowerCase()) return false;
-  return sameStrengthText(a.strength ?? a.dose, b.strength ?? b.dose);
+  return sameStrengthText(a.strength?.trim() || a.dose, b.strength?.trim() || b.dose);
 }
 
 /** "Sumatriptan 50 mg tablet" — a medicine told back as name, strength, form. */
@@ -210,8 +210,30 @@ function wayOf(form: string): string {
  *  flag, tablet ↔ nasal spray is (15f-2). */
 export const strengthNeedsCheck = (before: string, after: string): boolean => wayOf(before) !== wayOf(after);
 
+/**
+ * Strength and quantity for an old record that stored neither, read from its
+ * derived `dose` text ("1 tablet · 500/50mg", "400mg", "2 tablets"): a leading
+ * count with a unit word is the quantity, and what is left is the strength
+ * unless it is only a count. **Only ever seeds the edit form's fields**; nothing
+ * is written back unless the person changes something that changes the dose.
+ */
+export function seedFromDose(dose: string | null | undefined): { strength: string; quantity?: number } {
+  const text = (dose ?? '').trim();
+  if (!text) return { strength: '' };
+  const parts = text.split(' · ').map((p) => p.trim()).filter(Boolean);
+  const COUNT = /^(\d+(?:\.\d+)?)\s+[a-zA-Z]+$/;
+  let quantity: number | undefined;
+  const rest: string[] = [];
+  for (const part of parts) {
+    const m = part.match(COUNT);
+    if (m && quantity === undefined && !/^\d+(?:\.\d+)?\s*(mg|mcg|g|ml|iu)$/i.test(part)) quantity = Number(m[1]);
+    else rest.push(part);
+  }
+  return { strength: rest.join(' · '), ...(quantity !== undefined ? { quantity } : {}) };
+}
+
 /** The same medicine, as an edit would leave it. */
-export interface EditDraftShape { name: string; form: string; strength: string }
+export interface EditDraftShape { name: string; form: string; strength?: string; dose?: string }
 
 /**
  * The other entry an edit would turn this medicine into a twin of, or null.
@@ -224,7 +246,7 @@ export function editMakesDuplicate(
   edited: EditDraftShape,
   library: Medication[],
 ): Medication | null {
-  const after = { name: edited.name, form: edited.form, strength: edited.strength, dose: edited.strength };
+  const after = { name: edited.name, form: edited.form, strength: edited.strength, dose: edited.dose ?? edited.strength ?? '' };
   return library.find((m) => m.id !== original.id && sameMedicine(after, m) && !sameMedicine(original, m)) ?? null;
 }
 

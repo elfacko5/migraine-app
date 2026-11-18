@@ -3,11 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 /** One number at a time, set with − and +, over the wizard (frames 15c-2 and
  *  15c-3). Lidd has no bottom sheet smaller than a full `Sheet`, so this is the
  *  nearest pattern: a panel anchored to the bottom of the wizard on a scrim. */
-export function ValueSheet({ title, hint, unit, unitOne, steps, value, fallback, total, note, clearNote, onClear, onDone, onClose }: {
+export function ValueSheet({ title, hint, unit, unitOne, steps: stepsIn, value, fallback, total, note, clearNote, onClear, onDone, onClose }: {
   title: string; hint: string; unit: string; unitOne: string; steps: number[]; value: number | undefined; fallback: number;
   total: ((n: number) => string | null) | null; note?: string; clearNote?: string; onClear?: () => void; onDone: (v: number) => void; onClose: () => void;
 }) {
   const [v, setV] = useState(value ?? fallback);
+  // A stored value that is not one of the steps (an old free-typed limit)
+  // stays a step, so the stepper opens on it and moves from there.
+  const steps = stepsIn.includes(v) ? stepsIn : [...stepsIn, v].sort((a, b) => a - b);
   const dialogRef = useRef<HTMLDivElement>(null);
   // A dialog takes focus when it opens and gives it back to the row that
   // opened it; Escape closes without saving.

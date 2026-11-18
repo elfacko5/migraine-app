@@ -4,7 +4,7 @@
 // no network, no localStorage and no account.
 import assert from 'node:assert/strict';
 import type { Attack, Medication } from '../../src/types/index.ts';
-import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, sameMedName, withGuide, strengthNeedsCheck, editMakesDuplicate, otherVersionsWithOtherType, unitForForm, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
+import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, sameMedName, withGuide, strengthNeedsCheck, seedFromDose, editMakesDuplicate, otherVersionsWithOtherType, unitForForm, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
 import { GUIDELINE, guideFor, guideKeyOf } from '../../src/utils/medGuardrails.ts';
 import { classDaysInWindow } from '../../src/utils/stats.ts';
 import { M3_MARKER_KEY, markM3Done, planM3, runM3 } from '../../src/utils/medMigrations.ts';
@@ -469,6 +469,22 @@ t('strengthNeedsCheck: only when the form moves to another way of taking it', ()
   assert.equal(strengthNeedsCheck('Nasal spray', 'Injection'), true);
   assert.equal(strengthNeedsCheck('Tablet', 'Sachet'), true);
   assert.equal(strengthNeedsCheck('sachet', 'Sachet'), false);
+});
+t('seedFromDose: strength and quantity from an old derived dose, never invented', () => {
+  assert.deepEqual(seedFromDose('400mg'), { strength: '400mg' });
+  assert.deepEqual(seedFromDose('1 tablet · 500/50mg'), { strength: '500/50mg', quantity: 1 });
+  assert.deepEqual(seedFromDose('2 tablets'), { strength: '', quantity: 2 });
+  assert.deepEqual(seedFromDose('2 tablets · 50mg'), { strength: '50mg', quantity: 2 });
+  assert.deepEqual(seedFromDose('50 mg'), { strength: '50 mg' });
+  assert.deepEqual(seedFromDose(''), { strength: '' });
+});
+t('editMakesDuplicate: an old record with no strength compares on its dose text', () => {
+  const m12 = med('m12', 'Migraleve', '2 tablets');
+  const m13 = med('m13', 'Migraleve', '1 tablet');
+  // editing m12 but leaving its dose as it is: still not m13
+  assert.equal(editMakesDuplicate(m12, { name: 'Migraleve', form: 'Tablet', strength: undefined, dose: '2 tablets' }, [m12, m13]), null);
+  // rewriting its dose to "1 tablet" would make it m13's twin
+  assert.equal(editMakesDuplicate(m12, { name: 'Migraleve', form: 'Tablet', strength: undefined, dose: '1 tablet' }, [m12, m13])?.id, 'm13');
 });
 t('unitForForm: standard forms write their unit, an own form writes "dose"', () => {
   assert.equal(unitForForm('Nasal spray'), 'spray');

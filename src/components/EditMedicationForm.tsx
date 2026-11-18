@@ -7,7 +7,7 @@ import { useKeyboardFlow } from '../utils/keyboardOverride';
 import { TYPE_OPTIONS, classLetter } from '../utils/medClasses';
 import {
   DAY_STEPS, GAP_STEPS, QTY_STEPS, STANDARD_FORMS, daysTakenOf, derivedDose, editMakesDuplicate, formOf, medLabel,
-  otherVersionsWithOtherType, parseStrength, strengthNeedsCheck, unitForForm, unitText,
+  otherVersionsWithOtherType, parseStrength, pluralUnit, seedFromDose, strengthNeedsCheck, unitForForm, unitText,
 } from '../utils/medResolve';
 import { BinIcon } from './icons';
 import { ChipCheck } from './ChipCheck';
@@ -47,6 +47,9 @@ interface Props {
   attacks: Attack[];
   /** One write: this medicine's patch, plus the other versions to retype. */
   onSave: (updates: { id: string; patch: EditPatch }[]) => void;
+  /** Set to a function that handles a close request from outside (Escape, a
+   *  tap on the backdrop): back one screen, or the discard question. */
+  closeRef?: React.MutableRefObject<(() => void) | null>;
   onDelete: () => void;
   onClose: () => void;
 }
@@ -91,12 +94,13 @@ function Bar({ left, title, sub, right, headingRef }: { left: React.ReactNode; t
   );
 }
 
-export function EditMedicationForm({ medication: original, library, guides, attacks, onSave, onDelete, onClose }: Props) {
+export function EditMedicationForm({ medication: original, library, guides, attacks, onSave, closeRef, onDelete, onClose }: Props) {
   const initialForm = formOf(original);
   const initialClass: MedClass | undefined = original.class === 'other' ? undefined : original.class;
   const { inset, rootRef, bodyRef, onFocus, footerPaddingBottom } = useKeyboardFlow();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const reasonId = useId();
+  const dupId = useId();
   const nameId = useId();
   const strengthId = useId();
   const ownId = useId();
@@ -105,20 +109,31 @@ export function EditMedicationForm({ medication: original, library, guides, atta
   const [name, setName] = useState(original.name);
   const [cls, setCls] = useState<MedClass | undefined>(initialClass);
   const [form, setForm] = useState(initialForm);
-  const [strength, setStrength] = useState(original.strength ?? '');
-  const [qty, setQty] = useState(original.quantity ?? 1);
+  // An old record may store neither: they are read from its dose text for the
+  // fields, and compared against those, so merely opening it changes nothing.
+  const seed = seedFromDose(original.dose);
+  const baseStrength = (original.strength ?? seed.strength).trim();
+  const baseQty = original.quantity ?? seed.quantity ?? 1;
+  const [strength, setStrength] = useState(baseStrength);
+  const [qty, setQty] = useState(baseQty);
+  const hasIntake = original.maxPerIntake !== undefined;     // shown only where stored, so it can be cleared
+  const [maxPerIntake, setMaxPerIntake] = useState<number | undefined>(original.maxPerIntake);
   const [maxPerDay, setMaxPerDay] = useState<number | undefined>(original.maxPerDay);
   const [gap, setGap] = useState<number | undefined>(original.minHoursBetween);
   const [alsoOthers, setAlsoOthers] = useState(true);
   const [strengthChecked, setStrengthChecked] = useState(false);
-  const [editing, setEditing] = useState<'qty' | 'day' | 'gap' | null>(null);
+  const [editing, setEditing] = useState<'qty' | 'intake' | 'day' | 'gap' | null>(null);
   const [draftText, setDraftText] = useState('');       // the text screens' own staging
   const [ownOpen, setOwnOpen] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Focus goes to the heading of whichever screen is showing.
-  useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, [screen]);
+  // Focus goes to the heading of whichever screen is showing, except the text
+  // screens, whose field takes it (and the keyboard) on its own.
+  useEffect(() => {
+    if (screen === 'name' || screen === 'strength') return;
+    headingRef.current?.focus({ preventScroll: true });
+  }, [screen]);
 
   const ownForm = !(STANDARD_FORMS as readonly string[]).includes(form);
   const unit = form === initialForm ? (original.unitLabel || unitForForm(form)) : unitForForm(form);
@@ -130,37 +145,43 @@ export function EditMedicationForm({ medication: original, library, guides, atta
     name.trim() !== original.name.trim() && 'name',
     cls !== initialClass && 'type',
     form !== initialForm && 'form',
-    strength.trim() !== (original.strength ?? '').trim() && 'strength',
-    qty !== (original.quantity ?? 1) && 'usual dose',
+    strength.trim() !== baseStrength && 'strength',
+    qty !== baseQty && 'usual dose',
+    maxPerIntake !== original.maxPerIntake && 'max in one go',
     maxPerDay !== original.maxPerDay && 'max in 24 hours',
     gap !== original.minHoursBetween && 'time between doses',
   ].filter((c): c is string => !!c);
   const dirty = changes.length > 0;
-  const duplicate = editMakesDuplicate(original, { name: name.trim(), form, strength: strength.trim() }, library);
-  const blocked = !name.trim() ? 'Add a name to save' : original.strength && !strength.trim() ? 'Add the strength to save' : null;
+  // The dose text is only rewritten when something that makes it changes; an old
+  // record's own text ("400mg", "2 tablets") is otherwise left exactly as it is.
+  const doseChanged = strength.trim() !== baseStrength || qty !== baseQty || form !== initialForm;
+  const willDose = doseChanged ? derivedDose(qty, unit, strength) : original.dose;
+  const duplicate = editMakesDuplicate(original, { name: name.trim(), form, strength: strength.trim() || undefined, dose: willDose }, library);
+  const blocked = !name.trim() ? 'Add a name to save' : baseStrength && !strength.trim() ? 'Add the strength to save' : null;
   const saveDisabled = !dirty || !!blocked || !!duplicate;
   const strengthFlag = strengthNeedsCheck(initialForm, form) && !strengthChecked;
 
-  // Q10: other versions of this name whose type this edit would leave different.
-  const others = cls !== initialClass ? otherVersionsWithOtherType(original, cls, library) : [];
-  const recountDays = cls !== initialClass ? daysTakenOf(original, library, attacks).days : 0;
+  // Q10: other versions of the name (as it will be saved) whose type differs.
+  const nameChanged = name.trim() !== original.name.trim();
+  const othersNow = otherVersionsWithOtherType({ ...original, name: name.trim() }, cls, library);
+  const others = cls !== initialClass ? othersNow : [];
+  const taken = cls !== initialClass ? daysTakenOf(original, library, attacks) : { days: 0, ambiguousDoses: 0 };
 
   function save() {
     if (saveDisabled) return;
     // Every key is present, explicitly undefined when empty: the merge is a
     // spread, so a key left out would keep the old value and a limit could
-    // never be cleared. `maxPerIntake` and `maxDaysPerMonth` are left alone.
+    // never be cleared. `maxDaysPerMonth` is left alone, and `dose`, `strength`,
+    // `quantity` and `unitLabel` are only written when the dose itself changed.
     const patch: EditPatch = {
       name: name.trim(),
-      dose: derivedDose(qty, unit, strength),
-      strength: strength.trim() || undefined,
-      quantity: qty,
-      unitLabel: unit,
       form,
       class: cls !== initialClass ? cls : original.class,
       maxPerDay,
       minHoursBetween: gap,
     };
+    if (hasIntake) patch.maxPerIntake = maxPerIntake;
+    if (doseChanged) Object.assign(patch, { dose: willDose, strength: strength.trim() || undefined, quantity: qty, unitLabel: unit });
     const updates = [{ id: original.id, patch }];
     if (alsoOthers) for (const o of others) updates.push({ id: o.id, patch: { class: cls } });
     onSave(updates);
@@ -169,6 +190,18 @@ export function EditMedicationForm({ medication: original, library, guides, atta
   function cancel() {
     if (dirty) setConfirmDiscard(true); else onClose();
   }
+
+  // Escape or a tap on the backdrop: one screen back, or the discard question —
+  // never a silent close that throws staged changes away. While a dialog is open
+  // its own Escape handles it.
+  useEffect(() => {
+    if (!closeRef) return;
+    closeRef.current = () => {
+      if (confirmDiscard || confirmDelete || editing) return;
+      if (screen !== 'main') setScreen('main'); else cancel();
+    };
+    return () => { closeRef.current = null; };
+  });
 
   const guideKey = guideKeyOf(cls);
   const gl = guideKey ? guideLine(guideKey, guides) : null;
@@ -214,17 +247,21 @@ export function EditMedicationForm({ medication: original, library, guides, atta
           <div className="space-y-2">
             <p className="text-sm font-medium text-text-primary">From the leaflet <span className="font-normal text-text-secondary">· optional</span></p>
             <SettingsGroup raised>
+              {hasIntake && <Row label="Max in one go" value={maxPerIntake ? unitText(maxPerIntake, unit) : 'Not set'} onOpen={() => setEditing('intake')} />}
               <Row label="Max in 24 hours" value={maxPerDay ? unitText(maxPerDay, unit) : 'Not set'} extra={maxPerDay ? total(maxPerDay) : null} onOpen={() => setEditing('day')} />
               <Row label="Time between doses" value={gap ? `${gap} ${gap === 1 ? 'hour' : 'hours'}` : 'Not set'} onOpen={() => setEditing('gap')} />
             </SettingsGroup>
           </div>
 
           {gl && <p className="text-xs text-text-secondary">{gl.lead} <span className="font-medium text-text-primary">{gl.days}</span> · {gl.tail}</p>}
-          {duplicate && <InlineNote tone="amber">{`You already have ${medLabel(duplicate)}. Change the form or the strength.`}</InlineNote>}
+          {nameChanged && othersNow.length > 0 && cls === initialClass && (
+            <InlineNote>{`Your other ${name.trim()} entries are a different type, so earlier doses can’t be told apart. Open Type to match them.`}</InlineNote>
+          )}
+          {duplicate && <InlineNote id={dupId} tone="amber">{`You already have ${medLabel(duplicate)}. Change the form or the strength.`}</InlineNote>}
         </div>
         <div className={footerClass} style={footerStyle}>
           {(blocked || !dirty) && <p id={reasonId} className="text-center text-xs text-text-secondary">{blocked ?? 'Change something to save'}</p>}
-          <button type="button" aria-disabled={saveDisabled} aria-describedby={blocked || !dirty ? reasonId : undefined} onClick={save} className="btn-primary w-full">Save</button>
+          <button type="button" aria-disabled={saveDisabled} aria-describedby={blocked || !dirty ? reasonId : duplicate ? dupId : undefined} onClick={save} className="btn-primary w-full">Save</button>
         </div>
       </>
     );
@@ -235,8 +272,8 @@ export function EditMedicationForm({ medication: original, library, guides, atta
         <div ref={bodyRef} className={bodyClass}>
           <p id={`${nameId}-t`} className="text-base text-text-primary">{`What kind of medicine is ${name.trim() || original.name}? It's on the box or the leaflet.`}</p>
           <TypeList value={cls} chosen onChange={setCls} labelledBy={`${nameId}-t`} />
-          {recountDays > 0 && (
-            <InlineNote>{`When you save, ${recountDays === 1 ? 'the 1 day' : `all ${recountDays} days`} you took ${original.name} ${recountDays === 1 ? 'is' : 'are'} recounted, including past months in Insights.`}</InlineNote>
+          {taken.days > 0 && (
+            <InlineNote>{`When you save, ${taken.days === 1 ? 'the 1 day' : `all ${taken.days} days`} you took ${original.name} ${taken.days === 1 ? 'is' : 'are'} recounted, including past months in Insights.${alsoOthers && others.length > 0 ? ' The other entries are recounted too.' : ''}${taken.ambiguousDoses > 0 ? ` ${taken.ambiguousDoses === 1 ? '1 earlier dose can’t' : `${taken.ambiguousDoses} earlier doses can’t`} be matched to this version.` : ''}`}</InlineNote>
           )}
           {others.length > 0 && (
             <button type="button" aria-pressed={alsoOthers} onClick={() => setAlsoOthers((v) => !v)}
@@ -335,17 +372,17 @@ export function EditMedicationForm({ medication: original, library, guides, atta
       {editing && (
         <ValueSheet
           key={editing}
-          title={editing === 'qty' ? 'Usual dose' : editing === 'day' ? 'Max in 24 hours' : 'Time between doses'}
-          hint={editing === 'day' ? 'On the leaflet, under “How much to take”' : editing === 'gap' ? 'Shortest gap the leaflet allows between two doses' : `The ${unit}s you take at once`}
-          unit={editing === 'gap' ? 'hours' : `${unit}s`}
+          title={editing === 'qty' ? 'Usual dose' : editing === 'intake' ? 'Max in one go' : editing === 'day' ? 'Max in 24 hours' : 'Time between doses'}
+          hint={editing === 'day' ? 'On the leaflet, under “How much to take”' : editing === 'gap' ? 'Shortest gap the leaflet allows between two doses' : `The ${pluralUnit(unit)} you take at once`}
+          unit={editing === 'gap' ? 'hours' : pluralUnit(unit)}
           unitOne={editing === 'gap' ? 'hour' : unit}
           steps={editing === 'gap' ? GAP_STEPS : editing === 'day' ? DAY_STEPS : QTY_STEPS}
-          value={editing === 'qty' ? qty : editing === 'day' ? maxPerDay : gap}
+          value={editing === 'qty' ? qty : editing === 'intake' ? maxPerIntake : editing === 'day' ? maxPerDay : gap}
           fallback={editing === 'qty' ? 1 : 2}
           total={editing === 'gap' ? null : total}
           clearNote="Clear leaves it not set."
-          onClear={editing === 'qty' ? undefined : () => { if (editing === 'day') setMaxPerDay(undefined); else setGap(undefined); setEditing(null); }}
-          onDone={(v) => { if (editing === 'qty') setQty(v); else if (editing === 'day') setMaxPerDay(v); else setGap(v); setEditing(null); }}
+          onClear={editing === 'qty' ? undefined : () => { if (editing === 'intake') setMaxPerIntake(undefined); else if (editing === 'day') setMaxPerDay(undefined); else setGap(undefined); setEditing(null); }}
+          onDone={(v) => { if (editing === 'qty') setQty(v); else if (editing === 'intake') setMaxPerIntake(v); else if (editing === 'day') setMaxPerDay(v); else setGap(v); setEditing(null); }}
           onClose={() => setEditing(null)}
         />
       )}

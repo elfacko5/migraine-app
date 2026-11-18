@@ -100,6 +100,8 @@ export default function App() {
   // Sheet anchors to the app root — see the Profile tab notes in CLAUDE.md.
   const [medEditor, setMedEditor] = useState<{ med: Medication } | { isNew: true } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // The edit form's own answer to a close request (Escape, the backdrop).
+  const editCloseRef = useRef<(() => void) | null>(null);
   // Set when either sheet below was opened by voice — the Siri App Intent or
   // the Shortcut deep link (see the voice effect below) — and cleared whenever
   // that sheet closes so a stray prefill never leaks into a later manual open.
@@ -822,12 +824,13 @@ export default function App() {
         />
       </Sheet>
 
-      {/* Medication editor — a bottom-entering modal on top of the Profile
-          drill-down, with Sheet's own header and close X: it interrupts the
-          list rather than being another level of it. */}
+      {/* Edit a medicine — a bottom-entering modal on top of the Profile
+          drill-down: it interrupts the list rather than being another level of
+          it. It brings its own top bar and sub-screens, and answers a close
+          request itself (one screen back, or the discard question). */}
       <Sheet
         open={medEditor !== null && 'med' in medEditor}
-        onClose={() => setMedEditor(null)}
+        onClose={() => (editCloseRef.current ? editCloseRef.current() : setMedEditor(null))}
         title="Edit medication"
         flush
         bareHeader
@@ -838,8 +841,10 @@ export default function App() {
             library={medications}
             guides={guides}
             attacks={attacks}
+            closeRef={editCloseRef}
             onSave={(updates) => {
-              updateMedications(updates);
+              const twin = updateMedications(updates);
+              if (twin) { setToastMessage(`You already have ${medLabel(twin)}.`); return; }
               setMedEditor(null);
             }}
             onDelete={() => { removeMedication(medEditor.med.id); setMedEditor(null); }}
@@ -848,8 +853,7 @@ export default function App() {
         )}
       </Sheet>
 
-      {/* Add a medicine — the three-step wizard. Its own sheet, so editing
-          stays on the editor above until the edit flow is rebuilt. */}
+      {/* Add a medicine — the three-step wizard. Its own sheet. */}
       <Sheet
         open={medEditor !== null && 'isNew' in medEditor}
         onClose={() => setMedEditor(null)}
