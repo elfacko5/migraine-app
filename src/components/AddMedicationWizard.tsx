@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { MedClass, MedGuides, Medication } from '../types';
 import type { MedicationDraft } from './MedicationEditor';
 import { ClassBadge } from './ClassBadge';
@@ -8,6 +8,7 @@ import { TYPE_OPTIONS } from '../utils/medClasses';
 import { STANDARD_FORMS, findDuplicate, medLabel, parseStrength, sharedTypeForName, usualDoseExceedsMax } from '../utils/medResolve';
 import { guideFor, guideKeyOf, type GuideKey } from '../utils/medGuardrails';
 import { chipClass } from '../utils/chipStyles';
+import { useKeyboardInset } from '../utils/keyboardOverride';
 
 // The add flow (commit 1 of the medication flows; frames 15a to 15c in
 // medications.html). Three steps, swapped inside one `Sheet flush bareHeader`:
@@ -56,6 +57,17 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   const strengthId = useId();
   const ownId = useId();
   const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  // Keyboard: the webview is not shortened while this is open (see
+  // keyboardOverride.ts), so the flow lifts its own footer and shrinks its own
+  // scroll area by the keyboard's height, and keeps the focused field in view.
+  const inset = useKeyboardInset();
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (inset === 0) return;
+    const a = document.activeElement;
+    if (a instanceof HTMLInputElement && rootRef.current?.contains(a)) a.scrollIntoView({ block: 'center' });
+  }, [inset]);
 
   const [name, setName] = useState('');
   const [medClass, setMedClass] = useState<MedClass | undefined>(undefined);
@@ -125,7 +137,8 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
     : step === 3 ? medLabel(candidate) : null;
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div ref={rootRef} className="relative flex min-h-0 flex-1 flex-col" style={{ paddingBottom: inset }}
+      onFocus={(e) => { if (inset > 0 && e.target instanceof HTMLInputElement) e.target.scrollIntoView({ block: 'center' }); }}>
       <div
         className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4"
         style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
@@ -272,7 +285,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
 
       <div
         className="space-y-2 bg-bg-surface px-gutter py-4 sm:px-gutter-wide"
-        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: inset > 0 ? '1rem' : 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         {step === 1 && !step1Ready && (
           <p className="text-center text-xs text-text-secondary">{!trimmed ? 'Add the name to continue' : 'Choose a type to continue'}</p>
