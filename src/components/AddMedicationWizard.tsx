@@ -346,6 +346,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
           value={editing === 'qty' ? qty : editing === 'day' ? maxPerDay : gap}
           fallback={editing === 'qty' ? 1 : editing === 'day' ? 2 : 2}
           total={editing === 'gap' ? null : totalMg}
+          clearNote="Clear leaves it not set."
           onClear={editing === 'qty' ? undefined : () => { if (editing === 'day') setMaxPerDay(undefined); else setGap(undefined); setEditing(null); }}
           onClose={() => setEditing(null)}
           onDone={(v) => { if (editing === 'qty') setQty(v); else if (editing === 'day') setMaxPerDay(v); else setGap(v); setEditing(null); }}

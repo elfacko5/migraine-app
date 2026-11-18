@@ -63,7 +63,7 @@ export function GuidesView({ medications, guides, onSetGuide, onClose }: Props) 
               aria-label={`${r.label}, ${r.sub}, ${daysText(r.days)} a month. Change`}
               className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-bg-elevated"
             >
-              {r.cls ? <ClassBadge large>{classLetter(r.cls) ?? '–'}</ClassBadge> : <span className="size-9 shrink-0" aria-hidden="true" />}
+              <ClassBadge large>{r.cls ? classLetter(r.cls) ?? '–' : '+'}</ClassBadge>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium text-text-primary">{r.label}</span>
                 <span className="block truncate text-xs text-text-secondary">{r.sub}</span>
@@ -84,6 +84,7 @@ export function GuidesView({ medications, guides, onSetGuide, onClose }: Props) 
           unit="days"
           unitOne="day"
           note="in a calendar month"
+          clearNote={`Clear goes back to the guideline: ${daysText(GUIDELINE[open.key])}.`}
           steps={DAYS.includes(open.days) ? DAYS : [...DAYS, open.days].sort((a, b) => a - b)}
           value={open.days}
           fallback={GUIDELINE[open.key]}

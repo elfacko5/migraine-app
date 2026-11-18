@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 /** One number at a time, set with − and +, over the wizard (frames 15c-2 and
  *  15c-3). Lidd has no bottom sheet smaller than a full `Sheet`, so this is the
  *  nearest pattern: a panel anchored to the bottom of the wizard on a scrim. */
-export function ValueSheet({ title, hint, unit, unitOne, steps, value, fallback, total, note, onClear, onDone, onClose }: {
+export function ValueSheet({ title, hint, unit, unitOne, steps, value, fallback, total, note, clearNote, onClear, onDone, onClose }: {
   title: string; hint: string; unit: string; unitOne: string; steps: number[]; value: number | undefined; fallback: number;
-  total: ((n: number) => string | null) | null; note?: string; onClear?: () => void; onDone: (v: number) => void; onClose: () => void;
+  total: ((n: number) => string | null) | null; note?: string; clearNote?: string; onClear?: () => void; onDone: (v: number) => void; onClose: () => void;
 }) {
   const [v, setV] = useState(value ?? fallback);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -43,6 +43,7 @@ export function ValueSheet({ title, hint, unit, unitOne, steps, value, fallback,
           <button type="button" aria-label="More" disabled={i === steps.length - 1} onClick={() => setV(steps[i + 1])}
             className="flex size-14 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:[color:color-mix(in_srgb,var(--color-text-secondary)_55%,var(--color-bg-surface))]">+</button>
         </div>
+        {onClear && clearNote && <p className="text-center text-xs text-text-secondary">{clearNote}</p>}
         <div className="flex flex-wrap gap-2">
           {onClear && <button type="button" onClick={onClear} className="btn-secondary flex-1">Clear</button>}
           <button type="button" onClick={() => onDone(v)} className="btn-primary flex-1">Done</button>
