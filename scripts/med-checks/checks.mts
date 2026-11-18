@@ -4,7 +4,7 @@
 // no network, no localStorage and no account.
 import assert from 'node:assert/strict';
 import type { Attack, Medication } from '../../src/types/index.ts';
-import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, sameMedName, withGuide, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
+import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, sameMedName, withGuide, strengthNeedsCheck, editMakesDuplicate, otherVersionsWithOtherType, unitForForm, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
 import { GUIDELINE, guideFor, guideKeyOf } from '../../src/utils/medGuardrails.ts';
 import { classDaysInWindow } from '../../src/utils/stats.ts';
 import { M3_MARKER_KEY, markM3Done, planM3, runM3 } from '../../src/utils/medMigrations.ts';
@@ -460,6 +460,39 @@ t('withGuide sets, replaces and clears a type, never mutating, and refuses junk'
   assert.deepEqual(withGuide(g, 'triptan', 0), {});
   assert.deepEqual(withGuide(g, 'triptan', 2.5), {});
   assert.deepEqual(g, { triptan: 8 });
+});
+t('strengthNeedsCheck: only when the form moves to another way of taking it', () => {
+  assert.equal(strengthNeedsCheck('Tablet', 'Melt'), false);
+  assert.equal(strengthNeedsCheck('Tablet', 'Capsule'), false);
+  assert.equal(strengthNeedsCheck('Tablet', 'Liquid'), false);
+  assert.equal(strengthNeedsCheck('Tablet', 'Nasal spray'), true);
+  assert.equal(strengthNeedsCheck('Nasal spray', 'Injection'), true);
+  assert.equal(strengthNeedsCheck('Tablet', 'Sachet'), true);
+  assert.equal(strengthNeedsCheck('sachet', 'Sachet'), false);
+});
+t('unitForForm: standard forms write their unit, an own form writes "dose"', () => {
+  assert.equal(unitForForm('Nasal spray'), 'spray');
+  assert.equal(unitForForm('Capsule'), 'capsule');
+  assert.equal(unitForForm('Sachet'), 'dose');
+});
+t('editMakesDuplicate: a new twin is caught, an existing pair is never trapped', () => {
+  const a = med('a', 'Treo', '500mg', { strength: '500mg', form: 'Tablet' });
+  const b = med('b', 'Treo', '500mg', { strength: '500mg', form: 'Tablet' });   // an old exact twin
+  const c = med('c', 'Treo', '250mg', { strength: '250mg', form: 'Tablet' });
+  // editing c to 500mg would make it a twin of a and b
+  assert.equal(editMakesDuplicate(c, { name: 'Treo', form: 'Tablet', strength: '500 mg' }, [a, b, c])?.id, 'a');
+  // a and b already match each other: editing a without changing that is allowed
+  assert.equal(editMakesDuplicate(a, { name: 'Treo', form: 'Tablet', strength: '500mg' }, [a, b, c]), null);
+  // changing c to something unique is fine
+  assert.equal(editMakesDuplicate(c, { name: 'Treo', form: 'Tablet', strength: '100mg' }, [a, b, c]), null);
+});
+t('otherVersionsWithOtherType: same-name entries of another type, this one excluded', () => {
+  const a = med('a', 'Sumatriptan', '50mg', { class: 'triptan' });
+  const b = med('b', 'sumatriptan', '100mg', { class: 'triptan' });
+  const c = med('c', 'Sumatriptan', '25mg');
+  assert.deepEqual(otherVersionsWithOtherType(a, 'simple', [a, b, c]).map((m) => m.id), ['b', 'c']);
+  assert.deepEqual(otherVersionsWithOtherType(a, 'triptan', [a, b, c]).map((m) => m.id), ['c']);
+  assert.deepEqual(otherVersionsWithOtherType(a, undefined, [a, b, c]).map((m) => m.id), ['b']);
 });
 t('findDuplicate returns the matching entry, else null', () => {
   assert.equal(findDuplicate({ name: 'Sumatriptan', strength: '50mg', form: 'Tablet', dose: '' }, [med('x', 'Other', '1mg'), S50])?.id, 's1');

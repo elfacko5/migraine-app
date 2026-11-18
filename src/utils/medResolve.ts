@@ -170,6 +170,56 @@ export function sharedTypeForName(name: string, library: Medication[]): Exclude<
   return typeOfName(name, library) ?? undefined;
 }
 
+// ── Editing a medicine (commit 3) ──────────────────────────────────────────
+
+/** The unit each standard form writes. A form of the user's own writes "dose". */
+export const FORM_UNIT: Record<string, string> = {
+  Tablet: 'tablet', Melt: 'tablet', Capsule: 'capsule', Effervescent: 'tablet',
+  'Nasal spray': 'spray', Injection: 'injection', Suppository: 'suppository', Liquid: 'dose',
+};
+export const unitForForm = (form: string): string => FORM_UNIT[form] ?? 'dose';
+
+/** The way a form is taken: by mouth, or one of the others. A form of the
+ *  user's own is its own way, since nothing is known about it. */
+function wayOf(form: string): string {
+  if (['Tablet', 'Melt', 'Capsule', 'Effervescent', 'Liquid'].includes(form)) return 'mouth';
+  if (['Nasal spray', 'Injection', 'Suppository'].includes(form)) return form;
+  return `own:${form.trim().toLowerCase()}`;
+}
+
+/** Should Strength be flagged to check after the form changed? Only when the
+ *  form moves to another *way of taking it*: tablet ↔ melt or capsule is no
+ *  flag, tablet ↔ nasal spray is (15f-2). */
+export const strengthNeedsCheck = (before: string, after: string): boolean => wayOf(before) !== wayOf(after);
+
+/** The same medicine, as an edit would leave it. */
+export interface EditDraftShape { name: string; form: string; strength: string }
+
+/**
+ * The other entry an edit would turn this medicine into a twin of, or null.
+ * **An entry that already matched before the edit does not count** (Q4 item 4):
+ * an existing pair is never made worse and never trapped, so it can still be
+ * renamed, changed or deleted.
+ */
+export function editMakesDuplicate(
+  original: Medication,
+  edited: EditDraftShape,
+  library: Medication[],
+): Medication | null {
+  const after = { name: edited.name, form: edited.form, strength: edited.strength, dose: edited.strength };
+  return library.find((m) => m.id !== original.id && sameMedicine(after, m) && !sameMedicine(original, m)) ?? null;
+}
+
+/** Same-name entries other than this one whose type differs from `cls` (Q10:
+ *  versions of one drug share a type). Stopped entries are included. */
+export function otherVersionsWithOtherType(
+  original: Medication,
+  cls: Exclude<MedClass, 'other'> | undefined,
+  library: Medication[],
+): Medication[] {
+  return library.filter((m) => m.id !== original.id && sameMedName(m.name, original.name) && classOfEntry(m) !== cls);
+}
+
 // ── What a dose counts under (0b) ──────────────────────────────────────────
 
 /** A class with the pre-v3 `'other'` read as no class at all. */
