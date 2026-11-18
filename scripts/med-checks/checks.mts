@@ -4,7 +4,7 @@
 // no network, no localStorage and no account.
 import assert from 'node:assert/strict';
 import type { Attack, Medication } from '../../src/types/index.ts';
-import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, sameMedName, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
+import { cleanGuides, countingOf, daysTakenOf, formOf, isLogged, parseStrength, resolveDose, sameMedicine, sameMedName, withGuide, findDuplicate, usualDoseExceedsMax, sharedTypeForName, sameStrengthText, stampMedId, stampSnapshot, typeOfName } from '../../src/utils/medResolve.ts';
 import { GUIDELINE, guideFor, guideKeyOf } from '../../src/utils/medGuardrails.ts';
 import { classDaysInWindow } from '../../src/utils/stats.ts';
 import { M3_MARKER_KEY, markM3Done, planM3, runM3 } from '../../src/utils/medMigrations.ts';
@@ -451,6 +451,15 @@ t('names compare with doubled inner spaces collapsed', () => {
   assert.equal(sameMedName('Sumatriptan  succinate', ' sumatriptan succinate '), true);
   assert.equal(sameMedicine({ name: 'Sumatriptan  succinate', strength: '50mg', form: 'Tablet', dose: '' }, med('x', 'sumatriptan succinate', '50mg', { form: 'Tablet' })), true);
   assert.equal(sameMedName('', ' '), false);
+});
+t('withGuide sets, replaces and clears a type, never mutating, and refuses junk', () => {
+  const g = { triptan: 8 };
+  assert.deepEqual(withGuide(g, 'simple', 12), { triptan: 8, simple: 12 });
+  assert.deepEqual(withGuide(g, 'triptan', 9), { triptan: 9 });
+  assert.deepEqual(withGuide(g, 'triptan', undefined), {});
+  assert.deepEqual(withGuide(g, 'triptan', 0), {});
+  assert.deepEqual(withGuide(g, 'triptan', 2.5), {});
+  assert.deepEqual(g, { triptan: 8 });
 });
 t('findDuplicate returns the matching entry, else null', () => {
   assert.equal(findDuplicate({ name: 'Sumatriptan', strength: '50mg', form: 'Tablet', dose: '' }, [med('x', 'Other', '1mg'), S50])?.id, 's1');

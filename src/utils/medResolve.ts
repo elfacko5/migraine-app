@@ -312,3 +312,13 @@ export function cleanGuides(value: unknown): MedGuides {
   }
   return out;
 }
+
+/** `guides` with one type's days set, or removed (back to the guideline) when
+ *  `days` is not a positive whole number. Never mutates; the same test
+ *  `cleanGuides` and `guideFor` apply, so a number saved here is a number read. */
+export function withGuide(guides: MedGuides, key: keyof MedGuides, days: number | undefined): MedGuides {
+  const next: MedGuides = { ...guides };
+  if (typeof days === 'number' && Number.isInteger(days) && days > 0) next[key] = days;
+  else delete next[key];
+  return next;
+}

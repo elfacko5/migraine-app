@@ -9,6 +9,7 @@ interface Props {
   medications: Medication[];
   onEdit: (med: Medication) => void;
   onAddNew: () => void;
+  onOpenGuides: () => void;
   onClose: () => void;
 }
 
@@ -31,7 +32,7 @@ function doseLine(med: Medication): string {
   ].filter(Boolean).join(' · ') || med.dose;
 }
 
-export function MedicationsView({ medications, onEdit, onAddNew, onClose }: Props) {
+export function MedicationsView({ medications, onEdit, onAddNew, onOpenGuides, onClose }: Props) {
   const items = medications.filter((m) => m.kind === 'acute');
 
   return (
@@ -63,8 +64,23 @@ export function MedicationsView({ medications, onEdit, onAddNew, onClose }: Prop
         )}
 
         <button type="button" onClick={onAddNew} className="btn-secondary w-full">
-          + Add a medication
+          <span aria-hidden="true">+ </span>Add a medicine
         </button>
+
+        {/* One row to the monthly guides (frame 15d). */}
+        <SettingsGroup raised>
+          <button
+            type="button"
+            onClick={onOpenGuides}
+            className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-bg-elevated"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-text-primary">Monthly guides</span>
+              <span className="block truncate text-xs text-text-secondary">Days a month per type</span>
+            </span>
+            <Chevron />
+          </button>
+        </SettingsGroup>
       </section>
     </ProfileSubPage>
   );

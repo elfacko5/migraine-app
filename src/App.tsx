@@ -50,6 +50,7 @@ import { LogsFilterPanel, LogsFilterReset } from './components/LogsFilterPanel';
 import { DEFAULT_FILTERS, PERIOD_SEGMENTS, type LogFilters, type SortOrder, type Period } from './utils/logFilters';
 import { ProfileView, DisplayPanel, RemindersPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
+import { GuidesView } from './components/GuidesView';
 import { Hit6View } from './components/Hit6View';
 import { MedicationEditor } from './components/MedicationEditor';
 import { AddMedicationWizard } from './components/AddMedicationWizard';
@@ -115,7 +116,7 @@ export default function App() {
     syncStatus: prefsSyncStatus, lastSyncedAt: prefsLastSyncedAt,
   } = useUserPrefs(userId);
   const {
-    medications, guides, addMedication, updateMedication, removeMedication,
+    medications, guides, setGuide, addMedication, updateMedication, removeMedication,
     syncStatus: medsSyncStatus, lastSyncedAt: medsLastSyncedAt,
   } = useMedications(userId);
   const {
@@ -740,7 +741,16 @@ export default function App() {
             medications={medications}
             onEdit={(med) => setMedEditor({ med })}
             onAddNew={() => setMedEditor({ isNew: true })}
+            onOpenGuides={() => setProfileSheet('guides')}
             onClose={() => setProfileSheet(null)}
+          />
+        )}
+        {profileSheet === 'guides' && (
+          <GuidesView
+            medications={medications}
+            guides={guides}
+            onSetGuide={setGuide}
+            onClose={() => setProfileSheet('medications')}
           />
         )}
         {profileSheet === 'hit6' && (

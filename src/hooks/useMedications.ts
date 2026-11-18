@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { MedGuides, Medication, SyncStatus } from '../types';
 import { pullUserPrefs, pushMedications } from '../lib/sync';
-import { cleanGuides, findDuplicate } from '../utils/medResolve';
+import { cleanGuides, findDuplicate, withGuide } from '../utils/medResolve';
 import { guidesForPush, mergeMedicationPrefs, type StoredMedications } from '../utils/medPrefsMerge';
 import { markM3Done, runM3 } from '../utils/medMigrations';
 
@@ -166,5 +166,19 @@ export function useMedications(userId: string | null) {
     commit(medications.filter((m) => m.id !== id));
   }, [medications, commit]);
 
-  return { medications, guides, addMedication, updateMedication, removeMedication, syncStatus, lastSyncedAt };
+  /** Sets one type's monthly guide (days), or clears it back to the guideline
+   *  when `days` is undefined. Saved and pushed with the list under one stamp,
+   *  the same whole-list last-write-wins as an edit to a medicine. */
+  const setGuide = useCallback((key: keyof MedGuides, days: number | undefined) => {
+    const next = withGuide(guides, key, days);
+    const stored = save(medications, next);
+    setGuidesState(next);
+    if (!userId) return;
+    const sending = guidesForPush(stored.guides, remoteHadGuidesRef.current);
+    trackPush(pushMedications(stored.items, stored.updatedAt, userId, sending).then(() => {
+      remoteHadGuidesRef.current = !!sending && Object.keys(sending).length > 0;
+    }));
+  }, [guides, medications, userId, trackPush]);
+
+  return { medications, guides, setGuide, addMedication, updateMedication, removeMedication, syncStatus, lastSyncedAt };
 }

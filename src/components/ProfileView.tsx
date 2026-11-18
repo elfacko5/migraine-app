@@ -19,7 +19,7 @@ const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', 
 // Fixed px values used only in this picker as a visual size-comparison reference.
 const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
 
-export type ProfileSection = 'medications' | 'hit6' | 'display' | 'reminders' | 'account' | 'data';
+export type ProfileSection = 'medications' | 'guides' | 'hit6' | 'display' | 'reminders' | 'account' | 'data';
 
 interface MenuProps {
   onOpen: (section: ProfileSection) => void;

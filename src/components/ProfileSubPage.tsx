@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 interface Props {
   title: string;
   onClose: () => void;
@@ -19,6 +21,11 @@ interface Props {
 // from a list, not a modal that interrupts what you were doing. AttackDetail
 // keeps its X for exactly that contrast — it *is* a detour.
 export function ProfileSubPage({ title, onClose, children, footer }: Props) {
+  // A sub-page can replace another inside the same sheet (My medications →
+  // Monthly guides), which removes the control that had focus. The title takes
+  // it, so VoiceOver starts at the page it has just entered.
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { titleRef.current?.focus({ preventScroll: true }); }, []);
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div
@@ -35,7 +42,7 @@ export function ProfileSubPage({ title, onClose, children, footer }: Props) {
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
-        <h2 className="flex-1 text-center text-base font-medium text-text-primary">{title}</h2>
+        <h2 ref={titleRef} tabIndex={-1} className="flex-1 text-center text-base font-medium text-text-primary outline-none">{title}</h2>
         <span className="size-compact" aria-hidden="true" />
       </div>
 
