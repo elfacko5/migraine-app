@@ -413,3 +413,17 @@ June, in chat: the "medication X, 2 of 10" figures should not be shown on Today.
 **Phone checks passed:** Done without changing the number leaves a guide unset; VoiceOver reads the page in order. **Two changes from her check:** the Any row takes the "+" badge (the combined line's existing mark), and the value sheet says what Clear does ("Clear goes back to the guideline: 10 days."; in the wizard, "Clear leaves it not set."). Both strings are drafts.
 
 **Still held for June:** the guides wording (the "Agree these with your doctor" lines, the Any row's "All types together" against Q6, labelling the number as a guideline). Placeholder text from the frames stays until she rewords it.
+
+## Commit 3 built and checked on June's phone (2026-11-18)
+
+**Built:** `EditMedicationForm` (frames 15f to 16e) replacing `MedicationEditor`, which is removed: rows of labels and values; Type, Form, Strength and Name open screens inside the one sheet; the three numbers open the shared `ValueSheet`; everything stages and only Save commits; Cancel with changes asks first ("Discard changes?"); Save stays focusable but disabled until something changes, with its reason linked for VoiceOver. Shared pieces extracted: `useKeyboardFlow` (keyboard override, field centring in the flow's own body), `TypeList`, `medGuideText`, and the step constants and `derivedDose` in `medResolve.ts`. New pure logic with checks: `strengthNeedsCheck`, `editMakesDuplicate` (an existing pair is never trapped), `otherVersionsWithOtherType`, `seedFromDose`. `useMedications.updateMedications` writes several edits as one write and refuses an edit that would make an exact twin. Commits `234201b`, review fixes `fb14376`, layout `e716e19`, then `2a71046` and `917043e` after her phone checks. Reviewed by the `reviewer` agent; all ten findings answered.
+
+**Decisions (June):** keep the **Name row** (the frames have none; without it a typo could never be fixed; the Name screen says past doses keep the name they were logged under). **Q10** is a switch on the Type screen, on by default ("Change the other X entries too"), not a dialog, because a dialog's Escape or backdrop tap would have saved. **Name and Strength land on their heading** like every other screen; the field is not autofocused, so the keyboard opens when the field is tapped. Delete still uses the old confirm until commit 4. "Doctor report" is out of the recount line (Q7).
+
+**Old records:** an old medicine with no `strength` or `quantity` has them read from its dose text for the form's fields, and its dose text is only rewritten when something that makes it changes. `maxPerIntake` shows as "Max in one go" only where stored, so it can still be cleared.
+
+**Phone checks passed:** the top bar, the discard dialog, the sub-screens, the keyboard on Name, Strength and the own-form field, the Q10 switch, VoiceOver on every screen, no focus ring on headings, and focus returning to the control that opened the form (after Cancel and after Save).
+
+**Two bugs the phone found:** the top bar had Cancel and the bin on one row and the title on another; the discard dialog's red button had no horizontal padding (fixed in the shared `ConfirmDialog`, so the delete confirm gets it too). A third was the global focus ring beating `outline-none` on headings: fixed with `[tabindex="-1"]:focus-visible { outline: none }`.
+
+**Still held for June:** the guides wording, the Q10 switch wording, and whether the guide label should read "Any medicine" (edit form, frame 16d) or "Any attack medicine" (guides screen).
