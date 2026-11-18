@@ -176,8 +176,8 @@ export function useMedications(userId: string | null) {
   }, [medications, deleted, commit]);
 
   type Patch = Partial<Omit<Medication, 'id' | 'createdAt'>>;
-  /** Several edits as one write, one stamp and one push: two `updateMedication`
-   *  calls in a row would each map the list from the same render and the second
+  /** Several edits as one write, one stamp and one push: two edits in
+   *  a row would each map the list from the same render and the second
    *  would drop the first. */
   /** **Refuses an edit that would make an exact twin** (Q4 item 2, write time:
    *  the form checks while open, but a sync can bring a twin in afterwards) and
@@ -201,10 +201,6 @@ export function useMedications(userId: string | null) {
     commit(medications.map((m) => (byId.has(m.id) ? { ...m, ...byId.get(m.id) } : m)), nextDeleted);
     return null;
   }, [medications, deleted, commit]);
-
-  const updateMedication = useCallback((id: string, patch: Patch) => {
-    updateMedications([{ id, patch }]);
-  }, [updateMedications]);
 
   /** Removes the medicine from the library, and nothing else: no snapshot is
    *  touched (item 222). Its name goes on the deleted list — unless another
@@ -239,5 +235,5 @@ export function useMedications(userId: string | null) {
     }));
   }, [guides, medications, deleted, userId, trackPush]);
 
-  return { medications, guides, deleted, setGuide, addMedication, updateMedication, updateMedications, removeMedication, syncStatus, lastSyncedAt };
+  return { medications, guides, deleted, setGuide, addMedication, updateMedications, removeMedication, syncStatus, lastSyncedAt };
 }

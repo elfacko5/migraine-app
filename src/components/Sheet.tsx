@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
+import { recentPress } from '../utils/lastPressed';
 
 interface Props {
   open: boolean;
@@ -31,31 +32,34 @@ interface Props {
 // select the page behind it (its Back button, its "My medications" title).
 // So while any sheet is open, every sibling of the topmost one — the app
 // content, the nav, and any sheet lower in the stack — is `inert` and
-// `aria-hidden`. Closed sheets are left to their own React-managed `inert`.
-// `inert` landed in iOS 15.5 and the target is 15, hence both attributes.
-// Safari does not focus a button on tap, so `activeElement` is `body` when a
-// sheet is opened by touch (or by VoiceOver's double-tap). The last pressed
-// control is remembered instead, to give focus back to on close.
-let lastPressed: HTMLElement | null = null;
-if (typeof document !== 'undefined') {
-  document.addEventListener('click', (e) => {
-    const t = e.target instanceof Element ? e.target.closest<HTMLElement>('button, a, [role="button"]') : null;
-    if (t) lastPressed = t;
-  }, true);
-}
+// `aria-hidden`. `inert` landed in iOS 15.5 and the target is 15, hence both.
+//
+// **"Topmost" is the open sheet latest in the DOM, not the latest opened.** The
+// sheets are z-50 siblings, so DOM order is paint order: a sheet opened by code
+// (a reminder answer opens QuickUpdate, Siri opens LogForm) while one drawn
+// above it is open appears *underneath*, and treating it as the top would make
+// the sheet the person can actually see inert, with nothing on screen able to
+// answer. Closed sheets are left to their own React-managed `inert`, and an
+// element marked `data-modal-exempt` (the toast's live region) is never made
+// inert, or its message would never be announced.
 const openSheets: HTMLElement[] = [];
 const touched = new Map<Element, { inert: boolean; hidden: string | null }>();
+const byDomOrder = (a: Element, b: Element) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
+const isClosedSheet = (el: Element) => el.hasAttribute('data-sheet') && !openSheets.includes(el as HTMLElement);
+const topSheet = () => [...openSheets].sort(byDomOrder).pop();
 function syncModal() {
   touched.forEach((v, el) => {
+    // A sheet that has closed since is React's again: writing back what it had
+    // while open would leave a closed sheet looking open to assistive tech.
+    if (isClosedSheet(el)) return;
     (el as HTMLElement).inert = v.inert;
     if (v.hidden === null) el.removeAttribute('aria-hidden'); else el.setAttribute('aria-hidden', v.hidden);
   });
   touched.clear();
-  const top = openSheets[openSheets.length - 1];
+  const top = topSheet();
   if (!top?.parentElement) return;
   for (const c of Array.from(top.parentElement.children)) {
-    if (c === top) continue;
-    if (c.hasAttribute('data-sheet') && !openSheets.includes(c as HTMLElement)) continue;
+    if (c === top || isClosedSheet(c) || c.hasAttribute('data-modal-exempt')) continue;
     touched.set(c, { inert: (c as HTMLElement).inert, hidden: c.getAttribute('aria-hidden') });
     (c as HTMLElement).inert = true;
     c.setAttribute('aria-hidden', 'true');
@@ -70,10 +74,11 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
   const openerRef = useRef<HTMLElement | null>(null);
   useLayoutEffect(() => {
     if (!open) return;
-    // A click (or a keyboard press, which also clicks) is the truest record of
-    // what opened the sheet; `activeElement` may be the panel of the sheet below.
+    // A recent press is the truest record of what opened the sheet. Failing
+    // that, a focused control outside any dialog; never the panel of a sheet
+    // below, and never a stale tap when code opened the sheet.
     const a = document.activeElement;
-    openerRef.current = lastPressed?.isConnected ? lastPressed : a instanceof HTMLElement && a !== document.body ? a : null;
+    openerRef.current = recentPress() ?? (a instanceof HTMLElement && a !== document.body && !a.closest('[role="dialog"]') ? a : null);
   }, [open]);
   useEffect(() => {
     const el = wrapRef.current;
@@ -90,7 +95,11 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
     return () => {
       openSheets.splice(openSheets.indexOf(el), 1);
       syncModal();
-      if (opener && opener.isConnected) opener.focus({ preventScroll: true });
+      // Back to what opened it; if that is gone (the row of a medicine just
+      // removed) or there was none (opened by code), to the sheet that is now on
+      // top, so VoiceOver is never left on something that no longer exists.
+      if (opener && opener.isConnected && !opener.closest('[inert]')) opener.focus({ preventScroll: true });
+      else topSheet()?.querySelector<HTMLElement>('[role="dialog"]')?.focus({ preventScroll: true });
     };
   }, [open]);
 

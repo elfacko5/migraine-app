@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { recentPress } from '../utils/lastPressed';
 
 /** One number at a time, set with − and +, over the wizard (frames 15c-2 and
  *  15c-3). Lidd has no bottom sheet smaller than a full `Sheet`, so this is the
@@ -12,12 +13,28 @@ export function ValueSheet({ title, hint, unit, unitOne, steps: stepsIn, value, 
   // stays a step, so the stepper opens on it and moves from there.
   const steps = stepsIn.includes(v) ? stepsIn : [...stepsIn, v].sort((a, b) => a - b);
   const dialogRef = useRef<HTMLDivElement>(null);
-  // A dialog takes focus when it opens and gives it back to the row that
-  // opened it; Escape closes without saving.
+  // A dialog takes focus when it opens and gives it back to the control that
+  // opened it; Escape closes without saving. **Everything else in the flow is
+  // `inert` and `aria-hidden` while it is open**, for the reason `Sheet` does the
+  // same: `aria-modal` alone is not honoured reliably by VoiceOver in a WKWebView.
   useEffect(() => {
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialogRef.current?.focus({ preventScroll: true });
-    return () => opener?.focus({ preventScroll: true });
+    const dlg = dialogRef.current;
+    const opener = recentPress() ?? (document.activeElement instanceof HTMLElement && document.activeElement !== document.body && !document.activeElement.closest('[role="dialog"]') ? document.activeElement : null);
+    const hidden: { el: HTMLElement; inert: boolean; aria: string | null }[] = [];
+    for (const c of Array.from(dlg?.parentElement?.children ?? [])) {
+      if (c === dlg || !(c instanceof HTMLElement)) continue;
+      hidden.push({ el: c, inert: c.inert, aria: c.getAttribute('aria-hidden') });
+      c.inert = true;
+      c.setAttribute('aria-hidden', 'true');
+    }
+    dlg?.focus({ preventScroll: true });
+    return () => {
+      for (const h of hidden) {
+        h.el.inert = h.inert;
+        if (h.aria === null) h.el.removeAttribute('aria-hidden'); else h.el.setAttribute('aria-hidden', h.aria);
+      }
+      opener?.focus({ preventScroll: true });
+    };
   }, []);
   const i = Math.max(0, steps.indexOf(v));
   const t = total ? total(v) : null;

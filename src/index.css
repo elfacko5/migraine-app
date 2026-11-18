@@ -468,12 +468,15 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 2px;
 }
 
-/* An element with tabindex="-1" can only be focused by code, never tabbed to: a
-   page or sheet heading, a dialog panel. The accent ring is for controls, and on
-   these it draws a box around a title each time a screen opens (June,
-   2026-11-18). It has to be this rule and not Tailwind's `outline-none`:
+/* A heading or a dialog panel with tabindex="-1" can only be focused by code,
+   never tabbed to. The accent ring is for controls, and on these it draws a box
+   around a title each time a screen opens (June, 2026-11-18). It has to be this rule and not Tailwind's `outline-none`:
    that lives in a layer and this ring is not, so the ring wins. */
-[tabindex="-1"]:focus-visible {
+/* Scoped to headings and dialog panels: other tabindex="-1" elements are
+   controls reached with the arrow keys (the FAB menu's items), and those need
+   their ring. */
+:is(h1, h2, h3)[tabindex="-1"]:focus-visible,
+[role="dialog"][tabindex="-1"]:focus-visible {
   outline: none;
 }
 

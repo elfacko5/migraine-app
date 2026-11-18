@@ -10,7 +10,8 @@ import { useEffect } from 'react';
 // - `absolute`, never `fixed`, against the app root (viewport-architecture),
 //   offset from the bottom the way the nav is measured — 4.5rem of nav plus a
 //   gap, growing with the home-indicator inset — and above every `Sheet` (z-50): the message appears after a flow closes, over the page it returns to.
-// - Quiet: the raised surface and the control ring, no accent, no shadow.
+// - Quiet: the raised surface and a hairline (an edge round something you read,
+//   not a control), no accent, no shadow.
 export const TOAST_MS = 5000;
 
 export function Toast({ message, onDone }: { message: string | null; onDone: () => void }) {
@@ -34,11 +35,15 @@ export function Toast({ message, onDone }: { message: string | null; onDone: () 
     <div
       role="status"
       aria-live="polite"
+      // Never made inert by an open sheet (`Sheet`'s `syncModal` skips it): the
+      // message appears while a sheet is still open, and an inert live region is
+      // never announced.
+      data-modal-exempt=""
       className="pointer-events-none absolute inset-x-0 z-[60] flex justify-center px-gutter"
       style={{ bottom: 'calc(4.5rem + 1rem + env(safe-area-inset-bottom))' }}
     >
       {message && (
-        <p className="pointer-events-auto max-w-sm rounded-control bg-bg-raised px-control-x py-control-y text-sm text-text-primary ring-1 ring-inset ring-border-control">
+        <p className="pointer-events-auto max-w-sm rounded-control bg-bg-raised px-control-x py-control-y text-sm text-text-primary ring-1 ring-inset ring-bg-border">
           {message}
         </p>
       )}

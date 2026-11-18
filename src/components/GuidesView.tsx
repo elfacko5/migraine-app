@@ -83,7 +83,7 @@ export function GuidesView({ medications, guides, onSetGuide, onClose }: Props) 
           hint={`Shared by all ${open.one}s. Agree it with your doctor.`}
           unit="days"
           unitOne="day"
-          note="in a calendar month"
+          note="in a month"
           clearNote={`Clear goes back to the guideline: ${daysText(GUIDELINE[open.key])}.`}
           steps={DAYS.includes(open.days) ? DAYS : [...DAYS, open.days].sort((a, b) => a - b)}
           value={open.days}
