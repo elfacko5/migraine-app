@@ -177,6 +177,24 @@ export const FORM_UNIT: Record<string, string> = {
   Tablet: 'tablet', Melt: 'tablet', Capsule: 'capsule', Effervescent: 'tablet',
   'Nasal spray': 'spray', Injection: 'injection', Suppository: 'suppository', Liquid: 'dose',
 };
+// Steps the value sheets offer. Halves at the low end, where a split tablet is
+// real; a leaflet's 24-hour maximum goes higher than one dose does.
+export const QTY_STEPS = [0.5, 1, 1.5, 2, 3, 4, 5, 6];
+export const DAY_STEPS = [0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 20, 24];
+export const GAP_STEPS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 12, 24];
+
+/** suppository → suppositories; spray → sprays. */
+export const pluralUnit = (unit: string) => (/[^aeiou]y$/.test(unit) ? `${unit.slice(0, -1)}ies` : `${unit}s`);
+export const unitText = (q: number, unit: string) => `${q} ${q <= 1 ? unit : pluralUnit(unit)}`;
+
+/** `dose` stays the one string every other screen renders, so it is derived,
+ *  never typed. A quantity of one is left out: "1 tablet · 50mg" says nothing
+ *  "50mg" does not. */
+export function derivedDose(qty: number, unit: string, strength: string): string {
+  const count = qty !== 1 ? unitText(qty, unit) : null;
+  return [count, strength.trim()].filter(Boolean).join(' · ') || unitText(qty, unit);
+}
+
 export const unitForForm = (form: string): string => FORM_UNIT[form] ?? 'dose';
 
 /** The way a form is taken: by mouth, or one of the others. A form of the
@@ -214,10 +232,11 @@ export function editMakesDuplicate(
  *  versions of one drug share a type). Stopped entries are included. */
 export function otherVersionsWithOtherType(
   original: Medication,
-  cls: Exclude<MedClass, 'other'> | undefined,
+  cls: MedClass | undefined,
   library: Medication[],
 ): Medication[] {
-  return library.filter((m) => m.id !== original.id && sameMedName(m.name, original.name) && classOfEntry(m) !== cls);
+  const want = cls === 'other' ? undefined : cls;
+  return library.filter((m) => m.id !== original.id && sameMedName(m.name, original.name) && classOfEntry(m) !== want);
 }
 
 // ── What a dose counts under (0b) ──────────────────────────────────────────

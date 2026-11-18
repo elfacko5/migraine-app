@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { FocusEvent } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 
@@ -31,4 +32,38 @@ export function useKeyboardInset(): number {
     };
   }, []);
   return inset;
+}
+
+/**
+ * Everything a medication flow needs for the keyboard: the inset, a root and a
+ * scroll body to attach refs to, and the focus handler that keeps the focused
+ * field in view. The root takes `paddingBottom: inset` (which lifts the footer
+ * and shrinks the body); the footer drops its home-indicator padding while the
+ * keyboard is up, since the keyboard's height already includes it.
+ *
+ * Fields are centred in the flow's own body, never with `scrollIntoView`: that
+ * scrolls every ancestor too, including the app shell, which is how a focus
+ * during a sheet's slide-in once left the whole app scrolled up.
+ */
+export function useKeyboardFlow() {
+  const inset = useKeyboardInset();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const centerInBody = useCallback((el: HTMLElement) => {
+    const body = bodyRef.current;
+    if (!body) return;
+    const b = body.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    body.scrollTop += r.top + r.height / 2 - (b.top + b.height / 2);
+  }, []);
+  useEffect(() => {
+    if (inset === 0) return;
+    const a = document.activeElement;
+    if (a instanceof HTMLInputElement && rootRef.current?.contains(a)) centerInBody(a);
+  }, [inset, centerInBody]);
+  const onFocus = (e: FocusEvent) => {
+    if (inset > 0 && e.target instanceof HTMLInputElement) centerInBody(e.target);
+  };
+  const footerPaddingBottom = inset > 0 ? '1rem' : 'calc(1rem + env(safe-area-inset-bottom))';
+  return { inset, rootRef, bodyRef, onFocus, footerPaddingBottom };
 }

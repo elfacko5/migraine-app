@@ -125,6 +125,9 @@ export interface Medication {
   startedOn?: string;
 }
 
+/** What a medication flow hands back: everything but the fields the hook owns. */
+export type MedicationDraft = Omit<Medication, 'id' | 'createdAt'>;
+
 /** Days a month per type, set by the user. A missing key means "use the
  *  guideline number" (pre-filled, June 2026-11-17). No gepant key: there is no
  *  guideline for one. Nothing reads this yet (0a); `guideFor` arrives in 0b. */

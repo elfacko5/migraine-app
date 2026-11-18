@@ -29,7 +29,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 // whose note ran long enough to become the problem itself** (2026-09-23,
 // Sunny's call — Migraine days per month and Medication, both five-plus
 // lines). It's a "More info" icon beside the heading — the same
-// icon-opens-a-dialog shape `MedicationEditor`'s fields already use — rather
+// icon-opens-a-dialog shape the medication forms' fields already use — rather
 // than a third position for `note` to sit in. A section takes `note` or
 // `info`, never both: `info` replaces the always-visible paragraph outright,
 // so it also skips the inner outline that exists to separate content from a

@@ -158,9 +158,18 @@ export function useMedications(userId: string | null) {
     return true;
   }, [medications, commit]);
 
-  const updateMedication = useCallback((id: string, patch: Partial<Omit<Medication, 'id' | 'createdAt'>>) => {
-    commit(medications.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  type Patch = Partial<Omit<Medication, 'id' | 'createdAt'>>;
+  /** Several edits as one write, one stamp and one push: two `updateMedication`
+   *  calls in a row would each map the list from the same render and the second
+   *  would drop the first. */
+  const updateMedications = useCallback((updates: { id: string; patch: Patch }[]) => {
+    const byId = new Map(updates.map((u) => [u.id, u.patch]));
+    commit(medications.map((m) => (byId.has(m.id) ? { ...m, ...byId.get(m.id) } : m)));
   }, [medications, commit]);
+
+  const updateMedication = useCallback((id: string, patch: Patch) => {
+    updateMedications([{ id, patch }]);
+  }, [updateMedications]);
 
   const removeMedication = useCallback((id: string) => {
     commit(medications.filter((m) => m.id !== id));
@@ -185,5 +194,5 @@ export function useMedications(userId: string | null) {
     }));
   }, [guides, medications, userId, trackPush]);
 
-  return { medications, guides, setGuide, addMedication, updateMedication, removeMedication, syncStatus, lastSyncedAt };
+  return { medications, guides, setGuide, addMedication, updateMedication, updateMedications, removeMedication, syncStatus, lastSyncedAt };
 }

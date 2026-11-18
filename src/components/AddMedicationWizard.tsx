@@ -1,20 +1,20 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import type { MedClass, MedGuides, Medication } from '../types';
-import type { MedicationDraft } from './MedicationEditor';
-import { ClassBadge } from './ClassBadge';
+import type { MedClass, MedGuides, Medication, MedicationDraft } from '../types';
 import { InlineNote } from './InlineNote';
 import { RadioDot } from './RadioDot';
+import { TypeList } from './TypeList';
 import { ValueSheet } from './ValueSheet';
 import { TYPE_OPTIONS } from '../utils/medClasses';
-import { STANDARD_FORMS, findDuplicate, medLabel, parseStrength, sameMedName, sharedTypeForName, typeOfName, usualDoseExceedsMax } from '../utils/medResolve';
-import { guideFor, guideKeyOf, type GuideKey } from '../utils/medGuardrails';
+import { STANDARD_FORMS, DAY_STEPS, GAP_STEPS, QTY_STEPS, derivedDose, findDuplicate, medLabel, pluralUnit, unitForForm, unitText, parseStrength, sameMedName, sharedTypeForName, typeOfName, usualDoseExceedsMax } from '../utils/medResolve';
+import { guideKeyOf } from '../utils/medGuardrails';
+import { guideLine } from '../utils/medGuideText';
 import { chipClass } from '../utils/chipStyles';
-import { useKeyboardInset } from '../utils/keyboardOverride';
+import { useKeyboardFlow } from '../utils/keyboardOverride';
 
 // The add flow (commit 1 of the medication flows; frames 15a to 15c in
 // medications.html). Three steps, swapped inside one `Sheet flush bareHeader`:
 // 1 Name and type → 2 Form and strength → 3 One dose and limits. It replaces
-// the *add* path only; editing keeps `MedicationEditor` until commit 3.
+// the *add* path only; editing is `EditMedicationForm`.
 //
 // Built from Lidd's own parts: the sheet, `RadioDot` rows, `chipClass` tiles,
 // `InlineNote`, `btn-primary` / `btn-secondary`. Where a frame needs something
@@ -25,22 +25,7 @@ import { useKeyboardInset } from '../utils/keyboardOverride';
 // announce a count before the thing). Next stays focusable when it can't
 // proceed (`aria-disabled`) and says why on screen.
 
-/** The unit each form writes. A form of the user's own writes "dose". */
-const FORM_UNIT: Record<string, string> = {
-  Tablet: 'tablet', Melt: 'tablet', Capsule: 'capsule', Effervescent: 'tablet',
-  'Nasal spray': 'spray', Injection: 'injection', Suppository: 'suppository', Liquid: 'dose',
-};
-const QTY = [0.5, 1, 1.5, 2, 3, 4, 5, 6];
-// A leaflet's 24-hour maximum goes higher than one dose does (paracetamol: 8).
-const DAY_STEPS = [0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 20, 24];
-const GUIDE_LABEL: Record<GuideKey, string> = { triptan: 'Triptan', combination: 'Combination', simple: 'Painkiller', any: 'Any attack medicine' };
-const GUIDE_SHARED: Record<GuideKey, string> = {
-  triptan: 'shared by all triptans', combination: 'shared by all combinations', simple: 'shared by all painkillers', any: 'shared by all attack medicines',
-};
 
-/** suppository → suppositories; spray → sprays. */
-const plural = (unit: string) => (/[^aeiou]y$/.test(unit) ? `${unit.slice(0, -1)}ies` : `${unit}s`);
-const unitText = (q: number, unit: string) => `${q} ${q <= 1 ? unit : plural(unit)}`;
 
 const inputClass =
   'w-full min-h-[3.25rem] rounded-field bg-bg-surface px-control-x text-sm text-text-primary ring-1 ring-inset ring-border-control ' +
@@ -65,27 +50,10 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   // Keyboard: the webview is not shortened while this is open (see
   // keyboardOverride.ts), so the flow lifts its own footer and shrinks its own
   // scroll area by the keyboard's height, and keeps the focused field in view.
-  const inset = useKeyboardInset();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const bodyRef = useRef<HTMLDivElement>(null);
-  // Scrolls the wizard's own body so `el` is centred in it. Not `scrollIntoView`:
-  // that scrolls every ancestor too, including the app shell, which is how a
-  // focus during the sheet's slide-in left the whole app scrolled up.
-  const centerInBody = (el: HTMLElement) => {
-    const body = bodyRef.current;
-    if (!body) return;
-    const b = body.getBoundingClientRect();
-    const r = el.getBoundingClientRect();
-    body.scrollTop += r.top + r.height / 2 - (b.top + b.height / 2);
-  };
+  const { inset, rootRef, bodyRef, onFocus, footerPaddingBottom } = useKeyboardFlow();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const reasonId = useId();
   const dupId = useId();
-  useEffect(() => {
-    if (inset === 0) return;
-    const a = document.activeElement;
-    if (a instanceof HTMLInputElement && rootRef.current?.contains(a)) centerInBody(a);
-  }, [inset]);
 
   const [name, setName] = useState('');
   const [medClass, setMedClass] = useState<MedClass | undefined>(undefined);
@@ -124,7 +92,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
 
   // ── step 2 ───────────────────────────────────────────────────────────────
   const effectiveForm = ownOpen ? ownForm.trim() : form;
-  const unit = FORM_UNIT[effectiveForm] ?? 'dose';
+  const unit = unitForForm(effectiveForm);
   const candidate = { name: trimmed, form: effectiveForm, strength: strength.trim(), dose: strength.trim(), unitLabel: unit };
   const duplicate = effectiveForm && strength.trim() ? findDuplicate(candidate, library) : null;
   const step2Ready = !!effectiveForm && !!strength.trim();
@@ -136,16 +104,11 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   const guideKey = guideKeyOf(effectiveClass);
   const totalMg = (n: number) => (parsed ? `${Math.round(n * parsed.value * 100) / 100} ${parsed.unit}` : null);
 
-  function derivedDose(): string {
-    const count = qty !== 1 ? unitText(qty, unit) : null;
-    return [count, strength.trim()].filter(Boolean).join(' · ') || unitText(qty, unit);
-  }
-
   function draft(): MedicationDraft {
     return {
       kind: 'acute',
       name: trimmed,
-      dose: derivedDose(),
+      dose: derivedDose(qty, unit, strength),
       strength: strength.trim(),
       quantity: qty,
       unitLabel: unit,
@@ -164,7 +127,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
 
   return (
     <div ref={rootRef} className="relative flex min-h-0 flex-1 flex-col" style={{ paddingBottom: inset }}
-      onFocus={(e) => { if (inset > 0 && e.target instanceof HTMLInputElement) centerInBody(e.target); }}>
+      onFocus={onFocus}>
       <div
         className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4"
         style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
@@ -200,28 +163,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
 
             <div className="space-y-2">
               <p id={`${nameId}-type`} className="text-base font-semibold text-text-primary">What kind of medicine is it?</p>
-              <div role="radiogroup" aria-labelledby={`${nameId}-type`} className="space-y-2">
-                {TYPE_OPTIONS.map((t) => {
-                  const on = typeSet && effectiveClass === t.value;
-                  return (
-                    <button
-                      key={t.letter}
-                      type="button"
-                      role="radio"
-                      aria-checked={on}
-                      onClick={() => { setMedClass(t.value); setTypeChosen(true); }}
-                      className={`tap-44-y flex min-h-[3.5rem] w-full items-center gap-3 rounded-control px-control-x text-left ${chipClass(on)}`}
-                    >
-                      <ClassBadge>{t.letter}</ClassBadge>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-base font-medium text-text-primary">{t.label}</span>
-                        <span className="block text-xs text-text-secondary">{TYPE_HINT[t.letter]}</span>
-                      </span>
-                      <RadioDot selected={on} />
-                    </button>
-                  );
-                })}
-              </div>
+              <TypeList value={effectiveClass} chosen={typeSet} onChange={(c) => { setMedClass(c); setTypeChosen(true); }} labelledBy={`${nameId}-type`} />
               <p className="text-xs text-text-secondary">It's on the box or the leaflet. Decides which monthly guide it counts toward.</p>
               {typeFromName && <InlineNote>{`Same type as your other ${trimmed}.`}</InlineNote>}
               {typesDisagree && (
@@ -278,7 +220,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
             <div className="rounded-card bg-bg-raised">
               <LimitRow
                 label="Usual dose"
-                hint={`${plural(unit[0].toUpperCase() + unit.slice(1))} you take at once`}
+                hint={`${pluralUnit(unit[0].toUpperCase() + unit.slice(1))} you take at once`}
                 value={unitText(qty, unit)}
                 extra={totalMg(qty)}
                 onOpen={() => setEditing('qty')}
@@ -296,7 +238,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
 
             {guideKey && (
               <p className="text-xs text-text-secondary">
-                {GUIDE_LABEL[guideKey]} days a month: <span className="font-medium text-text-primary">{guideFor(guideKey, guides)} days</span> · {GUIDE_SHARED[guideKey]}
+                {guideLine(guideKey, guides).lead} <span className="font-medium text-text-primary">{guideLine(guideKey, guides).days}</span> · {guideLine(guideKey, guides).tail}
               </p>
             )}
 
@@ -309,7 +251,7 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
 
       <div
         className="space-y-2 bg-bg-surface px-gutter py-4 sm:px-gutter-wide"
-        style={{ paddingBottom: inset > 0 ? '1rem' : 'calc(1rem + env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: footerPaddingBottom }}
       >
         {step === 1 && !step1Ready && (
           <p id={reasonId} className="text-center text-xs text-text-secondary">{!trimmed ? 'Add the name to continue' : 'Choose a type to continue'}</p>
@@ -339,10 +281,10 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
         <ValueSheet
           key={editing}
           title={editing === 'qty' ? 'Usual dose' : editing === 'day' ? 'Max in 24 hours' : 'Time between doses'}
-          hint={editing === 'day' ? 'On the leaflet, under “How much to take”' : editing === 'gap' ? 'Shortest gap the leaflet allows between two doses' : `${plural(unit[0].toUpperCase() + unit.slice(1))} you take at once`}
-          unit={editing === 'gap' ? 'hours' : plural(unit)}
+          hint={editing === 'day' ? 'On the leaflet, under “How much to take”' : editing === 'gap' ? 'Shortest gap the leaflet allows between two doses' : `${pluralUnit(unit[0].toUpperCase() + unit.slice(1))} you take at once`}
+          unit={editing === 'gap' ? 'hours' : pluralUnit(unit)}
           unitOne={editing === 'gap' ? 'hour' : unit}
-          steps={editing === 'gap' ? GAP_STEPS : editing === 'day' ? DAY_STEPS : QTY}
+          steps={editing === 'gap' ? GAP_STEPS : editing === 'day' ? DAY_STEPS : QTY_STEPS}
           value={editing === 'qty' ? qty : editing === 'day' ? maxPerDay : gap}
           fallback={editing === 'qty' ? 1 : editing === 'day' ? 2 : 2}
           total={editing === 'gap' ? null : totalMg}
@@ -356,14 +298,6 @@ export function AddMedicationWizard({ library, guides, onAdd, onEditExisting, on
   );
 }
 
-const TYPE_HINT: Record<string, string> = {
-  T: 'Name usually ends in “-triptan”',
-  C: 'Two or more medicines in one tablet',
-  P: 'Paracetamol, ibuprofen, naproxen, aspirin',
-  G: 'Name usually ends in “-gepant”',
-  '?': 'Counted under “Any” until you choose',
-};
-const GAP_STEPS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 12, 24];
 
 function LimitRow({ label, hint, value, extra, onOpen }: { label: string; hint?: string; value: string; extra?: string | null; onOpen: () => void }) {
   return (

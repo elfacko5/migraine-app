@@ -52,7 +52,7 @@ import { ProfileView, DisplayPanel, RemindersPanel, AccountPanel, DataPanel, typ
 import { MedicationsView } from './components/MedicationsView';
 import { GuidesView } from './components/GuidesView';
 import { Hit6View } from './components/Hit6View';
-import { MedicationEditor } from './components/MedicationEditor';
+import { EditMedicationForm } from './components/EditMedicationForm';
 import { AddMedicationWizard } from './components/AddMedicationWizard';
 import { Toast } from './components/Toast';
 import { AttackModePill } from './components/AttackModePill';
@@ -116,7 +116,7 @@ export default function App() {
     syncStatus: prefsSyncStatus, lastSyncedAt: prefsLastSyncedAt,
   } = useUserPrefs(userId);
   const {
-    medications, guides, setGuide, addMedication, updateMedication, removeMedication,
+    medications, guides, setGuide, addMedication, updateMedications, removeMedication,
     syncStatus: medsSyncStatus, lastSyncedAt: medsLastSyncedAt,
   } = useMedications(userId);
   const {
@@ -833,10 +833,13 @@ export default function App() {
         bareHeader
       >
         {medEditor && 'med' in medEditor && (
-          <MedicationEditor
+          <EditMedicationForm
             medication={medEditor.med}
-            onSave={(next) => {
-              updateMedication(medEditor.med.id, next);
+            library={medications}
+            guides={guides}
+            attacks={attacks}
+            onSave={(updates) => {
+              updateMedications(updates);
               setMedEditor(null);
             }}
             onDelete={() => { removeMedication(medEditor.med.id); setMedEditor(null); }}
