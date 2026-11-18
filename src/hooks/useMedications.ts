@@ -171,6 +171,11 @@ export function useMedications(userId: string | null) {
    *  the same whole-list last-write-wins as an edit to a medicine. */
   const setGuide = useCallback((key: keyof MedGuides, days: number | undefined) => {
     const next = withGuide(guides, key, days);
+    // Nothing changed (Done on the number already shown, Clear with nothing
+    // set): write and push nothing. A write stamps the whole list, which can
+    // overwrite a newer one from another device, and storing the guideline
+    // number would turn "the guideline" into "set by you".
+    if (JSON.stringify(next) === JSON.stringify(guides)) return;
     const stored = save(medications, next);
     setGuidesState(next);
     if (!userId) return;

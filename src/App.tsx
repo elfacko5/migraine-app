@@ -730,7 +730,8 @@ export default function App() {
           a sticky footer inside an iOS scroll container. */}
       <Sheet
         open={profileSheet !== null}
-        onClose={() => setProfileSheet(null)}
+        // One level back from Monthly guides (like its Back control), else closed.
+        onClose={() => setProfileSheet(profileSheet === 'guides' ? 'medications' : null)}
         title="Profile"
         flush
         bareHeader
