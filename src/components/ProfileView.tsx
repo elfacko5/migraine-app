@@ -473,6 +473,27 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
   const fileRef = useRef<HTMLInputElement>(null);
   const [importErr, setImportErr] = useState<string | null>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
+  const [exportErr, setExportErr] = useState(false);
+  const exporting = useRef(false);
+
+  // Export used to fail silently in the iOS app (a blob download does nothing in
+  // a WKWebView). It now says so when it cannot save; a dismissed share sheet is
+  // not a failure and shows nothing.
+  async function onExport() {
+    // A second tap while the share sheet is open would be rejected by the plugin
+    // ("Can't share while sharing is in progress") and show a false failure.
+    if (exporting.current) return;
+    exporting.current = true;
+    setExportErr(false);
+    try {
+      await exportData();
+    } catch (e) {
+      console.error('Export failed:', e);
+      setExportErr(true);
+    } finally {
+      exporting.current = false;
+    }
+  }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -491,7 +512,7 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={exportData}
+              onClick={onExport}
               className="btn-secondary rounded-control-sm py-2.5 text-sm font-medium transition-colors"
             >
               Export backup
@@ -519,6 +540,9 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
               : 'Everything stays on this device; nothing is uploaded unless you sign in above.'}
           </p>
           {importErr && <p className="text-xs text-severity-high">{importErr}</p>}
+          {/* Amber, not the alarm colour: the data is untouched, only the file was not made. */}
+          {/* The live region stays in the page and only its text comes and goes: VoiceOver often skips a region that is added already holding text. */}
+          <p role="status" className="text-xs text-severity-mid">{exportErr ? "The backup couldn't be saved. Your data is still on this device." : ''}</p>
         </div>
 
         <ReminderDiagnostics />
