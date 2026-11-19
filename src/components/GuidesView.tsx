@@ -25,7 +25,7 @@ const ROWS: { key: GuideKey; label: string; one: string; cls: MedClass | null }[
   { key: 'triptan', label: 'Triptans', one: 'triptan', cls: 'triptan' },
   { key: 'combination', label: 'Combination', one: 'combination painkiller', cls: 'combination' },
   { key: 'simple', label: 'Painkillers', one: 'painkiller', cls: 'simple' },
-  { key: 'any', label: 'Any attack medicine', one: 'attack medicine', cls: null },
+  { key: 'any', label: 'Any medicine', one: 'attack medicine', cls: null },
 ];
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const daysText = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`;
@@ -53,7 +53,7 @@ export function GuidesView({ medications, guides, onSetGuide, onClose }: Props) 
   return (
     <ProfileSubPage title="Monthly guides" onClose={onClose}>
       <div className="space-y-4">
-        <p className="text-sm text-text-secondary">Days a month you aim to stay under. Agree these with your doctor.</p>
+        <p className="text-sm text-text-secondary">Guideline days a month before overuse can start. Check these with your doctor.</p>
         <SettingsGroup raised>
           {rows.map((r) => (
             <button
@@ -80,7 +80,7 @@ export function GuidesView({ medications, guides, onSetGuide, onClose }: Props) 
         <ValueSheet
           key={open.key}
           title={`${open.label} days a month`}
-          hint={`Shared by all ${open.one}s. Agree it with your doctor.`}
+          hint={`Shared by all ${open.one}s. Check it with your doctor.`}
           unit="days"
           unitOne="day"
           note="in a month"
