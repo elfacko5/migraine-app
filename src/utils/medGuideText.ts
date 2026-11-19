@@ -6,7 +6,7 @@ import { guideFor, type GuideKey } from './medGuardrails';
 // number is read through `guideFor`, so it is the same one Today and Insights
 // use. Wording follows frames 15c, 15f and 16d; the plan holds guide wording
 // for June to reword.
-export const GUIDE_LABEL: Record<GuideKey, string> = { triptan: 'Triptan', combination: 'Combination', simple: 'Painkiller', any: 'Any medicine' };
+export const GUIDE_LABEL: Record<GuideKey, string> = { triptan: 'Triptan', combination: 'Combination', simple: 'Painkiller', any: 'Any attack medicine' };
 export const GUIDE_SHARED: Record<GuideKey, string> = {
   triptan: 'shared by all triptans',
   combination: 'shared by all combinations',
