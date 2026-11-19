@@ -1,0 +1,173 @@
+/*
+ * Token roles with neutral defaults. An app imports this file after
+ * `@import "tailwindcss"`, then its own theme file, which gives a value to
+ * every role below for light and dark. Components read these roles only.
+ *
+ * Spacing roles are written calc(var(--spacing) * n), so one --spacing value
+ * scales all spacing. A named spacing value on its own would not follow it.
+ */
+
+@theme {
+  /* Colour. Function names, not history. Add a role when a component needs it. */
+  --color-surface: #ffffff;
+  --color-content: #1b1e23;
+  --color-content-muted: #565f6c;
+  --color-accent: #2d5bd1;
+  --color-on-accent: #ffffff;
+  /* A tint by default. A theme may set it to a solid colour. */
+  --color-selected: #e2eafb;
+  --color-on-selected: #1a3a8f;
+  /* Outline of anything you press. 3:1 against the surface. */
+  --color-line: #79828f;
+  /* Edge of something you only read. Lighter, no contrast requirement. */
+  --color-divider: #d8dce2;
+  --color-focus: #1d4ed8;
+  /* Error text (4.5:1) and error outline (3:1) on the surface. */
+  --color-error: #b3261e;
+  /* The label on a solid error fill (Button danger). 4.5:1 on --color-error. */
+  --color-on-error: #ffffff;
+  /* The dimming layer behind an interrupting Sheet and a Confirm dialog. It carries its own
+     opacity and always darkens what is behind it, so the Sheet stands apart from the page.
+     Not a contrast pair: there is no text or outline on it. Light: the text colour at 40%. */
+  --color-scrim: #1b1e2366;
+  /* The fill of a layer that stands above the page: the interrupting Sheet and the Confirm
+     dialog. Light: the same as the surface. Everything drawn on it passes the contrast check
+     on it too. A look that sets --color-surface sets this as well. */
+  --color-surface-raised: #ffffff;
+
+  /* Type. Input text is never below 16px, or iOS zooms in on focus. */
+  --text-input: max(16px, 1rem);
+  /* The page title in the Top bar. In rem, so the text size still scales it. */
+  --text-title: 2.125rem;
+  --text-title--line-height: 1.25;
+  /* Bottom nav label and icon. Persistent chrome: they stop growing, or a
+     destination is pushed off the screen at 200% text. */
+  --text-nav-label: min(0.875rem, 16px);
+
+  /* Font weight. Named for the job. Defaults are the weights the components used before these roles
+     existed, so nothing changes for an app that sets none. A theme gives numbers only. */
+  /* The label of anything you press: Button, the Text-size control's buttons, the Empty state's action, the current Bottom nav item. */
+  --font-weight-control: 600;
+  /* A title inside a layer: the Sheet and the Confirm dialog. */
+  --font-weight-heading: 600;
+  /* The page title in the Top bar. */
+  --font-weight-title: 700;
+
+  /* Radius */
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+  --radius-sheet: 1rem;
+  --radius-chip: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-segment: 0.375rem;
+  --radius-badge: 0.625rem;
+
+  /* Size. The 44px floor holds at the smallest text size. */
+  --spacing-target: max(44px, calc(var(--spacing) * 11));
+  --spacing-compact: calc(var(--spacing) * 9);
+
+  /* Switch. Track, thumb and the gap around the thumb. Travel is derived. */
+  --spacing-switch-w: calc(var(--spacing) * 12);
+  --spacing-switch-h: calc(var(--spacing) * 7);
+  --spacing-switch-thumb: calc(var(--spacing) * 5);
+  --spacing-switch-inset: calc(var(--spacing) * 1);
+  --spacing-switch-travel: calc(
+    var(--spacing-switch-w) - var(--spacing-switch-thumb) - var(--spacing-switch-inset) * 2
+  );
+
+  /* Persistent chrome (the Sheet's back and close button) keeps one fixed 44px
+     size. It does not grow with text size, or chrome would crowd out the content
+     at 200% with the keyboard open. */
+  --spacing-chrome-target: 44px;
+  /* The corner radius of those fixed-size controls: the control radius at 100% text. In rem it would be 24px at 200%, more than half of a 44px button, and turn the squares into circles. */
+  --radius-chrome: 12px;
+
+  /* Toast layer. Above the sticky Top bar (z-index 10) and every Sheet, which set
+     none: later elements paint over earlier ones, so a toast rendered at mount
+     would sit under every Sheet portal. */
+  --z-toast: 50;
+  /* The gap between a toast and the edge of the visible area, past the safe area. */
+  --spacing-toast-edge: calc(var(--spacing) * 3);
+
+  /* Text-size control. Persistent chrome: fixed px values, so the control does not change size while it changes the text size. The two glyphs, the step text, the step dots, the gap inside the step and the space between the buttons and the step. */
+  --text-textsize-glyph-small: 14px;
+  --text-textsize-glyph-large: 24px;
+  --text-textsize-step: 14px;
+  --spacing-textsize-dot: 6px;
+  --spacing-textsize-gap: 4px;
+  --spacing-textsize-space: 8px;
+
+  /* Slider. The strip around the track is the target role, 44px minimum. */
+  --spacing-slider-track: calc(var(--spacing) * 2);
+  --spacing-slider-thumb: calc(var(--spacing) * 6);
+
+  /* Padding */
+  --spacing-card: calc(var(--spacing) * 4);
+  --spacing-control-x: calc(var(--spacing) * 5);
+  --spacing-control-y: calc(var(--spacing) * 3);
+  --spacing-control-compact-x: calc(var(--spacing) * 3);
+  --spacing-control-compact-y: calc(var(--spacing) * 2);
+  --spacing-gutter: calc(var(--spacing) * 4);
+  --spacing-gutter-wide: calc(var(--spacing) * 6);
+
+  /* Bottom nav. The icon stops growing at the cap. The clearance is under the labels, before the safe-area inset. Both paddings stop growing at 150% text. */
+  --spacing-nav-icon: min(1.375rem, 26px);
+  /* The size of the middle action. It stops growing too: an action that scales with the text pushes a destination off the screen at 200%. The app's control uses it (size-nav-action). */
+  --spacing-nav-action: min(3.5rem, 56px);
+  --spacing-nav-bottom: min(calc(var(--spacing) * 1.5), 9px);
+  /* The space above an item's icon, where the line sits. Capped at its 150% size, so the bar stops growing with the text. */
+  --spacing-nav-item-top: min(calc(var(--spacing) * 3), 18px);
+  --spacing-nav-gap: min(calc(var(--spacing) * 0.5), 3px);
+  /* The line along the top of the current item, as wide as its slot less an inset on each side. A shape cue, so the current item does not depend on colour. */
+  --spacing-nav-mark-thickness: 2px;
+  /* How far the line is held in from each side of its slot. */
+  --spacing-nav-mark-inset: 10px;
+
+  /*
+   * Top bar. Clearance above the title row, added to the safe-area inset and
+   * never instead of it. The first is for the title state, the second for the
+   * state where a control stands in for the title.
+   */
+  --spacing-bar-top: calc(var(--spacing) * 8);
+  --spacing-bar-top-compact: calc(var(--spacing) * 4);
+
+  /*
+   * The one gap between chips, in rows and columns. At least 2 spacing units,
+   * and at least target minus compact, so the vertical hit areas of two rows
+   * meet in the gap and never overlap. A theme that changes target or compact
+   * keeps this right. A theme that overrides this value takes the check over.
+   */
+  --spacing-chip-gap: max(
+    calc(var(--spacing) * 2),
+    calc(var(--spacing-target) - var(--spacing-compact))
+  );
+}
+
+:root {
+  /*
+   * color-scheme tells the browser the page's mode for its own controls and
+   * scrollbars. Every theme sets it for each of its modes: light here, dark below.
+   * It does not change the Select's picker on iOS 26: that follows the phone.
+   */
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-surface: #14171c;
+  --color-content: #eceff3;
+  --color-content-muted: #a3acb9;
+  --color-accent: #8eabff;
+  --color-on-accent: #0b1020;
+  --color-selected: #27345c;
+  --color-on-selected: #dde6ff;
+  --color-line: #7f8998;
+  --color-divider: #2c323b;
+  --color-focus: #a9c0ff;
+  --color-error: #ff8c82;
+  --color-on-error: #14171c;
+  /* Dark: black at about 45%. The light text colour at 40% lifted the page to a mid grey. */
+  --color-scrim: #00000073;
+  /* Dark: a step lighter than the surface, so a layer reads as raised above the dimmed page. */
+  --color-surface-raised: #1f242b;
+}

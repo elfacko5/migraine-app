@@ -15,6 +15,7 @@
     "med-m3": "TZ=UTC tsx scripts/med-checks/m3.mts"
   },
   "dependencies": {
+    "@base-ui/react": "1.9.0",
     "@capacitor/core": "^8.5.0",
     "@capacitor/filesystem": "^8.1.5",
     "@capacitor/ios": "^8.5.0",
@@ -24,7 +25,7 @@
     "@capacitor/share": "^8.0.3",
     "@supabase/supabase-js": "^2.109.0",
     "@tailwindcss/vite": "^4.3.1",
-    "code-ds": "file:../code-design-system-main",
+    "code-ds": "file:vendor/code-ds",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "recharts": "^3.9.0",

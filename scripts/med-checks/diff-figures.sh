@@ -6,7 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 BASE="${1:-HEAD}"
-TSX=node_modules/code-ds/node_modules/.bin/tsx
+TSX=node_modules/.bin/tsx
 OUT="${OUT_DIR:-$(mktemp -d)}"
 # The real path, not the /var/... symlink mktemp returns: tsx matches a file to
 # the tsconfig `include` by real path, and on a mismatch the extracted tree loses

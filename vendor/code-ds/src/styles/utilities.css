@@ -1,0 +1,18 @@
+/*
+ * Hit area: an invisible 44pt target that grows vertically only, so
+ * neighbours in a row never overlap. The element keeps its drawn size.
+ * Anything with overflow hidden would clip it, so don't put it on those.
+ */
+@utility tap-44-y {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: max(100%, var(--spacing-target));
+    transform: translateY(-50%);
+  }
+}

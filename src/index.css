@@ -6,11 +6,11 @@
 @import "code-ds/roles.css";
 @import "./theme.css";
 
-/* The design system package (code-ds, linked from ../code-design-system-main).
+/* The design system package (code-ds, vendored in vendor/code-ds).
    Tailwind v4 does not scan node_modules, so its source is named here. Without
    this line, classes used only inside the package's components are never
    generated and they render unstyled. */
-@source "../../code-design-system-main/src";
+@source "../vendor/code-ds/src";
 
 /* ── Typeface ───────────────────────────────────────────
    Lexend, self-hosted (SIL Open Font License): the app has to work offline
