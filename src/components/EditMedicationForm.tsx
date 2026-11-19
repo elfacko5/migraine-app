@@ -287,7 +287,7 @@ export function EditMedicationForm({ medication: original, library, guides, atta
           <p id={`${nameId}-t`} className="text-base text-text-primary">{`What kind of medicine is ${name.trim() || original.name}? It's on the box or the leaflet.`}</p>
           <TypeList value={cls} chosen onChange={setCls} labelledBy={`${nameId}-t`} />
           {taken.days > 0 && (
-            <InlineNote>{`When you save, ${taken.days === 1 ? 'the 1 day' : `the ${taken.days} days`} you took ${original.name} count under the new type, including past months in Insights.${alsoOthers && others.length > 0 ? ' The other entries count too.' : ''}${taken.ambiguousDoses > 0 ? ` ${taken.ambiguousDoses === 1 ? '1 earlier dose can’t' : `${taken.ambiguousDoses} earlier doses can’t`} be matched to this version.` : ''}`}</InlineNote>
+            <InlineNote>{`When you save, ${taken.days === 1 ? 'the 1 day' : `the ${taken.days} days`} you took ${original.name} ${taken.days === 1 ? 'counts' : 'count'} ${guideKey ? 'under the new type' : 'under no monthly guide'}, including past months in Insights.${alsoOthers && others.length > 0 ? ' The other entries change type too.' : ''}${taken.ambiguousDoses > 0 ? ` ${taken.ambiguousDoses === 1 ? '1 earlier dose can’t' : `${taken.ambiguousDoses} earlier doses can’t`} be matched to this version.` : ''}`}</InlineNote>
           )}
           {others.length > 0 && (
             <button type="button" aria-pressed={alsoOthers} onClick={() => setAlsoOthers((v) => !v)}
