@@ -106,6 +106,22 @@ Nothing here is decided by me: code is authoritative where the design says so (d
 
 ---
 
+## E2. Visual pass (added 2026-11-22)
+
+After the first version I rendered eight boards in the browser pane (Today ongoing, Logs, Detail, Update "how bad now", End summary, Insights, Live medication, Display with attack mode on). The pane is narrower than the 390px artboards, so right edges are cropped; nothing below depends on them. What the text read could not show:
+
+- **Logs rows are much sparser than the shipped v3.10 row.** Each row is date block, duration, time range, a medication count with a small icon, and a **solid-filled** peak badge (amber, terracotta). No side glyph, no symptom icons, no drug type letters or helped/didn't-help marks, no sparkline. Two consequences: the side (half of ICHD criterion B) leaves the list, and the badge is a solid severity fill, where CLAUDE.md has the peak as a shaded number capped at 40% so it holds contrast in every theme. Decide whether the sparser row is intended.
+- **Detail's "Pain over time" ends at 0.** The dashed line runs to an open circle at 0 on the end time, captioned "no reading until it ended". The shipped rule is that a missing value is never drawn as zero and never interpolated, and the app has no record of pain at the end. The design draws an assumption.
+- **The Insights "i" modals are empty in the source.** The static render shows a literal `{{modal.title}}` / `{{modal.body}}` over the page, so the text that would replace each section's caption doesn't exist in these files. Together with A: the caveats those captions carry still have nowhere to live.
+- **Update "How bad is it now?"** is a single card: area name, "was 7 at 20:25", a 0–10 grid in two rows (6 + 5 cells) with last time drawn as a dashed cell, and "+ It hurts somewhere else too". Nothing is pre-selected, which softens A2's blank-start concern, but the 0 cell remains: the app's severity is 1–10 today.
+- **Today** is closer to the shipped hero than the text suggested: label, large duration, "Pain 5 now", the Add update / End attack pair, then one card with the dose and two counters. The hero art is concentric rings with an arc, not the leaf I assumed.
+- **Live medication** is as described: expanded card with a check, a 44px stepper, a "when" row of radio pills, "Add another dose". Display with attack mode on matches the text; the "When I log an attack" switch is off while attack mode is on, as drawn.
+- **Detail's dose markers collide** at the top of the chart ("Sumatriptan" and "Treo" tags overlap), a small point for the designer.
+
+Not rendered: the remaining ~100 boards. The medications set is the one most worth a second look if those flows are touched.
+
+---
+
 ## F. Where the code is ahead; do not regress
 
 The Medications boards were drawn from the same `medications.html` the app was built from, then partly overtaken:
