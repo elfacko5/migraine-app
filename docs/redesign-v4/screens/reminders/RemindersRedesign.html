@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — Reminders (redesign)</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+h1,h2,p{margin:0}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}.hd{height:64px;display:flex;align-items:center;justify-content:center;position:relative;padding:0 12px;border-bottom:1px solid #2b2926}.hd .bk{position:absolute;left:12px;width:44px;height:44px;border-radius:22px;background:#262421;border:0;display:flex;align-items:center;justify-content:center;color:#cdc7bb}.ttl{font-size:17px;font-weight:600;color:#e4dfd4}
+.lead{font-size:15px;line-height:1.55;color:#A39D92}
+.toggle-row{display:flex;align-items:center;gap:12px;background:#262421;border-radius:20px;padding:16px;min-height:56px}
+.toggle-row .t{flex:1;font-size:16px;font-weight:500;color:#cdc7bb}
+.tg{width:48px;height:28px;border-radius:14px;background:#7FA187;display:flex;align-items:center;padding:3px;justify-content:flex-end;flex:none}
+.tg .k{width:22px;height:22px;border-radius:11px;background:#1b1a18}
+.sl{display:block;font-size:14px;font-weight:600;color:#A39D92;margin-bottom:8px}
+.segs{display:flex;gap:4px;background:#262421;border-radius:14px;padding:4px}
+.seg{flex:1;min-height:44px;border:1px solid transparent;border-radius:10px;background:transparent;color:#cdc7bb;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+.seg.on{background:#2E3A31;border-color:#7FA187;font-weight:600;color:#e4dfd4}
+.opts{background:#262421;border-radius:20px;overflow:hidden;margin-top:12px}
+.or{display:flex;align-items:center;min-height:56px;padding:0 16px;border-top:1px solid #3A3733;font-size:16px}
+.or:first-child{border-top:0}
+.or .v{margin-left:auto;color:#9bb9a1;font-weight:500}
+.hint{font-size:14px;color:#A39D92;margin-top:10px}
+
+</style>
+</helmet>
+<div style="width:390px;height:844px;background:#1B1A18;position:relative;overflow:hidden"><div style="padding:54px 8px 0;height:106px;display:flex;align-items:center;justify-content:space-between"><a href="SettingsDark.dc.html" aria-label="Back" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#cdc7bb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><span style="font-size:16px;font-weight:600">Reminders</span><span style="width:44px"></span></div>
+<div style="padding:0 20px;display:flex;flex-direction:column;gap:22px">
+<p class="lead">While an attack is open, a reminder asks how it&rsquo;s going, so the diary has a reading every so often. Applies to attacks from now on.</p>
+<div class="toggle-row"><svg class="ic" style="color:#9bb9a1" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="t">Check-in reminders</span><span class="tg" role="switch" aria-checked="true" aria-label="Check-in reminders on"><span class="k"></span></span></div>
+<div>
+<span class="sl">Timing</span>
+<div class="segs" role="radiogroup" aria-label="Reminder timing"><button class="seg on" role="radio" aria-checked="true">Adaptive</button><button class="seg" role="radio" aria-checked="false">Fixed</button></div>
+<div class="opts"><div class="or"><span>First reminder</span><span class="v">1 h after start</span></div><div class="or"><span>Then</span><span class="v">Every 2 h</span></div></div>
+<p class="hint">Adaptive spaces check-ins out as the attack goes on. Switch to Fixed to set your own times.</p>
+</div>
+<div><span class="sl">Quiet hours</span><div class="opts"><div class="or"><span>No reminders</span><span class="v">23:00 &ndash; 07:00</span></div></div></div>
+</div></div></x-dc>
+</body>
+</html>

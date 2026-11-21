@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — Token decisions</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+.sec{display:flex;flex-direction:column;gap:16px;padding:32px 0;border-top:1px solid #3a3733}
+.sec:first-of-type{border-top:0}
+.h{margin:0;font-size:24px;font-weight:600;line-height:1.35}
+.q{margin:0;font-size:17px;color:#a39d92;line-height:1.5}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.opt{background:#262421;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:16px;border:1px solid #262421}
+.rec{border-color:#7fa187}
+.lab{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:600}
+.ltr{width:32px;height:32px;border-radius:10px;background:#302d29;display:flex;align-items:center;justify-content:center;font-size:16px}
+.tag{margin-left:auto;font-size:14px;font-weight:500;color:#1b1a18;background:#9bb9a1;border-radius:8px;padding:2px 10px}
+.demo{background:#1b1a18;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;min-height:150px;justify-content:center}
+.note{margin:0;font-size:14px;color:#a39d92;line-height:1.5}
+.pass{color:#8fb096;font-weight:500}
+.fail{color:#c68880;font-weight:500}
+.btn{height:52px;border-radius:12px;border:0;font:600 17px Lexend,sans-serif;display:flex;align-items:center;justify-content:center}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sev{width:40px;height:40px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;font-weight:600}
+</style>
+</helmet>
+<div style="width:1440px;background:#1b1a18;padding:64px 80px;display:flex;flex-direction:column">
+<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+<h1 style="margin:0;font-size:34px;font-weight:600">Token decisions</h1>
+<p class="q">Approved: all recommendations. The outlined option in each row is the one in use. Contrast is measured on the shown background. Decisions 8&ndash;14 are the token-reconciliation pass that followed the November audit &mdash; resolving drift the first seven decisions didn&rsquo;t cover.</p>
+</div>
+
+<section class="sec">
+<h2 class="h">1 · Text on solid accent buttons</h2>
+<p class="q">No <code>on-accent</code> token yet. What colour is the label on a primary button?</p>
+<div class="opts">
+<div class="opt rec"><div class="lab"><span class="ltr">A</span>bg-base #1b1a18<span class="tag">Approved</span></div>
+<div class="demo"><button class="btn" style="background:#7fa187;color:#1b1a18">Add Sumatriptan</button></div>
+<p class="note"><span class="pass">6.1 : 1 · passes AA</span>. Light mode pairs #4f6b57 with #f5f2ec (5.3 : 1).</p></div>
+<div class="opt"><div class="lab"><span class="ltr">B</span>text-primary #cdc7bb</div>
+<div class="demo"><button class="btn" style="background:#7fa187;color:#cdc7bb">Add Sumatriptan</button></div>
+<p class="note"><span class="fail">1.7 : 1 · fails</span>. Reads as disabled.</p></div>
+<div class="opt"><div class="lab"><span class="ltr">C</span>Light #f5f2ec</div>
+<div class="demo"><button class="btn" style="background:#7fa187;color:#f5f2ec">Add Sumatriptan</button></div>
+<p class="note"><span class="fail">2.6 : 1 · fails</span>. Would need a darker accent in dark mode.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">2 · Destructive actions</h2>
+<p class="q">Delete and Remove currently borrow terracotta, which is also severity-high (pain 8–10).</p>
+<div class="opts">
+<div class="opt"><div class="lab"><span class="ltr">A</span>Reuse severity-high #c68880</div>
+<div class="demo"><div style="display:flex;align-items:center;gap:12px"><span class="sev" style="background:#c68880;color:#1b1a18">8</span><span style="font-size:17px">Thu 20 Aug</span></div><span style="font-size:17px;font-weight:500;color:#c68880">Remove Sumatriptan</span></div>
+<p class="note"><span class="pass">6.0 : 1</span>. One less token, but "pain 8" and "delete" share a colour.</p></div>
+<div class="opt"><div class="lab"><span class="ltr">B</span>Own token, redder #d9705f</div>
+<div class="demo"><div style="display:flex;align-items:center;gap:12px"><span class="sev" style="background:#c68880;color:#1b1a18">8</span><span style="font-size:17px">Thu 20 Aug</span></div><span style="font-size:17px;font-weight:500;color:#d9705f">Remove Sumatriptan</span></div>
+<p class="note"><span class="pass">5.3 : 1</span>. Distinct from severity, but only by a shade.</p></div>
+<div class="opt rec"><div class="lab"><span class="ltr">C</span>Neutral link, colour only on confirm<span class="tag">Approved</span></div>
+<div class="demo"><div style="display:flex;align-items:center;gap:12px"><span class="sev" style="background:#c68880;color:#1b1a18">8</span><span style="font-size:17px">Thu 20 Aug</span></div><span style="font-size:17px;font-weight:500;color:#cdc7bb;display:flex;align-items:center;gap:8px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Remove Sumatriptan</span><button class="btn" style="background:#c68880;color:#1b1a18;height:44px;font-size:16px">Delete Sumatriptan and 6 doses</button></div>
+<p class="note">Entry points stay calm (icon + text-primary). Only the final confirm button is terracotta, so colour never competes with pain severity on a normal screen.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">3 · Warning surface</h2>
+<p class="q">No surface token for warnings. Note: <code>warning</code> #b07a3c as text on #2e2820 is only <span class="fail">4.0 : 1</span>.</p>
+<div class="opts">
+<div class="opt"><div class="lab"><span class="ltr">A</span>Warm tint, warning-coloured text</div>
+<div class="demo"><div style="background:#2e2820;border-radius:12px;padding:12px 14px;display:flex;gap:10px;color:#b07a3c;font-size:16px;line-height:1.5"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>3 in 24 hours. Your max is 2.</div></div>
+<p class="note"><span class="fail">4.0 : 1 · fails</span> for body text.</p></div>
+<div class="opt rec"><div class="lab"><span class="ltr">B</span>Warm tint, warning icon, primary text<span class="tag">Approved</span></div>
+<div class="demo"><div style="background:#2e2820;border-radius:12px;padding:12px 14px;display:flex;gap:10px;color:#cdc7bb;font-size:16px;line-height:1.5"><svg class="ic" style="color:#b07a3c" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>3 in 24 hours. Your max is 2.</div></div>
+<p class="note">Text <span class="pass">8.7 : 1</span>. New token <code>warning-surface</code> #2e2820 (light #efe4d3).</p></div>
+<div class="opt"><div class="lab"><span class="ltr">C</span>Raised card, icon only</div>
+<div class="demo"><div style="background:#302d29;border-radius:12px;padding:12px 14px;display:flex;gap:10px;color:#cdc7bb;font-size:16px;line-height:1.5"><svg class="ic" style="color:#b07a3c" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>3 in 24 hours. Your max is 2.</div></div>
+<p class="note">No new token, but warnings look like any other card; easy to miss.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">4 · Two ambers</h2>
+<p class="q"><code>warning</code> #b07a3c and <code>severity-mid</code> #c39257 sit side by side on Today and Start attack.</p>
+<div class="opts">
+<div class="opt"><div class="lab"><span class="ltr">A</span>Keep both as they are</div>
+<div class="demo"><div style="display:flex;gap:12px;align-items:center"><span class="sev" style="background:#c39257;color:#1b1a18">5</span><span style="color:#b07a3c;font-size:16px;display:flex;gap:8px;align-items:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>Over your max</span></div></div>
+<p class="note">Near-identical hue. Meaning depends on context.</p></div>
+<div class="opt rec"><div class="lab"><span class="ltr">B</span>Warning only as icon + surface<span class="tag">Approved</span></div>
+<div class="demo"><div style="display:flex;gap:12px;align-items:center"><span class="sev" style="background:#c39257;color:#1b1a18">5</span><span style="background:#2e2820;border-radius:12px;padding:8px 12px;color:#cdc7bb;font-size:16px;display:flex;gap:8px;align-items:center"><svg class="ic" style="color:#b07a3c" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>Over your max</span></div></div>
+<p class="note">Goes with 3B. Amber text and fills mean severity; warnings are recognised by shape and surface.</p></div>
+<div class="opt"><div class="lab"><span class="ltr">C</span>Merge: warning = severity-mid</div>
+<div class="demo"><div style="display:flex;gap:12px;align-items:center"><span class="sev" style="background:#c39257;color:#1b1a18">5</span><span style="color:#c39257;font-size:16px;display:flex;gap:8px;align-items:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>Over your max</span></div></div>
+<p class="note">One token fewer, but explicitly couples "warning" with "pain 4–7".</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">5 · Sheet radius</h2>
+<p class="q">Token says <code>sheet</code> 16px, smaller than <code>card</code> 20px.</p>
+<div class="opts">
+<div class="opt"><div class="lab"><span class="ltr">A</span>16px (as defined)</div>
+<div class="demo" style="background:#14140f;padding:20px 20px 0;justify-content:flex-end"><div style="background:#262421;border-radius:16px 16px 0 0;padding:16px 16px 20px"><div style="background:#302d29;border-radius:20px;height:56px"></div></div></div>
+<p class="note">Sheet corners are tighter than the cards inside it.</p></div>
+<div class="opt rec"><div class="lab"><span class="ltr">B</span>20px, same as card<span class="tag">Approved</span></div>
+<div class="demo" style="background:#14140f;padding:20px 20px 0;justify-content:flex-end"><div style="background:#262421;border-radius:20px 20px 0 0;padding:16px 16px 20px"><div style="background:#302d29;border-radius:20px;height:56px"></div></div></div>
+<p class="note">One radius for all large containers.</p></div>
+<div class="opt"><div class="lab"><span class="ltr">C</span>24px</div>
+<div class="demo" style="background:#14140f;padding:20px 20px 0;justify-content:flex-end"><div style="background:#262421;border-radius:24px 24px 0 0;padding:16px 16px 20px"><div style="background:#302d29;border-radius:20px;height:56px"></div></div></div>
+<p class="note">Closest to the iOS system sheet, adds a sixth radius value.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">6 · Text links and text actions</h2>
+<p class="q"><code>accent-light</code> #9bb9a1 has no stated use. "+ Add a different form", "Cancel", "Save".</p>
+<div class="opts">
+<div class="opt rec"><div class="lab"><span class="ltr">A</span>accent-light #9bb9a1<span class="tag">Approved</span></div>
+<div class="demo"><span style="color:#9bb9a1;font-size:17px;font-weight:500">+ Add a different form</span><div style="display:flex;justify-content:space-between;font-size:17px"><span style="color:#9bb9a1">Cancel</span><span style="color:#9bb9a1;font-weight:600">Save</span></div></div>
+<p class="note"><span class="pass">7.3 : 1</span> on surface. Gives accent-light a job.</p></div>
+<div class="opt"><div class="lab"><span class="ltr">B</span>accent #7fa187</div>
+<div class="demo"><span style="color:#7fa187;font-size:17px;font-weight:500">+ Add a different form</span><div style="display:flex;justify-content:space-between;font-size:17px"><span style="color:#7fa187">Cancel</span><span style="color:#7fa187;font-weight:600">Save</span></div></div>
+<p class="note"><span class="pass">5.4 : 1</span>. Matches buttons exactly; accent-light stays unused.</p></div>
+<div class="opt"><div class="lab"><span class="ltr">C</span>text-primary, underlined</div>
+<div class="demo"><span style="color:#cdc7bb;font-size:17px;font-weight:500;text-decoration:underline;text-underline-offset:4px">+ Add a different form</span><div style="display:flex;justify-content:space-between;font-size:17px"><span style="color:#cdc7bb;text-decoration:underline;text-underline-offset:4px">Cancel</span><span style="color:#cdc7bb;font-weight:600;text-decoration:underline;text-underline-offset:4px">Save</span></div></div>
+<p class="note"><span class="pass">9.2 : 1</span>. Calmest, but actions stop looking like actions.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">7 · Screens 01–14</h2>
+<p class="q">They're still in light mode, and now on the Archive page. Dark is the base style.</p>
+<div class="opts" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<div class="opt rec"><div class="lab"><span class="ltr">A</span>Convert to dark<span class="tag">Approved</span></div>
+<div class="demo" style="background:#1b1a18"><div style="background:#262421;border-radius:20px;padding:16px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:17px">Migraine days · 30 d</span><span style="font-size:24px;font-weight:600">3</span></div></div>
+<p class="note">Whole canvas in the base style; light comes later as a toggle check.</p></div>
+<div class="opt"><div class="lab"><span class="ltr">B</span>Keep light, apply light tokens</div>
+<div class="demo" style="background:#f5f2ec"><div style="background:#ece7dd;border-radius:20px;padding:16px;display:flex;justify-content:space-between;align-items:center;color:#3a3733"><span style="font-size:17px">Migraine days · 30 d</span><span style="font-size:24px;font-weight:600">3</span></div></div>
+<p class="note">Keeps a light reference set, but the canvas stays mixed.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">8 &middot; Row height &amp; badge size</h2>
+<p class="q">Rows found at 52&ndash;58px; badges at 26&times;26 and 40&times;40 beside the documented 28px.</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>Row 56px &middot; badge 28px in lists, 40px only beside a page heading<span class="tag">Resolved</span></div>
+<div class="demo"><div style="display:flex;align-items:center;gap:12px;height:56px"><span style="width:28px;height:28px;border-radius:8px;background:#302d29;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none">Su</span><span style="font-size:16px">Sumatriptan &middot; 50mg</span></div></div>
+<p class="note">Canon: list rows 56px, 28px badge. The 40px badge stays, but only directly beside a 26/600 page heading, never inside a row. Supersedes the 26&times;26 badge (AddName, AddDone) and the 40&times;40 row badge (EditMed).</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">9 &middot; Stepper circle &amp; toggle size</h2>
+<p class="q">Stepper found at 40px (Add-flow) vs. 44px (library). Toggle bespoke at 40&times;24 (Today), 46&times;27 (library) and 48&times;28 (Reminders).</p>
+<div class="opts" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>Stepper 44px inline<span class="tag">Resolved</span></div>
+<div class="demo"><div style="display:flex;gap:16px;align-items:center"><span style="width:44px;height:44px;border-radius:50%;background:#302d29;display:flex;align-items:center;justify-content:center;font-size:20px">&minus;</span><span style="font-size:20px;font-weight:600">2</span><span style="width:44px;height:44px;border-radius:50%;background:#302d29;display:flex;align-items:center;justify-content:center;font-size:20px">+</span></div></div>
+<p class="note">44px wherever a stepper sits inline (supersedes the Add-flow's 40px). 64px stays, but only inside a full-width value sheet &mdash; a deliberate step up for a tap target that is the whole screen's job, not drift.</p></div>
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>Toggle 46&times;27 everywhere<span class="tag">Resolved</span></div>
+<div class="demo"><span style="display:inline-flex;align-items:center;width:46px;height:27px;border-radius:14px;background:#7fa187;padding:2px;box-sizing:border-box"><span style="width:23px;height:23px;border-radius:50%;background:#f5f2ec;margin-left:auto"></span></span></div>
+<p class="note">One toggle, one size. Today's attack-mode switch and Reminders' switches both convert to the library's 46&times;27 (track #7D7669 &rarr; #7FA187).</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">10 &middot; Section label style</h2>
+<p class="q">Three competing styles found: 16/600 #CDC7BB, an old 13/600 caps #7D7669, and the canonical 14/600 #A39D92.</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>14/600, letter-spaced, #A39D92<span class="tag">Resolved</span></div>
+<div class="demo"><span style="font-size:14px;font-weight:600;color:#a39d92;letter-spacing:0.02em">DISPLAY</span></div>
+<p class="note">Settings already has this right. Display's Font/Dim screens (13/600 #7D7669) and its Theme/List screens (16/600 #CDC7BB) both convert to it.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">11 &middot; Severity ramp vs. destructive token</h2>
+<p class="q">Today and Logs use a three-step pain ramp (<code>.s1</code> #B3AD9F, <code>.s2</code> #C39257, <code>.s3</code> #C68880) that was never added to this canon &mdash; and <code>.s3</code> is the exact colour as the delete-confirm button, the collision decision 2C was meant to prevent.</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>Severity gets its own ramp; destructive stays unique<span class="tag">Resolved</span></div>
+<div class="demo"><div style="display:flex;gap:12px;align-items:center"><span class="sev" style="background:#8fb096;color:#1b1a18">2</span><span class="sev" style="background:#c39257;color:#1b1a18">5</span><span class="sev" style="background:#d9705f;color:#1b1a18">9</span><span style="width:1px;height:28px;background:#3a3733"></span><button class="btn" style="background:#c68880;color:#1b1a18;height:36px;width:120px;font-size:14px">Delete</button></div></div>
+<p class="note"><code>severity-low</code> #8FB096 and <code>severity-mid</code> #C39257 already exist as real tokens in <code>src/index.css</code> &mdash; this was never actually undocumented there, only on this canvas. The real conflict: the codebase's own <code>severity-high</code> is #C68880, the exact value as the delete-confirm button. That's a live collision, not just a canvas gap. Proposed fix: move <code>severity-high</code> to its own hue &mdash; #D9705F (decision 2B's rejected &ldquo;own token, redder&rdquo; swatch) is one candidate &mdash; which is a real <code>src/index.css</code> change, not only a canvas update. Today and Logs's <code>.s1/.s2/.s3</code> classes retitle to these three token names either way.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">12 &middot; Insights categorical palette</h2>
+<p class="q">InsightsRedesign introduces six undocumented colours (blue, tan, gold, purple, dusty-red, plus a purple heat-map ramp) with no stated relationship to severity &mdash; and two of them visually echo severity-mid and severity-high while meaning something else (a medication's share of use, a symptom's frequency).</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>Chart palette, kept apart from severity<span class="tag">Resolved</span></div>
+<div class="demo"><div style="display:flex;gap:10px"><span style="width:28px;height:28px;border-radius:8px;background:#8fb3c9"></span><span style="width:28px;height:28px;border-radius:8px;background:#ab9fcb"></span><span style="width:28px;height:28px;border-radius:8px;background:#d0948c"></span><span style="width:28px;height:28px;border-radius:8px;background:#c9b58c"></span><span style="width:28px;height:28px;border-radius:8px;background:#d6a476"></span></div></div>
+<p class="note">New token group: <code>chart-1</code>&hellip;<code>chart-5</code> (blue, purple, dusty-rose, gold, tan), plus the purple heat-map ramp as <code>chart-heat</code>. A closed set used only for category and frequency charts on Insights &mdash; never for pain intensity, which stays on the severity ramp (11) even inside an Insights chart. <b>Checked and locked:</b> blue #8FB3C9 and purple #AB9FCB are both muted (~30&ndash;35% saturation), inside the codebase's &ldquo;no <i>saturated</i> blue or purple&rdquo; rule; as light marks on #1B1A18 they clear 3:1. Kept because Insights isn't read mid-attack. The heat-map ramp's darkest step still needs its own 3:1 check when drawn.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">13 &middot; Strong display text</h2>
+<p class="q">#E4DFD4 shows up pervasively for shell titles and large numbers (Logs' 34px heading, Today's &ldquo;No attack today&rdquo;) with no token behind it.</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>New token: text-strong #E4DFD4<span class="tag">Resolved</span></div>
+<div class="demo"><span style="font-size:32px;font-weight:600;color:#e4dfd4">No attack today</span></div>
+<p class="note">One step brighter than <code>text-primary</code> #CDC7BB, for the one or two largest pieces of text on a screen &mdash; shell titles, empty-state headlines, the day count. Ordinary screen titles stay on <code>heading</code> 26/600 #CDC7BB.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">14 &middot; Attack-mode entry control</h2>
+<p class="q">The logging flow has no attack-mode affordance beyond the &ldquo;When I log an attack&rdquo; auto-setting (18a). But photophobia isn't present in every attack, so tying the mode strictly to &ldquo;an attack was logged&rdquo; would turn it on for people who don't want it that time.</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>Auto-setting stays the default; override lives in the flow body, not the header<span class="tag">Resolved</span></div>
+<div class="demo"><div style="display:flex;justify-content:space-between;align-items:center;width:100%"><span style="font-size:16px">Sensitive to light right now</span><span style="display:inline-flex;align-items:center;width:46px;height:27px;border-radius:14px;background:#7fa187;padding:2px;box-sizing:border-box;flex:none"><span style="width:23px;height:23px;border-radius:50%;background:#f5f2ec;margin-left:auto"></span></span></div></div>
+<p class="note">No icon next to Close &mdash; a bare icon repeats the &ldquo;unlabelled moon&rdquo; problem Today deliberately solved by labelling it, and crowds the header's one job. Instead step 1 of the logging flow carries a labelled &ldquo;Sensitive to light right now&rdquo; toggle, pre-set by the auto-setting and editable per attack: attack mode still defaults on when it usually applies, but anyone without photophobia this time can turn it off before it touches the rest of the flow.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">15 &middot; Reconciled against the codebase</h2>
+<p class="q">The product's real token file (<code>src/index.css</code>) settles several canvas-only guesses. Code is authoritative here &mdash; the canvas catches up.</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>Canvas adopts the code tokens<span class="tag">Resolved</span></div>
+<div class="demo" style="gap:10px;align-items:flex-start;min-height:0">
+<p class="note" style="color:#cdc7bb;margin:0">In-card compact control &rarr; <b>36px</b> (<code>compact</code>), not 40 &mdash; both sit under the 44 target, so 40 bought no real reach, and 36 keeps it distinct from the 40px header-icon button.</p>
+<p class="note" style="color:#cdc7bb;margin:0">Badge radius &rarr; <b>10px</b> (<code>badge</code>), not 8 &mdash; keeps the badge a touch rounder than chips and fields (both 8), as code intends.</p>
+<p class="note" style="color:#cdc7bb;margin:0">Font opt-in is <b>Atkinson Hyperlegible Next</b>, not &ldquo;System font&rdquo;. The DisplayFont screen copy is corrected.</p>
+<p class="note" style="color:#cdc7bb;margin:0"><code>severity-low</code> #8FB096 and <code>severity-mid</code> #C39257 already exist as real tokens &mdash; only severity-high's collision (11) is a live code change.</p>
+</div>
+<p class="note">Heading stays 26 by choice (see 16). Everything else above is the canvas catching up to code.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">16 &middot; Canvas decided, code behind</h2>
+<p class="q">Where a canvas choice differs from the shipped token. Here code is the thing to reconcile, not the canvas &mdash; for the code session.</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt"><div class="lab"><span class="ltr">!</span>Reconcile in src/index.css</div>
+<div class="demo" style="gap:10px;align-items:flex-start;min-height:0">
+<p class="note" style="color:#cdc7bb;margin:0"><b>Heading size:</b> screens keep <b>26</b> (28 / <code>text-2xl</code> wraps some titles on a narrow iPhone). Code needs a 26 screen-title size, or text-2xl drops to 26.</p>
+<p class="note" style="color:#cdc7bb;margin:0"><b>Sheet radius:</b> decision 5B approved 20 (matching card); code still says <code>sheet</code> 16 &mdash; code should move to 20.</p>
+<p class="note" style="margin:0">Spot-check two more when the code session runs: flow-CTA button radius (patterns 14; code <code>control</code> 12) and the segmented control (canvas 10&ndash;14; code <code>segment</code> 6).</p>
+</div>
+<p class="note">Flagged, not resolved: your call whether code adopts the canvas value or the reverse.</p></div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">17 &middot; Screen shell: fixed header/footer, independent scroll</h2>
+<p class="q">Most screens on this canvas use one scrolling frame top to bottom, with the footer CTA placed via <code>margin-top:auto</code> so it rides along with the content. On 21c, once the expand-in-place medication card grows the page, that CTA scrolls out of reach &mdash; not best practice for a primary action.</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt rec"><div class="lab"><span class="ltr">!</span>Three fixed regions: header, scrolling middle, footer<span class="tag">For the code build &mdash; canvas not swept</span></div>
+<div class="demo" style="gap:10px;align-items:flex-start;min-height:0">
+<p class="note" style="color:#cdc7bb;margin:0">This is the structural rule for <b>every</b> screen with a header and a footer CTA, whether or not this canvas's own files have been updated to show it &mdash; 21c is the one worked example, not a one-off.</p>
+<p class="note" style="color:#cdc7bb;margin:0;font-family:monospace;white-space:pre-wrap;background:#1b1a18;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.5">&lt;div class="screen" style="height:100%;display:flex;flex-direction:column;overflow:hidden"&gt;
+  &lt;div class="screen-header" style="flex:none"&gt;...&lt;/div&gt;
+  &lt;div class="screen-body" style="flex:1;overflow-y:auto"&gt;...&lt;/div&gt;
+  &lt;div class="screen-footer" style="flex:none;border-top:1px solid var(--border)"&gt;...&lt;/div&gt;
+&lt;/div&gt;</p>
+<p class="note" style="color:#cdc7bb;margin:0">Three rules: (1) the outer shell is <code>overflow:hidden</code>, never <code>overflow-y:auto</code> &mdash; it doesn't scroll itself. (2) header and footer are <code>flex:none</code>, fixed height, outside the scroll. (3) only the middle (<code>screen-body</code>) scrolls, and it alone carries <code>flex:1;overflow-y:auto</code>. The footer keeps a hairline top border (<code>border-top:1px solid</code> border token) so it reads as a bar sitting above content, not a button floating at the end of it.</p>
+<p class="note" style="margin:0">Applies to any screen with a scrollable body and a persistent footer action &mdash; not just where content currently happens to overflow, since that can change per-user (more medicines, longer notes, a taller list).</p>
+</div>
+</div>
+</div>
+</section>
+
+<section class="sec">
+<h2 class="h">18 &middot; Chip layout: fill rows, no orphans</h2>
+<p class="q">Chip groups wrap, and the order they are written in decides how ragged the result is. 21d &ldquo;Also had&rdquo; leaves short rows and single chips on a line.</p>
+<div class="opts" style="grid-template-columns:1fr">
+<div class="opt rec"><div class="lab"><span class="ltr">&#10003;</span>Pack rows first, then order<span class="tag">Rule, 20 Nov</span></div>
+<div class="demo" style="gap:10px;align-items:flex-start;min-height:0">
+<p class="note" style="color:#cdc7bb;margin:0">(1) <b>Fit as many chips per row as the width allows</b> (screen content width 350 at 390, 8px gap). Pair long chips with short ones so each row is as full as possible.</p>
+<p class="note" style="color:#cdc7bb;margin:0">(2) <b>No row with a single chip</b>, especially the last row. If one is left over, reorder or swap chips until it shares a row. A chip that fills a whole row on its own (for example a long label) is the only exception.</p>
+<p class="note" style="color:#cdc7bb;margin:0">(3) <b>Order is free for pick-any groups</b>, so arrange for fit. Do not reorder anything with a natural order: scales, times, Yes / A bit / No. &ldquo;+ Add your own&rdquo; is a text link under the group, not a chip, so it never counts as an orphan.</p>
+<p class="note" style="color:#cdc7bb;margin:0">(3b) <b>When flex-wrap can't avoid an orphan</b> (for example 4 chips that wrap 3 + 1), put each row in its own line of chips so they sit 2 + 2. Chips always hug their text; never stretch them into equal grid cells.</p>
+<p class="note" style="color:#cdc7bb;margin:0">(4) <b>Measure with the selected state</b>: a selected chip gains a check and grows by about 28px, so a row that fits unselected can wrap when tapped. Either reserve the check space on every chip or leave that much slack in each row.</p>
+<p class="note" style="margin:0">Applies to every chip group on the canvas and in code. Swept so far: 21d (all three groups, widths measured in Lexend 16). Still to check: the other chip groups on the canvas.</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</x-dc>
+</body>
+</html>

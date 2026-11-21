@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Lidd — Insights medication at 200% text</title><link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,p{margin:0}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+body{background:#1B1A18}
+.wrap{width:390px;background:#1B1A18;padding:64px 20px 48px;display:flex;flex-direction:column;gap:28px}
+h1.big{font-size:34px;font-weight:600;color:#e4dfd4;flex:1}
+.title{display:flex;align-items:center;gap:8px}
+.share{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;color:#9bb9a1;margin-right:-8px}
+.share .ic{width:24px;height:24px}
+.top{display:flex;flex-direction:column;gap:10px}
+.seg{display:flex;gap:4px;background:#262421;border-radius:14px;padding:4px}
+.seg button{flex:1;min-height:44px;border:1px solid transparent;border-radius:10px;background:transparent;color:#A39D92;font-size:15px}
+.seg .on{background:#2E3A31;border-color:#7FA187;color:#e4dfd4;font-weight:600}
+.range{font-size:14px;color:#A39D92;text-align:center}
+.report{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 16px;border-radius:14px;border:1px solid #46423d;background:#262421;color:#e4dfd4;font-size:16px;font-weight:500}
+.report .sp{flex:1}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.tile{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}
+.tile .ic{width:18px;height:18px}
+.sh h2{font-size:17px;font-weight:600;color:#e4dfd4;flex:1}
+.sh .i{width:44px;height:44px;margin:-6px -11px -6px 0;border:0;background:transparent;display:flex;align-items:center;justify-content:center;color:#A39D92;padding:0;flex:none}
+.sh .i span{width:22px;height:22px;border-radius:11px;border:1px solid #6b655b;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.card{background:#262421;border-radius:18px;padding:18px}
+.bars{display:flex;flex-direction:column;gap:14px}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.bar .m{font-size:15px;color:#cdc7bb;min-width:52px}
+.bar .m small{font-size:13px;color:#A39D92}
+.bar .tk{flex:1 1 160px;position:relative;height:12px;border-radius:6px;background:#302D29;overflow:hidden}
+.bar .tk i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.bar .n{font-size:16px;font-weight:600;color:#e4dfd4;min-width:20px;text-align:right}
+.striped{background:repeating-linear-gradient(135deg,#7FA187 0 6px,#5d7563 6px 10px)!important}
+.meds{display:flex;flex-direction:column;gap:12px}
+.mc{background:#262421;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.mh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mh .nm{flex:1;min-width:120px;font-size:17px;font-weight:600;color:#e4dfd4;line-height:1.25}
+.mh .nm small{display:block;font-size:14px;font-weight:400;color:#A39D92}
+.mrows{display:flex;flex-direction:column;gap:10px}
+.mr{display:flex;flex-direction:column;gap:6px}
+.mr .t{display:flex;justify-content:space-between;gap:8px;font-size:15px;color:#cdc7bb}
+.mr .t b{font-weight:600;color:#e4dfd4}
+.mr .t .g{color:#A39D92;font-weight:400}
+.mtrack{height:10px;border-radius:5px;background:#302D29;overflow:hidden}
+.mtrack i{display:block;height:100%;border-radius:5px}
+.mstats{display:flex;flex-wrap:wrap;gap:8px 16px;padding-top:12px;border-top:1px solid #3A3733;font-size:14px;color:#cdc7bb}
+.mstats span{display:inline-flex;align-items:center;gap:6px}
+.mstats .ic{width:16px;height:16px;color:#A39D92}
+.link{display:flex;align-items:center;gap:6px;min-height:44px;font-size:15px;color:#9bb9a1;font-weight:500}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:#302D29;border-radius:16px;overflow:hidden}
+.fc{background:#262421;padding:14px 16px}
+.fc .v{font-size:22px;font-weight:600;color:#e4dfd4}
+.fc .k{font-size:14px;color:#A39D92;margin-top:2px;line-height:1.35}
+.list{display:flex;flex-direction:column;gap:12px}
+.lhead{display:flex;justify-content:flex-end;font-size:13px;color:#A39D92;margin-bottom:10px}
+.li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 8px;align-items:center}
+.li .nm{font-size:16px;color:#cdc7bb}
+.li .ct{font-size:15px;font-weight:600;color:#e4dfd4}
+.li .track2{flex:1 0 100%;height:8px;border-radius:4px;background:#302D29;overflow:hidden}
+.li .track2 i{display:block;height:100%;border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13px;color:#A39D92}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.axis{font-size:13px;color:#A39D92}
+.tabnote{font-size:13px;color:#7d7669;text-align:center}
+.prog{height:8px;border-radius:4px;background:#302D29;overflow:hidden;margin-top:12px}
+.prog i{display:block;height:100%;background:#7FA187;border-radius:4px}
+.att{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 0;border-top:1px solid #3A3733}
+.att:first-child{border-top:0;padding-top:0}
+.att .dt{flex:1;font-size:16px;color:#e4dfd4}
+.att .dt small{display:block;font-size:14px;color:#A39D92}
+.att .pk{font-size:15px;color:#cdc7bb}
+.soon{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#cdc7bb;background:#302D29;border-radius:999px;padding:6px 12px}
+.chip .ic{width:14px;height:14px}
+.backdrop{position:fixed;inset:0;background:rgba(10,9,8,.6);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
+.modal{width:100%;max-width:342px;max-height:80vh;overflow-y:auto;background:#262421;border-radius:28px;padding:28px 24px 24px;display:flex;flex-direction:column;gap:16px}
+.modal h3{font-size:26px;font-weight:600;color:#e4dfd4;line-height:1.25}
+.modal p{font-size:17px;line-height:1.55;color:#cdc7bb}
+.modal .got{min-height:56px;border:0;border-radius:16px;background:#7FA187;color:#17201a;font-size:17px;font-weight:600;margin-top:4px}
+
+</style></head><body><x-dc>
+<div style="width:390px;background:#1B1A18;padding-bottom:40px"><div style="zoom:2;width:195px;padding:27px 8px 0">
+<section><div class="sh"><span class="tile" style="width:32px;height:32px;background:rgba(143,179,201,0.16);color:#8FB3C9"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg></span><h2>Medication</h2><button class="i" aria-label="About medication and your guides" onClick="{{info.medication.open}}"><span aria-hidden="true">i</span></button></div>
+<div class="meds"><div class="mc"><div class="mh"><span class="tile" style="width:36px;height:36px;background:rgba(143,179,201,0.16);color:#8FB3C9"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg></span><span class="nm">Sumatriptan<small>Triptan</small></span></div><div class="mrows"><div class="mr"><div class="t"><span>Sep</span><span><b>1</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:10%;background:#8FB3C9"></i></div></div><div class="mr"><div class="t"><span>Oct</span><span><b>2</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:20%;background:#8FB3C9"></i></div></div><div class="mr"><div class="t"><span>Nov <span class="g">so far</span></span><span><b>3</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:30%;background:#8FB3C9"></i></div></div></div><div class="mstats"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg>9 doses</span><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>3 checked at 2 h</span></div></div><div class="mc"><div class="mh"><span class="tile" style="width:36px;height:36px;background:rgba(214,164,118,0.16);color:#d6a476"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg></span><span class="nm">Treo<small>Combination</small></span></div><div class="mrows"><div class="mr"><div class="t"><span>Sep</span><span><b>0</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:0%;background:#d6a476"></i></div></div><div class="mr"><div class="t"><span>Oct</span><span><b>1</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:10%;background:#d6a476"></i></div></div><div class="mr"><div class="t"><span>Nov <span class="g">so far</span></span><span><b>1</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:10%;background:#d6a476"></i></div></div></div><div class="mstats"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg>4 doses</span><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>none checked at 2 h</span></div></div></div></section></div><sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+<div class="backdrop" onClick="{{close}}">
+<div class="modal" onClick="{{stop}}">
+<h3>{{modal.title}}</h3>
+<p>{{modal.body}}</p>
+<button class="got" onClick="{{close}}">Got it</button>
+</div>
+</div>
+</sc-if>
+</div></x-dc>
+</body></html>

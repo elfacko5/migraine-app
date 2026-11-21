@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — Medicine added, dark</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.bdg{width:26px;height:26px;border-radius:8px;border:1px solid #7d7669;background:#1B1A18;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex:none}
+.grp{background:#262421;border-radius:20px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;min-height:58px;padding:12px 16px;border-top:1px solid #3A3733;font-size:16px}
+.row:first-child{border-top:0}
+.sec{margin:0 0 6px;font-size:14px;font-weight:600;color:#A39D92}
+.sub{display:block;font-size:14px;color:#A39D92}
+</style>
+</helmet>
+<div style="width:390px;height:844px;background:#1B1A18;display:flex;flex-direction:column;overflow:hidden;position:relative">
+<div style="padding:54px 8px 0;height:106px;display:flex;align-items:center;justify-content:space-between">
+<a href="SettingsDark.dc.html" aria-label="Back" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+<span style="font-size:16px;font-weight:600">Medications</span>
+<span style="width:44px"></span>
+</div>
+<div style="padding:0 20px;display:flex;flex-direction:column;gap:16px">
+<div>
+<div class="grp">
+<a href="EditMed.dc.html" class="row"><span class="bdg">T</span><span style="flex:1"><span style="display:block">Sumatriptan</span><span class="sub">50 mg tablet · max 2 a day</span></span><svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+<a href="EditMed.dc.html" class="row"><span class="bdg">C</span><span style="flex:1"><span style="display:block">Treo</span><span class="sub">500/50 mg tablet · max 4 a day</span></span><svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+<a href="EditMed.dc.html" class="row"><span class="bdg">P</span><span style="flex:1"><span style="display:block">Ibuprofen</span><span class="sub">400 mg tablet · max 3 a day</span></span><svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+<a href="AddNameDark.dc.html" class="row" style="color:#9bb9a1;font-weight:500"><span class="bdg" style="border-style:dashed">+</span>Add a medicine</a>
+</div>
+</div>
+<div class="grp">
+<a href="GuidesDark.dc.html" class="row"><span style="flex:1"><span style="display:block">Monthly guides</span><span class="sub">Days a month per type</span></span><svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+</div>
+</div>
+<div role="status" style="position:absolute;left:16px;right:16px;bottom:40px;min-height:52px;border-radius:12px;background:#cdc7bb;color:#1B1A18;display:flex;align-items:center;padding:0 16px;font-size:16px">
+<span>Naproxen removed</span>
+</div>
+</div>
+</x-dc>
+</body>
+</html>

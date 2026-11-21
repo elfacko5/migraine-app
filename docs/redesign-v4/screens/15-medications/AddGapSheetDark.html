@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — Set time between doses, dark</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+.big{width:64px;height:64px;border-radius:32px;border:1px solid #7d7669;background:#1B1A18;color:#cdc7bb;font-size:26px}
+</style>
+</helmet>
+<div style="width:390px;height:844px;background:#14140f;display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:120px 20px 0;opacity:0.35"><div style="font-size:24px;font-weight:600">How do you take it?</div></div>
+<div style="margin-top:auto;background:#262421;border-radius:20px 20px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:20px">
+<span style="align-self:center;width:36px;height:5px;border-radius:3px;background:#7d7669"></span>
+<div>
+<h2 style="margin:0;font-size:20px;font-weight:600">Time between doses</h2>
+<p style="margin:4px 0 0;font-size:14px;color:#A39D92">Shortest gap the leaflet allows between two doses</p>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 8px">
+<button class="big" aria-label="Less time">−</button>
+<div style="text-align:center">
+<div style="font-size:48px;font-weight:600;line-height:1">2</div>
+<div style="font-size:16px;margin-top:6px">hours</div>
+<div style="font-size:14px;color:#A39D92;margin-top:2px">in steps of 30 min</div>
+</div>
+<button class="big" aria-label="More time">+</button>
+</div>
+<div style="display:flex;gap:8px">
+<a href="AddDoseDark.dc.html" style="flex:1;height:52px;border-radius:12px;border:1px solid #7d7669;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500">Clear</a>
+<a href="AddDoseDark.dc.html" style="flex:2;height:52px;border-radius:12px;background:#7FA187;color:#1b1a18;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600">Done</a>
+</div>
+</div>
+</div>
+</x-dc>
+</body>
+</html>

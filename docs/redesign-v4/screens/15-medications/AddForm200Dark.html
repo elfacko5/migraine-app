@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — Form and strength, 200% text, dark</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tile{position:relative;min-height:76px;border-radius:12px;border:1px solid #302D29;background:#302D29;color:#cdc7bb;font-size:32px;text-align:left;padding:0 16px}
+.tile.on{background:#2E3A31;border-color:#7FA187;font-weight:600;padding-right:56px}
+.tile.on::after{content:"";position:absolute;right:14px;top:50%;width:32px;height:32px;margin-top:-16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237FA187' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/contain no-repeat}
+</style>
+</helmet>
+<div style="width:390px;height:844px;background:#1B1A18;display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:54px 8px 0;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<a href="AddNameDark.dc.html" aria-label="Back" style="min-width:64px;height:60px;display:flex;align-items:center;padding:0 12px 0 8px;color:#cdc7bb"><svg class="ic" style="width:28px;height:28px;color:#cdc7bb" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+<a href="AddDoneDark.dc.html" style="min-height:60px;display:flex;align-items:center;padding:0 12px;font-size:32px;color:#9bb9a1">Cancel</a>
+</div>
+<span style="font-size:32px;font-weight:600;text-align:center;padding-bottom:12px">Step 2 of 3</span>
+</div>
+<div style="flex:1;min-height:0;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:24px">
+<div><h1 style="margin:0;font-size:48px;font-weight:600;line-height:1.15">Sumatriptan</h1><span style="display:block;font-size:28px;color:#A39D92;margin-top:2px">Triptan</span></div>
+<div>
+<p style="margin:0 0 10px;font-size:32px;font-weight:600">Form</p>
+<div style="display:flex;flex-direction:column;gap:10px">
+<button class="tile on" aria-pressed="true">Tablet</button>
+<button class="tile">Melt</button>
+<button class="tile">Capsule</button>
+<button class="tile">Effervescent</button>
+<button class="tile">Nasal spray</button>
+<button class="tile">Injection</button>
+<button class="tile">Suppository</button>
+<button class="tile">Liquid</button>
+</div>
+</div>
+</div>
+<div style="padding:10px 20px 34px">
+<a href="AddDoseDark.dc.html" style="height:76px;border-radius:12px;background:#7FA187;color:#1b1a18;font-size:32px;font-weight:600;display:flex;align-items:center;justify-content:center">Next</a>
+</div>
+</div>
+</x-dc>
+</body>
+</html>

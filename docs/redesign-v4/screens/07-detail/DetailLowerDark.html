@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — Attack detail, scrolled, dark</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+h1,h2,p{margin:0}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sub{display:block;font-size:14px;color:#A39D92;line-height:1.45}
+.lbl{display:block;font-size:15px;font-weight:600;color:#cdc7bb}
+.eyebrow{display:block;font-size:13px;font-weight:600;letter-spacing:.06em;color:#9bb9a1;text-transform:uppercase}
+.card{background:#262421;border-radius:20px;padding:18px}
+.live{background:#2b2a26;border:1px solid #4a4740;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.grp{background:#262421;border-radius:20px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;min-height:56px;padding:12px 16px;border-top:1px solid #3A3733;color:#cdc7bb;font-size:16px}
+.row:first-child{border-top:0}
+.row .t{flex:1}
+.val{font-size:16px;font-weight:600;color:#9bb9a1;text-align:right}
+.add{font-size:16px;font-weight:500;color:#9bb9a1}
+.btn{height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;border:0;padding:0 16px}
+.pri{background:#7FA187;color:#1b1a18}
+.sec{border:1px solid #7d7669;font-weight:500;background:none;color:#cdc7bb}
+.hbtn{width:44px;height:44px;border-radius:22px;background:#262421;border:0;display:flex;align-items:center;justify-content:center;color:#cdc7bb;flex:none}
+.pill{display:inline-flex;align-items:center;gap:8px;height:44px;border-radius:22px;background:#262421;border:0;padding:0 16px;color:#cdc7bb;font-size:15px;font-weight:500}
+.sev{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;border-radius:10px;font-size:16px;font-weight:600;color:#1b1a18;padding:0 6px;flex:none}
+.s1{background:#b3ad9f}.s2{background:#c39257}.s3{background:#c68880}
+.lnk{display:inline-flex;align-items:center;min-height:44px;border:0;background:none;padding:0 2px;color:#9bb9a1;font-size:16px;font-weight:500}
+.pend{border:1px dashed #5a554c;border-radius:16px;padding:4px 16px;display:flex;align-items:center;gap:10px;min-height:56px}
+.rdc{position:relative;display:inline-flex;align-items:center;gap:10px;min-height:48px;border-radius:24px;border:1px solid #302D29;background:#302D29;color:#cdc7bb;font-size:16px;padding:0 16px}
+.rd{width:18px;height:18px;border-radius:9px;border:1.5px solid #7d7669;flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.days{display:flex;justify-content:space-between;margin-top:14px}
+.day{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px;color:#A39D92}
+.dot{width:36px;height:36px;border-radius:18px;border:1.5px solid #46423d;display:flex;align-items:center;justify-content:center}
+.dot.on{background:#7FA187;border-color:#7FA187}
+.dot.today{box-shadow:0 0 0 3px #1B1A18,0 0 0 5px #cdc7bb}
+.dia{width:10px;height:10px;background:#1b1a18;transform:rotate(45deg);border-radius:2px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.big{display:block;font-size:34px;font-weight:600;line-height:1.1;color:#e4dfd4}
+.tab{position:absolute;left:0;right:0;bottom:0;height:88px;background:#1B1A18;border-top:1px solid #2b2926;display:flex;align-items:flex-start;justify-content:space-around;padding-top:10px}
+.ti{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:13px;font-weight:500;color:#A39D92;width:64px}
+.ti.on{color:#9bb9a1}
+.fab{width:60px;height:60px;border-radius:30px;background:#7FA187;color:#1b1a18;border:0;display:flex;align-items:center;justify-content:center;margin-top:-22px}
+.side{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#A39D92}
+.lc{background:#262421;border-radius:20px;padding:16px;display:flex;align-items:center;gap:12px}
+
+</style>
+</helmet>
+<div style="width:390px;height:844px;background:#1B1A18;position:relative;overflow:hidden"><div style="height:738px;overflow-y:auto"><div style="padding:54px 14px 0;height:106px;display:flex;align-items:center;gap:8px;flex:none"><a href="LogsDark.dc.html" class="hbtn" aria-label="Back to Logs"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><h1 style="flex:1;text-align:center;font-size:16px;font-weight:600">Mon 17 &ndash; Tue 18 Aug</h1><button class="hbtn" aria-label="Delete this attack"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></div><div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:22px"><section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="wh"><h2 id="wh" style="font-size:20px;font-weight:600">Where it hurt</h2>
+<table class="grp" style="width:100%;border-collapse:collapse;display:table"><thead><tr style="border-bottom:1px solid #3A3733"><th style="text-align:left;padding:12px 16px" class="sub"><span class="sub">Area</span></th><th style="padding:12px 4px;width:64px"><span class="sub">Worst</span></th><th style="padding:12px 16px 12px 4px;width:72px"><span class="sub">At the end</span></th></tr></thead>
+<tbody><tr style="border-bottom:1px solid #3A3733"><td style="padding:12px 16px;font-size:16px">Forehead, left</td><td style="text-align:center"><span class="sev s2">7</span></td><td style="text-align:center;padding-right:12px"><span class="sev s2">7</span></td></tr>
+<tr><td style="padding:12px 16px;font-size:16px">Eye, left</td><td style="text-align:center"><span class="sev s2">5</span></td><td style="text-align:center;padding-right:12px"><span class="sub">no reading</span></td></tr></tbody></table></section><section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="lk"><h2 id="lk" style="font-size:20px;font-weight:600">What it was like</h2><div class="grp"><a href="#" class="row"><span class="t sub" style="font-size:15px">Felt like</span><span class="add">Add</span><svg class="ic" style="color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a href="#" class="row"><span class="t sub" style="font-size:15px">Also had</span><span class="val">Dizziness</span><svg class="ic" style="color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a href="#" class="row"><span class="t sub" style="font-size:15px">Tried</span><span class="val">Peppermint oil, water</span><svg class="ic" style="color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a href="#" class="row"><span class="t sub" style="font-size:15px">Stopped you</span><span class="add">Add</span><svg class="ic" style="color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a><a href="End24BeforeDark.dc.html" class="row"><span class="t sub" style="font-size:15px">The two days before</span><span class="add">Add</span><svg class="ic" style="color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></div></section><section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="tl"><h2 id="tl" style="font-size:20px;font-weight:600">Timeline</h2><ol class="grp" style="list-style:none;margin:0;padding:0"><li style="display:flex;gap:14px;padding:14px 16px;border-top:0"><span class="sub" style="width:52px;flex:none">Mon<br>10:26</span><div><span class="lbl" style="font-size:16px">Started &middot; pain 5</span><span class="sub" style="margin-top:2px">Forehead left 5 &middot; took Sumatriptan &times;2</span></div></li><li style="display:flex;gap:14px;padding:14px 16px;border-top:1px solid #3A3733"><span class="sub" style="width:52px;flex:none">Mon<br>11:40</span><div><span class="lbl" style="font-size:16px">Pain 5</span><span class="sub" style="margin-top:2px">Eye left 5</span></div></li><li style="display:flex;gap:14px;padding:14px 16px;border-top:1px solid #3A3733"><span class="sub" style="width:52px;flex:none">Mon<br>15:25</span><div><span class="lbl" style="font-size:16px">Pain 7</span><span class="sub" style="margin-top:2px">Forehead left 7 &middot; took Treo &times;2 &middot; tried peppermint oil, water</span></div></li><li style="display:flex;gap:14px;padding:14px 16px;border-top:1px solid #3A3733"><span class="sub" style="width:52px;flex:none">Tue<br>09:25</span><div><span class="lbl" style="font-size:16px">Ended</span><span class="sub" style="margin-top:2px">Gone when you woke up</span></div></li></ol></section></div></div><div style="position:absolute;left:0;right:0;bottom:0;padding:12px 20px 34px;background:#1B1A18;border-top:1px solid #2b2926"><a href="#" class="btn sec" style="width:100%">Edit this attack</a></div></div>
+</x-dc>
+</body>
+</html>

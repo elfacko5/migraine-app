@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — Attack detail (redesign), dark</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+h1,h2,p{margin:0}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sub{display:block;font-size:14px;color:#A39D92;line-height:1.45}
+.lbl{display:block;font-size:15px;font-weight:600;color:#cdc7bb}
+.card{background:#262421;border-radius:20px;padding:18px}
+.grp{background:#262421;border-radius:20px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;min-height:56px;padding:12px 16px;border-top:1px solid #3A3733;color:#cdc7bb;font-size:16px}
+.row:first-child{border-top:0}
+.row .t{flex:1}
+.val{font-size:16px;font-weight:600;color:#9bb9a1;text-align:right}
+.add{font-size:16px;font-weight:500;color:#9bb9a1}
+.btn{height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;border:0;padding:0 16px}
+.pri{background:#7FA187;color:#1b1a18}
+.sec{border:1px solid #7d7669;font-weight:500;background:none;color:#cdc7bb}
+.hbtn{width:44px;height:44px;border-radius:22px;background:#262421;border:0;display:flex;align-items:center;justify-content:center;color:#cdc7bb;flex:none}
+.sev{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;border-radius:10px;font-size:16px;font-weight:600;color:#1b1a18;padding:0 6px;flex:none}
+.s1{background:#b3ad9f}.s2{background:#c39257}.s3{background:#c68880}
+.tab{position:absolute;left:0;right:0;bottom:0;height:88px;background:#1B1A18;border-top:1px solid #2b2926;display:flex;align-items:flex-start;justify-content:space-around;padding-top:10px}
+.ti{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:13px;font-weight:500;color:#A39D92;width:64px}
+.ti.on{color:#9bb9a1}
+.fab{width:60px;height:60px;border-radius:30px;background:#7FA187;color:#1b1a18;border:0;display:flex;align-items:center;justify-content:center;margin-top:-22px}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:36px;border-radius:18px;border:1px solid #3A3733;background:#262421;padding:0 14px;font-size:14px;font-weight:500;color:#cdc7bb}
+.pill.on{background:#2E3A31;border-color:#7FA187;color:#9bb9a1}
+.lnk{display:inline-flex;align-items:center;min-height:44px;border:0;background:none;padding:0 2px;color:#9bb9a1;font-size:16px;font-weight:500}
+</style>
+</helmet>
+
+<div style="width:390px;height:844px;background:#1B1A18;position:relative;overflow:hidden">
+<div style="height:756px;overflow-y:auto">
+<div style="padding:54px 14px 0;height:106px;display:flex;align-items:center;gap:8px;flex:none">
+<a href="LogsDark.dc.html" class="hbtn" aria-label="Back"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+<h1 style="flex:1;text-align:center;font-size:16px;font-weight:600">Mon 17 &ndash; Tue 18 Nov</h1>
+<button class="hbtn" aria-label="Delete"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+</div>
+<div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:20px">
+
+<!-- HERO: duration + worst + where -->
+<section class="card" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-size:34px;font-weight:600;color:#e4dfd4;line-height:1">22 h</span><span class="sub">Mon 20:20 &ndash; Tue 18:25</span></div>
+<div style="display:flex;gap:12px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:8px"><span class="sev s2">7</span><span style="font-size:15px">left temple</span></div>
+<div style="display:flex;align-items:center;gap:8px"><span class="sev s1">5</span><span style="font-size:15px">eye, left</span></div>
+</div>
+<span class="sub">Woke up without it &middot; slowed down</span>
+</section>
+
+<!-- TIMELINE: the shape of the attack -->
+<section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="tl">
+<h2 id="tl" style="font-size:18px;font-weight:600">Timeline</h2>
+<ol class="grp" style="list-style:none;margin:0;padding:0">
+<li style="display:flex;gap:14px;padding:14px 16px;border-top:0"><span class="sub" style="width:52px;flex:none">Mon<br>20:20</span><div><span class="lbl" style="font-size:16px">Started</span><span class="sub" style="margin-top:2px">Left temple 5</span></div></li>
+<li style="display:flex;gap:14px;padding:14px 16px;border-top:1px solid #3A3733"><span class="sub" style="width:52px;flex:none">Mon<br>20:25</span><div><span class="lbl" style="font-size:16px">Sumatriptan &times; 1</span><span class="sub" style="margin-top:2px">50 mg &middot; helped a bit</span></div></li>
+<li style="display:flex;gap:14px;padding:14px 16px;border-top:1px solid #3A3733"><span class="sub" style="width:52px;flex:none">Mon<br>22:25</span><div><span class="lbl" style="font-size:16px">Update &middot; pain 4</span><span class="sub" style="margin-top:2px">Left temple 4, eye left new &middot; Ibuprofen &times; 1</span></div></li>
+<li style="display:flex;gap:14px;padding:14px 16px;border-top:1px solid #3A3733"><span class="sub" style="width:52px;flex:none">Tue<br>09:25</span><div><span class="lbl" style="font-size:16px">Ended</span><span class="sub" style="margin-top:2px">Gone when you woke up</span></div></li>
+</ol>
+</section>
+
+<!-- MEDICATION SUMMARY -->
+<section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="md">
+<h2 id="md" style="font-size:18px;font-weight:600">Medication</h2>
+<div class="grp">
+<div class="row"><span class="t"><span style="display:block">Sumatriptan 50 mg</span><span class="sub">1 tablet &middot; 20:25</span></span><span class="val">Helped a bit</span></div>
+<div class="row"><span class="t"><span style="display:block">Ibuprofen 400 mg</span><span class="sub">1 tablet &middot; 22:25</span></span><span class="val">Didn&rsquo;t help</span></div>
+</div>
+</section>
+
+<!-- WHAT IT WAS LIKE: secondary detail -->
+<section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="lk">
+<h2 id="lk" style="font-size:18px;font-weight:600">What it was like</h2>
+<div class="grp">
+<a href="#" class="row"><span class="t sub" style="font-size:15px">Felt like</span><span class="val">Throbbing</span><svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+<a href="#" class="row"><span class="t sub" style="font-size:15px">Also had</span><span class="val">Light-sensitive, nausea</span><svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+<a href="#" class="row"><span class="t sub" style="font-size:15px">Tried</span><span class="val">Dark room, sleep</span><svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+<a href="#" class="row"><span class="t sub" style="font-size:15px">Stopped you</span><span class="add">Add</span><svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+<a href="End24BeforeDark.dc.html" class="row"><span class="t sub" style="font-size:15px">The two days before</span><span class="val">Poor sleep</span><svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+</div>
+</section>
+
+</div></div>
+<div style="position:absolute;left:0;right:0;bottom:0;padding:12px 20px 34px;background:#1B1A18;border-top:1px solid #2b2926"><a href="#" class="btn sec" style="width:100%">Edit this attack</a></div>
+</div>
+
+</x-dc>
+</body>
+</html>

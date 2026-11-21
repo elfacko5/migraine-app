@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — Filter, sort menu</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+h1,h2,p{margin:0}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hd{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #3a3733}
+.hbtn{width:44px;height:44px;border-radius:22px;background:#262421;border:0;display:flex;align-items:center;justify-content:center;color:#cdc7bb}
+.ttl{font-size:17px;font-weight:600;color:#e4dfd4}
+.rst{min-width:64px;height:44px;border:0;background:none;font-size:16px;font-weight:500;color:#9bb9a1;text-align:right;padding:0 6px}
+.body{position:absolute;top:118px;bottom:112px;left:0;right:0;overflow:hidden;padding:16px 20px;display:flex;flex-direction:column;gap:18px}
+.sl{display:block;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#A39D92;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.ch{display:inline-flex;align-items:center;gap:8px;height:44px;border-radius:22px;border:1px solid #5a554c;background:none;color:#cdc7bb;font-size:15px;font-weight:500;padding:0 14px}
+.ch.on{background:#2E3A31;border-color:#7FA187;color:#e4dfd4}
+.rd{width:16px;height:16px;border-radius:8px;border:1.5px solid #7d7669;flex:none}
+.on .rd{border:5px solid #7FA187}
+.sw{width:10px;height:10px;border-radius:3px;flex:none}
+.sortrow{display:flex;align-items:center;gap:10px;min-height:56px;padding:0 16px;background:#262421;border-radius:16px;border:0;color:#cdc7bb;font-size:16px;width:100%}
+.sortrow .v{margin-left:auto;color:#9bb9a1;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.more{background:#262421;border-radius:16px;overflow:hidden}
+.mr{display:flex;align-items:center;min-height:52px;padding:0 16px;border-top:1px solid #3A3733;font-size:16px}
+.mr:first-child{border-top:0}
+.mr .v{margin-left:auto;color:#A39D92;display:inline-flex;align-items:center;gap:8px}
+.ft{position:absolute;left:0;right:0;bottom:0;height:112px;padding:12px 20px 34px;border-top:1px solid #3a3733;background:#1B1A18;display:flex;flex-direction:column;gap:8px;justify-content:flex-end}
+.pri{height:56px;border-radius:14px;border:0;background:#7FA187;color:#1b1a18;font-size:17px;font-weight:600;width:100%}
+.pri[disabled]{background:#302D29;color:#A39D92}
+.hint{font-size:14px;color:#A39D92;text-align:center}
+
+</style>
+</helmet>
+<div style="width:390px;height:844px;background:#1B1A18;position:relative;overflow:hidden">
+<div style="height:54px"></div>
+<div class="hd"><button class="hbtn" aria-label="Close without applying"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span class="ttl">Filter &amp; sort</span><button class="rst">Reset</button></div>
+<div class="body"><button class="sortrow" aria-haspopup="menu"><span>Sort</span><span class="v">Newest first <svg class="ic" style="width:16px;height:16px" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></span></button><div role="radiogroup" aria-labelledby="p"><span class="sl" id="p">Period</span><div class="chips"><button class="ch" role="radio" aria-checked="false"><span class="rd" aria-hidden="true"></span>Any time</button><button class="ch" role="radio" aria-checked="false"><span class="rd" aria-hidden="true"></span>7 days</button><button class="ch on" role="radio" aria-checked="true"><span class="rd" aria-hidden="true"></span>30 days</button><button class="ch" role="radio" aria-checked="false"><span class="rd" aria-hidden="true"></span>3 months</button><button class="ch" role="radio" aria-checked="false"><span class="rd" aria-hidden="true"></span>Custom…</button></div></div><div role="group" aria-labelledby="s"><span class="sl" id="s">Peak pain</span><div class="chips"><button class="ch on" aria-pressed="true">Any<svg class="ic" style="width:16px;height:16px;stroke-width:2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="ch" aria-pressed="false"><span class="sw" style="background:#b3ad9f" aria-hidden="true"></span>1–3</button><button class="ch" aria-pressed="false"><span class="sw" style="background:#c39257" aria-hidden="true"></span>4–7</button><button class="ch" aria-pressed="false"><span class="sw" style="background:#c68880" aria-hidden="true"></span>8–10</button></div></div><div role="group" aria-labelledby="m"><span class="sl" id="m">Medicine</span><div class="chips"><button class="ch" aria-pressed="false">Any</button><button class="ch" aria-pressed="false">None taken</button><button class="ch on" aria-pressed="true">Sumatriptan<svg class="ic" style="width:16px;height:16px;stroke-width:2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="ch" aria-pressed="false">Treo</button></div></div><div role="group" aria-labelledby="i"><span class="sl" id="i">Stopped you</span><div class="chips"><button class="ch on" aria-pressed="true">Any<svg class="ic" style="width:16px;height:16px;stroke-width:2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="ch" aria-pressed="false">Not at all</button><button class="ch" aria-pressed="false">A little</button><button class="ch" aria-pressed="false">A lot</button><button class="ch" aria-pressed="false">Couldn&rsquo;t function</button></div></div><div role="group" aria-labelledby="d"><span class="sl" id="d">Side</span><div class="chips"><button class="ch on" aria-pressed="true">Any<svg class="ic" style="width:16px;height:16px;stroke-width:2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="ch" aria-pressed="false">Left</button><button class="ch" aria-pressed="false">Right</button><button class="ch" aria-pressed="false">Both</button><button class="ch" aria-pressed="false">Not logged</button></div></div><div class="more"><a href="#" class="mr">Triggers<span class="v">Any <svg class="ic" style="width:16px;height:16px" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a><a href="#" class="mr">Symptoms<span class="v">Any <svg class="ic" style="width:16px;height:16px" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></a></div></div>
+<div class="ft"><button class="pri">Show 2 attacks</button></div>
+<div style="position:absolute;inset:0;background:rgba(0,0,0,.45)"></div>
+<div role="menu" aria-label="Sort" style="position:absolute;top:190px;right:20px;width:250px;background:#302D29;border-radius:14px;overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,.5)">
+<button role="menuitemradio" aria-checked="true" style="display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 16px;border:0;border-top:0;background:none;color:#e4dfd4;font-size:16px;text-align:left"><span style="width:18px;color:#9bb9a1"><svg class="ic" style="width:16px;height:16px;stroke-width:2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Newest first</button><button role="menuitemradio" aria-checked="false" style="display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 16px;border:0;border-top:1px solid #3f3b36;background:none;color:#e4dfd4;font-size:16px;text-align:left"><span style="width:18px;color:#9bb9a1"></span>Oldest first</button><button role="menuitemradio" aria-checked="false" style="display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 16px;border:0;border-top:1px solid #3f3b36;background:none;color:#e4dfd4;font-size:16px;text-align:left"><span style="width:18px;color:#9bb9a1"></span>Longest first</button><button role="menuitemradio" aria-checked="false" style="display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 16px;border:0;border-top:1px solid #3f3b36;background:none;color:#e4dfd4;font-size:16px;text-align:left"><span style="width:18px;color:#9bb9a1"></span>Most painful first</button>
+</div>
+</div>
+</x-dc>
+</body>
+</html>

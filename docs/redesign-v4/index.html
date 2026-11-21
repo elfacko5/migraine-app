@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — Redesign v4 (source of truth)</title>
+<style>
+:root{
+  /* ===== COLOR TOKENS (dark, default) ===== */
+  --bg:#1B1A18;
+  --surface:#262421;
+  --surface-sunken:#14140f;
+  --surface-recessed:#2b2a26;
+  --border:#3A3733;
+  --border-faint:#2b2926;
+  --control-bg:#302D29;
+  --control-border:#7d7669;
+  --control-selected-bg:#2E3A31;
+  --control-selected-border:#7FA187;
+  --text:#cdc7bb;
+  --text-bright:#e4dfd4;
+  --text-muted:#A39D92;
+  --text-faint:#7d7669;
+  --accent:#7FA187;       /* primary green: CTAs, selected state, FAB */
+  --accent-on:#9bb9a1;    /* green used on dark surfaces for active tab/link text */
+  --warn:#c39257;         /* amber: severity mid-tier, "needs review" accents */
+  --warn-soft:#c9b58c;    /* lighter amber: two-days-before chart, check-entry badge */
+  --danger:#c68880;       /* red-brown: severity high-tier, required-field asterisk, destructive confirm */
+  --chart-purple:#ab9fcb; /* pain-over-time line, where-it-hurt heatmap */
+  --chart-rose:#d0948c;   /* symptoms bars in Insights */
+  --focus-warn-bg:#2e2820; /* dose-limit warning surface background */
+
+  /* ===== TYPE TOKENS ===== */
+  --font-family:'Lexend', sans-serif;
+  --fs-page-title:26px;   /* h1, e.g. "How bad is it now?" */
+  --fs-section-title:18px;/* h2, e.g. "Timeline" */
+  --fs-stat-xl:40px;      /* Today hero duration */
+  --fs-stat-lg:34px;      /* Insights fact tiles, attack-detail hero */
+  --fs-body:16px;         /* rows, chips, buttons */
+  --fs-sub:14px;          /* secondary line under a row/heading */
+  --fs-caption:13px;      /* small grey caps section labels, step counters */
+  --fw-regular:400;
+  --fw-medium:500;
+  --fw-semibold:600;
+  --lh-tight:1.2;
+  --lh-normal:1.45;
+  --ls-caps:.06em;        /* letter-spacing on uppercase caption labels */
+
+  /* ===== SPACING TOKENS (4px base) ===== */
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;         /* standard page horizontal padding */
+  --space-6:24px;
+  --space-8:34px;         /* bottom safe-area padding above home indicator */
+  --header-h:106px;       /* incl. 54px top safe-area padding */
+  --row-min-h:56px;       /* list rows */
+  --chip-min-h:48px;      /* pills/chips */
+  --touch-min:44px;       /* minimum touch target */
+  --icon-btn:40px;        /* header icon buttons */
+  --fab-size:60px;
+
+  /* ===== RADIUS TOKENS ===== */
+  --radius-card:20px;     /* cards, grouped lists, sheets (top corners) */
+  --radius-btn:14px;      /* primary/secondary buttons */
+  --radius-chip:24px;     /* pills/chips, stadium at 48px height */
+  --radius-control:12px;  /* secondary small controls, stepper buttons */
+  --radius-dot:10px;      /* radio dots, small badges */
+  --radius-icon-btn:20px; /* 40px icon button → half of width */
+
+  /* ===== DEVICE ===== */
+  --frame-w:390px;
+  --frame-h:844px;        /* iPhone-class frame used in every mock */
+}
+
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font-family);background:#0e0d0c;color:var(--text);line-height:1.5}
+a{color:var(--accent-on)}
+h1,h2,h3{font-weight:var(--fw-semibold);color:var(--text-bright)}
+code{background:var(--surface);padding:2px 6px;border-radius:6px;font-size:13px}
+.wrap{max-width:980px;margin:0 auto;padding:40px 24px 120px}
+.swatch{display:inline-flex;align-items:center;gap:8px;margin:4px 12px 4px 0;font-size:13px;color:var(--text-muted)}
+.sw{width:18px;height:18px;border-radius:5px;border:1px solid rgba(255,255,255,.15);flex:none}
+table{border-collapse:collapse;width:100%;margin:16px 0 32px;font-size:14px}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface);color:var(--text-muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+.yes{color:var(--accent-on);font-weight:600}
+.partial{color:var(--warn-soft);font-weight:600}
+.no{color:var(--danger);font-weight:600}
+.flow-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:16px 0 36px}
+.flow-card{background:var(--surface);border-radius:var(--radius-card);padding:16px 18px;border:1px solid var(--border-faint)}
+.flow-card h3{margin:0 0 4px;font-size:16px}
+.flow-card .meta{font-size:12px;color:var(--text-muted);margin-bottom:10px}
+.flow-card ul{margin:0;padding-left:18px;font-size:13px}
+.flow-card ul li{margin:3px 0}
+.flow-card a{color:var(--accent-on);text-decoration:none}
+.flow-card a:hover{text-decoration:underline}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
+.badge.approved{background:rgba(127,161,135,.18);color:var(--accent-on)}
+.badge.proposal{background:rgba(195,146,87,.18);color:var(--warn-soft)}
+.badge.incomplete{background:rgba(198,136,128,.18);color:var(--danger)}
+.gap-box{background:var(--surface);border-left:3px solid var(--danger);border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0}
+.gap-box h4{margin:0 0 8px;color:var(--danger);font-size:14px}
+nav.toc{position:sticky;top:0;background:#0e0d0c;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:24px;z-index:10}
+nav.toc a{margin-right:18px;font-size:13px;color:var(--text-muted);text-decoration:none}
+nav.toc a:hover{color:var(--accent-on)}
+hr{border:0;border-top:1px solid var(--border);margin:40px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="toc">
+  <a href="#tokens">Tokens</a>
+  <a href="#flows">Flows</a>
+  <a href="#states">State coverage</a>
+  <a href="#gaps">Known gaps</a>
+  <a href="#retired">What this retires</a>
+  <a href="#proposals">Unapproved proposals</a>
+</nav>
+
+<h1 style="font-size:32px">Lidd — Redesign v4</h1>
+<p style="color:var(--text-muted);max-width:640px">
+Source of truth for the approved screens, superseding anything in <code>docs/redesign-v3/</code> that this file's
+<a href="#retired">retirement table</a> marks as replaced. Screens live in <code>screens/</code>, one static HTML file
+per board, named the same as the design-canvas artboard minus <code>.dc</code>. Not-yet-approved explorations live in
+<code>proposals/</code> and should not be built against without sign-off.
+</p>
+<p style="color:var(--text-muted);font-size:13px">
+I do not have <code>src/index.css</code> in this session, so the tokens below are stated as used across the approved
+mockups, not diffed against it automatically. Please reconcile the <code>:root</code> block above with the real
+stylesheet and flag anything that conflicts.
+</p>
+
+<h2 id="tokens">Design tokens</h2>
+<p>Stated as CSS custom properties above this page's own <code>&lt;style&gt;</code> block (view source, or see the
+table below for the same values with their usage).</p>
+
+<table>
+<tr><th>Token</th><th>Value</th><th>Used for</th></tr>
+<tr><td><code>--bg</code></td><td><span class="swatch"><span class="sw" style="background:#1B1A18"></span>#1B1A18</span></td><td>Screen background, dark default</td></tr>
+<tr><td><code>--surface</code></td><td><span class="swatch"><span class="sw" style="background:#262421"></span>#262421</span></td><td>Cards, grouped lists, sheets</td></tr>
+<tr><td><code>--surface-recessed</code></td><td><span class="swatch"><span class="sw" style="background:#2b2a26"></span>#2b2a26</span></td><td>Inset rows inside a card (e.g. medication card header)</td></tr>
+<tr><td><code>--border</code></td><td><span class="swatch"><span class="sw" style="background:#3A3733"></span>#3A3733</span></td><td>Row dividers inside grouped lists</td></tr>
+<tr><td><code>--control-bg</code> / <code>--control-border</code></td><td><span class="swatch"><span class="sw" style="background:#302D29;border-color:#7d7669"></span>#302D29 / #7d7669</span></td><td>Unselected chip/radio/stepper background &amp; border</td></tr>
+<tr><td><code>--control-selected-bg</code> / <code>--control-selected-border</code></td><td><span class="swatch"><span class="sw" style="background:#2E3A31;border-color:#7FA187"></span>#2E3A31 / #7FA187</span></td><td>Selected chip/radio state</td></tr>
+<tr><td><code>--text</code></td><td><span class="swatch"><span class="sw" style="background:#cdc7bb"></span>#cdc7bb</span></td><td>Primary body text</td></tr>
+<tr><td><code>--text-bright</code></td><td><span class="swatch"><span class="sw" style="background:#e4dfd4"></span>#e4dfd4</span></td><td>Large stat numbers, emphasised headings</td></tr>
+<tr><td><code>--text-muted</code></td><td><span class="swatch"><span class="sw" style="background:#A39D92"></span>#A39D92</span></td><td>Secondary lines, caption labels, inactive tab icons</td></tr>
+<tr><td><code>--accent</code></td><td><span class="swatch"><span class="sw" style="background:#7FA187"></span>#7FA187</span></td><td>Primary buttons, FAB, selected-state border/check</td></tr>
+<tr><td><code>--accent-on</code></td><td><span class="swatch"><span class="sw" style="background:#9bb9a1"></span>#9bb9a1</span></td><td>Links and active tab-bar text on dark surfaces</td></tr>
+<tr><td><code>--warn</code> / <code>--warn-soft</code></td><td><span class="swatch"><span class="sw" style="background:#c39257"></span>#c39257</span> <span class="swatch"><span class="sw" style="background:#c9b58c"></span>#c9b58c</span></td><td>Mid-severity badge; "two days before" chart bars; "check entry" badge</td></tr>
+<tr><td><code>--danger</code></td><td><span class="swatch"><span class="sw" style="background:#c68880"></span>#c68880</span></td><td>High-severity badge, required-field asterisk, destructive confirm button</td></tr>
+<tr><td><code>--chart-purple</code> / <code>--chart-rose</code></td><td><span class="swatch"><span class="sw" style="background:#ab9fcb"></span>#ab9fcb</span> <span class="swatch"><span class="sw" style="background:#d0948c"></span>#d0948c</span></td><td>Insights-only chart accents (pain-over-time, where-it-hurt / symptoms)</td></tr>
+<tr><td><code>--font-family</code></td><td>Lexend (Google Fonts), weights 400/500/600</td><td>Entire UI</td></tr>
+<tr><td><code>--fs-page-title</code></td><td>26px / 600 / line-height 1.2</td><td>Screen <code>&lt;h1&gt;</code></td></tr>
+<tr><td><code>--fs-section-title</code></td><td>18–20px / 600</td><td>In-page <code>&lt;h2&gt;</code> (Timeline, Medication, …)</td></tr>
+<tr><td><code>--fs-stat-xl</code> / <code>--fs-stat-lg</code></td><td>40px / 34px, both 600</td><td>Today hero duration; Insights fact tiles</td></tr>
+<tr><td><code>--fs-body</code></td><td>16px / 400</td><td>Rows, chips, button labels</td></tr>
+<tr><td><code>--fs-sub</code></td><td>14px / 400, <code>--text-muted</code></td><td>Secondary line under a heading or row</td></tr>
+<tr><td><code>--fs-caption</code></td><td>13px / 600, uppercase, letter-spacing .06em</td><td>Grey section-label caps, step counters</td></tr>
+<tr><td>Spacing scale</td><td>4 / 8 / 12 / 16 / <b>20</b> / 24 / 34 px</td><td>4px base; 20px is the standard page gutter, 34px the bottom safe-area pad</td></tr>
+<tr><td>Header</td><td>106px tall (54px top safe-area pad)</td><td>Every screen's nav bar</td></tr>
+<tr><td>Row / chip / touch target</td><td>56px / 48px / 44px minimum</td><td>List rows / pills &amp; chips / smallest tappable control</td></tr>
+<tr><td>Radii</td><td>20px cards &middot; 14px buttons &middot; 24px chips (stadium) &middot; 12px small controls &middot; 10px dots</td><td>&mdash;</td></tr>
+<tr><td>Frame</td><td>390 × 844</td><td>iPhone-class reference frame used in every mock (not a hard device constraint — screens marked "page" expand fluid)</td></tr>
+</table>
+
+<h2 id="flows">Approved flows</h2>
+<p>Each card links to its screens in <code>screens/&lt;flow-folder&gt;/</code>.</p>
+<div class="flow-grid" id="flow-grid-placeholder">
+<!-- FLOW_CARDS_PLACEHOLDER -->
+</div>
+
+<h2 id="states">State coverage</h2>
+<p>What's drawn beyond the plain happy path, per flow. This is reported honestly — a dash means it does not exist yet,
+not that it was overlooked.</p>
+<table>
+<tr><th>Flow</th><th>Empty state</th><th>In-attack / live state</th><th>Attack-mode variant</th><th>Largest text (200%)</th><th>Light mode</th><th>Error state</th></tr>
+<tr><td>Today</td><td class="yes">✓ TodayPendingDark is the no-attack default</td><td class="yes">✓ TodayOngoingDark, TodayAddSheetDark</td><td class="partial">Toggle only — no "mode on" rendering of Today itself</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Logs</td><td class="yes">✓ LogsEmptyDark</td><td class="no">n/a (historical list)</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="partial">LogsFilterNoneDark covers "no matches", not a true error</td></tr>
+<tr><td>Attack detail</td><td class="no">n/a</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Insights</td><td class="yes">✓ InsightsEmptyDark, InsightsLowData</td><td class="no">n/a</td><td class="no">—</td><td class="yes">✓ InsightsMed200</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Medications</td><td class="yes">✓ MedsEmptyDark</td><td class="no">n/a</td><td class="no">—</td><td class="yes">✓ AddForm200Dark, AddDoseSheet200Dark, EditMed200Dark</td><td class="no">—</td><td class="partial">AddNameDupDark covers a duplicate-name conflict</td></tr>
+<tr><td>Data (export/import/delete)</td><td class="no">—</td><td class="no">n/a</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no" style="font-weight:700">missing — see gaps</td></tr>
+<tr><td>Display &amp; attack mode</td><td class="no">n/a</td><td class="no">n/a</td><td class="yes">✓ DisplayAttackListOnDark vs DisplayAttackListDark (off)</td><td class="yes">✓ DisplayTextSizeDark / DisplayTextSizeIphoneDark are the size picker itself</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Past-attack log (21)</td><td class="no">n/a</td><td class="no">n/a (backfill only)</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="partial">MrgPastMedOverDark = above-dose-limit warning</td></tr>
+<tr><td>Live log (23)</td><td class="no">n/a</td><td class="yes">✓ is the in-attack flow</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="partial">Live23MedOverDark = above-dose-limit warning</td></tr>
+<tr><td>End of attack (24)</td><td class="no">n/a</td><td class="yes">✓ is the end-of-attack flow</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Update (25)</td><td class="no">n/a</td><td class="yes">✓ is the in-attack update flow</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="partial">UpdMedOverDark = above-dose-limit warning</td></tr>
+</table>
+
+<div class="gap-box" id="gaps">
+<h4>Known gaps — do not fill these in without a design pass</h4>
+<ul>
+<li><b>Light mode does not exist for any approved screen.</b> Every mock in this export is dark-mode-only, by the designer's own working preference during this redesign. If the shipped app must honour the OS light/dark setting, this needs its own design pass before code treats dark as the only path.</li>
+<li><b>Attack-mode "on" is drawn once</b> (the Display &amp; attack-mode settings screen, as a before/after of that one row). No screen shows what Today, Logs, or any flow screen looks like while attack mode is actually active (softened colours, dimmed illustration) beyond that one comparison.</li>
+<li><b>No error states exist</b> for: failed file import, network loss mid-sync, a sync conflict, or a corrupted/invalid backup file on Data (export/import/delete). The only "error-adjacent" states drawn anywhere are a duplicate medication name (15a-2) and the above-dose-limit warnings in the live/past/update flows, which are informational, not failure states.</li>
+<li><b>200%-text variants exist for only four screens</b> (two medication-add steps, one edit-medication step, one Insights medication chart). Nothing else has been checked at the largest Dynamic Type size.</li>
+<li><b>The 4-step end-of-attack variant</b> (attack with no medication logged, so step 2 — "did it help?" — is skipped) is approved in principle but not drawn as its own screen; the counters on the drawn 5-step path still read "Step N of 5".</li>
+<li><b>Inline "add a medication"</b> exists only inside the past-attack flow (21c-6). The live flow and update flow do not have it yet.</li>
+<li><b>Reminders screen is incomplete</b> — it is missing the fixed/standing reminder row. The designer needs the current shipped app's reminder settings to finish it.</li>
+<li><b>The morning prompt (24-0, "is the attack still going?")</b> is still an open question with the designer — it may be cut in favour of auto-closing an attack or a "finish this entry" row in Logs. Do not treat it as final.</li>
+</ul>
+</div>
+
+<h2 id="retired">What this retires</h2>
+<p>See <a href="RETIRED.md">RETIRED.md</a> for the full, generated mapping of every screen that was archived on the design
+canvas during this pass (old flow name → the approved screen replacing it, with the designer's stated reason where one
+was recorded).</p>
+
+<h2 id="proposals">Unapproved proposals</h2>
+<p>Three explorations exist in <code>proposals/</code>. None are approved. Do not build against them.</p>
+<ul>
+<li><b>Attack detail (redesign)</b> — reorders the screen so the timeline sits right after the summary, ahead of "what it was like".</li>
+<li><b>Logs with inline filters (redesign)</b> — replaces the filter/sort bottom sheet with inline pills above the list.</li>
+<li><b>Widget redesign</b> — lock-screen (circular + rectangular) and home-screen treatments for the existing stats widget, in the v4 palette.</li>
+</ul>
+
+</div>
+</body>
+</html>

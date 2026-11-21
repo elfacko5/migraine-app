@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Lidd — Insights (redesign)</title><link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Lexend,sans-serif;color:#cdc7bb}
+*{box-sizing:border-box}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,p{margin:0}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+body{background:#1B1A18}
+.wrap{width:390px;background:#1B1A18;padding:64px 20px 48px;display:flex;flex-direction:column;gap:28px}
+h1.big{font-size:34px;font-weight:600;color:#e4dfd4;flex:1}
+.title{display:flex;align-items:center;gap:8px}
+.share{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;color:#9bb9a1;margin-right:-8px}
+.share .ic{width:24px;height:24px}
+.top{display:flex;flex-direction:column;gap:10px}
+.seg{display:flex;gap:4px;background:#262421;border-radius:14px;padding:4px}
+.seg button{flex:1;min-height:44px;border:1px solid transparent;border-radius:10px;background:transparent;color:#A39D92;font-size:15px}
+.seg .on{background:#2E3A31;border-color:#7FA187;color:#e4dfd4;font-weight:600}
+.range{font-size:14px;color:#A39D92;text-align:center}
+.report{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 16px;border-radius:14px;border:1px solid #46423d;background:#262421;color:#e4dfd4;font-size:16px;font-weight:500}
+.report .sp{flex:1}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.tile{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}
+.tile .ic{width:18px;height:18px}
+.sh h2{font-size:17px;font-weight:600;color:#e4dfd4;flex:1}
+.sh .i{width:44px;height:44px;margin:-6px -11px -6px 0;border:0;background:transparent;display:flex;align-items:center;justify-content:center;color:#A39D92;padding:0;flex:none}
+.sh .i span{width:22px;height:22px;border-radius:11px;border:1px solid #6b655b;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.card{background:#262421;border-radius:18px;padding:18px}
+.bars{display:flex;flex-direction:column;gap:14px}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.bar .m{font-size:15px;color:#cdc7bb;min-width:52px}
+.bar .m small{font-size:13px;color:#A39D92}
+.bar .tk{flex:1 1 160px;position:relative;height:12px;border-radius:6px;background:#302D29;overflow:hidden}
+.bar .tk i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.bar .n{font-size:16px;font-weight:600;color:#e4dfd4;min-width:20px;text-align:right}
+.striped{background:repeating-linear-gradient(135deg,#7FA187 0 6px,#5d7563 6px 10px)!important}
+.meds{display:flex;flex-direction:column;gap:12px}
+.mc{background:#262421;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.mh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mh .nm{flex:1;min-width:120px;font-size:17px;font-weight:600;color:#e4dfd4;line-height:1.25}
+.mh .nm small{display:block;font-size:14px;font-weight:400;color:#A39D92}
+.mrows{display:flex;flex-direction:column;gap:10px}
+.mr{display:flex;flex-direction:column;gap:6px}
+.mr .t{display:flex;justify-content:space-between;gap:8px;font-size:15px;color:#cdc7bb}
+.mr .t b{font-weight:600;color:#e4dfd4}
+.mr .t .g{color:#A39D92;font-weight:400}
+.mtrack{height:10px;border-radius:5px;background:#302D29;overflow:hidden}
+.mtrack i{display:block;height:100%;border-radius:5px}
+.mstats{display:flex;flex-wrap:wrap;gap:8px 16px;padding-top:12px;border-top:1px solid #3A3733;font-size:14px;color:#cdc7bb}
+.mstats span{display:inline-flex;align-items:center;gap:6px}
+.mstats .ic{width:16px;height:16px;color:#A39D92}
+.link{display:flex;align-items:center;gap:6px;min-height:44px;font-size:15px;color:#9bb9a1;font-weight:500}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:#302D29;border-radius:16px;overflow:hidden}
+.fc{background:#262421;padding:14px 16px}
+.fc .v{font-size:22px;font-weight:600;color:#e4dfd4}
+.fc .k{font-size:14px;color:#A39D92;margin-top:2px;line-height:1.35}
+.list{display:flex;flex-direction:column;gap:12px}
+.lhead{display:flex;justify-content:flex-end;font-size:13px;color:#A39D92;margin-bottom:10px}
+.li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 8px;align-items:center}
+.li .nm{font-size:16px;color:#cdc7bb}
+.li .ct{font-size:15px;font-weight:600;color:#e4dfd4}
+.li .track2{flex:1 0 100%;height:8px;border-radius:4px;background:#302D29;overflow:hidden}
+.li .track2 i{display:block;height:100%;border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13px;color:#A39D92}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.axis{font-size:13px;color:#A39D92}
+.tabnote{font-size:13px;color:#7d7669;text-align:center}
+.prog{height:8px;border-radius:4px;background:#302D29;overflow:hidden;margin-top:12px}
+.prog i{display:block;height:100%;background:#7FA187;border-radius:4px}
+.att{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 0;border-top:1px solid #3A3733}
+.att:first-child{border-top:0;padding-top:0}
+.att .dt{flex:1;font-size:16px;color:#e4dfd4}
+.att .dt small{display:block;font-size:14px;color:#A39D92}
+.att .pk{font-size:15px;color:#cdc7bb}
+.soon{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#cdc7bb;background:#302D29;border-radius:999px;padding:6px 12px}
+.chip .ic{width:14px;height:14px}
+.backdrop{position:fixed;inset:0;background:rgba(10,9,8,.6);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
+.modal{width:100%;max-width:342px;max-height:80vh;overflow-y:auto;background:#262421;border-radius:28px;padding:28px 24px 24px;display:flex;flex-direction:column;gap:16px}
+.modal h3{font-size:26px;font-weight:600;color:#e4dfd4;line-height:1.25}
+.modal p{font-size:17px;line-height:1.55;color:#cdc7bb}
+.modal .got{min-height:56px;border:0;border-radius:16px;background:#7FA187;color:#17201a;font-size:17px;font-weight:600;margin-top:4px}
+
+</style></head><body><x-dc>
+<div class="wrap">
+<div class="title"><h1 class="big">Insights</h1><a class="share" href="ReportBuilder.dc.html" aria-label="Share a doctor report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg></a></div>
+<div class="top"><div class="seg" role="tablist" aria-label="Period"><button role="tab" aria-selected="false">7d</button><button role="tab" aria-selected="false">30d</button><button role="tab" aria-selected="true" class="on">3m</button><button role="tab" aria-selected="false">All</button></div><p class="range">1 Sep – 19 Nov &middot; 10 attacks</p></div>
+
+<section><div class="sh"><span class="tile" style="width:32px;height:32px;background:rgba(127,161,135,0.16);color:#7FA187"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><h2>Migraine days</h2><button class="i" aria-label="About migraine days" onClick="{{info.attackdays.open}}"><span aria-hidden="true">i</span></button></div>
+<div class="card"><div class="bars"><div class="bar"><span class="m">Sep</span><span class="tk"><i style="width:30%;background:#7FA187"></i></span><span class="n">3</span></div><div class="bar"><span class="m">Oct</span><span class="tk"><i style="width:50%;background:#7FA187"></i></span><span class="n">5</span></div><div class="bar"><span class="m">Nov <small>so far</small></span><span class="tk"><i class="striped" style="width:30%"></i></span><span class="n">3</span></div></div></div></section>
+
+<section><div class="sh"><span class="tile" style="width:32px;height:32px;background:rgba(143,179,201,0.16);color:#8FB3C9"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg></span><h2>Medication</h2><button class="i" aria-label="About medication and your guides" onClick="{{info.medication.open}}"><span aria-hidden="true">i</span></button></div>
+<div class="meds"><div class="mc"><div class="mh"><span class="tile" style="width:36px;height:36px;background:rgba(143,179,201,0.16);color:#8FB3C9"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg></span><span class="nm">Sumatriptan<small>Triptan</small></span></div><div class="mrows"><div class="mr"><div class="t"><span>Sep</span><span><b>1</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:10%;background:#8FB3C9"></i></div></div><div class="mr"><div class="t"><span>Oct</span><span><b>2</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:20%;background:#8FB3C9"></i></div></div><div class="mr"><div class="t"><span>Nov <span class="g">so far</span></span><span><b>3</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:30%;background:#8FB3C9"></i></div></div></div><div class="mstats"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg>9 doses</span><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>3 checked at 2 h</span></div></div><div class="mc"><div class="mh"><span class="tile" style="width:36px;height:36px;background:rgba(214,164,118,0.16);color:#d6a476"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg></span><span class="nm">Treo<small>Combination</small></span></div><div class="mrows"><div class="mr"><div class="t"><span>Sep</span><span><b>0</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:0%;background:#d6a476"></i></div></div><div class="mr"><div class="t"><span>Oct</span><span><b>1</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:10%;background:#d6a476"></i></div></div><div class="mr"><div class="t"><span>Nov <span class="g">so far</span></span><span><b>1</b> <span class="g">of 10 days</span></span></div><div class="mtrack"><i style="width:10%;background:#d6a476"></i></div></div></div><div class="mstats"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg>4 doses</span><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>none checked at 2 h</span></div></div></div>
+<a class="link" href="GuidesDark.dc.html">Your monthly guides <svg class="ic" style="width:16px;height:16px;color:#A39D92" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></section>
+
+<section><div class="sh"><span class="tile" style="width:32px;height:32px;background:rgba(201,181,140,0.16);color:#c9b58c"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span><h2>Typical attack</h2><button class="i" aria-label="About typical attack" onClick="{{info.typical.open}}"><span aria-hidden="true">i</span></button></div>
+<div class="facts">
+<div class="fc"><div class="v">6.3</div><div class="k">average peak pain</div></div>
+<div class="fc"><div class="v">9 h</div><div class="k">long</div></div>
+<div class="fc"><div class="v">1.5 h</div><div class="k">to the peak</div></div>
+<div class="fc"><div class="v">11</div><div class="k">attack days</div></div>
+</div></section>
+
+<section><div class="sh"><span class="tile" style="width:32px;height:32px;background:rgba(171,159,203,0.16);color:#ab9fcb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><path d="M5 15l4-5 4 3 6-7"/></svg></span><h2>Pain over time</h2><button class="i" aria-label="About pain over time" onClick="{{info.painovertime.open}}"><span aria-hidden="true">i</span></button></div>
+<div class="card"><svg viewBox="0 0 350 160" width="100%" role="img" aria-label="Pain of 10 attacks from 1 September to 19 November, placed by date. 21 Sep 9, 26 Sep 6, 29 Sep 5, 4 Oct 8, 25 Oct 5, 27 Oct 5, 28 Oct 5, 30 Oct 5, 16 Nov 10, 19 Nov 5." style="display:block;font-family:Lexend">
+<g stroke="#3a3733" stroke-width="1"><line x1="30" y1="12.0" x2="344" y2="12.0"/><line x1="30" y1="66.0" x2="344" y2="66.0"/><line x1="30" y1="120.0" x2="344" y2="120.0"/></g>
+<g fill="#A39D92" font-size="12"><text x="24" y="16" text-anchor="end">10</text><text x="24" y="70" text-anchor="end">5</text><text x="24" y="124" text-anchor="end">0</text>
+<text x="30" y="154" text-anchor="start">1 Sep</text><text x="149" y="154" text-anchor="middle">1 Oct</text><text x="272" y="154" text-anchor="middle">1 Nov</text><text x="344" y="154" text-anchor="end">19 Nov</text></g>
+<line x1="109" y1="23" x2="129" y2="55" stroke="#ab9fcb" stroke-width="2.5"/><line x1="129" y1="55" x2="141" y2="66" stroke="#ab9fcb" stroke-width="2.5"/><line x1="141" y1="66" x2="161" y2="34" stroke="#ab9fcb" stroke-width="2.5"/><line x1="249" y1="66" x2="257" y2="66" stroke="#ab9fcb" stroke-width="2.5"/><line x1="257" y1="66" x2="261" y2="66" stroke="#ab9fcb" stroke-width="2.5"/><line x1="261" y1="66" x2="268" y2="66" stroke="#ab9fcb" stroke-width="2.5"/><line x1="332" y1="12" x2="344" y2="66" stroke="#ab9fcb" stroke-width="2.5"/><circle cx="109" cy="23" r="4" fill="#ab9fcb"/><circle cx="129" cy="55" r="4" fill="#ab9fcb"/><circle cx="141" cy="66" r="4" fill="#ab9fcb"/><circle cx="161" cy="34" r="4" fill="#ab9fcb"/><circle cx="249" cy="66" r="4" fill="#ab9fcb"/><circle cx="257" cy="66" r="4" fill="#ab9fcb"/><circle cx="261" cy="66" r="4" fill="#ab9fcb"/><circle cx="268" cy="66" r="4" fill="#ab9fcb"/><circle cx="332" cy="12" r="4" fill="#ab9fcb"/><circle cx="344" cy="66" r="4" fill="#ab9fcb"/>
+</svg>
+</div></section>
+
+<section><div class="sh"><span class="tile" style="width:32px;height:32px;background:rgba(208,148,140,0.16);color:#d0948c"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg></span><h2>Symptoms</h2><button class="i" aria-label="About symptoms" onClick="{{info.symptoms.open}}"><span aria-hidden="true">i</span></button></div>
+<div class="card"><div class="lhead">attacks, of 10</div><div class="list"><div class="li"><span class="nm">Nausea</span><span class="ct">4</span><span class="track2"><i style="width:40%;background:#d0948c"></i></span></div><div class="li"><span class="nm">Light sensitivity</span><span class="ct">3</span><span class="track2"><i style="width:30%;background:#d0948c"></i></span></div><div class="li"><span class="nm">Aura</span><span class="ct">1</span><span class="track2"><i style="width:10%;background:#d0948c"></i></span></div><div class="li"><span class="nm">Dizziness</span><span class="ct">1</span><span class="track2"><i style="width:10%;background:#d0948c"></i></span></div><div class="li"><span class="nm">Vomiting</span><span class="ct">1</span><span class="track2"><i style="width:10%;background:#d0948c"></i></span></div></div></div></section>
+
+<section><div class="sh"><span class="tile" style="width:32px;height:32px;background:rgba(171,159,203,0.16);color:#ab9fcb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c4.4 0 7 3.2 7 7 0 2-.8 3.4-2 4.5V21H9v-3H7a2 2 0 0 1-2-2v-3l-1.5-1.5L5 9c.6-3.5 3.3-6 7-6z"/></svg></span><h2>Where it hurt</h2><button class="i" aria-label="About where it hurt" onClick="{{info.whereithurt.open}}"><span aria-hidden="true">i</span></button></div>
+<div class="card"><svg viewBox="0 0 320 240" width="100%" role="img" aria-label="Pain areas, most frequent: left eye 8, right eye 6, right forehead 4, left temple 3, bridge 3, right temple 2, left cheek 2" style="display:block">
+<path d="M160 20c54 0 84 40 84 96 0 58-38 104-84 104s-84-46-84-104c0-56 30-96 84-96z" fill="#2a2724" stroke="#4a443d" stroke-width="1.5"/>
+<path d="M76 120c-10 0-16 8-14 18M244 120c10 0 16 8 14 18" fill="none" stroke="#4a443d" stroke-width="1.5"/>
+<g font-family="Lexend" font-weight="600">
+<circle cx="120" cy="92" r="24" fill="#4f4a62"/><text x="120" y="97" text-anchor="middle" font-size="15" fill="#e4dfd4">4</text>
+<circle cx="200" cy="96" r="16" fill="#3d3a4a"/><text x="200" y="101" text-anchor="middle" font-size="13" fill="#e4dfd4">2</text>
+<circle cx="214" cy="122" r="18" fill="#454157"/><text x="214" y="127" text-anchor="middle" font-size="14" fill="#e4dfd4">3</text>
+<circle cx="118" cy="140" r="30" fill="#7d7398"/><text x="118" y="146" text-anchor="middle" font-size="18" fill="#1b1a18">6</text>
+<circle cx="204" cy="142" r="34" fill="#ab9fcb"/><text x="204" y="149" text-anchor="middle" font-size="20" fill="#1b1a18">8</text>
+<circle cx="160" cy="168" r="16" fill="#454157"/><text x="160" y="173" text-anchor="middle" font-size="13" fill="#e4dfd4">3</text>
+<circle cx="190" cy="186" r="14" fill="#3d3a4a"/><text x="190" y="191" text-anchor="middle" font-size="12" fill="#e4dfd4">2</text>
+</g>
+<text x="20" y="150" font-size="12" fill="#A39D92" font-family="Lexend">your right</text>
+<text x="300" y="150" font-size="12" fill="#A39D92" text-anchor="end" font-family="Lexend">your left</text>
+</svg></div></section>
+
+<section><div class="sh"><span class="tile" style="width:32px;height:32px;background:rgba(127,161,135,0.16);color:#7FA187"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg></span><h2>What you tried</h2><button class="i" aria-label="About what you tried" onClick="{{info.whatyoutried.open}}"><span aria-hidden="true">i</span></button></div>
+<div class="card"><div class="lhead">attacks, of 10</div><div class="list"><div class="li"><span class="nm">Eye mask</span><span class="ct">4</span><span class="track2"><i style="width:40%;background:#7FA187"></i></span></div><div class="li"><span class="nm">Peppermint oil</span><span class="ct">3</span><span class="track2"><i style="width:30%;background:#7FA187"></i></span></div><div class="li"><span class="nm">Caffeine</span><span class="ct">2</span><span class="track2"><i style="width:20%;background:#7FA187"></i></span></div><div class="li"><span class="nm">Dark room</span><span class="ct">2</span><span class="track2"><i style="width:20%;background:#7FA187"></i></span></div><div class="li"><span class="nm">Water</span><span class="ct">2</span><span class="track2"><i style="width:20%;background:#7FA187"></i></span></div><div class="li"><span class="nm">Sleep / rest</span><span class="ct">2</span><span class="track2"><i style="width:20%;background:#7FA187"></i></span></div></div></div></section>
+
+<section><div class="sh"><span class="tile" style="width:32px;height:32px;background:rgba(201,181,140,0.16);color:#c9b58c"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v4h4"/><path d="M12 8v4l3 2"/></svg></span><h2>In the two days before</h2><button class="i" aria-label="About the two days before" onClick="{{info.twodaysbefore.open}}"><span aria-hidden="true">i</span></button></div>
+<div class="card"><div class="lhead">attacks, of 10</div><div class="list"><div class="li"><span class="nm">Bright light</span><span class="ct">1</span><span class="track2"><i style="width:10%;background:#c9b58c"></i></span></div><div class="li"><span class="nm">Poor sleep</span><span class="ct">1</span><span class="track2"><i style="width:10%;background:#c9b58c"></i></span></div><div class="li"><span class="nm">Screen time</span><span class="ct">1</span><span class="track2"><i style="width:10%;background:#c9b58c"></i></span></div></div></div></section>
+
+<p class="tabnote">(tab bar omitted in this scroll mock)</p>
+<sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+<div class="backdrop" onClick="{{close}}">
+<div class="modal" onClick="{{stop}}">
+<h3>{{modal.title}}</h3>
+<p>{{modal.body}}</p>
+<button class="got" onClick="{{close}}">Got it</button>
+</div>
+</div>
+</sc-if>
+
+</div></x-dc>
+</body></html>
