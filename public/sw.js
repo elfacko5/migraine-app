@@ -9,7 +9,7 @@ function scheduleReminder(attackId, delayMs, title, body) {
   if (pendingTimers.has(attackId)) clearTimeout(pendingTimers.get(attackId));
   const tid = setTimeout(async () => {
     pendingTimers.delete(attackId);
-    await self.registration.showNotification(title ?? "How's your migraine?", {
+    await self.registration.showNotification(title ?? "How's your attack?", {
       body: body ?? 'Tap to add an update.',
       icon: '/favicon.svg',
       badge: '/favicon.svg',

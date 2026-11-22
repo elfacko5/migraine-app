@@ -1,7 +1,7 @@
 {
   "name": "Lidd",
   "short_name": "Lidd",
-  "description": "Log and track your migraine attacks with a snapshot timeline.",
+  "description": "Log and track your attacks with a snapshot timeline.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#020617",
