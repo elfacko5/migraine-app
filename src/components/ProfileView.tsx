@@ -214,7 +214,7 @@ function FontOption({ name, family, selected, onSelect, hint }: {
       role="radio"
       aria-checked={selected}
       onClick={onSelect}
-      className={`relative block w-full rounded-card px-4 py-4 text-left ring-inset transition-colors ${
+      className={`relative block w-full rounded-card p-card text-left ring-inset transition-colors ${
         selected ? 'bg-accent/10 ring-2 ring-accent' : 'bg-bg-raised ring-1 ring-border-control'
       }`}
     >
@@ -292,7 +292,13 @@ function AttackChangesPage({ onBack }: { onBack: () => void }) {
     <ProfileSubPage title="What it changes" onClose={onBack}>
       <div className="space-y-6">
         <section className="space-y-2">
-          <SectionLabel>A log in attack mode</SectionLabel>
+          {/* "A sample log", not "A log in attack mode": the preview card is
+              built from theme tokens and only the <html> element carries
+              data-theme="attack" (:root-scoped in theme.css), so the card can't
+              render in attack styling while attack mode is off — which is the
+              common case for someone opening this page. The heading would then
+              contradict the card. The list below names the changes in words. */}
+          <SectionLabel>A sample log</SectionLabel>
           <DisplayPreviewCard />
         </section>
         <List>
