@@ -471,7 +471,7 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
             className={`flex w-full items-center gap-2 rounded-control px-4 py-3 text-left text-sm font-medium transition-colors ${chipClass(woke)}`}
           >
             <SunriseIcon className="h-4 w-4 shrink-0" />
-            <span className="flex-1">Woke up with this migraine</span>
+            <span className="flex-1">Woke up with this attack</span>
             <ChipCheck selected={woke} />
           </button>
         </div>

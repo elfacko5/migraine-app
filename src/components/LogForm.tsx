@@ -642,7 +642,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                       text colour and an emoji would have stayed the same
                       colour in both states. */}
                   <SunriseIcon className="h-4 w-4" />
-                  Woke up with this migraine
+                  Woke up with this attack
                 </button>
               </div>
 

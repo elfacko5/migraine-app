@@ -45,12 +45,12 @@ export async function exportData(): Promise<void> {
     data,
   };
   const json = JSON.stringify(payload, null, 2);
-  const filename = `migraine-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const filename = `lidd-backup-${new Date().toISOString().slice(0, 10)}.json`;
 
   if (Capacitor.isNativePlatform()) {
     const { uri } = await Filesystem.writeFile({ path: filename, data: json, directory: Directory.Cache, encoding: Encoding.UTF8 });
     try {
-      await Share.share({ title: 'Migraine backup', url: uri });
+      await Share.share({ title: 'Lidd backup', url: uri });
     } catch (e) {
       if (isShareCancel(e)) return;
       throw e;
@@ -97,7 +97,7 @@ export async function readBackupFile(file: File): Promise<ReadResult> {
 
   const entries = Object.entries(rawCandidate).filter(([k]) => k.startsWith(PREFIX));
   if (entries.length === 0) {
-    return { ok: false, error: 'No migraine data found in this file.' };
+    return { ok: false, error: 'No Lidd data found in this file.' };
   }
 
   const data: Record<string, string> = {};

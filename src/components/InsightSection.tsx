@@ -77,7 +77,7 @@ export function InsightSection({ title, children, note, info }: Props) {
           section's own edges, unlike the card below it which insets its
           content by `p-4`; on a phone the info icon read as crowded against
           the right edge. 8px each side, not matched to the card's 16px: the
-          title still has to line up closely with "MIGRAINE DAYS PER MONTH"
+          title still has to line up closely with "ATTACK DAYS PER MONTH"
           reading as the section's own label, not as indented content. */}
       <div className="flex items-center justify-between gap-2 px-2">
         <h2 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{title}</h2>

@@ -52,7 +52,7 @@ function notificationBody(attack: Attack): string {
   return `Started ${formatTime(first.time)} · ${areas} · severity ${severity}`;
 }
 
-const TITLE = "How's your migraine?";
+const TITLE = "How's your attack?";
 
 // Registers the notification's action buttons. Native only, and must run
 // before the first schedule() or iOS shows the notification with no buttons.

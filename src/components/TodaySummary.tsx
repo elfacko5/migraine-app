@@ -293,7 +293,7 @@ export function TodaySummary({
           The label is a single 14px line under the figure, with the unit and
           the window together; no uppercase kicker. Both open Insights. */}
       <div className="grid grid-cols-2 gap-3.5">
-        <NumberTile value={migraineDays} label="migraine days · last 30 days" onClick={onOpenInsights} />
+        <NumberTile value={migraineDays} label="attack days · last 30 days" onClick={onOpenInsights} />
         <NumberTile value={attackCount} label={`${attackCount === 1 ? 'attack' : 'attacks'} · last 30 days`} onClick={onOpenInsights} />
       </div>
 

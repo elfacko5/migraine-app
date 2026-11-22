@@ -27,7 +27,7 @@ export function WeekCard({ attacks }: { attacks: Attack[] }) {
   if (count < 2) return null;
   const days = lastSevenDays(attacks);
 
-  // The label names the days rather than describing the picture: "Migraine on
+  // The label names the days rather than describing the picture: "Attacks on
   // Monday 20 and Wednesday 22". Built from each cell's own key, so it never
   // reads the clock.
   const dayName = (key: string) => {
@@ -36,8 +36,8 @@ export function WeekCard({ attacks }: { attacks: Attack[] }) {
   };
   const hits = days.filter((d) => d.hit).map((d) => dayName(d.key));
   const label = hits.length === 0
-    ? 'No migraine days in the last 7 days'
-    : `Migraine on ${hits.length === 1 ? hits[0] : `${hits.slice(0, -1).join(', ')} and ${hits[hits.length - 1]}`}`;
+    ? 'No attack days in the last 7 days'
+    : `Attacks on ${hits.length === 1 ? hits[0] : `${hits.slice(0, -1).join(', ')} and ${hits[hits.length - 1]}`}`;
 
   return (
     <div className={`${TODAY_CARD} space-y-3`}>
@@ -68,7 +68,7 @@ export function WeekCard({ attacks }: { attacks: Attack[] }) {
         <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent">
           <span className="block h-[0.3125rem] w-[0.3125rem] rotate-45 rounded-[1px] bg-bg-base" />
         </span>
-        Migraine
+        Attack
       </p>
     </div>
   );

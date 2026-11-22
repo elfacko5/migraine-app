@@ -249,7 +249,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
                 `consecutiveMigraineDays`. Neither is a run to protect or
                 break; one says what is happening now, the other when it last
                 happened. */}
-            <StatCard label="Days in a row" value={stats.inARow} sub="with a migraine" />
+            <StatCard label="Days in a row" value={stats.inARow} sub="with an attack" />
             <StatCard label="Days since" value={stats.daysSince} sub="last attack" />
             {stats.timeToPeak !== null && (
               <StatCard label="Avg time to peak" value={`${stats.timeToPeak}h`} sub="from start" />
