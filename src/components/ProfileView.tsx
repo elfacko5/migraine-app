@@ -18,6 +18,7 @@ const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
 // Fixed px values used only in this picker as a visual size-comparison reference.
 const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
+const SCALE_NAME: Record<TextScale, string> = { xs: 'XS', sm: 'Small', md: 'Medium', lg: 'Large', xl: 'XL' };
 
 export type ProfileSection = 'medications' | 'guides' | 'hit6' | 'display' | 'reminders' | 'account' | 'data';
 
@@ -109,89 +110,136 @@ interface DisplayProps {
   onClose: () => void;
 }
 
-// "Display & attack mode", the v3 page (2026-10-26) — it was "Accessibility".
-// Theme and font are radio tiles you can see the result in; the attack mode
-// controls and the text-size source are one group of switches; the five-step
-// text size and the brightness overlay keep their own sections below.
+// "Display & attack mode", the v4 page — a list that drills into Font, Text
+// size and "What it changes", matching docs/redesign-v4/screens/18-display.
+// Brightness is gone: the redesign drops the manual dim (attack mode keeps its
+// own floor via BrightnessOverlay), so `brightness`/`onBrightness` stay in the
+// props the caller passes but are no longer rendered here. The auto-setting
+// still only turns attack mode on, never off (A10, June 2026-11-22). Font,
+// Text size and What-it-changes are nested views swapped inside this one sheet
+// — the My medications → Monthly guides pattern — so their back chevron
+// returns to the list rather than closing the sheet.
 export function DisplayPanel({
-  textScale, onTextScale, brightness, onBrightness, theme, onTheme, attackMode, onAttackMode,
+  textScale, onTextScale, theme, onTheme, attackMode, onAttackMode,
   font, onFont, attackModeAuto, onAttackModeAuto, systemText, onSystemText, onClose,
 }: DisplayProps) {
+  const [view, setView] = useState<'list' | 'font' | 'textsize' | 'changes'>('list');
+
+  if (view === 'font') return <FontPage font={font} onFont={onFont} onBack={() => setView('list')} />;
+  if (view === 'textsize')
+    return <TextSizePage textScale={textScale} onTextScale={onTextScale} systemText={systemText} onSystemText={onSystemText} onBack={() => setView('list')} />;
+  if (view === 'changes') return <AttackChangesPage onBack={() => setView('list')} />;
+
   return (
     <ProfileSubPage title="Display & attack mode" onClose={onClose}>
       <div className="space-y-8">
+        {/* Attack mode — also one tap from the Today hero; it lives here too so
+            it's discoverable when nothing hurts yet. "What it changes" is its
+            own screen now, so the long explanation leaves the list. */}
+        <section className="space-y-3">
+          <SectionLabel>Attack mode</SectionLabel>
+          <List>
+            <ListRow bare>
+              <Switch checked={attackMode} onCheckedChange={onAttackMode}>Attack mode</Switch>
+            </ListRow>
+            <ListRow bare>
+              <Switch checked={attackModeAuto} onCheckedChange={onAttackModeAuto}>
+                When I log an attack
+                <span className="block text-xs text-content-muted">Turns it on as soon as you log an attack that's still going.</span>
+              </Switch>
+            </ListRow>
+            <ListRow
+              onClick={() => setView('changes')}
+              value={attackMode ? undefined : 'Everyday'}
+              supporting={attackMode ? "Attack mode is on. You'll see these when you turn it off." : undefined}
+            >
+              What it changes
+            </ListRow>
+          </List>
+        </section>
 
-      {/* Manual only, no prefers-color-scheme detection (2026-09-25, Sunny's
-          call): an explicit choice, not one the OS makes. Attack mode still
-          overrides whichever is picked here while it's on. */}
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-text-primary">Theme</p>
-        <div role="radiogroup" aria-label="Theme" className="grid grid-cols-2 gap-3">
-          <OptionTile selected={theme === 'light'} onSelect={() => onTheme('light')} style={THEME_SWATCH.light}>Light</OptionTile>
-          <OptionTile selected={theme === 'dark'} onSelect={() => onTheme('dark')} style={THEME_SWATCH.dark}>Dark</OptionTile>
-        </div>
-      </div>
+        {/* Manual theme choice, no prefers-color-scheme (2026-09-25). Each tile
+            previews the theme it selects; attack mode overrides both while on. */}
+        <section className="space-y-3">
+          <SectionLabel>Theme</SectionLabel>
+          <div role="radiogroup" aria-label="Theme" className="grid grid-cols-2 gap-3">
+            <OptionTile selected={theme === 'light'} onSelect={() => onTheme('light')} style={THEME_SWATCH.light}>Light</OptionTile>
+            <OptionTile selected={theme === 'dark'} onSelect={() => onTheme('dark')} style={THEME_SWATCH.dark}>Dark</OptionTile>
+          </div>
+        </section>
 
-      {/* Each tile is set in the face it selects, which is the whole preview.
-          Lexend stays the default; Atkinson is the dossier's opt-in for
-          maximum character distinction. */}
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-text-primary">Font</p>
-        <div role="radiogroup" aria-label="Font" className="grid grid-cols-2 gap-3">
-          <OptionTile
-            selected={font === 'lexend'}
-            onSelect={() => onFont('lexend')}
-            className={`text-text-primary ${font === 'lexend' ? 'bg-accent/20' : 'bg-bg-raised'}`}
-            style={{ fontFamily: "'Lexend', sans-serif" }}
-          >
-            <span aria-hidden="true" className="text-[1.875rem] leading-none">Aa</span>
-            Lexend
-          </OptionTile>
-          <OptionTile
-            selected={font === 'atkinson'}
-            onSelect={() => onFont('atkinson')}
-            className={`text-text-primary ${font === 'atkinson' ? 'bg-accent/20' : 'bg-bg-raised'}`}
-            style={{ fontFamily: "'Atkinson Hyperlegible Next', sans-serif" }}
-          >
-            <span aria-hidden="true" className="text-[1.875rem] leading-none">Aa</span>
-            Atkinson
-          </OptionTile>
-        </div>
-      </div>
-
-      {/* Attack mode — also one tap from the hero on Today and the floating
-          pill on the other tabs; it lives here too so it's discoverable when
-          nothing hurts yet. */}
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-text-primary">Attack mode</p>
+        {/* Font and Text size each open their own screen, where the full
+            previews have room — the list just states the current value. */}
         <List>
-          <ListRow bare>
-            <Switch checked={attackMode} onCheckedChange={onAttackMode}>Attack mode</Switch>
-          </ListRow>
-          <ListRow bare>
-            <Switch checked={attackModeAuto} onCheckedChange={onAttackModeAuto}>
-              Attack mode when I start an attack
-              <span className="block text-xs text-content-muted">Turns it on as soon as you log an attack that's still going.</span>
-            </Switch>
-          </ListRow>
+          <ListRow onClick={() => setView('font')} value={font === 'lexend' ? 'Lexend' : 'Atkinson'}>Font</ListRow>
+          <ListRow onClick={() => setView('textsize')} value={systemText ? 'iPhone' : SCALE_NAME[textScale]}>Text size</ListRow>
         </List>
-        <p className="text-xs text-text-secondary">
-          Dims the screen, warms and lowers the contrast, enlarges body text and stops all animation.
-          Everything you logged stays exactly as it is.
-        </p>
       </div>
+    </ProfileSubPage>
+  );
+}
 
-      {/* Accessibility — text size and brightness were two sibling sections;
-          they're one group now, since both answer "make this easier to look
-          at" and neither means much on its own. */}
+// A section label: 14px / 600 / letter-spaced / muted — the canonical v4
+// settings label (decision 10). Display's old 16/500/primary labels convert.
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="text-xs font-semibold tracking-wide text-text-secondary">{children}</p>;
+}
 
-      <div className="space-y-4">
-        {/* "Default text size" (2026-09-23, Sunny's call) — it was "Text
-            size", which read as though it set the size everywhere, when what
-            it actually sets is the *floor* attack mode still enlarges from.
-            "Default" is the accurate word — see attack mode's own 20px body
-            floor in CLAUDE.md, which this picker doesn't override. */}
-        <p className="text-sm font-medium text-text-primary">Default text size</p>
+// Font screen — each option renders a sample in the face it selects, with room
+// for Atkinson's "why you'd pick it" line the two-up tiles had no space for.
+// A left-aligned radio card: OptionTile's ring/mark rules on a full-width row.
+function FontPage({ font, onFont, onBack }: { font: FontChoice; onFont: (f: FontChoice) => void; onBack: () => void }) {
+  return (
+    <ProfileSubPage title="Font" onClose={onBack}>
+      <div role="radiogroup" aria-label="Font" className="space-y-3">
+        <FontOption name="Lexend" family="'Lexend', sans-serif" selected={font === 'lexend'} onSelect={() => onFont('lexend')} />
+        <FontOption
+          name="Atkinson Hyperlegible Next"
+          family="'Atkinson Hyperlegible Next', sans-serif"
+          selected={font === 'atkinson'}
+          onSelect={() => onFont('atkinson')}
+          hint="Try it if letters like I, l and 1 blur together."
+        />
+      </div>
+    </ProfileSubPage>
+  );
+}
+
+function FontOption({ name, family, selected, onSelect, hint }: {
+  name: string; family: string; selected: boolean; onSelect: () => void; hint?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={`relative block w-full rounded-card px-4 py-4 text-left ring-inset transition-colors ${
+        selected ? 'bg-accent/10 ring-2 ring-accent' : 'bg-bg-raised ring-1 ring-border-control'
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute right-3 top-3 h-3.5 w-3.5 rounded-full ring-inset ${selected ? 'ring-[5px] ring-accent' : 'ring-2 ring-current opacity-60'}`}
+      />
+      <span className={`block pr-6 text-text-primary ${selected ? 'font-semibold' : 'font-medium'}`}>{name}</span>
+      <span className="mt-1.5 block text-base text-text-primary" style={{ fontFamily: family }}>
+        Took 1 tablet at 09:15. Right temple.
+      </span>
+      {hint && <span className="mt-2 block text-xs text-text-secondary">{hint}</span>}
+    </button>
+  );
+}
+
+// Text size screen — the iPhone-size switch, then either the five-step picker
+// or, when the phone is in charge, where to change it. Picker, labels and
+// preview are unchanged from the old inline section.
+function TextSizePage({ textScale, onTextScale, systemText, onSystemText, onBack }: {
+  textScale: TextScale; onTextScale: (s: TextScale) => void; systemText: boolean; onSystemText: (on: boolean) => void; onBack: () => void;
+}) {
+  return (
+    <ProfileSubPage title="Text size" onClose={onBack}>
+      <div className="space-y-6">
         <List>
           <ListRow bare>
             <Switch checked={systemText} onCheckedChange={onSystemText}>
@@ -200,127 +248,90 @@ export function DisplayPanel({
             </Switch>
           </ListRow>
         </List>
-        <div className="space-y-4 rounded-group bg-bg-surface py-4">
-          {/* Moved above the picker (2026-09-23, Sunny's call) — it used to
-              sit under the preview card, after the thing it explains had
-              already been used. One line, so unlike the long Insights
-              captions this doesn't cost the fold; it just has to be read
-              before the control, the same reasoning `InsightSection`'s note
-              originally shipped with. */}
-          <p className="text-xs text-text-secondary">
-            Changes apply instantly across the app, and every screen reflows rather than clipping — XL is 50% larger than the default.
+
+        {systemText ? (
+          <p className="text-sm text-text-secondary">
+            Lidd follows your iPhone's text size. To change it, open iPhone Settings, then Display &amp; Brightness, then Text Size.
           </p>
-
-          {/* Five-segment picker — set aside while the iPhone's size is in
-              charge, rather than left looking live and doing nothing. The
-              choice is kept, so turning the switch off restores it. */}
-          {systemText ? (
-            <p className="text-xs text-text-secondary">Following your iPhone's text size.</p>
-          ) : (
-          <div className="flex rounded-control overflow-hidden border border-border-control">
-            {SCALES.map((s, i) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => onTextScale(s)}
-                aria-pressed={textScale === s}
-                className={`flex-1 flex flex-col items-center justify-center py-3 gap-1.5 transition-colors ${
-                  textScale === s
-                    ? 'bg-accent/20 text-accent-light'
-                    : 'bg-bg-raised text-text-secondary hover:bg-bg-border'
-                } ${i > 0 ? 'border-l border-bg-border' : ''}`}
-              >
-                {/* A shown at the absolute size that scale produces — intentional px exception */}
-                <span aria-hidden="true" style={{ fontSize: `${SCALE_PX[s]}px`, lineHeight: 1 }}>A</span>
-                <span style={{ fontSize: '0.625rem', letterSpacing: '0.05em' }} className="font-medium uppercase">
-                  {SCALE_LABELS[s]}
-                </span>
-              </button>
-            ))}
-          </div>
-          )}
-
-          {/* Live preview card — inherits root font size so it updates instantly */}
-          <div className="rounded-inset border border-bg-border/60 bg-bg-raised/40 p-card">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1 min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-text-primary">Mon, Jun 24</span>
-                  <span className="text-xs text-text-secondary">9:15 AM</span>
-                </div>
-                <p className="text-xs text-text-secondary">2h 30m · 3 readings</p>
-                <p className="text-xs text-text-secondary">Right temple, Forehead</p>
-                {/* Mirrors AttackCard by hand, so it has to track it: the chips
-                    are symptoms, not triggers, and the line above says
-                    "readings". A preview that shows a card the app no longer
-                    renders is worse than no preview — it's the one place a user
-                    is invited to study the layout closely. */}
-                <p className="text-xs text-text-secondary">
-                  Impact: <span className="text-text-primary">a lot</span>
-                </p>
-                <div className="flex flex-wrap gap-1 pt-0.5">
-                  <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Nausea</span>
-                  <span className="text-xs bg-bg-border/60 text-text-secondary rounded-full px-2 py-0.5">Light sensitivity</span>
-                </div>
-              </div>
-              <div className="shrink-0">
-                <span className="rounded-lg border border-severity-mid/30 bg-severity-mid/20 px-2 py-1 text-lg font-bold tabular-nums text-severity-mid">
-                  7
-                </span>
-              </div>
+        ) : (
+          <div className="space-y-3">
+            <SectionLabel>Size</SectionLabel>
+            <div className="flex overflow-hidden rounded-control border border-border-control">
+              {SCALES.map((s, i) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => onTextScale(s)}
+                  aria-pressed={textScale === s}
+                  className={`flex flex-1 flex-col items-center justify-center gap-1.5 py-3 transition-colors ${
+                    textScale === s ? 'bg-accent/20 text-accent-light' : 'bg-bg-raised text-text-secondary hover:bg-bg-border'
+                  } ${i > 0 ? 'border-l border-bg-border' : ''}`}
+                >
+                  {/* A at the absolute size that scale produces — intentional px exception */}
+                  <span aria-hidden="true" style={{ fontSize: `${SCALE_PX[s]}px`, lineHeight: 1 }}>A</span>
+                  <span style={{ fontSize: '0.625rem', letterSpacing: '0.05em' }} className="font-medium uppercase">{SCALE_LABELS[s]}</span>
+                </button>
+              ))}
             </div>
+            <p className="text-xs text-text-secondary">
+              {textScale === 'md' ? 'Medium is the default. ' : ''}Every screen grows with it, reflowing rather than clipping — XL is 50% larger. Attack mode makes small text bigger.
+            </p>
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="space-y-4">
-        <p className="text-sm font-medium text-text-primary">Screen brightness</p>
-
-        <div className="space-y-3 rounded-group bg-bg-surface py-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-text-primary">Overlay</span>
-            <span className="text-sm font-medium text-text-secondary tabular-nums">
-              {Math.round(brightness * 100)}%
-            </span>
-          </div>
-          <input
-            type="range"
-            // A slider with no name reads as "slider, 20%" — the percentage
-            // without the thing it is a percentage of.
-            aria-label="Screen dimming"
-            min={0}
-            max={80}
-            step={5}
-            value={Math.round(brightness * 100)}
-            onChange={(e) => onBrightness(Number(e.target.value) / 100)}
-            className="w-full"
-          />
-          {/* **A live swatch, not just the slider's own %.** (2026-09-23,
-              Sunny's call — she saw no immediate feedback while dragging.)
-              The real dim lives on `BrightnessOverlay`, `absolute` on the app
-              root at z-35, which this sub-page's own `Sheet` paints straight
-              over — so the actual effect is invisible from inside the very
-              panel that controls it. Rather than touch that layering (the
-              viewport architecture's z-order is deliberately fragile — see
-              docs/viewport-architecture.md), this mirrors its exact recipe,
-              `rgba(20,20,15,brightness)`, on a small swatch that lives inside
-              the panel and updates on every drag. */}
-          <div className="relative overflow-hidden rounded-inset border border-bg-border/60 bg-bg-raised/40 p-card">
-            <p className="text-sm font-medium text-text-primary">Preview</p>
-            <p className="text-xs text-text-secondary">How the dim looks during an attack.</p>
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0"
-              style={{ background: `rgba(20,20,15,${brightness})` }}
-            />
-          </div>
-          <p className="text-xs text-text-secondary">
-            Dims the screen during attacks without changing your phone's system brightness
-          </p>
-        </div>
-      </div>
+        <DisplayPreviewCard />
       </div>
     </ProfileSubPage>
+  );
+}
+
+// What attack mode changes — the explanation that used to sit under the toggle,
+// now its own screen with the sample log it describes.
+function AttackChangesPage({ onBack }: { onBack: () => void }) {
+  return (
+    <ProfileSubPage title="What it changes" onClose={onBack}>
+      <div className="space-y-6">
+        <section className="space-y-2">
+          <SectionLabel>A log in attack mode</SectionLabel>
+          <DisplayPreviewCard />
+        </section>
+        <List>
+          <ListRow supporting="At least 35% darker">Dims the screen</ListRow>
+          <ListRow>Warmer colours, softer contrast</ListRow>
+          <ListRow>Bigger text, if yours is set small</ListRow>
+          <ListRow>Nothing moves — animation stops</ListRow>
+          <ListRow>Your logs stay exactly as they are</ListRow>
+        </List>
+      </div>
+    </ProfileSubPage>
+  );
+}
+
+// The sample attack card shown on the Text size and What-it-changes screens.
+// Mirrors AttackCard by hand (the chips are symptoms, the line says
+// "readings"), so a preview never shows a card the app no longer renders.
+function DisplayPreviewCard() {
+  return (
+    <div className="rounded-inset border border-bg-border/60 bg-bg-raised/40 p-card">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-text-primary">Mon, Jun 24</span>
+            <span className="text-xs text-text-secondary">9:15 AM</span>
+          </div>
+          <p className="text-xs text-text-secondary">2h 30m · 3 readings</p>
+          <p className="text-xs text-text-secondary">Right temple, Forehead</p>
+          <p className="text-xs text-text-secondary">Impact: <span className="text-text-primary">a lot</span></p>
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            <span className="rounded-full bg-bg-border/60 px-2 py-0.5 text-xs text-text-secondary">Nausea</span>
+            <span className="rounded-full bg-bg-border/60 px-2 py-0.5 text-xs text-text-secondary">Light sensitivity</span>
+          </div>
+        </div>
+        <div className="shrink-0">
+          <span className="rounded-lg border border-severity-mid/30 bg-severity-mid/20 px-2 py-1 text-lg font-bold tabular-nums text-severity-mid">7</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
