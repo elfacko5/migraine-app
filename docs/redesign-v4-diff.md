@@ -63,7 +63,13 @@ Design colour values match the existing palette closely (page `#1B1A18`, card `#
 | Scrim | `#14140F` | attack-mode base value | |
 | Page padding / gap | 20 / 18 | `px-gutter` 16 | |
 
-Nothing here is decided by me: code is authoritative where the design says so (decision 15) and the design says code should move in decision 16.
+**Decided 2026-11-22 (June):**
+- **Heading size: adopt the design's 26px/600 for ordinary screen titles** (replaces code's 34px tab titles). The text-size control still scales it (≈39px at max), so accessibility holds. Couples with `TopBar`'s `min-h-14` and top padding, which were measured for 34px — re-tune those in frame when applied. *Hero headline stays 44 (code) for now; revisit when Today is built.*
+- **`text-strong`: add a new token, but NOT the design's `#E4DFD4`** — that is the value device-testing rejected as glare. Use a milder value, brighter than `text-primary` `#CDC7BB` but below the glare point (provisional `#d8d2c6`, ~11:1 on page), and verify on the phone before trusting it. Used only for the 1–2 largest texts per screen (empty-state headlines, big numbers). Light value derived when added (A11).
+- **Buttons: bigger footer CTA only** — the primary footer action goes to 56px high / 14px radius; in-card and compact buttons stay at 44px / 12px radius. Not the full two-tier.
+- **Clean batch adopted** (design's settled reconciliations): sheet radius 16→**20**, segment radius 6→**10**, `warning-surface` **#2E2820** (light `#efe4d3`, amber *icon* + primary text), **toggle 46×27** everywhere, **stepper 44** inline (64 only in the value sheet), **list rows 56 / badge 28** (40 badge only beside a page heading), **section labels 14/600** `#A39D92`, **text links → accent-light `#9bb9a1`**, on-accent label = `bg-base`, destructive = confirm-only terracotta, **chart-1…5 + chart-heat** (Insights only, per A7), **gutter 16→20 / card gap 18**.
+
+**Application approach: tokens land per-screen, not in one blind commit.** Each new colour token (`warning-surface`, `text-strong`, the chart set) gets its dark/attack/light value derived and measured *when the screen that uses it is built*, verified in frame — chart tokens with Insights, `warning-surface` with Today's overuse banners, `text-strong` with the empty states. `severity-high` stays `#c68880` (A6). Display (G2) is the first screen and carries the section-label / toggle / segment-radius / heading-26 applications.
 
 ---
 
