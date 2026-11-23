@@ -48,7 +48,7 @@ import { SegmentedControl } from './components/SegmentedControl';
 import { HistoryView } from './components/HistoryView';
 import { LogsFilterPanel, LogsFilterReset } from './components/LogsFilterPanel';
 import { DEFAULT_FILTERS, PERIOD_SEGMENTS, type LogFilters, type SortOrder, type Period } from './utils/logFilters';
-import { ProfileView, DisplayPanel, RemindersPanel, AccountPanel, DataPanel, type ProfileSection } from './components/ProfileView';
+import { ProfileView, DisplayPanel, RemindersPanel, AccountPanel, DataPanel, AboutPanel, type ProfileSection } from './components/ProfileView';
 import { MedicationsView } from './components/MedicationsView';
 import { GuidesView } from './components/GuidesView';
 import { Hit6View } from './components/Hit6View';
@@ -655,7 +655,15 @@ export default function App() {
         {/* ── Settings tab ─────────────────────────── */}
         {tab === 'profile' && (
           <section className="space-y-4">
-            <ProfileView onOpen={setProfileSheet} accountEnabled={auth.enabled} hit6Due={hit6IsDue} />
+            <ProfileView
+              onOpen={setProfileSheet}
+              accountEnabled={auth.enabled}
+              hit6Due={hit6IsDue}
+              medCount={medications.length}
+              remindersOn={defaultNotifConfig.enabled}
+              attackMode={attackMode}
+              accountEmail={auth.user?.email ?? null}
+            />
           </section>
         )}
         </div>
@@ -803,6 +811,9 @@ export default function App() {
         )}
         {profileSheet === 'data' && (
           <DataPanel auth={auth} onClose={() => setProfileSheet(null)} />
+        )}
+        {profileSheet === 'about' && (
+          <AboutPanel onClose={() => setProfileSheet(null)} />
         )}
       </Sheet>
 

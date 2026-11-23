@@ -20,7 +20,7 @@ const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', 
 const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
 const SCALE_NAME: Record<TextScale, string> = { xs: 'XS', sm: 'Small', md: 'Medium', lg: 'Large', xl: 'XL' };
 
-export type ProfileSection = 'medications' | 'guides' | 'hit6' | 'display' | 'reminders' | 'account' | 'data';
+export type ProfileSection = 'medications' | 'guides' | 'hit6' | 'display' | 'reminders' | 'account' | 'data' | 'about';
 
 interface MenuProps {
   onOpen: (section: ProfileSection) => void;
@@ -29,57 +29,118 @@ interface MenuProps {
    *  answering again. This is the *only* place HIT-6 asks for attention —
    *  deliberately not a card on Today and not a notification. */
   hit6Due?: boolean;
+  /** Row sub-text (the v4 look): the medicine count, the reminder state, the
+   *  attack-mode state, and the signed-in email (null when signed out). */
+  medCount: number;
+  remindersOn: boolean;
+  attackMode: boolean;
+  accountEmail: string | null;
 }
 
 type MenuItem = { id: ProfileSection; Icon: (p: { className?: string }) => React.ReactElement; label: string };
 
+// Lidd's version, bumped by hand — there is no real build-pipeline number to
+// show, so no fake "build N".
+const APP_VERSION = '1.0';
+
+// About's mark is a Lucide info glyph — a generic UI affordance, inlined to the
+// same contract as the drawn icons (24×24, currentColor). A function
+// declaration so MENU_GROUPS below can name it before this line.
+function AboutIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
+
 // Drawn marks rather than emoji, for the reason the attack-mode pill gave up
-// its own: an emoji is full-colour and can't inherit `currentColor`, so four
+// its own: an emoji is full-colour and can't inherit `currentColor`, so a row
 // of them made a settings list the most saturated thing on a screen the
 // palette works to keep quiet. These take the row's own colour and size.
 //
-// **Two groups, in the v3 grouped-list look** (2026-10-26): what you keep in
-// the app (medications, the impact questionnaire), then how the app behaves
-// (display, account, data). The v3 prototype's own rows — a doctor report, a
-// states preview, "restart prototype" — are not here: the last two are
-// prototype tools, and the report is a feature of its own.
-const MENU_GROUPS: MenuItem[][] = [
-  [
-    { id: 'medications', Icon: TabletIcon, label: 'My medications' },
-    { id: 'hit6', Icon: ChecklistIcon, label: 'Headache impact' },
-  ],
-  [
-    { id: 'display', Icon: EyeIcon, label: 'Display & attack mode' },
-    { id: 'reminders', Icon: BellIcon, label: 'Reminders' },
-    { id: 'account', Icon: CloudIcon, label: 'Account & sync' },
-    { id: 'data', Icon: DataIcon, label: 'Data' },
-  ],
+// **Two labelled groups, v4 (docs/redesign-v4/screens/14-settings).** "Your
+// diary" is what you record and when you're reminded; "The app" is how it
+// behaves and the account. Each row carries a value sub-text (count, state,
+// email). Headache impact and Account & sync are kept though the v4 board omits
+// them — the board is incomplete there, and dropping either would lose a
+// shipped feature. About is new. The prototype's doctor-report / states-preview
+// rows stay out (a report is its own feature; the others are prototype tools).
+const MENU_GROUPS: { label: string; items: MenuItem[] }[] = [
+  {
+    label: 'Your diary',
+    items: [
+      { id: 'medications', Icon: TabletIcon, label: 'My medications' },
+      { id: 'hit6', Icon: ChecklistIcon, label: 'Headache impact' },
+      { id: 'reminders', Icon: BellIcon, label: 'Reminders' },
+    ],
+  },
+  {
+    label: 'The app',
+    items: [
+      { id: 'display', Icon: EyeIcon, label: 'Display & attack mode' },
+      { id: 'data', Icon: DataIcon, label: 'Data' },
+      { id: 'account', Icon: CloudIcon, label: 'Account & sync' },
+      { id: 'about', Icon: AboutIcon, label: 'About' },
+    ],
+  },
 ];
 
-// Every group is its own sub-page. An earlier version kept these flat and
-// gave only medications a row, which left one row sitting above three loose
-// sections and read as an accident rather than a choice — the page needs to
-// be one thing or the other.
-export function ProfileView({ onOpen, accountEnabled, hit6Due = false }: MenuProps) {
+// Every row opens its own sub-page. The group labels and value sub-text are the
+// v4 look; the "Due" marker on Headache impact stays text, not a dot — a dot
+// reads as an alert, and this is a suggestion about a questionnaire.
+export function ProfileView({ onOpen, accountEnabled, hit6Due = false, medCount, remindersOn, attackMode, accountEmail }: MenuProps) {
+  const valueFor = (id: ProfileSection): string | undefined => {
+    switch (id) {
+      case 'medications': return `${medCount} ${medCount === 1 ? 'medicine' : 'medicines'}`;
+      case 'reminders': return remindersOn ? 'On during attacks' : 'Off';
+      case 'hit6': return hit6Due ? 'Due' : undefined;
+      case 'display': return `Attack mode ${attackMode ? 'on' : 'off'}`;
+      case 'data': return 'Export, import, delete';
+      case 'account': return accountEmail ?? 'Not signed in';
+      default: return undefined;
+    }
+  };
   return (
-    <div className="space-y-4">
-      {MENU_GROUPS.map((group, gi) => (
-        <List key={gi}>
-          {group.filter((m) => m.id !== 'account' || accountEnabled).map((item) => (
-            <ListRow
-              key={item.id}
-              leading={<item.Icon />}
-              // Text, not a coloured dot: a dot on a settings row reads as an
-              // alert, and this is a suggestion about a questionnaire.
-              value={item.id === 'hit6' && hit6Due ? 'Due' : undefined}
-              onClick={() => onOpen(item.id)}
-            >
-              {item.label}
-            </ListRow>
-          ))}
-        </List>
+    <div className="space-y-6">
+      {MENU_GROUPS.map((group) => (
+        <section key={group.label} className="space-y-2">
+          <SectionLabel>{group.label}</SectionLabel>
+          <List>
+            {group.items
+              .filter((m) => m.id !== 'account' || accountEnabled)
+              .map((item) => (
+                <ListRow key={item.id} leading={<item.Icon />} value={valueFor(item.id)} onClick={() => onOpen(item.id)}>
+                  {item.label}
+                </ListRow>
+              ))}
+          </List>
+        </section>
       ))}
     </div>
+  );
+}
+
+// About — version, what Lidd is and isn't, and where it's made. The v4 board's
+// Privacy policy / Terms of use / Send feedback rows are deferred: the policy
+// and terms are legal content that doesn't exist yet, and feedback has no
+// destination decided. They land when those are settled.
+export function AboutPanel({ onClose }: { onClose: () => void }) {
+  return (
+    <ProfileSubPage title="About" onClose={onClose}>
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <p className="text-[2rem] font-semibold leading-tight text-text-primary">Lidd</p>
+          <p className="text-sm text-text-secondary">Version {APP_VERSION}</p>
+        </div>
+        <p className="text-sm leading-relaxed text-text-primary">
+          Lidd is a diary for you and your doctor. It records attacks, medication and how they affect you — it doesn't diagnose, score severity or give medical advice. If you're in doubt about a symptom, talk to a doctor or pharmacist.
+        </p>
+        <p className="text-xs text-text-secondary">Made in Denmark.</p>
+      </div>
+    </ProfileSubPage>
   );
 }
 
