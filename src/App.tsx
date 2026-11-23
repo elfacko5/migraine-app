@@ -18,6 +18,8 @@ import { awaitPendingVoiceEntry } from './utils/pendingVoice';
 import { consumePendingActions } from './utils/pendingActions';
 import { useWidgetSnapshot } from './hooks/useWidgetSnapshot';
 import { BottomNav } from './components/BottomNav';
+import { AddSheet } from './components/AddSheet';
+import { formatTime } from './utils/format';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
 import { EndAttackDialog } from './components/EndAttackDialog';
@@ -81,6 +83,7 @@ export default function App() {
   const [detailAttackId, setDetailAttackId] = useState<number | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [profileSheet, setProfileSheet] = useState<ProfileSection | null>(null);
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
 
   // Logs list state lives up here, not in HistoryView, because its filter
   // Sheet has to be rendered from this component — a Sheet inside the tab's
@@ -676,13 +679,20 @@ export default function App() {
       <BottomNav
         active={tab}
         onChange={setTab}
-        addActions={ongoingAttack
+        onAddPress={() => setAddSheetOpen(true)}
+        addOpen={addSheetOpen}
+      />
+      <AddSheet
+        open={addSheetOpen}
+        ongoing={!!ongoingAttack}
+        onClose={() => setAddSheetOpen(false)}
+        actions={ongoingAttack
           ? [
-              { label: 'Add an update', onSelect: () => setUpdateAttackId(ongoingAttack.id) },
+              { label: 'Add an update', detail: `Started ${formatTime(ongoingAttack.snapshots[0].time)}`, onSelect: () => setUpdateAttackId(ongoingAttack.id) },
               { label: 'End attack', onSelect: () => setEndConfirmOpen(true) },
             ]
           : [
-              { label: 'Log an attack', onSelect: () => { setLogPast(false); setLogSheetOpen(true); } },
+              { label: 'Log an attack', detail: 'Starting now', onSelect: () => { setLogPast(false); setLogSheetOpen(true); } },
               { label: 'Add a past attack', onSelect: () => { setLogPast(true); setLogSheetOpen(true); } },
             ]}
       />
