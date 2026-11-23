@@ -19,23 +19,58 @@ export function AddSheet({ open, ongoing, actions, onClose }: {
   actions: FabAction[];
   onClose: () => void;
 }) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const firstRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const title = ongoing ? 'Add or end' : 'Add';
 
-  // Escape closes, body scroll locks, focus moves to the first action — the
-  // same rules Sheet applies to the wizards.
+  // Focus the first action on open, make everything behind the sheet inert
+  // (aria-modal alone is not honoured by iOS VoiceOver in a WKWebView, so
+  // without this the Today page, nav and the + stay reachable — the same
+  // reason Sheet does it), and return focus to the + on close. Deps are
+  // [open] only, so an unrelated App re-render can't re-steal focus to the
+  // first row or re-run the inert dance (Sheet's rule).
+  useEffect(() => {
+    if (!open) return;
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    firstRef.current?.focus({ preventScroll: true });
+
+    const parent = rootRef.current?.parentElement;
+    const touched: { el: HTMLElement; inert: boolean; hidden: string | null }[] = [];
+    if (parent) {
+      for (const c of Array.from(parent.children)) {
+        if (c === rootRef.current || c.hasAttribute('data-modal-exempt')) continue;
+        const el = c as HTMLElement;
+        touched.push({ el, inert: el.inert, hidden: el.getAttribute('aria-hidden') });
+        el.inert = true;
+        el.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    return () => {
+      for (const t of touched) {
+        t.el.inert = t.inert;
+        if (t.hidden === null) t.el.removeAttribute('aria-hidden'); else t.el.setAttribute('aria-hidden', t.hidden);
+      }
+      const opener = openerRef.current;
+      if (opener && opener.isConnected && !opener.closest('[inert]')) opener.focus({ preventScroll: true });
+    };
+  }, [open]);
+
+  // Escape closes and body scroll locks while open. Separate from the focus
+  // effect above so onClose's changing identity can't re-run that one.
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
-    firstRef.current?.focus({ preventScroll: true });
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
   }, [open, onClose]);
 
   return (
     <div
+      ref={rootRef}
       className={`absolute inset-0 z-50 ${open ? '' : 'pointer-events-none'}`}
       aria-hidden={!open}
       inert={!open}
