@@ -87,8 +87,13 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
 
   function submit() {
     const nowMs = Date.now();
-    const resolvedStartMs = startMode === 'manual' ? new Date(localInputToIso(startTime)).getTime() : nowMs - (START_OFFSET_MIN[startMode] ?? 0) * 60_000;
-    const startIso = new Date(resolvedStartMs).getTime() > nowMs ? new Date(nowMs).toISOString() : new Date(resolvedStartMs).toISOString();
+    const rawStartMs = startMode === 'manual' ? new Date(localInputToIso(startTime)).getTime() : nowMs - (START_OFFSET_MIN[startMode] ?? 0) * 60_000;
+    // Clamped once, here, and reused for every dose below — a manually
+    // picked start in the future (the picker's own max should already
+    // prevent this, but nothing downstream should rely on that alone) must
+    // not push a dose's resolved time past "now" either.
+    const resolvedStartMs = Math.min(rawStartMs, nowMs);
+    const startIso = new Date(resolvedStartMs).toISOString();
 
     // Every dose entry resolves to its own time; one that lands on the start
     // (within doseEntryMs's own slack) rides on the opening reading instead

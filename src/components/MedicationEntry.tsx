@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Attack, Medication } from '../types';
-import { formatTime, isoToLocalInput } from '../utils/format';
+import { isoToLocalInput } from '../utils/format';
 import { chipClass } from '../utils/chipStyles';
 import { RadioDot } from './RadioDot';
 import { ChipCheck } from './ChipCheck';
@@ -45,20 +45,35 @@ export function MedicationEntry({
   const [customDose, setCustomDose] = useState('');
   const options = doseOptions(startMs, endMs, nowMs);
 
-  const selectedFor = (name: string) => value.find((m) => m.name === name);
+  // Case-insensitive throughout — "Sumatriptan" typed into the custom field
+  // must find the chip already selected as "sumatriptan", not create a
+  // second entry that silently doubles every dose at save time.
+  const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  const selectedFor = (name: string) => value.find((m) => sameName(m.name, name));
 
   function toggle(med: { name: string; dose: string }) {
-    if (selectedFor(med.name)) onChange(value.filter((m) => m.name !== med.name));
+    if (selectedFor(med.name)) onChange(value.filter((m) => !sameName(m.name, med.name)));
     else onChange([...value, { name: med.name, dose: med.dose, doses: [newDoseEntry()] }]);
   }
 
   function updateMed(name: string, patch: Partial<SelectedMedication>) {
-    onChange(value.map((m) => (m.name === name ? { ...m, ...patch } : m)));
+    onChange(value.map((m) => (sameName(m.name, name) ? { ...m, ...patch } : m)));
+  }
+
+  // A unit-count label ("3 tablets") only ever described the one dose it was
+  // derived from. Adding a second dose makes it describe both, which is
+  // wrong the moment the two have different amounts — so it's cleared back
+  // to blank rather than left stating a number that may no longer be true
+  // of this dose. A typed strength ("50mg") is unaffected: that is a fact
+  // about the drug, not about how many were taken.
+  function addDoseTo(med: SelectedMedication): SelectedMedication {
+    const clearDose = LOOKS_LIKE_UNITS.test(med.dose.trim());
+    return { ...med, ...(clearDose ? { dose: '' } : {}), doses: [...med.doses, newDoseEntry()] };
   }
 
   function addDose(name: string) {
     const med = selectedFor(name);
-    if (med) updateMed(name, { doses: [...med.doses, newDoseEntry()] });
+    if (med) onChange(value.map((m) => (sameName(m.name, name) ? addDoseTo(m) : m)));
   }
 
   function removeDose(name: string, key: string) {
@@ -74,20 +89,45 @@ export function MedicationEntry({
   // Keeps `dose`'s free-text role intact — a strength like "50mg" is left
   // alone, since restating it as "2 tablets" would throw away the one fact
   // the field was holding. Same rule as MedicationInput's own setUnits.
+  //
+  // Both the dose-text rewrite and the amount change must land in one
+  // `onChange` call: `updateMed`/`updateDose` each compute their next array
+  // from this render's own `value`, so two separate calls in a row would
+  // have the second overwrite the first rather than compose with it.
+  //
+  // The rewrite only happens with exactly one dose entry — `dose` is one
+  // string shared by every dose of this medicine, so a unit-count label
+  // derived from *this* dose's amount would misdescribe any other dose of
+  // the same medicine that carries a different amount.
   function setUnits(name: string, doseKey: string, n: number) {
     const med = selectedFor(name);
     if (!med) return;
     const library = findMedication(medications, name);
     const text = med.dose.trim();
     const keepText = HAS_STRENGTH.test(text) || (text !== '' && !LOOKS_LIKE_UNITS.test(text));
-    if (!keepText) updateMed(name, { dose: unitsLabel(n, library) });
-    updateDose(name, doseKey, { amount: n });
+    const rewriteDose = !keepText && med.doses.length === 1;
+    onChange(value.map((m) => (!sameName(m.name, name) ? m : {
+      ...m,
+      ...(rewriteDose ? { dose: unitsLabel(n, library) } : {}),
+      doses: m.doses.map((d) => (d.key === doseKey ? { ...d, amount: n } : d)),
+    })));
   }
 
+  // A typed name that matches a medicine already selected (a chip pick, or
+  // an earlier custom add — any case) adds another dose to that one entry
+  // instead of a second, duplicate entry for the same medicine: `value`
+  // would otherwise hold it twice, and every dose would be saved twice.
   function addCustom() {
     const name = customName.trim();
     if (!name) return;
-    onChange([...value, { name, dose: customDose.trim(), doses: [newDoseEntry()] }]);
+    const existing = selectedFor(name);
+    if (existing) {
+      onChange(value.map((m) => (m === existing ? addDoseTo(m) : m)));
+    } else {
+      const chip = recentMeds.find((m) => sameName(m.name, name));
+      if (chip) onChange([...value, { name: chip.name, dose: chip.dose, doses: [newDoseEntry()] }]);
+      else onChange([...value, { name, dose: customDose.trim(), doses: [newDoseEntry()] }]);
+    }
     setCustomName('');
     setCustomDose('');
     setCustomOpen(false);
@@ -97,7 +137,7 @@ export function MedicationEntry({
   // `recentMeds`) still needs its own expanded card — without this, picking
   // "+ Add a medication" would add it to `value` and then render nothing at
   // all, since the card used to live only inside the `recentMeds.map` loop.
-  const customSelected = value.filter((m) => !recentMeds.some((r) => r.name === m.name));
+  const customSelected = value.filter((m) => !recentMeds.some((r) => sameName(r.name, m.name)));
 
   return (
     <div className="space-y-3">
@@ -117,7 +157,7 @@ export function MedicationEntry({
                     type="button"
                     onClick={() => toggle(med)}
                     aria-pressed={false}
-                    className={`flex min-h-[3.625rem] w-full items-center gap-3 rounded-group px-4 py-2.5 text-left transition-colors ${chipClass(false)}`}
+                    className={`flex min-h-[3.625rem] w-full items-center gap-3 rounded-card px-4 py-2.5 text-left transition-colors ${chipClass(false)}`}
                   >
                     <ClassBadge small>{classLetter(library?.class) ?? '–'}</ClassBadge>
                     <span className="min-w-0 flex-1">
@@ -202,7 +242,7 @@ export function MedicationEntry({
               type="button"
               onClick={addCustom}
               disabled={!customName.trim()}
-              className="tap-44-y btn-tertiary min-h-0 rounded-control-sm py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
+              className="tap-44-y btn-tertiary min-h-0 rounded-control py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
             >
               Add
             </button>
@@ -210,7 +250,7 @@ export function MedicationEntry({
               <button
                 type="button"
                 onClick={() => { setCustomName(''); setCustomDose(''); setCustomOpen(false); }}
-                className="tap-44-y btn-tertiary min-h-0 rounded-control-sm py-1.5 text-sm font-medium transition-colors"
+                className="tap-44-y btn-tertiary min-h-0 rounded-control py-1.5 text-sm font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -221,7 +261,7 @@ export function MedicationEntry({
         <button
           type="button"
           onClick={() => setCustomOpen(true)}
-          className="tap-44-y btn-tertiary min-h-0 rounded-control-sm py-2 text-sm font-medium transition-colors"
+          className="tap-44-y btn-tertiary min-h-0 rounded-control py-2 text-sm font-medium transition-colors"
         >
           + Add a medication
         </button>
@@ -252,11 +292,9 @@ function MedicineCard({ selected, library, attacks, options, startMs, endMs, now
   onTime: (key: string, t: string) => void;
   onRemoveDose: (key: string) => void;
 }) {
-  const totalUnits = selected.doses.reduce((sum, d) => sum + d.amount, 0);
-  const latestMs = Math.max(...selected.doses.map((d) => doseEntryMs(d, startMs, endMs, nowMs)));
   const unit = library?.unitLabel?.trim() || DEFAULT_UNIT;
   return (
-    <div className="overflow-hidden rounded-group bg-bg-surface ring-1 ring-inset ring-accent">
+    <div className="overflow-hidden rounded-card bg-bg-surface ring-1 ring-inset ring-accent">
       <button type="button" onClick={onDeselect} aria-pressed className="flex min-h-[3.625rem] w-full items-center gap-3 px-4 py-2.5 text-left">
         <ClassBadge small>{classLetter(library?.class) ?? '–'}</ClassBadge>
         <span className="min-w-0 flex-1">
@@ -282,7 +320,7 @@ function MedicineCard({ selected, library, attacks, options, startMs, endMs, now
             onRemove={() => onRemoveDose(d.key)}
           />
         ))}
-        <DoseLimitNote library={library} attacks={attacks} name={selected.name} totalUnits={totalUnits} atIso={new Date(latestMs).toISOString()} />
+        <DoseLimitNote library={library} attacks={attacks} name={selected.name} doses={selected.doses} startMs={startMs} endMs={endMs} nowMs={nowMs} />
         <button type="button" onClick={onAddDose} className="tap-44-y min-h-0 py-1.5 text-sm font-medium text-accent-light transition-colors hover:text-accent">
           + Add another dose
         </button>
@@ -380,20 +418,52 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
   );
 }
 
-/** The running-position note and limit warnings — same copy and rule as
- *  `MedicationInput`'s, checked against the sum of every dose entry for this
- *  medicine rather than one. Never blocks a save; states the user's own
- *  number and stops. */
-function DoseLimitNote({ library, attacks, name, totalUnits, atIso }: {
+/**
+ * The running-position note and limit warnings — same copy and rule as
+ * `MedicationInput`'s. Never blocks a save; states the user's own number
+ * and stops.
+ *
+ * **Per-intake is checked per dose entry, not against the sum.** Two
+ * separate 1-tablet doses are two intakes, not one intake of two — summing
+ * them before comparing to `maxPerIntake` would call a dose "too much in
+ * one go" that was never taken in one go. The daily total and the 24h
+ * count are legitimately a sum, since `maxPerDay` is about the whole day.
+ *
+ * **The minimum gap is checked two ways**: `checkDose`'s own `tooSoon`
+ * against history, and — new here — between these dose entries themselves.
+ * Two doses entered 30 minutes apart in this same step are exactly as
+ * "too soon" as one against a logged dose; checking only against history
+ * missed that entirely.
+ */
+function DoseLimitNote({ library, attacks, name, doses, startMs, endMs, nowMs }: {
   library: Medication | null;
   attacks: Attack[];
   name: string;
-  totalUnits: number;
-  atIso: string;
+  doses: DoseEntry[];
+  startMs: number;
+  endMs: number | null;
+  nowMs: number;
 }) {
   const hasLimits = !!library && (!!library.maxPerIntake || !!library.maxPerDay || !!library.minHoursBetween);
   if (!hasLimits || !library) return null;
-  const check = checkDose(library, attacks, name, totalUnits, atIso);
+
+  const resolved = doses
+    .map((d) => ({ ms: doseEntryMs(d, startMs, endMs, nowMs), amount: d.amount }))
+    .sort((a, b) => a.ms - b.ms);
+  const totalUnits = resolved.reduce((sum, d) => sum + d.amount, 0);
+  const latestMs = resolved[resolved.length - 1].ms;
+  const check = checkDose(library, attacks, name, totalUnits, new Date(latestMs).toISOString());
+
+  const exceedsIntake = !!library.maxPerIntake && resolved.some((d) => d.amount > library.maxPerIntake!);
+
+  let tooSoon = check.tooSoon;
+  if (library.minHoursBetween && resolved.length > 1) {
+    const minMs = library.minHoursBetween * 60 * 60 * 1000;
+    for (let i = 1; i < resolved.length; i++) {
+      if (resolved[i].ms - resolved[i - 1].ms < minMs) tooSoon = true;
+    }
+  }
+
   return (
     <div className="space-y-1">
       <p className="text-xs text-text-secondary">
@@ -401,7 +471,7 @@ function DoseLimitNote({ library, attacks, name, totalUnits, atIso }: {
           ? `${check.unitsInWindow + totalUnits} of ${library.maxPerDay} in the last 24h`
           : `${check.unitsInWindow + totalUnits} in the last 24h`}
       </p>
-      {check.exceedsIntake && library.maxPerIntake && (
+      {exceedsIntake && library.maxPerIntake && (
         <p className="text-xs text-severity-mid">
           You entered a limit of {unitsLabel(library.maxPerIntake, library)} in one go.
         </p>
@@ -411,13 +481,12 @@ function DoseLimitNote({ library, attacks, name, totalUnits, atIso }: {
           That would put you past the {unitsLabel(library.maxPerDay, library)} in 24 hours you entered.
         </p>
       )}
-      {check.tooSoon && check.nextAllowedAt && library.minHoursBetween && (
+      {tooSoon && library.minHoursBetween && (
         <p className="text-xs text-severity-mid">
-          You entered a {library.minHoursBetween}-hour gap between doses — the next one falls at{' '}
-          {formatTime(check.nextAllowedAt)}.
+          You entered a {library.minHoursBetween}-hour gap between doses.
         </p>
       )}
-      {(check.exceedsIntake || check.exceedsDaily || check.tooSoon) && (
+      {(exceedsIntake || check.exceedsDaily || tooSoon) && (
         <p className="text-xs text-text-secondary">
           That's the limit you entered — worth checking it against your label or what your doctor told you.
         </p>
