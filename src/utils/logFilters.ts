@@ -1,5 +1,5 @@
 import type { Attack } from '../types';
-import { attackMaxSeverity } from './stats';
+import { attackMaxSeverity, hasKnownDuration } from './stats';
 import { isRetired } from './retired';
 import { IMPACT_SHORT } from './impact';
 import { LOW_MAX, MID_MAX } from './severity';
@@ -126,8 +126,12 @@ export function attackMedications(attack: Attack): string[] {
 }
 
 // Ongoing attacks measure to now, so a live attack sorts by how long it has
-// been running rather than falling to the bottom as a zero.
+// been running rather than falling to the bottom as a zero. An ended attack
+// whose end is only a placeholder guess (`endUnknown`) sorts to the very
+// bottom of "Longest" instead — the row itself says "Not recorded", and
+// ranking it by a length the app doesn't actually know would contradict that.
 function durationMs(attack: Attack, now: number): number {
+  if (attack.end && !hasKnownDuration(attack)) return -1;
   const start = new Date(attack.snapshots[0].time).getTime();
   const end = attack.end ? new Date(attack.end).getTime() : now;
   return Math.max(0, end - start);

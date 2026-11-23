@@ -91,7 +91,10 @@ export function longestPlateauMinutes(attack: Attack): number {
     }
   }
   if (runStart !== null) {
-    const end = attack.end ?? snaps[snaps.length - 1].time;
+    // Same fallback as an ongoing attack (`end` null): the last reading's own
+    // time, never the placeholder guess an unknown end would otherwise
+    // stretch this run out to.
+    const end = hasKnownDuration(attack) ? attack.end! : snaps[snaps.length - 1].time;
     longest = Math.max(longest, msBetween(snaps[runStart].time, end) / 60000);
   }
   return Math.round(longest);

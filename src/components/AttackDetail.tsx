@@ -80,10 +80,14 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
   const letterFor = (name: string) => classLetter(findMedication(medications, name)?.class);
 
   // "Wed 08:17 – Thu 08:26", or just the end time when it's the same day.
+  // An unknown end ("gone when you woke up," no time added) never states the
+  // placeholder as a fact — same rule as the duration tile.
   const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short' });
   const sameDay = (a: string, b: string) => new Date(a).toDateString() === new Date(b).toDateString();
   const span = `${day(start)} ${formatTime(start)} – ${
-    attack.end ? `${sameDay(start, attack.end) ? '' : `${day(attack.end)} `}${formatTime(attack.end)}` : 'now'
+    !attack.end ? 'now'
+    : !hasKnownDuration(attack) ? 'end time not recorded'
+    : `${sameDay(start, attack.end) ? '' : `${day(attack.end)} `}${formatTime(attack.end)}`
   }`;
 
   // Where it hurt: each area's worst, and its value at the last reading. An
@@ -100,10 +104,20 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
     }))
     .sort((a, b) => b.peak - a.peak || a.name.localeCompare(b.name));
 
-  // Updates, newest first, with the end as its own row.
-  type Update = { key: string; time: string; title: string; more: string };
+  // Updates, newest first, with the end as its own row. A placeholder end
+  // ("gone when you woke up," no time added) shows no time at all rather
+  // than the guess — `timeUnknown` blanks the clock column below.
+  type Update = { key: string; time: string; title: string; more: string; timeUnknown?: boolean };
   const updates: Update[] = [
-    ...(attack.end ? [{ key: 'end', time: attack.end, title: 'Attack ended', more: '' }] : []),
+    ...(attack.end
+      ? [{
+          key: 'end',
+          time: attack.end,
+          title: 'Attack ended',
+          more: hasKnownDuration(attack) ? '' : 'Time not recorded',
+          timeUnknown: !hasKnownDuration(attack),
+        }]
+      : []),
     ...[...attack.snapshots].reverse().map((s, i) => ({
       key: `${s.time}-${i}`,
       time: s.time,
@@ -153,8 +167,8 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
       <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
         <div className="grid grid-cols-3 gap-2.5">
           <Tile
-            value={!ongoing && !hasKnownDuration(attack) ? 'Not recorded' : formatDuration(start, attack.end)}
-            label={ongoing ? 'so far' : 'long'}
+            value={!ongoing && !hasKnownDuration(attack) ? '—' : formatDuration(start, attack.end)}
+            label={!ongoing && !hasKnownDuration(attack) ? 'not recorded' : ongoing ? 'so far' : 'long'}
           />
           <Tile value={String(peak)} label="peak pain" />
           <div className="flex flex-col items-center justify-center gap-1 rounded-card bg-bg-surface p-3 text-center">
@@ -242,8 +256,8 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           {shownUpdates.map((u) => (
             <li key={u.key} className="flex items-start gap-3 px-4 py-3">
               <span className="w-12 shrink-0 text-xs tabular-nums text-text-secondary">
-                {spansDays && <span className="block">{day(u.time)}</span>}
-                {formatTime(u.time)}
+                {!u.timeUnknown && spansDays && <span className="block">{day(u.time)}</span>}
+                {u.timeUnknown ? '—' : formatTime(u.time)}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium text-text-primary">{u.title}</span>
@@ -420,9 +434,15 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
   onCancel: () => void;
   onSave: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>>) => void;
 }) {
-  const [triggers, setTriggers] = useState<string[]>(attack.triggers);
+  const [triggers, setTriggers] = useState<string[]>(attack.triggers.filter((t) => t !== NOTHING_UNUSUAL));
   const [woke, setWoke] = useState<boolean>(attack.wokeWithMigraine ?? false);
   const [end, setEnd] = useState<string>(() => isoToLocalInput(attack.end ?? undefined));
+  // Whether the user has actually touched the end-time field this visit —
+  // distinct from `end` differing from the stored value, because the field
+  // starts pre-filled with the placeholder guess on an endUnknown attack.
+  // Without this, opening the screen to change something else entirely and
+  // saving would silently "confirm" a guess nobody looked at.
+  const [endTouched, setEndTouched] = useState(false);
 
   // An end time can never precede the last reading. Same clamp EndAttackDialog
   // applies, and for the same reason: the picker is minute-precision while
@@ -432,16 +452,24 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
 
   function save() {
     const patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>> = {
+      // The sentinel never round-trips back in from this generic triggers
+      // picker — it has no chip for it and no way to re-add it, so a real
+      // selection here always means "the two days before" is answered with
+      // something specific, not "nothing unusual" any more.
       triggers,
       wokeWithMigraine: woke,
     };
-    // Only when it actually changed. The picker is minute-precision and the
-    // stored time is second-precision, so round-tripping an untouched value
-    // would silently shave up to 59 seconds off the end of the attack every
-    // time this screen was opened and saved.
-    if (attack.end !== null && end && end !== isoToLocalInput(attack.end)) {
-      const iso = localInputToIso(end);
-      patch.end = iso < minTime ? minTime : iso;
+    // Sent when the value actually changed, or — for an attack whose end is
+    // only a placeholder guess — whenever the user touched the field at all,
+    // even to re-pick the same minute. Either way is what clears endUnknown;
+    // a value that merely *displays* unchanged because it was never looked
+    // at must not.
+    if (attack.end !== null && end) {
+      const valueChanged = end !== isoToLocalInput(attack.end);
+      if (valueChanged || (attack.endUnknown && endTouched)) {
+        const iso = localInputToIso(end);
+        patch.end = iso < minTime ? minTime : iso;
+      }
     }
     onSave(patch);
   }
@@ -496,9 +524,10 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
               value={end}
               min={isoToLocalInput(minTime)}
               max={isoToLocalInput()}
-              onChange={setEnd}
+              onChange={(v) => { setEnd(v); setEndTouched(true); }}
             />
             <p className="text-xs text-text-secondary">
+              {attack.endUnknown && 'Not recorded — this is a placeholder. '}
               It can't be set before the last reading at {formatTime(minTime)}.
             </p>
           </div>
