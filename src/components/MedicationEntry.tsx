@@ -131,19 +131,24 @@ export function MedicationEntry({
   // instead of a second, duplicate entry for the same medicine: `value`
   // would otherwise hold it twice, and every dose would be saved twice.
   //
-  // A dose/strength typed alongside that name is never silently dropped —
-  // it's what the user just told us, which `addDoseTo`'s own blank-if-
-  // ambiguous rule has no way to know about. Only falls back to that rule
-  // when the field was left empty.
+  // A dose/strength typed alongside that name is only adopted when there is
+  // exactly one existing dose — `dose` is one string shared by every dose of
+  // this medicine, so overwriting it once a second dose already exists would
+  // silently restate that earlier dose's strength as whatever was just
+  // typed for this one. With more than one existing dose, the typed text is
+  // not applied (ambiguous: which dose would it even describe?), but nothing
+  // already saved is corrupted — the same trade the ambiguity rule elsewhere
+  // in this file makes. The adopted text still goes through `addDoseTo`'s
+  // own keepText check, so a typed unit count ("2 tablets") is cleared the
+  // same way it would be anywhere else, not adopted verbatim.
   function addCustom() {
     const name = customName.trim();
     if (!name) return;
     const dose = customDose.trim();
     const existing = selectedFor(name);
     if (existing) {
-      onChange(value.map((m) => (m !== existing ? m : dose
-        ? { ...m, dose, doses: [...m.doses, newDoseEntry()] }
-        : addDoseTo(m))));
+      const withDose = dose && existing.doses.length === 1 ? { ...existing, dose } : existing;
+      onChange(value.map((m) => (m !== existing ? m : addDoseTo(withDose))));
     } else {
       const chip = recentMeds.find((m) => sameName(m.name, name));
       if (chip) onChange([...value, { name: chip.name, dose: dose || chip.dose, doses: [newDoseEntry()] }]);
@@ -485,7 +490,15 @@ function DoseLimitNote({ library, attacks, name, doses, startMs, endMs, nowMs }:
   // check at the latest time with the summed units is right for those.
   const check = checkDose(library, attacks, name, totalUnits, new Date(latestMs).toISOString());
 
-  const exceedsIntake = !!library.maxPerIntake && resolved.some((d) => d.amount > library.maxPerIntake!);
+  // Grouped by exact resolved time first: two entries deliberately left at
+  // the same moment (both "When it started", or the same picked time) are
+  // one intake, not two, and summing *those* against maxPerIntake is right
+  // — it's only entries at genuinely different times that are separate
+  // intakes and must be checked individually, never summed together.
+  const intakeGroups = new Map<number, number>();
+  for (const d of resolved) intakeGroups.set(d.ms, (intakeGroups.get(d.ms) ?? 0) + d.amount);
+  const exceedsIntake = !!library.maxPerIntake
+    && [...intakeGroups.values()].some((amount) => amount > library.maxPerIntake!);
 
   // The minimum gap is checked two ways, and *every* entry needs both:
   // each entry against already-logged history (checkDose's own tooSoon,
