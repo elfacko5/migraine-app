@@ -108,6 +108,11 @@
      use this. */
   --spacing-target:  max(44px, calc(var(--spacing) * 11));  /* 44px touch target */
   --spacing-compact: calc(var(--spacing) * 9);   /* 36px compact control */
+  /* 56px list row (decision 8, v4) — settingsUi.tsx's SettingsRow. Not the
+     same role as --spacing-target: that's the 44px touch-target floor used
+     everywhere else, this is one specific row height a v4 settings-style
+     list measured at. */
+  --spacing-row:     calc(var(--spacing) * 14);  /* 56px list row */
 
   /* ── Padding roles (phase 3) ──────────────────────────
      Only for structures that repeat; everything else stays on Tailwind's

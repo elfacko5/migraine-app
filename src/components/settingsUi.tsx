@@ -10,6 +10,89 @@ export function Chevron() {
   );
 }
 
+// A v4 settings list: 56px rows at 16px text on a 20px card (decision 8),
+// replacing code-ds's List/ListRow for ProfileView's screens. Built
+// 2026-11-23 after June reported Settings "visually far from the redesign"
+// — code-ds's own List/ListRow hardcode 44px rows at 17px text on a smaller
+// card radius, and editing the vendored package wasn't the chosen path (the
+// medication flows already moved off code-ds onto Lidd's own parts for the
+// same reason — June, "stop moving lidd"). Same prop surface as code-ds's
+// ListRow, so every call site needed only an import swap, not a rewrite.
+//
+// No outer ring on the card: SettingsDark.html's own `.grp` is a plain fill
+// + radius + overflow-hidden, same as the existing `SettingsGroup` — a
+// group of rows you read, not a control you press, so it keeps the
+// `bg-bg-border` hairline rule rather than the control-ring one.
+export function SettingsList({ children }: { children: React.ReactNode }) {
+  return (
+    <ul role="list" className="overflow-hidden rounded-card bg-bg-surface">
+      {children}
+    </ul>
+  );
+}
+
+export interface SettingsRowProps {
+  /** The label. */
+  children?: React.ReactNode;
+  /** A second line under the label. */
+  supporting?: string;
+  /** Trailing text, such as "On during attacks". */
+  value?: string;
+  /** A decorative icon in currentColor. Hidden from screen readers. */
+  leading?: React.ReactNode;
+  /** Makes the row pressable: a button with a chevron. Without it the row is static. */
+  onClick?: () => void;
+  disabled?: boolean;
+  /** The row's content is its own control, such as a Switch. Only the padding, height and divider apply. */
+  bare?: boolean;
+}
+
+export function SettingsRow({ children, supporting, value, leading, onClick, disabled = false, bare = false }: SettingsRowProps) {
+  // The divider lives on every row but the first, drawn as a pseudo-element
+  // (not a border) so the first row is as tall as the others; the first and
+  // last row's own content follows the card's rounded corners. An explicit
+  // `:not(:first-child)` arbitrary variant, not code-ds's own `not-first:`
+  // — that variant is registered in code-ds's own Tailwind build and isn't
+  // guaranteed to reach classes written in this app's own files.
+  const item = [
+    'relative',
+    "[&:not(:first-child)]:before:absolute [&:not(:first-child)]:before:inset-x-0 [&:not(:first-child)]:before:top-0 [&:not(:first-child)]:before:h-px [&:not(:first-child)]:before:bg-bg-border",
+    'first:[&>*]:rounded-t-card last:[&>*]:rounded-b-card',
+  ].join(' ');
+  if (bare) {
+    return <li className={`${item} flex min-h-row items-stretch`}>{children}</li>;
+  }
+  const content = (
+    <>
+      {leading && <span aria-hidden="true" className="shrink-0 text-text-secondary [&>svg]:size-6">{leading}</span>}
+      {/* Label, then the value on the label's line (or under it when there's
+          no room), then supporting text under both — the reading order. */}
+      <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 [overflow-wrap:anywhere]">
+        <span className="min-w-[min(100%,7.5rem)] flex-1 text-text-primary">{children}</span>
+        {value && <span className="ml-auto max-w-full text-right text-text-secondary">{value}</span>}
+        {supporting && <span className="basis-full text-text-secondary">{supporting}</span>}
+      </span>
+    </>
+  );
+  const layout = 'flex min-h-row w-full items-center gap-3 px-card py-control-y text-left text-sm leading-tight';
+  if (!onClick) {
+    return <li className={`${item} ${layout}`}>{content}</li>;
+  }
+  return (
+    <li className={item}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className={`${layout} transition-colors hover:bg-bg-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50`}
+      >
+        {content}
+        <Chevron />
+      </button>
+    </li>
+  );
+}
+
 // A v3 group: rows on one `bg-surface` card, separated by a hairline. The
 // rule is drawn per row rather than with `divide-y`, which measured as no
 // border at all on the Insights medication rows. `bg-border` because it

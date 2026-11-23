@@ -7,8 +7,8 @@ import { useNowTick } from '../hooks/useNowTick';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
-import { Button, List, ListRow, Switch, TextField } from 'code-ds';
-import { OptionTile } from './settingsUi';
+import { Button, Switch, TextField } from 'code-ds';
+import { OptionTile, SettingsList, SettingsRow } from './settingsUi';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
@@ -108,15 +108,15 @@ export function ProfileView({ onOpen, accountEnabled, hit6Due = false, medCount,
       {MENU_GROUPS.map((group) => (
         <section key={group.label} className="space-y-2">
           <SectionLabel>{group.label}</SectionLabel>
-          <List>
+          <SettingsList>
             {group.items
               .filter((m) => m.id !== 'account' || accountEnabled)
               .map((item) => (
-                <ListRow key={item.id} leading={<item.Icon />} value={valueFor(item.id)} onClick={() => onOpen(item.id)}>
+                <SettingsRow key={item.id} leading={<item.Icon />} value={valueFor(item.id)} onClick={() => onOpen(item.id)}>
                   {item.label}
-                </ListRow>
+                </SettingsRow>
               ))}
-          </List>
+          </SettingsList>
         </section>
       ))}
     </div>
@@ -143,9 +143,9 @@ export function AboutPanel({ onClose, email }: { onClose: () => void; email: str
         <p className="text-sm leading-relaxed text-text-primary">
           Lidd is a diary for you and your doctor. It records attacks, medication and how they affect you — it doesn't diagnose, score severity or give medical advice. If you're in doubt about a symptom, talk to a doctor or pharmacist.
         </p>
-        <List>
-          <ListRow onClick={() => setView('feedback')}>Send feedback</ListRow>
-        </List>
+        <SettingsList>
+          <SettingsRow onClick={() => setView('feedback')}>Send feedback</SettingsRow>
+        </SettingsList>
         <p className="text-xs text-text-secondary">Made in Denmark.</p>
       </div>
     </ProfileSubPage>
@@ -185,11 +185,11 @@ function FeedbackPage({ email, onBack }: { email: string | null; onBack: () => v
           aria-label="Your feedback"
           className="w-full resize-none rounded-field border border-border-control bg-bg-raised p-card text-text-primary placeholder:text-text-secondary"
         />
-        <List>
-          <ListRow bare>
+        <SettingsList>
+          <SettingsRow bare>
             <Switch checked={includeEmail} onCheckedChange={setIncludeEmail}>Include my email so we can follow up</Switch>
-          </ListRow>
-        </List>
+          </SettingsRow>
+        </SettingsList>
         {includeEmail && (
           <input
             type="email"
@@ -258,24 +258,24 @@ export function DisplayPanel({
             own screen now, so the long explanation leaves the list. */}
         <section className="space-y-3">
           <SectionLabel>Attack mode</SectionLabel>
-          <List>
-            <ListRow bare>
+          <SettingsList>
+            <SettingsRow bare>
               <Switch checked={attackMode} onCheckedChange={onAttackMode}>Attack mode</Switch>
-            </ListRow>
-            <ListRow bare>
+            </SettingsRow>
+            <SettingsRow bare>
               <Switch checked={attackModeAuto} onCheckedChange={onAttackModeAuto}>
                 When I log an attack
                 <span className="block text-xs text-content-muted">Turns it on as soon as you log an attack that's still going.</span>
               </Switch>
-            </ListRow>
-            <ListRow
+            </SettingsRow>
+            <SettingsRow
               onClick={() => setView('changes')}
               value={attackMode ? undefined : 'Everyday'}
               supporting={attackMode ? "Attack mode is on. You'll see these when you turn it off." : undefined}
             >
               What it changes
-            </ListRow>
-          </List>
+            </SettingsRow>
+          </SettingsList>
         </section>
 
         {/* Manual theme choice, no prefers-color-scheme (2026-09-25). Each tile
@@ -290,10 +290,10 @@ export function DisplayPanel({
 
         {/* Font and Text size each open their own screen, where the full
             previews have room — the list just states the current value. */}
-        <List>
-          <ListRow onClick={() => setView('font')} value={font === 'lexend' ? 'Lexend' : 'Atkinson'}>Font</ListRow>
-          <ListRow onClick={() => setView('textsize')} value={systemText ? 'iPhone' : SCALE_NAME[textScale]}>Text size</ListRow>
-        </List>
+        <SettingsList>
+          <SettingsRow onClick={() => setView('font')} value={font === 'lexend' ? 'Lexend' : 'Atkinson'}>Font</SettingsRow>
+          <SettingsRow onClick={() => setView('textsize')} value={systemText ? 'iPhone' : SCALE_NAME[textScale]}>Text size</SettingsRow>
+        </SettingsList>
       </div>
     </ProfileSubPage>
   );
@@ -363,14 +363,14 @@ function TextSizePage({ textScale, onTextScale, systemText, onSystemText, onBack
   return (
     <ProfileSubPage title="Text size" onClose={onBack}>
       <div className="space-y-6">
-        <List>
-          <ListRow bare>
+        <SettingsList>
+          <SettingsRow bare>
             <Switch checked={systemText} onCheckedChange={onSystemText}>
               Use iPhone text size
               <span className="block text-xs text-content-muted">Follows the size set in your iPhone's settings, from XS to XL.</span>
             </Switch>
-          </ListRow>
-        </List>
+          </SettingsRow>
+        </SettingsList>
 
         {systemText ? (
           <p className="text-sm text-text-secondary">
@@ -424,13 +424,13 @@ function AttackChangesPage({ onBack }: { onBack: () => void }) {
           <SectionLabel>A sample log</SectionLabel>
           <DisplayPreviewCard />
         </section>
-        <List>
-          <ListRow supporting="At least 35% darker">Dims the screen</ListRow>
-          <ListRow>Warmer colours, softer contrast</ListRow>
-          <ListRow>Bigger text, if yours is set small</ListRow>
-          <ListRow>Nothing moves — animation stops</ListRow>
-          <ListRow>Your logs stay exactly as they are</ListRow>
-        </List>
+        <SettingsList>
+          <SettingsRow supporting="At least 35% darker">Dims the screen</SettingsRow>
+          <SettingsRow>Warmer colours, softer contrast</SettingsRow>
+          <SettingsRow>Bigger text, if yours is set small</SettingsRow>
+          <SettingsRow>Nothing moves — animation stops</SettingsRow>
+          <SettingsRow>Your logs stay exactly as they are</SettingsRow>
+        </SettingsList>
       </div>
     </ProfileSubPage>
   );
@@ -683,11 +683,11 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount }
       >
         <div className="space-y-6">
           <p className="text-sm text-text-secondary">One file with your attacks, check-ins, medicines and settings.</p>
-          <List>
-            <ListRow value={String(attackCount)}>Attacks</ListRow>
-            <ListRow value={String(checkInCount)}>Check-ins</ListRow>
-            <ListRow value={String(medCount)}>Medicines</ListRow>
-          </List>
+          <SettingsList>
+            <SettingsRow value={String(attackCount)}>Attacks</SettingsRow>
+            <SettingsRow value={String(checkInCount)}>Check-ins</SettingsRow>
+            <SettingsRow value={String(medCount)}>Medicines</SettingsRow>
+          </SettingsList>
           <p className="text-xs text-text-secondary">The file is not encrypted. Keep it somewhere private.</p>
           {/* Amber, not the alarm colour: the data is untouched, only the file was not made. */}
           <p role="status" className="text-xs text-severity-mid">{exportErr ? "The backup couldn't be saved. Your data is still on this device." : ''}</p>
