@@ -1,6 +1,6 @@
 import type { Attack, Medication } from '../types';
 import { formatDate, formatTime, formatDuration } from '../utils/format';
-import { attackDoseOutcomes, attackMaxSeverity, type DoseOutcome } from '../utils/stats';
+import { attackDoseOutcomes, attackMaxSeverity, hasKnownDuration, type DoseOutcome } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
 import { findMedication } from '../utils/medGuardrails';
 import { classLetter } from '../utils/medClasses';
@@ -56,7 +56,10 @@ export function AttackCard({ attack, onClick, isOngoing, medications = [] }: Pro
 
   // No running length while ongoing: it would have to tick to stay honest,
   // and a tick per row re-renders the whole list for a figure Today shows.
-  const headline = isOngoing ? 'Ongoing' : formatDuration(start, attack.end);
+  // An unknown end ("gone when you woke up," no time added) is excluded the
+  // same way — the stored `end` is a placeholder, not a fact worth stating
+  // as "9h 12m".
+  const headline = isOngoing ? 'Ongoing' : !hasKnownDuration(attack) ? 'Not recorded' : formatDuration(start, attack.end);
   const when = `${formatDate(start)} · ${formatTime(start)}`;
   const label = [
     headline,

@@ -191,14 +191,19 @@ export function useAttacks(userId: string | null) {
     return updated;
   }, [addSnapshots]);
 
-  const endAttack = useCallback((attackId: number, time?: string, impact?: Attack['impact']) => {
+  // `endUnknown` is for "gone when you woke up" with no time added: `end`
+  // still gets a real timestamp (so the attack reads as ended everywhere),
+  // but the flag says that timestamp is a placeholder, not a fact — every
+  // duration figure must check it (`hasKnownDuration` in stats.ts) before
+  // treating `end` as trustworthy.
+  const endAttack = useCallback((attackId: number, time?: string, impact?: Attack['impact'], endUnknown = false) => {
     const end = time ?? new Date().toISOString();
     let updated: Attack | undefined;
     commit(attacks.map((a) => {
       if (a.id !== attackId) return a;
       // Only written when answered — an unanswered question must not land in
       // the record as "no impact".
-      updated = { ...a, end, ...(impact !== undefined ? { impact } : {}), updatedAt: new Date().toISOString() };
+      updated = { ...a, end, endUnknown, ...(impact !== undefined ? { impact } : {}), updatedAt: new Date().toISOString() };
       return updated;
     }));
     cancelNotification(attackId);
@@ -255,15 +260,27 @@ export function useAttacks(userId: string | null) {
    * `painQuality` and `confirmedReal` (added with the v4 redesign) are stable
    * metadata by the same test impact fails — nothing about them decays with
    * recall the way "how much did this stop you" does — so they belong here.
+   *
+   * `endUnknown` is in the patch type for the rare case something needs to
+   * set it directly (mirrors `endAttack`'s own param). But a caller patching
+   * `end` without saying anything about `endUnknown` almost always means
+   * "now the time is known" — Detail's existing end-time editor is exactly
+   * this case — so that's the default here: giving a real `end` clears the
+   * flag unless the patch says otherwise. Otherwise an attack that was never
+   * re-opened to say so would stay excluded from duration figures forever
+   * after its time was filled in.
    */
   const updateAttackDetails = useCallback((
     attackId: number,
-    patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality' | 'confirmedReal'>>,
+    patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'endUnknown' | 'painQuality' | 'confirmedReal'>>,
   ) => {
+    const fullPatch = patch.end !== undefined && !('endUnknown' in patch)
+      ? { ...patch, endUnknown: false }
+      : patch;
     let updated: Attack | undefined;
     commit(attacks.map((a) => {
       if (a.id !== attackId) return a;
-      updated = { ...a, ...patch, updatedAt: new Date().toISOString() };
+      updated = { ...a, ...fullPatch, updatedAt: new Date().toISOString() };
       return updated;
     }));
     if (updated && userId) trackPush(pushAttacks([updated], userId));

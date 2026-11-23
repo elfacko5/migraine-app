@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Attack, Medication } from '../types';
 import { NOTHING_UNUSUAL } from '../types';
 import { formatDate, formatTime, formatDuration, isoToLocalInput, localInputToIso } from '../utils/format';
-import { attackDoseOutcomes, attackMaxSeverity, maxSeverity, type DoseOutcome } from '../utils/stats';
+import { attackDoseOutcomes, attackMaxSeverity, hasKnownDuration, maxSeverity, type DoseOutcome } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
 import { findMedication, unitsLabel } from '../utils/medGuardrails';
 import { classLetter } from '../utils/medClasses';
@@ -152,7 +152,10 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
 
       <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
         <div className="grid grid-cols-3 gap-2.5">
-          <Tile value={formatDuration(start, attack.end)} label={ongoing ? 'so far' : 'long'} />
+          <Tile
+            value={!ongoing && !hasKnownDuration(attack) ? 'Not recorded' : formatDuration(start, attack.end)}
+            label={ongoing ? 'so far' : 'long'}
+          />
           <Tile value={String(peak)} label="peak pain" />
           <div className="flex flex-col items-center justify-center gap-1 rounded-card bg-bg-surface p-3 text-center">
             {side
@@ -269,9 +272,8 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
               <Row
                 term="Different the day before"
                 value={
-                  attack.triggers.includes(NOTHING_UNUSUAL)
-                    ? 'Nothing unusual'
-                    : attack.triggers.join(', ')
+                  attack.triggers.filter((t) => t !== NOTHING_UNUSUAL).join(', ')
+                    || 'Nothing unusual'
                 }
               />
             )}
