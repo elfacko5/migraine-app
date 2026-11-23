@@ -213,7 +213,7 @@ export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onCl
         <button
           type="button"
           onClick={onClose}
-          className="btn-primary w-full rounded-control py-control-y text-sm font-medium transition-colors"
+          className="btn-primary btn-inline w-full"
         >
           Show results
         </button>

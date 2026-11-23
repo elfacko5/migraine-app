@@ -22,9 +22,20 @@
 // takes no layout space; a border does. Mixing them makes the unselected pill
 // 2px taller, which is invisible in a flex row (siblings stretch) and obvious
 // on a control that sits alone — exactly how the "Woke up with this migraine"
-// toggle was found jumping as it toggled.
+// toggle was found jumping as it toggled. The pattern library's own CSS draws
+// this as a literal `border`, which would reintroduce exactly that bug; the
+// fix here is to take its *colours*, not its box model — ring stays a ring.
+//
+// **Fill is `--color-selected`, not an `accent/20` alpha tint** (2026-11-23,
+// pattern library — a fixed, named "selected fill" colour, listed alongside
+// accent and accent-light as one of the app's three core state colours).
+// **Text stays `text-primary`, not `accent-light`** — the library never
+// tints the label when selected, only the fill/border, plus `font-semibold`
+// for emphasis. Both are real corrections, not stylistic preference: the old
+// accent-light text thinned contrast against the new, deliberately darker
+// fill, where text-primary measures comfortably on it in every theme.
 export const CHIP_ON =
-  'bg-accent/20 text-accent-light ring-1 ring-inset ring-accent/50';
+  'bg-selected-fill text-text-primary font-semibold ring-1 ring-inset ring-accent';
 
 export const CHIP_OFF =
   'bg-bg-raised text-text-secondary ring-1 ring-inset ring-border-control hover:text-text-primary';

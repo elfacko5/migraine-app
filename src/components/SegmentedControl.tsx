@@ -65,7 +65,7 @@ export function SegmentedControl<T extends string>({
             // text sizes; `min-w-0` is what lets it engage inside a flex item.
             className={`tap-44-y flex h-7 min-w-0 items-center justify-center rounded-segment px-2 text-xs font-medium transition-colors ${
               fill ? 'flex-1' : ''
-            } ${isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:text-text-primary'}`}
+            } ${isActive ? 'bg-selected-fill text-text-primary font-semibold' : 'text-text-secondary hover:text-text-primary'}`}
           >
             <span className="truncate">{o.label}</span>
           </button>

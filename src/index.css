@@ -196,6 +196,24 @@
      the Today hero headline (HomeCard) — the single largest, most-at-a-glance
      text in the app. */
   --color-text-strong:    #d8d2c6;
+  /* The pattern library's named "selected fill" (2026-11-23, docs/
+     redesign-v4/reference/Patterns.html — listed as one of only three core
+     accent/state colours, alongside accent itself and accent-light).
+     Replaces the ad-hoc `accent/20` alpha tint every chip/tile/segment used
+     — a fixed value rather than a runtime alpha composite, so "selected"
+     looks identical regardless of what surface it sits on, and can be
+     contrast-checked on its own. Paired with the accent colour as the
+     border/ring (unchanged) and `text-primary` + `font-semibold` for the
+     label — the library keeps text at its normal colour when selected,
+     never tinting it to accent-light the way the old convention did.
+     **Named `-fill`, not `--color-selected`**: that name is already taken,
+     in theme.css — an unrelated, unlayered `:root` role the vendored
+     package's own contrast checker uses as an opaque stand-in for the *old*
+     `accent/20` tint, and an unlayered `:root` rule always wins over this
+     `@theme` block regardless of specificity, so a same-named token here
+     would silently never apply. Found by checking the rendered value, not
+     assumed. */
+  --color-selected-fill:  #2e3a31;
 
   /* ── Hero illustration ──────────────────────────────
      The two fills `heroArt.tsx` draws the Today hero with. Decorative only,
@@ -253,6 +271,15 @@
      bg-raised already follows. 12.61:1 on the page against text-primary's
      10.59:1, 10.32:1 on bg-raised; both clear of a near-black extreme. */
   --color-text-strong:    #2e2b27;
+  /* Provisional: no light-mode board exists for the selected-fill token
+     (A11 — light mode is built last, each new token's light value derived
+     and measured when the screen using it is built; this change instead
+     touches many already-shipped dark screens at once). Computed from the
+     same alpha-tint mechanism the old convention used, rather than a
+     hand-picked hex nobody has measured, so it's never a worse guess than
+     what shipped before. Replace with a real measured value in the light
+     pass. */
+  --color-selected-fill:  color-mix(in srgb, var(--color-accent) 18%, var(--color-bg-surface));
 }
 
 /* ── Three-tier button hierarchy ───────────────────────
@@ -321,6 +348,23 @@
      one you inherit — and it is the only definition of either, so the hero
      card's own buttons now use this class instead of repeating the values. */
   .btn-compact { padding: var(--spacing-control-compact-y) var(--spacing-control-compact-x); }
+
+  /* **A third size: "inline action"** (pattern library, 2026-11-23,
+     docs/redesign-v4/reference/Patterns.html — "52 high, 12 radius, 16px"
+     for "the one primary action on a settings, edit or list screen", named
+     apart from the flow wizards' own "56/14/17" flow-CTA role). Radius and
+     font-size already matched (`--radius-control` is already 12px,
+     `.btn-primary`'s own font-size already 16px) — only height needed a
+     name. Scoped to call sites that are their own single-screen confirm
+     (Data's Save file, Feedback's Send, the Logs filter sheet's Show
+     results, Headache impact's Done screens) — not the logging wizards
+     (LogForm, QuickUpdateForm, EndAttackDialog), which stay at the current
+     44px pending their own pass: those are the flows this redesign
+     deliberately does last, since they change stored data and the
+     notification handler. Not the medication add/edit flows either — both
+     were only just rebuilt, carefully, off a different design source; this
+     pass doesn't reopen them. */
+  .btn-inline { min-height: 3.25rem; }
 
   /* A disabled primary is a *muted* button, never a faded accent one — the
      treatment the logging wizard spells out by hand at each call site. Here

@@ -76,7 +76,7 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
       <ProfileSubPage
         title="Headache impact"
         onClose={onClose}
-        footer={<button type="button" onClick={onClose} className="btn-primary w-full">Done</button>}
+        footer={<button type="button" onClick={onClose} className="btn-primary btn-inline w-full">Done</button>}
       >
         <div className="space-y-4">
           <div className="rounded-inset bg-bg-raised p-card">
@@ -205,7 +205,7 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
           </p>
         )}
 
-        <button type="button" onClick={() => setStage(0)} className="btn-primary w-full active:scale-[.99]">
+        <button type="button" onClick={() => setStage(0)} className="btn-primary btn-inline w-full active:scale-[.99]">
           {entries.length === 0 ? 'Start' : 'Answer again'}
         </button>
 

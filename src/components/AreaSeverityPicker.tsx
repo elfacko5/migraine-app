@@ -75,13 +75,15 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
                 type="button"
                 onClick={() => setActiveViewId(v.id)}
                 aria-pressed={isActive}
-                // Tint, not the solid accent fill — the app's rule is that
-                // solid means "press this to act" and this is a switch between
-                // two views of one step. No ring: the segment sits inside a
-                // bordered track that already draws the boundary, and a ring
-                // on top of it reads as a box in a box.
+                // `--color-selected` fill, not the solid accent fill — the
+                // app's rule is that solid means "press this to act" and
+                // this is a switch between two views of one step. No ring:
+                // the segment sits inside a bordered track that already
+                // draws the boundary, and a ring on top of it reads as a
+                // box in a box. Text stays primary, not accent-light
+                // (pattern library, 2026-11-23 — see chipStyles.ts).
                 className={`tap-44-y flex h-7 items-center gap-1.5 rounded-segment px-4 text-xs font-medium transition-colors ${
-                  isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:text-text-primary'
+                  isActive ? 'bg-selected-fill text-text-primary font-semibold' : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {v.label}

@@ -3,6 +3,7 @@ import type { NotificationConfig } from '../types';
 import { BellIcon } from './drawnIcons';
 import { RadioDot } from './RadioDot';
 import { SectionLabel, SettingsList, SettingsRow } from './settingsUi';
+import { chipClass } from '../utils/chipStyles';
 
 interface Props {
   value: NotificationConfig;
@@ -75,9 +76,10 @@ export function NotificationSettings({ value, onChange }: Props) {
                       role="radio"
                       aria-checked={selected}
                       onClick={() => onChange({ ...value, fixedIntervalMinutes: min })}
-                      className={`tap-44-y inline-flex items-center gap-1.5 rounded-chip px-4 py-2 text-sm font-medium transition-colors ring-1 ring-inset ${
-                        selected ? 'bg-accent/20 text-accent-light ring-accent/50' : 'bg-bg-raised text-text-primary ring-border-control hover:bg-bg-border'
-                      }`}
+                      // `chipClass` (shared module, not a local duplicate) —
+                      // font-weight comes from it, so it isn't left to fight
+                      // a locally-declared one for the selected state.
+                      className={`tap-44-y inline-flex items-center gap-1.5 rounded-chip px-4 py-2 text-sm transition-colors ${chipClass(selected)}`}
                     >
                       <RadioDot selected={selected} />
                       {label}
@@ -119,7 +121,7 @@ function TimingSwitch({ value, onChange }: { value: NotificationConfig['mode']; 
             aria-checked={selected}
             onClick={() => onChange(o.value)}
             className={`flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[0.625rem] border text-sm transition-colors ${
-              selected ? 'border-accent bg-accent/15 font-semibold text-text-primary' : 'border-transparent text-text-primary hover:bg-bg-raised'
+              selected ? 'border-accent bg-selected-fill font-semibold text-text-primary' : 'border-transparent text-text-primary hover:bg-bg-raised'
             }`}
           >
             {o.label}

@@ -169,7 +169,7 @@ function FeedbackPage({ email, onBack }: { email: string | null; onBack: () => v
       title="Send feedback"
       onClose={onBack}
       footer={
-        <button type="button" className="btn-primary w-full" disabled={!msg.trim()} onClick={send}>
+        <button type="button" className="btn-primary btn-inline w-full" disabled={!msg.trim()} onClick={send}>
           Send
         </button>
       }
@@ -377,7 +377,7 @@ function TextSizePage({ textScale, onTextScale, systemText, onSystemText, onBack
                   onClick={() => onTextScale(s)}
                   aria-pressed={textScale === s}
                   className={`flex flex-1 flex-col items-center justify-center gap-1.5 py-3 transition-colors ${
-                    textScale === s ? 'bg-accent/20 text-accent-light' : 'bg-bg-raised text-text-secondary hover:bg-bg-border'
+                    textScale === s ? 'bg-selected-fill text-text-primary font-semibold' : 'bg-bg-raised text-text-secondary hover:bg-bg-border'
                   } ${i > 0 ? 'border-l border-bg-border' : ''}`}
                 >
                   {/* A at the absolute size that scale produces — intentional px exception */}
@@ -660,10 +660,10 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount }
         onClose={backToData}
         footer={
           <div className="grid grid-cols-2 gap-3">
-            <button type="button" className="btn-secondary w-full" onClick={backToData}>Cancel</button>
+            <button type="button" className="btn-secondary btn-inline w-full" onClick={backToData}>Cancel</button>
             <button
               type="button"
-              className="btn-primary w-full"
+              className="btn-primary btn-inline w-full"
               onClick={async () => { if (await doExport()) setView('data'); }}
             >
               Save file

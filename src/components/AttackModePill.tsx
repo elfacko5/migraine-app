@@ -43,7 +43,7 @@ export function AttackModePill({ active, onToggle }: Props) {
       title="Attack mode"
       className={`flex size-target shrink-0 items-center justify-center rounded-full ring-1 transition-[color,background-color,box-shadow] ${
         active
-          ? 'bg-accent/20 text-accent-light ring-accent/40'
+          ? 'bg-selected-fill text-text-primary ring-accent'
           : 'bg-bg-surface text-text-primary ring-bg-border hover:bg-bg-raised'
       }`}
     >
