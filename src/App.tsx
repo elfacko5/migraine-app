@@ -34,6 +34,7 @@ const TAB_TITLES: Record<Tab, string> = {
   profile: 'Settings',
 };
 import { LogForm } from './components/LogForm';
+import { LiveAttackForm } from './components/LiveAttackForm';
 import { QuickUpdateForm } from './components/QuickUpdateForm';
 import { OngoingAttackBanner } from './components/OngoingAttackBanner';
 import { AttackFreeCard } from './components/AttackFreeCard';
@@ -697,7 +698,12 @@ export default function App() {
             ]}
       />
 
-      {/* Log attack sheet */}
+      {/* Log attack sheet. The v4 3-step LiveAttackForm replaces LogForm for
+          a manual, starting-now log — voice drafts (live or past) and any
+          past-attack log still go through LogForm, which keeps the step-0
+          voice review screen and the symptoms/reliefs/triggers steps a past
+          log and a dictated one both still need. See LiveAttackForm's own
+          doc comment. */}
       <Sheet
         open={logSheetOpen}
         onClose={closeLogSheet}
@@ -705,24 +711,37 @@ export default function App() {
         flush
         bareHeader
       >
-        <LogForm
-          past={logPast}
-          triggers={sortedTriggers}
-          symptoms={sortedSymptoms}
-          reliefs={sortedReliefs}
-          defaultNotifConfig={defaultNotifConfig}
-          recentMeds={recentMeds}
-          medications={medications}
-          attacks={attacks}
-          textScale={textScale}
-          onTextScale={setTextScale}
-          onAddTrigger={addTrigger}
-          onAddSymptom={addSymptom}
-          onAddRelief={addRelief}
-          onClose={closeLogSheet}
-          onSave={handleLogSave}
-          voiceDraft={voiceDraft}
-        />
+        {!logPast && !voiceDraft ? (
+          <LiveAttackForm
+            recentMeds={recentMeds}
+            medications={medications}
+            attacks={attacks}
+            defaultNotifConfig={defaultNotifConfig}
+            textScale={textScale}
+            onTextScale={setTextScale}
+            onClose={closeLogSheet}
+            onSave={handleLogSave}
+          />
+        ) : (
+          <LogForm
+            past={logPast}
+            triggers={sortedTriggers}
+            symptoms={sortedSymptoms}
+            reliefs={sortedReliefs}
+            defaultNotifConfig={defaultNotifConfig}
+            recentMeds={recentMeds}
+            medications={medications}
+            attacks={attacks}
+            textScale={textScale}
+            onTextScale={setTextScale}
+            onAddTrigger={addTrigger}
+            onAddSymptom={addSymptom}
+            onAddRelief={addRelief}
+            onClose={closeLogSheet}
+            onSave={handleLogSave}
+            voiceDraft={voiceDraft}
+          />
+        )}
       </Sheet>
 
       {/* Quick update sheet — targets the ongoing attack (FAB/banner) or any
