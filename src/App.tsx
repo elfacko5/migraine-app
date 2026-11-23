@@ -817,7 +817,7 @@ export default function App() {
           />
         )}
         {profileSheet === 'about' && (
-          <AboutPanel onClose={() => setProfileSheet(null)} />
+          <AboutPanel onClose={() => setProfileSheet(null)} email={auth.user?.email ?? null} />
         )}
       </Sheet>
 

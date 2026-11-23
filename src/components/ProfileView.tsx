@@ -123,11 +123,16 @@ export function ProfileView({ onOpen, accountEnabled, hit6Due = false, medCount,
   );
 }
 
-// About — version, what Lidd is and isn't, and where it's made. The v4 board's
-// Privacy policy / Terms of use / Send feedback rows are deferred: the policy
-// and terms are legal content that doesn't exist yet, and feedback has no
-// destination decided. They land when those are settled.
-export function AboutPanel({ onClose }: { onClose: () => void }) {
+// Where feedback is sent. A placeholder — set a real inbox before any public
+// release (June, 2026-11-23: mailto, and deliberately not her personal address).
+const FEEDBACK_EMAIL = 'feedback@lidd.app';
+
+// About — version, what Lidd is and isn't, a Send feedback row, and where it's
+// made. The v4 board's Privacy policy / Terms of use rows are held for now
+// (legal content that doesn't exist yet).
+export function AboutPanel({ onClose, email }: { onClose: () => void; email: string | null }) {
+  const [view, setView] = useState<'about' | 'feedback'>('about');
+  if (view === 'feedback') return <FeedbackPage email={email} onBack={() => setView('about')} />;
   return (
     <ProfileSubPage title="About" onClose={onClose}>
       <div className="space-y-6">
@@ -138,7 +143,63 @@ export function AboutPanel({ onClose }: { onClose: () => void }) {
         <p className="text-sm leading-relaxed text-text-primary">
           Lidd is a diary for you and your doctor. It records attacks, medication and how they affect you — it doesn't diagnose, score severity or give medical advice. If you're in doubt about a symptom, talk to a doctor or pharmacist.
         </p>
+        <List>
+          <ListRow onClick={() => setView('feedback')}>Send feedback</ListRow>
+        </List>
         <p className="text-xs text-text-secondary">Made in Denmark.</p>
+      </div>
+    </ProfileSubPage>
+  );
+}
+
+// Feedback opens the user's own mail app (mailto) rather than posting to a
+// server: no backend, no new privacy surface, and the user sends it themselves
+// — the app only drafts. A nested view in the About sheet; back returns to it.
+function FeedbackPage({ email, onBack }: { email: string | null; onBack: () => void }) {
+  const [msg, setMsg] = useState('');
+  const [includeEmail, setIncludeEmail] = useState(false);
+  const [contact, setContact] = useState(email ?? '');
+  const send = () => {
+    const body = includeEmail && contact.trim() ? `${msg}\n\n— Reply to: ${contact.trim()}` : msg;
+    window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Lidd feedback')}&body=${encodeURIComponent(body)}`;
+    onBack();
+  };
+  return (
+    <ProfileSubPage
+      title="Send feedback"
+      onClose={onBack}
+      footer={
+        <button type="button" className="btn-primary w-full" disabled={!msg.trim()} onClick={send}>
+          Send
+        </button>
+      }
+    >
+      <div className="space-y-5">
+        <p className="text-sm text-text-primary">What's not working, or what would make Lidd better? We read every message.</p>
+        <p className="text-xs text-text-secondary">This isn't for urgent medical questions — talk to a doctor or pharmacist for those.</p>
+        <textarea
+          value={msg}
+          onChange={(e) => setMsg(e.target.value)}
+          rows={6}
+          placeholder="Your message"
+          aria-label="Your feedback"
+          className="w-full resize-none rounded-field border border-border-control bg-bg-raised p-card text-text-primary placeholder:text-text-secondary"
+        />
+        <List>
+          <ListRow bare>
+            <Switch checked={includeEmail} onCheckedChange={setIncludeEmail}>Include my email so we can follow up</Switch>
+          </ListRow>
+        </List>
+        {includeEmail && (
+          <input
+            type="email"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+            placeholder="you@example.com"
+            aria-label="Your email"
+            className="w-full rounded-field border border-border-control bg-bg-raised px-control-x py-control-y text-text-primary placeholder:text-text-secondary"
+          />
+        )}
       </div>
     </ProfileSubPage>
   );
