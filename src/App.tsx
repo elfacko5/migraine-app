@@ -808,7 +808,13 @@ export default function App() {
           />
         )}
         {profileSheet === 'data' && (
-          <DataPanel auth={auth} onClose={() => setProfileSheet(null)} />
+          <DataPanel
+            auth={auth}
+            onClose={() => setProfileSheet(null)}
+            attackCount={attacks.length}
+            checkInCount={attacks.reduce((n, a) => n + a.snapshots.length, 0)}
+            medCount={medications.length}
+          />
         )}
         {profileSheet === 'about' && (
           <AboutPanel onClose={() => setProfileSheet(null)} />

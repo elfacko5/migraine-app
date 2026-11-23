@@ -545,27 +545,41 @@ export function RemindersPanel({ value, onChange, onClose }: {
   );
 }
 
-export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>; onClose: () => void }) {
+export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount }: {
+  auth: ReturnType<typeof useAuth>;
+  onClose: () => void;
+  /** Counts shown on the export-confirm screen before a file is written. */
+  attackCount: number;
+  checkInCount: number;
+  medCount: number;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importErr, setImportErr] = useState<string | null>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
   const [exportErr, setExportErr] = useState(false);
+  // Export now opens a confirm screen first (the v4 DataExport board): it names
+  // what the file holds and that it isn't encrypted before anything is written.
+  const [view, setView] = useState<'data' | 'export'>('data');
   const exporting = useRef(false);
 
-  // Export used to fail silently in the iOS app (a blob download does nothing in
-  // a WKWebView). It now says so when it cannot save; a dismissed share sheet is
-  // not a failure and shows nothing.
-  async function onExport() {
+  // The write itself (share sheet on native, download on web). Returns whether
+  // it saved, so the confirm screen can step back only on success. It used to
+  // fail silently in the iOS app (a blob download does nothing in a WKWebView);
+  // it now says so when it can't save, and a dismissed share sheet is not a
+  // failure and shows nothing.
+  async function doExport(): Promise<boolean> {
     // A second tap while the share sheet is open would be rejected by the plugin
     // ("Can't share while sharing is in progress") and show a false failure.
-    if (exporting.current) return;
+    if (exporting.current) return false;
     exporting.current = true;
     setExportErr(false);
     try {
       await exportData();
+      return true;
     } catch (e) {
       console.error('Export failed:', e);
       setExportErr(true);
+      return false;
     } finally {
       exporting.current = false;
     }
@@ -581,6 +595,43 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
     else setImportErr(res.error);
   }
 
+  // The export-confirm screen: what the file holds, and that it isn't
+  // encrypted, before it's written. A nested view swapped in this one sheet —
+  // its back chevron and Cancel return to the Data list, not out of the sheet.
+  if (view === 'export') {
+    const backToData = () => { setView('data'); setExportErr(false); };
+    return (
+      <ProfileSubPage
+        title="Export"
+        onClose={backToData}
+        footer={
+          <div className="grid grid-cols-2 gap-3">
+            <button type="button" className="btn-secondary w-full" onClick={backToData}>Cancel</button>
+            <button
+              type="button"
+              className="btn-primary w-full"
+              onClick={async () => { if (await doExport()) setView('data'); }}
+            >
+              Save file
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          <p className="text-sm text-text-secondary">One file with your attacks, check-ins, medicines and settings.</p>
+          <List>
+            <ListRow value={String(attackCount)}>Attacks</ListRow>
+            <ListRow value={String(checkInCount)}>Check-ins</ListRow>
+            <ListRow value={String(medCount)}>Medicines</ListRow>
+          </List>
+          <p className="text-xs text-text-secondary">The file is not encrypted. Keep it somewhere private.</p>
+          {/* Amber, not the alarm colour: the data is untouched, only the file was not made. */}
+          <p role="status" className="text-xs text-severity-mid">{exportErr ? "The backup couldn't be saved. Your data is still on this device." : ''}</p>
+        </div>
+      </ProfileSubPage>
+    );
+  }
+
   return (
     <ProfileSubPage title="Data" onClose={onClose}>
 
@@ -588,7 +639,7 @@ export function DataPanel({ auth, onClose }: { auth: ReturnType<typeof useAuth>;
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={onExport}
+              onClick={() => setView('export')}
               className="btn-secondary rounded-control-sm py-2.5 text-sm font-medium transition-colors"
             >
               Export backup
