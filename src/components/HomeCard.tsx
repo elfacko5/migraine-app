@@ -11,10 +11,25 @@ interface Props {
    * The kicker above the headline: a time-of-day greeting between attacks,
    * "Ongoing attack" during one. Never a greeting mid-attack — "Good morning"
    * above an ongoing attack would be the app failing to notice.
+   *
+   * `ReactNode`, not `string` (2026-11-23, the v4 hero pass): the ongoing
+   * state's own label is a small accent dot + uppercase eyebrow text, a
+   * different treatment from the attack-free greeting's plain muted text,
+   * so the caller supplies it fully styled; a plain string still renders
+   * exactly as before, on the wrapping element's own default classes below.
    */
-  label: string;
+  label: ReactNode;
   /** The one thing the hero exists to say, at a glance. */
   headline: string;
+  /**
+   * The headline's own font-size + line-height, as literal Tailwind classes
+   * (2026-11-23, the v4 hero pass) — e.g. `"text-[2.5rem] leading-[1.1]"`.
+   * The two hero states now carry different weights for different reasons
+   * (the design gives the active-attack figure more size than the
+   * attack-free statement), where a single shared size used to serve both.
+   * Required, not defaulted: every caller states its own deliberately.
+   */
+  headlineSize: string;
   /**
    * A small figure between the headline and the detail line — the ongoing
    * hero's trajectory. When present, the detail line sits 8px under it
@@ -72,21 +87,31 @@ interface Props {
  * The artwork is `aria-hidden` and `focusable="false"` — it carries mood, not
  * information, and every fact is in the text beside it.
  */
-export function HomeCard({ art, label, headline, figure, detail, topAction, onOpenDetail, children }: Props) {
+export function HomeCard({ art, label, headline, headlineSize, figure, detail, topAction, onOpenDetail, children }: Props) {
   const text = (
     <>
       {/* Deliberately uneven gaps, to spec: 4px under the label so it reads as
           a kicker attached to the headline, then 16px before the detail line
           so it separates as its own fact. A uniform stack made the label float
-          between the two. */}
+          between the two. The default classes are the attack-free greeting's
+          own look; the ongoing label overrides them on its own markup, which
+          wins by specificity the same way `detail`'s nested overrides do. */}
       <p className="text-sm font-medium text-text-secondary">{label}</p>
-      {/* Never wrapped. "Started 24h 38m" broke onto a second line against the
-          64% text width and pushed the hero taller for no reason — the
-          headline is the one line that has to be readable at a glance, and
-          running it over the artwork costs nothing. 44px at weight 600 with a
-          tight 1.05 line-height, to the v3 spec; written in rem so the
-          text-size control still scales it. */}
-      <p className="mt-1 whitespace-nowrap text-[2.75rem] font-semibold leading-[1.05] text-text-primary">{headline}</p>
+      {/* Wrap behaviour now lives in the caller's own `headlineSize` string,
+          not hardcoded here (v4, 2026-11-23). It used to always be
+          `whitespace-nowrap` — "Started 24h 38m" broke onto a second line
+          against the 64% text width and pushed the hero taller for no
+          reason, so running a short figure over the artwork cost nothing —
+          but the attack-free state's headline is a phrase now ("No attack
+          today"), long enough that nowrap ran it off the screen edge at the
+          larger text-size settings, the exact failure `detail`'s own note
+          below already describes. The ongoing state's headline is still a
+          short figure and keeps its own `whitespace-nowrap` in its string.
+          Size/leading/wrap all come from the caller, in rem so the
+          text-size control still scales them. `text-strong`, not
+          `text-primary`: this is the single largest, most-at-a-glance text
+          in the app — exactly what that token exists for. */}
+      <p className={`mt-1 font-semibold text-text-strong ${headlineSize}`}>{headline}</p>
       {/* Allowed to wrap now. It was `whitespace-nowrap` because a date and a
           time ("Since Tue 18 Aug, 20:18") broke after the comma and read as
           two facts; neither hero carries a date any more, and at the largest

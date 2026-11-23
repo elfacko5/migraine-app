@@ -187,6 +187,15 @@
   --color-severity-high:  #c68880;  /* desaturated terracotta, not bright red */
   --color-warning:        #b07a3c;
   --color-positive:       #7fa187;
+  /* One step brighter than text-primary, for the one or two largest pieces
+     of text on a screen (B decision, 2026-11-22) — NOT the design's literal
+     #e4dfd4, which is the exact value rejected earlier as glare at body
+     sizes (see the text-primary note above). This is milder: 11.56:1 on the
+     page against text-primary's own 10.34:1, 9.1:1 on bg-raised — clear of
+     both text-primary and the rejected value's 13.1:1 extreme. First used by
+     the Today hero headline (HomeCard) — the single largest, most-at-a-glance
+     text in the app. */
+  --color-text-strong:    #d8d2c6;
 
   /* ── Hero illustration ──────────────────────────────
      The two fills `heroArt.tsx` draws the Today hero with. Decorative only,
@@ -240,6 +249,10 @@
   --color-positive:       #4f6b57;
   --color-ill-1:          #c9a98a;
   --color-ill-2:          #a9bfad;
+  /* Light raises by going darker, not lighter — the same inversion
+     bg-raised already follows. 12.61:1 on the page against text-primary's
+     10.59:1, 10.32:1 on bg-raised; both clear of a near-black extreme. */
+  --color-text-strong:    #2e2b27;
 }
 
 /* ── Three-tier button hierarchy ───────────────────────
