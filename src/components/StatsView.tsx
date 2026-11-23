@@ -7,7 +7,7 @@ import type { Attack, DeletedMedName, MedGuides, Medication } from '../types';
 import { formatDateShort } from '../utils/format';
 import {
   attackMaxSeverity, consecutiveMigraineDays, daysSinceLastMigraine,
-  areaFrequency, avgTimeToPeak, avgAttackLength,
+  areaFrequency, avgTimeToPeak, avgAttackLength, attackDayKeys,
   triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
 } from '../utils/stats';
 import { HeadHeatmap } from './HeadHeatmap';
@@ -92,6 +92,17 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
   );
 }
 
+// A figure in the "Typical attack" group — a bare value over a plain-language
+// label, not a bordered tile: these sit together inside one section card.
+function TypicalStat({ value, label }: { value: string | number; label: string }) {
+  return (
+    <div>
+      <p className="text-2xl font-bold leading-none text-text-primary">{value}</p>
+      <p className="mt-1 text-xs text-text-secondary">{label}</p>
+    </div>
+  );
+}
+
 // Ranked horizontal frequency bars (most-frequent first).
 function FreqBars({ data, color }: { data: Freq[]; color: string }) {
   const max = data[0]?.count ?? 1;
@@ -144,19 +155,21 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
   // month, so a 3-month or all-time count would sail past 10 without meaning
   // anything. Under a month it can only under-warn, which is the safe way to
   // be wrong.
-  const { since, monthsShown, monthScale } = useMemo(() => {
+  const { since, monthsShown, monthScale, rangeFrom, rangeTo } = useMemo(() => {
     // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     if (period === 'all') {
       const first = attacks.reduce<number>(
         (min, a) => Math.min(min, new Date(a.snapshots[0].time).getTime()), now);
-      return { since: null, monthsShown: Math.min(12, monthsBetween(first, now)), monthScale: false };
+      return { since: null, monthsShown: Math.min(12, monthsBetween(first, now)), monthScale: false, rangeFrom: first, rangeTo: now };
     }
     const cutoff = now - PERIOD_MS[period];
     return {
       since: cutoff,
       monthsShown: monthsBetween(cutoff, now),
       monthScale: PERIOD_MS[period] <= PERIOD_MS['30d'],
+      rangeFrom: cutoff,
+      rangeTo: now,
     };
   }, [period, attacks]);
 
@@ -195,8 +208,14 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
 
     const areas = areaFrequency(filtered);
 
+    // Calendar days with an attack in this period, de-duplicated across
+    // overlapping attacks — one attack past midnight is two days.
+    const attackDaySet = new Set<string>();
+    for (const a of filtered) for (const k of attackDayKeys(a)) attackDaySet.add(k);
+
     return {
       count: filtered.length,
+      attackDays: attackDaySet.size,
       avgSeverity,
       inARow: consecutiveMigraineDays(attacks),
       daysSince: daysSinceLastMigraine(attacks),
@@ -227,41 +246,26 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
           nothing said which period the figures answered. `period` is owned by
           `App` for the same reason. */}
 
-      {/* The tiles answer the period the control sets, so they stay at the
-          top, directly under it. */}
+      {/* The window the page answers, in dates, with the attack count folded
+          in (it used to be the "Attacks" tile). The averages that were the
+          other tiles moved into "Typical attack" below. */}
+      <p className="text-sm text-text-secondary">
+        {formatDateShort(new Date(rangeFrom).toISOString())} – {formatDateShort(new Date(rangeTo).toISOString())}
+        {' · '}{stats.count} attack{stats.count === 1 ? '' : 's'}
+      </p>
+
       {filtered.length === 0 ? (
         <div className="py-12 text-center text-text-secondary text-sm">
           No attacks in this period.
         </div>
       ) : (
           <div className="grid grid-cols-2 gap-3">
-            {/* No period sub-label: the selected pill above already says it,
-                and repeating it on every card cost a line each. The cards
-                below keep theirs, which say what the number *is*. */}
-            <StatCard label="Attacks" value={stats.count} />
-            {/* "Peak", not "max" — the Logs row already calls this figure the
-                peak, and one concept wants one word. The averaging moved into
-                the sub: "Avg peak severity" wrapped to two lines at 12px and
-                took the whole row with it, and the unit needed saying anyway —
-                this is the mean of each attack's own peak, not of every reading. */}
-            <StatCard label="Peak severity" value={stats.avgSeverity} sub="avg per attack" />
             {/* Plain observations, not streaks — see the note on
                 `consecutiveMigraineDays`. Neither is a run to protect or
                 break; one says what is happening now, the other when it last
                 happened. */}
             <StatCard label="Days in a row" value={stats.inARow} sub="with an attack" />
             <StatCard label="Days since" value={stats.daysSince} sub="last attack" />
-            {stats.timeToPeak !== null && (
-              <StatCard label="Avg time to peak" value={`${stats.timeToPeak}h`} sub="from start" />
-            )}
-            {/* Length, not "time at severity >= 5" — that threshold was never
-                justified and had to be decoded before the figure meant
-                anything. Duration needs no explaining and is the one ICHD-3
-                anchor this page was missing (4-72 hours untreated), which is
-                why the Logs row already leads with it. */}
-            {stats.avgLength !== null && (
-              <StatCard label="Avg length" value={`${Math.floor(stats.avgLength / 60)}h ${stats.avgLength % 60}m`} sub="per attack" />
-            )}
           </div>
       )}
 
@@ -288,9 +292,28 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
 
       {filtered.length > 0 && (
         <>
+          {/* Typical attack — the averages that used to be loose stat tiles,
+              grouped (v4). `avgTimeToPeak` and `avgAttackLength` already
+              existed; "attack days" and the grouping are new. */}
+          <InsightSection
+            title="Typical attack"
+            info="Across the attacks in this period. Peak is each attack's own worst reading, averaged. Length and time to the peak leave out any attack still going, since a peak can still rise. Attack days counts calendar days with an attack — one attack past midnight is two."
+          >
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+              <TypicalStat value={stats.avgSeverity} label="average peak pain" />
+              {stats.avgLength !== null && (
+                <TypicalStat value={`${Math.floor(stats.avgLength / 60)}h ${stats.avgLength % 60}m`} label="long" />
+              )}
+              {stats.timeToPeak !== null && (
+                <TypicalStat value={`${stats.timeToPeak}h`} label="to the peak" />
+              )}
+              <TypicalStat value={stats.attackDays} label={`attack day${stats.attackDays === 1 ? '' : 's'}`} />
+            </div>
+          </InsightSection>
+
           {/* Severity trend */}
           {stats.severityTrend.length >= 2 && (
-            <InsightSection title="Severity trend"
+            <InsightSection title="Pain over time"
               info="Peak severity for the most recent attacks in this period, oldest to newest. Up to 12 shown."
             >
               <div>
@@ -321,7 +344,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
 
           {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
-            <InsightSection title="Pain area frequency"
+            <InsightSection title="Where it hurt"
               info="Attacks that touched each area, not readings — an area counts once per attack no matter how many times it was logged."
             >
               <HeadHeatmap data={stats.areas.map((a) => ({ area: a.area, value: a.count }))} />
@@ -340,10 +363,10 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
             color={chartColors.severityMid}
             info="Recorded on attack days only — this is what you suspected at the time, not what's been shown to bring one on."
           />
-          <FreqSection title="Top symptoms" data={stats.symptoms} color={chartColors.severityHigh}
+          <FreqSection title="Symptoms" data={stats.symptoms} color={chartColors.severityHigh}
             info="Attacks that included each symptom, not readings — one count per attack no matter how many times it was logged."
           />
-          <FreqSection title="Top reliefs"  data={stats.reliefs}  color={chartColors.accent}
+          <FreqSection title="What you tried"  data={stats.reliefs}  color={chartColors.accent}
             info="Attacks in which each relief was tried at least once. This counts use, not whether it helped."
           />
         </>
