@@ -61,10 +61,13 @@ export function TopBar({ title, action, control, titleHidden = false }: Props) {
             <div className="min-w-0 flex-1">{control}</div>
           </>
         ) : (
-          /* 34px at the default text size, expressed in rem so the app's own
-             text-size control still scales it — a px value would pin the one
-             piece of type on screen that ignores the setting. */
-          <h1 className="text-[2.125rem] font-bold leading-tight text-text-primary">{title}</h1>
+          /* 26px/600 at the default text size (B decision, 2026-11-22 — June:
+             adopt the v4 design's screen-title size, was 34px/bold). Still
+             expressed in rem so the app's own text-size control scales it —
+             a px value would pin the one piece of type on screen that
+             ignores the setting. font-semibold, not bold: a screen title is
+             text, and the app reserves font-bold for headline numbers. */
+          <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{title}</h1>
         )}
         {action}
       </div>
