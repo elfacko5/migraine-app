@@ -3,10 +3,19 @@ import type { FabAction } from './BottomNav';
 import { useModalStack } from './modalStack';
 
 // The + opens this bottom action-sheet (v4, docs/redesign-v4/screens/01-today:
-// TodayAddSheet / TodayAddSheetNoAttack). June's call to build the redesign
-// version, which reverses the 2026-10-28 "built fresh, not a Sheet, because a
-// full overlay is heavier than a choice of two" note — the sheet is heavier,
-// but it is what the design draws.
+// TodayAddSheetDark / TodayAddSheetNoAttackDark). June's call to build the
+// redesign version, which reverses the 2026-10-28 "built fresh, not a Sheet,
+// because a full overlay is heavier than a choice of two" note — the sheet is
+// heavier, but it is what the design draws.
+//
+// **Matches the boards pixel-for-pixel** (2026-11-23, against a "visually far
+// from the redesign" report from device): full-bleed to both screen edges
+// (no side gutter — the padding is the sheet's own, not an outer inset), a
+// drag-handle affordance, a real 20px/600 title (not a small label), and the
+// action rows on their own `bg-bg-raised` card nested inside the sheet's own
+// `bg-bg-surface` — card-on-card, the same surface-stacking rule the rest of
+// the app follows. Cancel is a plain centred text link (`accent-light`), not
+// a bordered button — the design never gives it one.
 //
 // **Rendered from App, not BottomNav.** Every full-screen overlay is `absolute
 // inset-0` against the app root (never `position: fixed` — the viewport
@@ -70,31 +79,48 @@ export function AddSheet({ open, ongoing, actions, onClose }: {
         className={`absolute inset-0 bg-bg-base/70 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}
       />
-      {/* The card and its Cancel slide up together from the bottom. */}
+      {/* The sheet itself is full-bleed — no side gutter, no floating inset
+          card. Its own padding (not an outer margin) is what keeps the
+          content off the screen edges, so the backdrop never shows a strip
+          down either side of it the way an inset card would. */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={`absolute inset-x-0 bottom-0 mx-auto w-full max-w-md px-gutter transition-transform duration-300 ease-out ${open ? 'translate-y-0' : 'translate-y-full'}`}
-        style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+        className={`absolute inset-x-0 bottom-0 flex flex-col gap-4 rounded-t-sheet bg-bg-surface px-5 pt-2.5 transition-transform duration-300 ease-out ${open ? 'translate-y-0' : 'translate-y-full'}`}
+        style={{ paddingBottom: 'calc(2.125rem + env(safe-area-inset-bottom))' }}
       >
-        <div className="overflow-hidden rounded-sheet bg-bg-surface ring-1 ring-inset ring-border-control">
-          <p className="px-4 pb-2 pt-3 text-xs font-semibold tracking-wide text-text-secondary">{title}</p>
+        {/* Drag-handle affordance — decorative; this sheet dismisses by tap,
+            not drag, but the design draws the handle regardless. */}
+        <span aria-hidden="true" className="mx-auto h-[5px] w-10 rounded-full bg-[#5a554c]" />
+        <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+        {/* The action rows sit on their own bg-bg-raised card — a card on the
+            sheet's own bg-bg-surface card, per the surface-stacking rule. */}
+        <div className="overflow-hidden rounded-sheet bg-bg-raised">
           {actions.map((a, i) => (
             <button
               key={a.label}
               ref={i === 0 ? firstRef : undefined}
               type="button"
               onClick={() => { onClose(); a.onSelect(); }}
-              className="flex min-h-target w-full flex-col items-start justify-center border-t border-bg-border px-4 py-2.5 text-left transition-colors hover:bg-bg-raised focus-visible:bg-bg-raised"
+              className={`flex min-h-[4.5rem] w-full items-center gap-2.5 px-4 py-3.5 text-left transition-colors hover:bg-bg-elevated focus-visible:bg-bg-elevated ${
+                i > 0 ? 'border-t border-bg-border' : ''
+              }`}
             >
-              <span className="font-medium text-text-primary">{a.label}</span>
-              {a.detail && <span className="text-xs text-text-secondary">{a.detail}</span>}
+              <span className="flex-1">
+                <span className="block text-base font-semibold text-text-primary">{a.label}</span>
+                {a.detail && <span className="mt-0.5 block text-xs text-text-secondary">{a.detail}</span>}
+              </span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-4 w-4 shrink-0 text-text-secondary">
+                <path d="m9 6 6 6-6 6" />
+              </svg>
             </button>
           ))}
         </div>
-        <button type="button" onClick={onClose} className="btn-secondary mt-2 w-full">Cancel</button>
+        <button type="button" onClick={onClose} className="mx-auto flex min-h-target items-center px-0.5 text-sm font-medium text-accent-light">
+          Cancel
+        </button>
       </div>
     </div>
   );
