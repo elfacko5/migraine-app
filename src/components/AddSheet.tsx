@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { FabAction } from './BottomNav';
+import { useModalStack } from './modalStack';
 
 // The + opens this bottom action-sheet (v4, docs/redesign-v4/screens/01-today:
 // TodayAddSheet / TodayAddSheetNoAttack). June's call to build the redesign
@@ -24,34 +25,21 @@ export function AddSheet({ open, ongoing, actions, onClose }: {
   const openerRef = useRef<HTMLElement | null>(null);
   const title = ongoing ? 'Add or end' : 'Add';
 
-  // Focus the first action on open, make everything behind the sheet inert
-  // (aria-modal alone is not honoured by iOS VoiceOver in a WKWebView, so
-  // without this the Today page, nav and the + stay reachable — the same
-  // reason Sheet does it), and return focus to the + on close. Deps are
-  // [open] only, so an unrelated App re-render can't re-steal focus to the
-  // first row or re-run the inert dance (Sheet's rule).
+  // Registers into Sheet's own modal stack rather than keeping a second,
+  // independent copy of the same bookkeeping — see useModalStack's comment
+  // for the bug that caused (every control in a sheet opened from one of
+  // these actions became permanently untappable). Requires the root below
+  // to carry `data-sheet=""` and set `inert={!open}` directly.
+  useModalStack(open, rootRef);
+
+  // Focus the first action on open and return focus to the + on close.
+  // Deps are [open] only, so an unrelated App re-render can't re-steal focus
+  // to the first row (Sheet's rule).
   useEffect(() => {
     if (!open) return;
     openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     firstRef.current?.focus({ preventScroll: true });
-
-    const parent = rootRef.current?.parentElement;
-    const touched: { el: HTMLElement; inert: boolean; hidden: string | null }[] = [];
-    if (parent) {
-      for (const c of Array.from(parent.children)) {
-        if (c === rootRef.current || c.hasAttribute('data-modal-exempt')) continue;
-        const el = c as HTMLElement;
-        touched.push({ el, inert: el.inert, hidden: el.getAttribute('aria-hidden') });
-        el.inert = true;
-        el.setAttribute('aria-hidden', 'true');
-      }
-    }
-
     return () => {
-      for (const t of touched) {
-        t.el.inert = t.inert;
-        if (t.hidden === null) t.el.removeAttribute('aria-hidden'); else t.el.setAttribute('aria-hidden', t.hidden);
-      }
       const opener = openerRef.current;
       if (opener && opener.isConnected && !opener.closest('[inert]')) opener.focus({ preventScroll: true });
     };
@@ -71,6 +59,7 @@ export function AddSheet({ open, ongoing, actions, onClose }: {
   return (
     <div
       ref={rootRef}
+      data-sheet=""
       className={`absolute inset-0 z-50 ${open ? '' : 'pointer-events-none'}`}
       aria-hidden={!open}
       inert={!open}

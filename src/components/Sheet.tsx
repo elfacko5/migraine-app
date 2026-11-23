@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { recentPress } from '../utils/lastPressed';
+import { useModalStack, topSheet } from './modalStack';
 
 interface Props {
   open: boolean;
@@ -27,44 +28,11 @@ interface Props {
 }
 
 // **An open sheet makes everything behind it unreachable to assistive tech.**
-// `aria-modal` alone is not honoured reliably by iOS VoiceOver in a WKWebView:
-// with the add-medicine wizard open over My medications, VoiceOver could still
-// select the page behind it (its Back button, its "My medications" title).
-// So while any sheet is open, every sibling of the topmost one — the app
-// content, the nav, and any sheet lower in the stack — is `inert` and
-// `aria-hidden`. `inert` landed in iOS 15.5 and the target is 15, hence both.
-//
-// **"Topmost" is the open sheet latest in the DOM, not the latest opened.** The
-// sheets are z-50 siblings, so DOM order is paint order: a sheet opened by code
-// (a reminder answer opens QuickUpdate, Siri opens LogForm) while one drawn
-// above it is open appears *underneath*, and treating it as the top would make
-// the sheet the person can actually see inert, with nothing on screen able to
-// answer. Closed sheets are left to their own React-managed `inert`, and an
-// element marked `data-modal-exempt` (the toast's live region) is never made
-// inert, or its message would never be announced.
-const openSheets: HTMLElement[] = [];
-const touched = new Map<Element, { inert: boolean; hidden: string | null }>();
-const byDomOrder = (a: Element, b: Element) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
-const isClosedSheet = (el: Element) => el.hasAttribute('data-sheet') && !openSheets.includes(el as HTMLElement);
-const topSheet = () => [...openSheets].sort(byDomOrder).pop();
-function syncModal() {
-  touched.forEach((v, el) => {
-    // A sheet that has closed since is React's again: writing back what it had
-    // while open would leave a closed sheet looking open to assistive tech.
-    if (isClosedSheet(el)) return;
-    (el as HTMLElement).inert = v.inert;
-    if (v.hidden === null) el.removeAttribute('aria-hidden'); else el.setAttribute('aria-hidden', v.hidden);
-  });
-  touched.clear();
-  const top = topSheet();
-  if (!top?.parentElement) return;
-  for (const c of Array.from(top.parentElement.children)) {
-    if (c === top || isClosedSheet(c) || c.hasAttribute('data-modal-exempt')) continue;
-    touched.set(c, { inert: (c as HTMLElement).inert, hidden: c.getAttribute('aria-hidden') });
-    (c as HTMLElement).inert = true;
-    c.setAttribute('aria-hidden', 'true');
-  }
-}
+// The stacking/inert mechanism (`useModalStack`, shared with `AddSheet`) and
+// the reasoning for it live in `./modalStack` — moved out 2026-11-23 so a
+// second kind of overlay can share the one stack instead of keeping its own
+// copy that can race with this one (see that file's comment for the bug that
+// caused).
 
 export function Sheet({ open, onClose, title, children, flush = false, headerRight, bareHeader = false, enterFrom = 'bottom' }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -80,11 +48,13 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
     const a = document.activeElement;
     openerRef.current = recentPress() ?? (a instanceof HTMLElement && a !== document.body && !a.closest('[role="dialog"]') ? a : null);
   }, [open]);
+  // Stacking/inert is the shared concern (useModalStack); focus is kept as
+  // its own effect here since AddSheet's version of it differs (it focuses
+  // the first action, not the panel).
+  useModalStack(open, wrapRef);
   useEffect(() => {
     const el = wrapRef.current;
     if (!open || !el) return;
-    openSheets.push(el);
-    syncModal();
     // Focus goes into the sheet when it opens (unless something inside already
     // took it, such as a heading or an autofocused field) and back to whatever
     // opened it when it closes. Without this VoiceOver's cursor stays on the
@@ -93,8 +63,6 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
     const panel = el.querySelector<HTMLElement>('[role="dialog"]');
     if (panel && !panel.contains(document.activeElement)) panel.focus({ preventScroll: true });
     return () => {
-      openSheets.splice(openSheets.indexOf(el), 1);
-      syncModal();
       // Back to what opened it; if that is gone (the row of a medicine just
       // removed) or there was none (opened by code), to the sheet that is now on
       // top, so VoiceOver is never left on something that no longer exists.
