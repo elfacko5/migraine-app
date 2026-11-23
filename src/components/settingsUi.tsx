@@ -2,6 +2,16 @@
 // Display page, My medications and the medication editor — so a group, a
 // switch row or a radio tile is one definition rather than a copy per screen.
 
+// A section label: 14px / 600 / muted, sentence case, no letter-spacing — the
+// literal v4 SettingsDark board's `.sl` (an earlier note describing this as
+// "letter-spaced" was a different, older precedent this converges onto, not
+// this board's own markup, which carries no tracking). 4px side inset + 8px
+// below, matching the board's margin exactly. Shared by the Settings menu
+// and Reminders.
+export function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="mx-1 mb-2 text-xs font-semibold text-text-secondary">{children}</p>;
+}
+
 export function Chevron() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-text-secondary" aria-hidden="true">

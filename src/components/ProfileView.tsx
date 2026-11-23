@@ -8,7 +8,7 @@ import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../u
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
 import { Button, Switch, TextField } from 'code-ds';
-import { OptionTile, SettingsList, SettingsRow } from './settingsUi';
+import { OptionTile, SectionLabel, SettingsList, SettingsRow } from './settingsUi';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
@@ -297,15 +297,6 @@ export function DisplayPanel({
       </div>
     </ProfileSubPage>
   );
-}
-
-// A section label: 14px / 600 / muted, sentence case, no letter-spacing — the
-// literal v4 SettingsDark board's `.sl` (decision 10's "letter-spaced" note
-// described an older precedent this converges onto, not this board's own
-// markup, which carries no tracking). Display's old 16/500/primary labels
-// convert. 4px side inset + 8px below, matching the board's margin exactly.
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mx-1 mb-2 text-xs font-semibold text-text-secondary">{children}</p>;
 }
 
 // Font screen — each option renders a sample in the face it selects, with room
