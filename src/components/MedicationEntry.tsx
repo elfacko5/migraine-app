@@ -65,10 +65,13 @@ export function MedicationEntry({
   // wrong the moment the two have different amounts — so it's cleared back
   // to blank rather than left stating a number that may no longer be true
   // of this dose. A typed strength ("50mg") is unaffected: that is a fact
-  // about the drug, not about how many were taken.
+  // about the drug, not about how many were taken. Same `keepText` test as
+  // `setUnits` below — checking `LOOKS_LIKE_UNITS` alone would also match
+  // "50mg" (digits then letters) and wipe a real strength.
   function addDoseTo(med: SelectedMedication): SelectedMedication {
-    const clearDose = LOOKS_LIKE_UNITS.test(med.dose.trim());
-    return { ...med, ...(clearDose ? { dose: '' } : {}), doses: [...med.doses, newDoseEntry()] };
+    const text = med.dose.trim();
+    const keepText = HAS_STRENGTH.test(text) || (text !== '' && !LOOKS_LIKE_UNITS.test(text));
+    return { ...med, ...(keepText ? {} : { dose: '' }), doses: [...med.doses, newDoseEntry()] };
   }
 
   function addDose(name: string) {
@@ -76,9 +79,19 @@ export function MedicationEntry({
     if (med) onChange(value.map((m) => (sameName(m.name, name) ? addDoseTo(m) : m)));
   }
 
+  // Back down to one dose, a label `addDoseTo` blanked for being ambiguous
+  // is unambiguous again — restored from that one remaining dose's own
+  // amount, the same rule `setUnits` uses when there's a single entry. Only
+  // when `dose` is currently blank: a real strength was never blanked in
+  // the first place, so there's nothing to restore for it.
   function removeDose(name: string, key: string) {
     const med = selectedFor(name);
-    if (med && med.doses.length > 1) updateMed(name, { doses: med.doses.filter((d) => d.key !== key) });
+    if (!med || med.doses.length <= 1) return;
+    const remaining = med.doses.filter((d) => d.key !== key);
+    const dose = !med.dose.trim() && remaining.length === 1
+      ? unitsLabel(remaining[0].amount, findMedication(medications, name))
+      : med.dose;
+    updateMed(name, { dose, doses: remaining });
   }
 
   function updateDose(name: string, key: string, patch: Partial<DoseEntry>) {
@@ -117,16 +130,24 @@ export function MedicationEntry({
   // an earlier custom add — any case) adds another dose to that one entry
   // instead of a second, duplicate entry for the same medicine: `value`
   // would otherwise hold it twice, and every dose would be saved twice.
+  //
+  // A dose/strength typed alongside that name is never silently dropped —
+  // it's what the user just told us, which `addDoseTo`'s own blank-if-
+  // ambiguous rule has no way to know about. Only falls back to that rule
+  // when the field was left empty.
   function addCustom() {
     const name = customName.trim();
     if (!name) return;
+    const dose = customDose.trim();
     const existing = selectedFor(name);
     if (existing) {
-      onChange(value.map((m) => (m === existing ? addDoseTo(m) : m)));
+      onChange(value.map((m) => (m !== existing ? m : dose
+        ? { ...m, dose, doses: [...m.doses, newDoseEntry()] }
+        : addDoseTo(m))));
     } else {
       const chip = recentMeds.find((m) => sameName(m.name, name));
-      if (chip) onChange([...value, { name: chip.name, dose: chip.dose, doses: [newDoseEntry()] }]);
-      else onChange([...value, { name, dose: customDose.trim(), doses: [newDoseEntry()] }]);
+      if (chip) onChange([...value, { name: chip.name, dose: dose || chip.dose, doses: [newDoseEntry()] }]);
+      else onChange([...value, { name, dose, doses: [newDoseEntry()] }]);
     }
     setCustomName('');
     setCustomDose('');
@@ -139,6 +160,14 @@ export function MedicationEntry({
   // all, since the card used to live only inside the `recentMeds.map` loop.
   const customSelected = value.filter((m) => !recentMeds.some((r) => sameName(r.name, m.name)));
 
+  // `recentMeds` can itself hold the same name twice under different
+  // capitalisation (library vs. history). `selectedFor` is case-insensitive,
+  // so without this, picking either chip would render *both* as the
+  // selected card — two cards editing the one entry in `value`.
+  const dedupedRecentMeds = recentMeds.filter(
+    (m, i) => recentMeds.findIndex((r) => sameName(r.name, m.name)) === i,
+  );
+
   return (
     <div className="space-y-3">
       {(recentMeds.length > 0 || customSelected.length > 0) && (
@@ -147,7 +176,7 @@ export function MedicationEntry({
             My medications — pick any
           </p>
           <div className="flex flex-col gap-2.5" role="group" aria-labelledby="my-meds-label">
-            {recentMeds.map((med) => {
+            {dedupedRecentMeds.map((med) => {
               const selected = selectedFor(med.name);
               const library = findMedication(medications, med.name);
               if (!selected) {
@@ -452,15 +481,28 @@ function DoseLimitNote({ library, attacks, name, doses, startMs, endMs, nowMs }:
     .sort((a, b) => a.ms - b.ms);
   const totalUnits = resolved.reduce((sum, d) => sum + d.amount, 0);
   const latestMs = resolved[resolved.length - 1].ms;
+  // The daily total and the 24h count are about the aggregate, so a single
+  // check at the latest time with the summed units is right for those.
   const check = checkDose(library, attacks, name, totalUnits, new Date(latestMs).toISOString());
 
   const exceedsIntake = !!library.maxPerIntake && resolved.some((d) => d.amount > library.maxPerIntake!);
 
-  let tooSoon = check.tooSoon;
+  // The minimum gap is checked two ways, and *every* entry needs both:
+  // each entry against already-logged history (checkDose's own tooSoon,
+  // called per entry rather than once at the latest — a dose at 10:30 can
+  // be too soon after a logged 10:00 dose even when a later entry at 16:00
+  // isn't), and each entry against its immediate predecessor in this same
+  // step. A zero gap between two entries is excluded — "Add another dose"
+  // starts both at the same default time, and that's an unset time nobody
+  // has differentiated yet, not a real zero-hour gap to warn about.
+  let tooSoon = resolved.some(
+    (d) => checkDose(library, attacks, name, d.amount, new Date(d.ms).toISOString()).tooSoon,
+  );
   if (library.minHoursBetween && resolved.length > 1) {
     const minMs = library.minHoursBetween * 60 * 60 * 1000;
     for (let i = 1; i < resolved.length; i++) {
-      if (resolved[i].ms - resolved[i - 1].ms < minMs) tooSoon = true;
+      const gap = resolved[i].ms - resolved[i - 1].ms;
+      if (gap > 0 && gap < minMs) tooSoon = true;
     }
   }
 
