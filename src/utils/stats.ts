@@ -1,5 +1,15 @@
 import type { Attack, Snapshot } from '../types';
+import { NOTHING_UNUSUAL } from '../types';
 import { isRetired } from './retired';
+
+/** False for an ongoing attack (`end === null`) and for one whose end time
+ *  is known to be a guess (`endUnknown`) — "gone when you woke up" with no
+ *  time added. Both read the same way here: there is no honest duration to
+ *  report, so every length-based figure must skip them rather than fabricate
+ *  one from a placeholder timestamp. */
+export function hasKnownDuration(attack: Attack): boolean {
+  return attack.end !== null && !attack.endUnknown;
+}
 
 export function maxSeverity(snapshot: Snapshot): number {
   const vals = Object.values(snapshot.areas);
@@ -110,7 +120,7 @@ export function longestPlateauMinutes(attack: Attack): number {
  */
 export function avgAttackLength(attacks: Attack[]): number | null {
   const lengths = attacks
-    .filter((a) => a.end !== null && a.snapshots.length > 0)
+    .filter((a) => hasKnownDuration(a) && a.snapshots.length > 0)
     .map((a) => msBetween(a.snapshots[0].time, a.end!) / 60000);
   if (lengths.length === 0) return null;
   return Math.round(lengths.reduce((s, m) => s + m, 0) / lengths.length);
@@ -219,7 +229,9 @@ function tallyToFreq(tally: Record<string, number>): Freq[] {
 export function triggerFrequency(attacks: Attack[]): Freq[] {
   const tally: Record<string, number> = {};
   for (const a of attacks) for (const t of new Set(a.triggers)) {
-    if (isRetired(t)) continue;
+    // The explicit "nothing unusual" answer is not a trigger and must never
+    // be counted as one.
+    if (isRetired(t) || t === NOTHING_UNUSUAL) continue;
     tally[t] = (tally[t] ?? 0) + 1;
   }
   return tallyToFreq(tally);

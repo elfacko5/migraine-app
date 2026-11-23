@@ -11,6 +11,9 @@ interface AttackRow {
   updated_at: string;
   woke_with_migraine: boolean | null;
   impact: number | null;
+  pain_quality: string[] | null;
+  end_unknown: boolean | null;
+  confirmed_real: boolean | null;
 }
 
 function rowToAttack(row: AttackRow): Attack {
@@ -24,6 +27,9 @@ function rowToAttack(row: AttackRow): Attack {
     wokeWithMigraine: row.woke_with_migraine ?? false,
     // null means unanswered, which is not the same as 0 — see Attack.impact.
     ...(row.impact === null || row.impact === undefined ? {} : { impact: row.impact as Attack['impact'] }),
+    ...(row.pain_quality && row.pain_quality.length > 0 ? { painQuality: row.pain_quality } : {}),
+    endUnknown: row.end_unknown ?? false,
+    confirmedReal: row.confirmed_real ?? false,
   };
 }
 
@@ -38,6 +44,9 @@ function attackToRow(attack: Attack, userId: string) {
     updated_at: attack.updatedAt ?? new Date().toISOString(),
     woke_with_migraine: attack.wokeWithMigraine ?? false,
     impact: attack.impact ?? null,
+    pain_quality: attack.painQuality ?? [],
+    end_unknown: attack.endUnknown ?? false,
+    confirmed_real: attack.confirmedReal ?? false,
   };
 }
 

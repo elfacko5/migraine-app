@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Attack, Medication } from '../types';
+import { NOTHING_UNUSUAL } from '../types';
 import { formatDate, formatTime, formatDuration, isoToLocalInput, localInputToIso } from '../utils/format';
 import { attackDoseOutcomes, attackMaxSeverity, maxSeverity, type DoseOutcome } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
@@ -264,7 +265,16 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         {(impact || attack.triggers.length > 0 || attack.wokeWithMigraine) && (
           <dl className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
             {impact && <Row term="Impact on your day" value={impact} />}
-            {attack.triggers.length > 0 && <Row term="Different the day before" value={attack.triggers.join(', ')} />}
+            {attack.triggers.length > 0 && (
+              <Row
+                term="Different the day before"
+                value={
+                  attack.triggers.includes(NOTHING_UNUSUAL)
+                    ? 'Nothing unusual'
+                    : attack.triggers.join(', ')
+                }
+              />
+            )}
             {attack.wokeWithMigraine && <Row term="Started" value="Woke up with it" />}
           </dl>
         )}

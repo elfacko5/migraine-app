@@ -30,6 +30,9 @@ export interface Attack {
   id: number;           // timestamp
   snapshots: Snapshot[];
   end: string | null;
+  // `triggers` also carries the reserved `NOTHING_UNUSUAL` sentinel (below)
+  // when "the two days before" was explicitly answered "nothing unusual" —
+  // every reader that tallies or displays triggers must filter it out first.
   triggers: string[];
   notificationConfig: NotificationConfig;
   updatedAt?: string;    // ISO timestamp of the last local write; used to resolve sync conflicts
@@ -38,7 +41,33 @@ export interface Attack {
   // 0 none · 1 some · 2 a lot · 3 couldn't function. Undefined means it was
   // never answered — never assume 0, which would read as "no impact".
   impact?: 0 | 1 | 2 | 3;
+  // Pick-any pain quality (ICHD-3 criterion B), from PAIN_QUALITY_OPTIONS.
+  // Stable metadata — editable after the fact via updateAttackDetails, same
+  // as triggers/wokeWithMigraine.
+  painQuality?: string[];
+  // True once the end time is known to be approximate — "gone when you woke
+  // up," no time added. `end` still holds a real timestamp so the attack
+  // reads as ended everywhere (FabMenu, Today, Detail footer); this flag is
+  // what excludes it from duration/avgAttackLength, the same way an ongoing
+  // attack is excluded. A reader must check this before treating `end` as a
+  // trustworthy duration endpoint — never fabricate confidence in a guess.
+  endUnknown?: boolean;
+  // Set after Logs/Detail flagged the attack as "too short to be real"
+  // (under 5 min) and the user confirmed it did happen. Metadata-only, like
+  // impact/triggers — never touches snapshots.
+  confirmedReal?: boolean;
 }
+
+/** Pick-any pain-quality chips (ICHD-3 criterion B gap). Stored verbatim in
+ *  `Attack.painQuality`, so this list is the one lookup table for it. */
+export const PAIN_QUALITY_OPTIONS = ['Throbbing', 'Pressing', 'Stabbing', 'Dull'];
+
+/** Reserved value inside `Attack.triggers` meaning "the two days before was
+ *  explicitly answered — nothing unusual", distinct from an unanswered empty
+ *  array. No migration: triggers is per-attack metadata on one jsonb row, not
+ *  a merged list, so a sentinel string costs nothing extra to sync. Every
+ *  tally/display over `triggers` must filter this out first. */
+export const NOTHING_UNUSUAL = '__nothing_unusual__';
 
 // The user's own medication library (Profile → My medications). Acute meds
 // are taken to treat an attack and feed the logging wizard's chips;

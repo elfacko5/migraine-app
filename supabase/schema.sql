@@ -13,7 +13,10 @@ create table if not exists attacks (
   notification_config jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now(),
   woke_with_migraine boolean not null default false,
-  impact smallint                                -- 0-3, null = never answered
+  impact smallint,                               -- 0-3, null = never answered
+  pain_quality text[] not null default '{}',
+  end_unknown boolean not null default false,
+  confirmed_real boolean not null default false
 );
 
 create index if not exists attacks_user_id_idx on attacks (user_id);
@@ -22,6 +25,14 @@ create index if not exists attacks_user_id_idx on attacks (user_id);
 -- this once (create table if not exists above won't retroactively add it):
 -- alter table attacks add column if not exists woke_with_migraine boolean not null default false;
 -- alter table attacks add column if not exists impact smallint;
+
+-- If this table already existed before the v4 logging-flow fields were
+-- added (painQuality / endUnknown / confirmedReal), run these once — every
+-- attack push upserts all three columns unconditionally, so sync fails
+-- until they exist:
+-- alter table attacks add column if not exists pain_quality text[] not null default '{}';
+-- alter table attacks add column if not exists end_unknown boolean not null default false;
+-- alter table attacks add column if not exists confirmed_real boolean not null default false;
 
 alter table attacks enable row level security;
 

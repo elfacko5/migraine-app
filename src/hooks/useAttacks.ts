@@ -251,10 +251,14 @@ export function useAttacks(userId: string | null) {
    * exists to avoid, and a badly remembered level counts in the disability
    * figures where an absent one does not. Adding it here would quietly undo
    * that decision. `setImpact` remains the only writer.
+   *
+   * `painQuality` and `confirmedReal` (added with the v4 redesign) are stable
+   * metadata by the same test impact fails — nothing about them decays with
+   * recall the way "how much did this stop you" does — so they belong here.
    */
   const updateAttackDetails = useCallback((
     attackId: number,
-    patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>>,
+    patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality' | 'confirmedReal'>>,
   ) => {
     let updated: Attack | undefined;
     commit(attacks.map((a) => {
