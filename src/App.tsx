@@ -127,7 +127,7 @@ export default function App() {
   } = useHit6(userId);
   const { shouldPrompt, requestPermission } = useNotifications();
   const {
-    textScale, setTextScale, brightness, setBrightness, theme, setTheme, attackMode, setAttackMode,
+    textScale, setTextScale, brightness, theme, setTheme, attackMode, setAttackMode,
     font, setFont, attackModeAuto, setAttackModeAuto, systemText, setSystemText,
   } = useSettings();
 
@@ -779,8 +779,6 @@ export default function App() {
           <DisplayPanel
             textScale={textScale}
             onTextScale={setTextScale}
-            brightness={brightness}
-            onBrightness={setBrightness}
             theme={theme}
             onTheme={setTheme}
             attackMode={attackMode}

@@ -156,8 +156,6 @@ const THEME_SWATCH: Record<Theme, React.CSSProperties> = {
 interface DisplayProps {
   textScale: TextScale;
   onTextScale: (s: TextScale) => void;
-  brightness: number;
-  onBrightness: (v: number) => void;
   theme: Theme;
   onTheme: (t: Theme) => void;
   attackMode: boolean;
@@ -174,8 +172,8 @@ interface DisplayProps {
 // "Display & attack mode", the v4 page — a list that drills into Font, Text
 // size and "What it changes", matching docs/redesign-v4/screens/18-display.
 // Brightness is gone: the redesign drops the manual dim (attack mode keeps its
-// own floor via BrightnessOverlay), so `brightness`/`onBrightness` stay in the
-// props the caller passes but are no longer rendered here. The auto-setting
+// own floor via BrightnessOverlay, which still reads `hd_brightness` — only the
+// slider that set it is removed). The auto-setting
 // still only turns attack mode on, never off (A10, June 2026-11-22). Font,
 // Text size and What-it-changes are nested views swapped inside this one sheet
 // — the My medications → Monthly guides pattern — so their back chevron
