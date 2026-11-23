@@ -44,9 +44,17 @@ export function SettingsList({ children }: { children: React.ReactNode }) {
 export interface SettingsRowProps {
   /** The label. */
   children?: React.ReactNode;
-  /** A second line under the label. */
-  supporting?: string;
-  /** Trailing text, such as "On during attacks". */
+  /**
+   * A second line under the label, muted — status text such as "On during
+   * attacks" or "2 medicines". `value` is kept as the prop name (callers
+   * already use it this way) but it renders stacked under the label now,
+   * never beside it — the pattern library's "Medicine row" (label, then a
+   * muted `.sub` directly below, both block-level, left-aligned), not
+   * code-ds's "value on the label's line, drops under only when there's no
+   * room" — that flex-wrap fallback is what made a long label like "Display
+   * & attack mode" wrap awkwardly around the value instead of the value
+   * simply taking its own line underneath. Found on device, 2026-11-23.
+   */
   value?: string;
   /** A decorative icon in currentColor. Hidden from screen readers. */
   leading?: React.ReactNode;
@@ -57,7 +65,7 @@ export interface SettingsRowProps {
   bare?: boolean;
 }
 
-export function SettingsRow({ children, supporting, value, leading, onClick, disabled = false, bare = false }: SettingsRowProps) {
+export function SettingsRow({ children, value, leading, onClick, disabled = false, bare = false }: SettingsRowProps) {
   // The divider lives on every row but the first, drawn as a pseudo-element
   // (not a border) so the first row is as tall as the others; the first and
   // last row's own content follows the card's rounded corners. An explicit
@@ -75,12 +83,13 @@ export function SettingsRow({ children, supporting, value, leading, onClick, dis
   const content = (
     <>
       {leading && <span aria-hidden="true" className="shrink-0 text-text-secondary [&>svg]:size-6">{leading}</span>}
-      {/* Label, then the value on the label's line (or under it when there's
-          no room), then supporting text under both — the reading order. */}
-      <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 [overflow-wrap:anywhere]">
-        <span className="min-w-[min(100%,7.5rem)] flex-1 text-text-primary">{children}</span>
-        {value && <span className="ml-auto max-w-full text-right text-text-secondary">{value}</span>}
-        {supporting && <span className="basis-full text-text-secondary">{supporting}</span>}
+      {/* Label, then the value directly below it — both block-level inside
+          one flex-1 column, never side-by-side. The "Medicine row" pattern:
+          a row's job is "here's its current state", not "here's a value to
+          compare against the label on one line". */}
+      <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">
+        <span className="block text-text-primary">{children}</span>
+        {value && <span className="block text-xs text-text-secondary">{value}</span>}
       </span>
     </>
   );

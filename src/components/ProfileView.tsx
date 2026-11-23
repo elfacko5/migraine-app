@@ -270,8 +270,7 @@ export function DisplayPanel({
             </SettingsRow>
             <SettingsRow
               onClick={() => setView('changes')}
-              value={attackMode ? undefined : 'Everyday'}
-              supporting={attackMode ? "Attack mode is on. You'll see these when you turn it off." : undefined}
+              value={attackMode ? "Attack mode is on. You'll see these when you turn it off." : 'Everyday'}
             >
               What it changes
             </SettingsRow>
@@ -416,7 +415,7 @@ function AttackChangesPage({ onBack }: { onBack: () => void }) {
           <DisplayPreviewCard />
         </section>
         <SettingsList>
-          <SettingsRow supporting="At least 35% darker">Dims the screen</SettingsRow>
+          <SettingsRow value="At least 35% darker">Dims the screen</SettingsRow>
           <SettingsRow>Warmer colours, softer contrast</SettingsRow>
           <SettingsRow>Bigger text, if yours is set small</SettingsRow>
           <SettingsRow>Nothing moves — animation stops</SettingsRow>

@@ -32,18 +32,22 @@ export function ProfileSubPage({ title, onClose, children, footer }: Props) {
         className="flex items-center gap-3 border-b border-border-subtle px-3 py-3"
         style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
       >
+        {/* Pattern library's "List header" (docs/redesign-v4/reference/
+            Patterns.html, 2026-11-23): a bare 44px chevron, no circle fill —
+            the filled-circle treatment is the *flow* header's own (40px,
+            bg-bg-raised), a different role. Title 16/600, not 17/500. */}
         <button
           type="button"
           onClick={onClose}
           aria-label="Back"
-          className="tap-44 flex size-compact items-center justify-center rounded-full bg-bg-raised text-text-secondary transition-colors hover:text-text-primary"
+          className="tap-44 flex size-target items-center justify-center text-text-secondary transition-colors hover:text-text-primary"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
-        <h2 ref={titleRef} tabIndex={-1} className="flex-1 text-center text-base font-medium text-text-primary outline-none">{title}</h2>
-        <span className="size-compact" aria-hidden="true" />
+        <h2 ref={titleRef} tabIndex={-1} className="flex-1 text-center text-sm font-semibold text-text-primary outline-none">{title}</h2>
+        <span className="size-target" aria-hidden="true" />
       </div>
 
       <div

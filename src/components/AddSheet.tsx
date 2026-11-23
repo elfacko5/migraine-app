@@ -89,11 +89,17 @@ export function AddSheet({ open, ongoing, actions, onClose }: {
         aria-label={title}
         tabIndex={-1}
         className={`absolute inset-x-0 bottom-0 flex flex-col gap-4 rounded-t-sheet bg-bg-surface px-5 pt-2.5 transition-transform duration-300 ease-out ${open ? 'translate-y-0' : 'translate-y-full'}`}
-        style={{ paddingBottom: 'calc(2.125rem + env(safe-area-inset-bottom))' }}
+        // 22px (pattern library's own Confirm/Edit-sheet reference,
+        // docs/redesign-v4/reference/Patterns.html), not the 34px this
+        // screen's own board draws — found too much dead space below Cancel
+        // on device. 22px + the real safe-area inset reads correctly; 34px
+        // was double-counting roughly what the inset already reserves.
+        style={{ paddingBottom: 'calc(1.375rem + env(safe-area-inset-bottom))' }}
       >
         {/* Drag-handle affordance — decorative; this sheet dismisses by tap,
-            not drag, but the design draws the handle regardless. */}
-        <span aria-hidden="true" className="mx-auto h-[5px] w-10 rounded-full bg-[#5a554c]" />
+            not drag, but the design draws the handle regardless. 36×5
+            (pattern library), not the 40×5 this screen's own board draws. */}
+        <span aria-hidden="true" className="mx-auto h-[5px] w-9 rounded-full bg-[#5a554c]" />
         <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
         {/* The action rows sit on their own bg-bg-raised card — a card on the
             sheet's own bg-bg-surface card, per the surface-stacking rule. */}
