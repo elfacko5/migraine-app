@@ -431,7 +431,7 @@ function AttackChangesPage({ onBack }: { onBack: () => void }) {
 // "readings"), so a preview never shows a card the app no longer renders.
 function DisplayPreviewCard() {
   return (
-    <div className="rounded-inset border border-bg-border/60 bg-bg-raised/40 p-card">
+    <div className="rounded-control border border-bg-border/60 bg-bg-raised/40 p-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -689,19 +689,19 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount }
   return (
     <ProfileSubPage title="Data" onClose={onClose}>
 
-        <div className="rounded-inset border border-bg-border bg-bg-raised/40 p-card space-y-3">
+        <div className="rounded-card border border-bg-border bg-bg-raised/40 p-card space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setView('export')}
-              className="btn-secondary rounded-control-sm py-2.5 text-sm font-medium transition-colors"
+              className="btn-secondary py-2.5 text-sm font-medium transition-colors"
             >
               Export backup
             </button>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="btn-secondary rounded-control-sm py-2.5 text-sm font-medium transition-colors"
+              className="btn-secondary py-2.5 text-sm font-medium transition-colors"
             >
               Import backup
             </button>

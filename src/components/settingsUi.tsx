@@ -121,7 +121,7 @@ export function SettingsRow({ children, value, leading, onClick, disabled = fals
 // group on it vanishes — there it is a card on a card.
 export function SettingsGroup({ children, raised = false }: { children: React.ReactNode; raised?: boolean }) {
   return (
-    <div className={`overflow-hidden rounded-group ${raised ? 'bg-bg-raised' : 'bg-bg-surface'} [&>*+*]:border-t [&>*+*]:border-bg-border`}>
+    <div className={`overflow-hidden rounded-card ${raised ? 'bg-bg-raised' : 'bg-bg-surface'} [&>*+*]:border-t [&>*+*]:border-bg-border`}>
       {children}
     </div>
   );
