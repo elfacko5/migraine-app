@@ -482,7 +482,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
             <div className="space-y-3">
               {areaNames.length > 0 && (
                 <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-2">
-                  <p className="text-xs uppercase tracking-wider text-text-secondary">Pain areas</p>
+                  <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">Pain areas</p>
                   <ul className="space-y-1.5">
                     {/* Per area, not off the single all-areas flag: a
                         transcript that states three severities and omits one
@@ -514,7 +514,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               )}
 
               <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-2">
-                <p className="text-xs uppercase tracking-wider text-text-secondary">Started</p>
+                <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">Started</p>
                 {/* "I woke up with it" answers *whether* but not *when*, and
                     the form's untouched default is "Just now" — which would
                     claim a start time nobody gave, the same way a defaulted
@@ -540,7 +540,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                   each becomes its own reading on the attack's timeline. */}
               {voiceDraft.doses.length > 0 && (
                 <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-2">
-                  <p className="text-xs uppercase tracking-wider text-text-secondary">Medication</p>
+                  <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">Medication</p>
                   <ul className="space-y-1.5">
                     {voiceDraft.doses.map((d, i) => (
                       <li key={`${d.name}-${i}`} className="flex items-baseline justify-between gap-3">
@@ -570,7 +570,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                 ['Triggers', form.triggers.join(', ')],
               ].filter(([, value]) => value).map(([label, value]) => (
                 <div key={label} className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-2">
-                  <p className="text-xs uppercase tracking-wider text-text-secondary">{label}</p>
+                  <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">{label}</p>
                   <p className="text-base text-text-primary">{value}</p>
                 </div>
               ))}
@@ -587,7 +587,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                     verbatim of the transcript, which is not necessarily
                     verbatim of the user. When a field looks wrong, this is
                     almost always where it went wrong. */}
-                <p className="text-xs uppercase tracking-wider text-text-secondary">What Siri heard</p>
+                <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">What Siri heard</p>
                 <p className="text-sm italic text-text-secondary">"{voiceDraft.note}"</p>
               </div>
             </div>
@@ -611,7 +611,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               {/* Start time card */}
               <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-3">
                 <div>
-                  <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">Start time</p>
+                  <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">Start time</p>
                   <p className="mt-1 text-lg font-medium text-text-primary">{startDisplay}</p>
                 </div>
                 <PresetRadios
@@ -649,7 +649,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               {/* End time card */}
               <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-3">
                 <div>
-                  <p className="text-xs uppercase tracking-wider font-medium text-text-secondary">End time</p>
+                  <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">End time</p>
                   <p className="mt-1 text-lg font-medium text-text-primary">{endDisplay}</p>
                 </div>
                 <PresetRadios
@@ -833,7 +833,7 @@ function PresetRadios<T extends string>({ label, options, value, onChange }: {
 }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-xs uppercase tracking-wider font-medium text-text-secondary" aria-hidden="true">Time presets</p>
+      <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary" aria-hidden="true">Time presets</p>
       <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
         {options.map((o) => (
           <button

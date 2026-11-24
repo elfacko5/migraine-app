@@ -462,6 +462,13 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
   onSave: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality'>>) => void;
 }) {
   const [triggers, setTriggers] = useState<string[]>(attack.triggers.filter((t) => t !== NOTHING_UNUSUAL));
+  // Same reasoning as `endTouched` below: this picker has no "Nothing
+  // unusual" chip of its own, so an untouched, still-empty `triggers` must
+  // not overwrite a stored `[NOTHING_UNUSUAL]` with `[]` — that would quietly
+  // turn an explicit "nothing unusual" answer back into "unanswered" the
+  // first time anyone opens this screen for an unrelated reason (reviewer
+  // finding, 2026-11-24). Only a real interaction with the picker counts.
+  const [triggersTouched, setTriggersTouched] = useState(false);
   const [painQuality, setPainQuality] = useState<string[]>(attack.painQuality ?? []);
   const [woke, setWoke] = useState<boolean>(attack.wokeWithMigraine ?? false);
   const [end, setEnd] = useState<string>(() => isoToLocalInput(attack.end ?? undefined));
@@ -480,14 +487,18 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
 
   function save() {
     const patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality'>> = {
-      // The sentinel never round-trips back in from this generic triggers
-      // picker — it has no chip for it and no way to re-add it, so a real
-      // selection here always means "the two days before" is answered with
-      // something specific, not "nothing unusual" any more.
-      triggers,
       painQuality,
       wokeWithMigraine: woke,
     };
+    // The sentinel never round-trips back in from this generic triggers
+    // picker — it has no chip for it and no way to re-add it — so `triggers`
+    // is only sent when the picker was actually touched. Sending it
+    // unconditionally would overwrite a stored `[NOTHING_UNUSUAL]` with `[]`
+    // on every save, including one made for an unrelated reason (painQuality,
+    // the end time), silently turning an explicit answer into "unanswered".
+    if (triggersTouched) {
+      patch.triggers = triggers;
+    }
     // Sent when the value actually changed, or — for an attack whose end is
     // only a placeholder guess — whenever the user touched the field at all,
     // even to re-pick the same minute. Either way is what clears endUnknown;
@@ -574,7 +585,7 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
           <ChipSelector
             options={triggerOptions}
             selected={triggers}
-            onChange={setTriggers}
+            onChange={(v) => { setTriggers(v); setTriggersTouched(true); }}
             onAddCustom={onAddTrigger}
             renderIcon={(t) => <TriggerIcon name={t} className="h-4 w-4" />}
           />

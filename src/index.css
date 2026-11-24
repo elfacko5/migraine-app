@@ -95,12 +95,13 @@
   --radius-segment: 0.625rem;  /* segments, Qty pills, severity cells */
   --radius-badge:   0.625rem;  /* T / C / P letter badge, dose pill */
   /* Flow-CTA radius (v4 Patterns.html, "56 high, 14 radius, 17" for a pinned
-     footer action) — only the default `.btn-primary`/`.btn-secondary`/
-     `.btn-tertiary` size uses this. `.btn-compact` and `.btn-inline` stay on
-     --radius-control: "bigger footer CTA only", not the full two-tier button
-     system (B decision, 2026-11-22). Not a public shape role (no call site
-     reaches for `rounded-control-lg` directly) — scoped to the button layer
-     below, the same way --spacing-row is scoped to SettingsRow. */
+     footer action) — only `.btn-cta` uses this, not the default
+     `.btn-primary`/`.btn-secondary`/`.btn-tertiary` size, which stays on
+     --radius-control: "bigger footer CTA only" means the six logging
+     wizards' own footer, not every default button (B decision, 2026-11-22).
+     Not a public shape role (no call site reaches for `rounded-control-lg`
+     directly) — scoped to the button layer below, the same way --spacing-row
+     is scoped to SettingsRow. */
   --radius-control-lg: 0.875rem;
 
   /* Lidd-local, temporary: collapse when the drift is decided.
@@ -129,15 +130,16 @@
      list measured at. */
   --spacing-row:     calc(var(--spacing) * 14);  /* 56px list row */
   /* Flow-CTA height (v4 Patterns.html / B decision, 2026-11-22): "bigger
-     footer CTA only" — the default `.btn-primary`/`.btn-secondary`/
-     `.btn-tertiary` size. Numerically the same as --spacing-row, but a
-     different role (a button's height, not a list row's) that happens to
-     land on the same step of the scale — the two are not merged on purpose,
-     the same way --spacing-row isn't --spacing-target. */
+     footer CTA only" means `.btn-cta`, the six logging wizards' own footer —
+     not the default `.btn-primary`/`.btn-secondary`/`.btn-tertiary` size,
+     which stays on --spacing-target. Numerically the same as --spacing-row,
+     but a different role (a button's height, not a list row's) that happens
+     to land on the same step of the scale — the two are not merged on
+     purpose, the same way --spacing-row isn't --spacing-target. */
   --spacing-cta:     calc(var(--spacing) * 14);  /* 56px flow-CTA button */
 
   /* Switch size (v4 token decision 9, "Resolved", 2026-11-24): the package's
-     default switch is 48x27 (vendor/code-ds/src/tokens/roles.css); the canvas
+     default switch is 48x28 (vendor/code-ds/src/tokens/roles.css); the canvas
      measured Today's attack-mode switch at a bespoke 40x24 and Reminders' at
      a bespoke 48x28, and settled on one size, 46x27, everywhere. Overridden
      here rather than in the vendored file, same as every other package role

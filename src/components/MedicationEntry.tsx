@@ -404,27 +404,34 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
 
   return (
     <div className="space-y-2.5 rounded-control bg-bg-raised p-3">
-      <div className="flex items-center gap-3">
-        <span className="flex-1 text-xs font-semibold uppercase tracking-wider text-text-secondary">How much</span>
-        <button
-          type="button"
-          onClick={() => onUnits(Math.max(1, entry.amount - 1))}
-          aria-label="One fewer"
-          className="flex size-target items-center justify-center rounded-full bg-bg-base text-lg text-text-primary ring-1 ring-inset ring-border-control"
-        >
-          −
-        </button>
-        <span className="min-w-[4.5rem] text-center text-base font-semibold tabular-nums text-text-primary">
-          {entry.amount} {entry.amount === 1 ? unit : `${unit}s`}
-        </span>
-        <button
-          type="button"
-          onClick={() => onUnits(entry.amount + 1)}
-          aria-label="One more"
-          className="flex size-target items-center justify-center rounded-full bg-bg-base text-lg text-text-primary ring-1 ring-inset ring-border-control"
-        >
-          +
-        </button>
+      {/* Label above the stepper, not beside it (matching "When did you take
+          it?" below) — sharing a row with two 44px circles left the label
+          squeezed into a sliver, or the row overflowing outright, once text
+          size grew past 100% (reviewer finding, 2026-11-24: the old 36px
+          buttons were already tight here; 44px broke it). */}
+      <div className="space-y-1.5">
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">How much</span>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => onUnits(Math.max(1, entry.amount - 1))}
+            aria-label="One fewer"
+            className="flex size-target shrink-0 items-center justify-center rounded-full bg-bg-base text-lg text-text-primary ring-1 ring-inset ring-border-control"
+          >
+            −
+          </button>
+          <span className="min-w-[4.5rem] text-center text-base font-semibold tabular-nums text-text-primary">
+            {entry.amount} {entry.amount === 1 ? unit : `${unit}s`}
+          </span>
+          <button
+            type="button"
+            onClick={() => onUnits(entry.amount + 1)}
+            aria-label="One more"
+            className="flex size-target shrink-0 items-center justify-center rounded-full bg-bg-base text-lg text-text-primary ring-1 ring-inset ring-border-control"
+          >
+            +
+          </button>
+        </div>
       </div>
       <div className="space-y-1.5">
         <p id={`dose-time-${entry.key}`} className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
