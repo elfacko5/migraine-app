@@ -71,26 +71,27 @@ function lastKnownAreas(snapshots: Snapshot[]): Record<string, number> {
   return result;
 }
 
-/** The areas actually on record *as of* `ms`, read from the attack's
- *  *existing* history only — never from this update's own new "how bad
- *  now" reading, which didn't exist yet at any time before it's saved. A
- *  new dose entry backdated earlier than the attack's latest existing
- *  reading (e.g. "When it started") must be given the state that was
- *  really true back then, not today's current severities.
+/** The areas actually on record at `ms` — whichever existing snapshot is
+ *  the nearest one at or before it, taken whole — read from the attack's
+ *  *existing* history only, never from this update's own new "how bad now"
+ *  reading, which didn't exist yet at any time before it's saved. A new
+ *  dose entry backdated earlier than the attack's latest existing reading
+ *  (e.g. "When it started") must be given the state that was really true
+ *  back then, not today's current severities.
  *
- *  Per-area lookback, same as `lastKnownAreas`, just bounded by `ms`
- *  instead of "now" — the nearest reading at or before `ms` can itself be
- *  a one-area follow-up, and taking its areas wholesale would hand a
- *  backdated dose the same "only one area" picture `lastKnownAreas` exists
- *  to avoid. Scans every snapshot rather than stopping at the first one
- *  past `ms`, so it doesn't depend on the array already being time-sorted. */
+ *  Deliberately *not* `lastKnownAreas`'s per-area lookback here: that would
+ *  reconstruct this dose's "before" state as of `ms` by walking each area
+ *  back to wherever it was last mentioned, which can resurrect an area that
+ *  had already been dropped (stopped being re-rated) by the time of `ms` —
+ *  the same ambiguity `submitNoChange` backed away from, for the same
+ *  reason. Taking one snapshot's areas wholesale can itself be a one-area
+ *  follow-up reading; that's an accepted, pre-existing shape already
+ *  possible from Past/Live's own follow-up events, not a new one. */
 function areasAsOf(snapshots: Snapshot[], ms: number): Record<string, number> {
-  const result: Record<string, number> = {};
-  for (let i = snapshots.length - 1; i >= 0; i--) {
-    if (new Date(snapshots[i].time).getTime() > ms) continue;
-    for (const [area, sev] of Object.entries(snapshots[i].areas)) {
-      if (!(area in result)) result[area] = sev;
-    }
+  let result: Record<string, number> = {};
+  for (const s of snapshots) {
+    if (new Date(s.time).getTime() > ms) break;
+    result = s.areas;
   }
   return result;
 }
@@ -133,6 +134,11 @@ function doseHelpRows(attack: Attack, nowMs: number): HelpRow[] {
     }
     const age = nowMs - doseMs;
     if (age >= FOLLOW_UP_MAX_MS) continue; // window closed — nothing to ask
+    // An attack that already ended too soon after this dose for a reading
+    // to ever land past the 1h floor has nothing to wait for — left out
+    // entirely rather than shown as "too soon to tell", which would read as
+    // temporary when it never becomes answerable.
+    if (attack.end && new Date(attack.end).getTime() - doseMs < FOLLOW_UP_MIN_MS) continue;
     out.push({ name, dose: med.dose, amount: med.amount, doseTimeIso: snaps[i].time, state: age < FOLLOW_UP_MIN_MS ? 'too-soon' : 'ask', peakArea: area });
   }
   return out;
@@ -227,7 +233,16 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   // attack whose own end fell inside the dose's 1h dead zone. Answering
   // anyway would store a reading `followUpReading` skips outright — worse
   // than just not offering it, since it looks saved but never counts.
-  const rowEligible = (row: HelpRow) => resolvedUpdateMs - new Date(row.doseTimeIso).getTime() >= FOLLOW_UP_MIN_MS;
+  //
+  // Padded by `helpRows.length` seconds, not just the bare 1h floor: `submit`
+  // staggers every answered row a further second or so earlier to keep each
+  // one strictly before the primary reading, so a gap only barely over 1h
+  // can still land under the floor once that stagger is applied. One second
+  // per row in `helpRows` (never just the answered ones, which can't be
+  // known yet while this is only deciding what to show) is already more
+  // headroom than `submit` can ever actually use.
+  const rowEligible = (row: HelpRow) =>
+    resolvedUpdateMs - new Date(row.doseTimeIso).getTime() >= FOLLOW_UP_MIN_MS + 1000 * helpRows.length;
 
   const nextDisabled = kind === 'now' && Object.keys(form.areas).length === 0;
 
@@ -250,11 +265,15 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   // reading's severities, carried forward at this reading's own time,
   // tagged `notification_no_change` rather than `manual` so the plateau
   // analytics count it as "held", not as a gap.
+  // `prev.areas`, not `lastKnownAreas` — matching the other two writers of
+  // this same source (the notification's own no-change reply, and
+  // QuickUpdateForm's). Per-area lookback would resurrect an area the user
+  // had since stopped re-rating: severity has no zero, so dropping an area
+  // from a later full reading *is* how "this one eased" gets said, and A2
+  // leaves "how areas not re-rated are recorded" an open question — not
+  // something to settle differently in just one of three call sites.
   function submitNoChange() {
-    // `lastKnownAreas`, not `prev.areas` — the latest snapshot can itself be
-    // a one-area follow-up reading, and "nothing changed" promises *every*
-    // area carries forward, matching the hint the picker itself just showed.
-    onNoChange({ time: new Date(resolvedUpdateMs).toISOString(), areas: lastKnownAreas(attack.snapshots), symptoms: [], reliefs: [], medication: null, note: null });
+    onNoChange({ time: new Date(resolvedUpdateMs).toISOString(), areas: { ...prev.areas }, symptoms: [], reliefs: [], medication: null, note: null });
   }
 
   function submit() {
@@ -308,7 +327,12 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
 
     events.sort((a, b) => a.ms - b.ms);
 
-    let runningAreas = lastKnownAreas(attack.snapshots);
+    // Never actually read before the primary event overwrites it (every
+    // `dose`/`followUp` event before the primary resolves through
+    // `areasAsOf` instead) — kept as `prev.areas` rather than
+    // `lastKnownAreas` only so this starting value doesn't quietly imply a
+    // different "no change" policy than `submitNoChange` just settled on.
+    let runningAreas = { ...prev.areas };
     let openingMedication: Omit<Snapshot, 'source'>['medication'] = null;
     let openingClaimed = false;
     const extraSnapshots: Array<Omit<Snapshot, 'source'>> = [];
