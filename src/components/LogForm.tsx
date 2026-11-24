@@ -770,7 +770,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
         {step === 0 ? (
           <>
             <button type="button" onClick={() => setStep(1)}
-              className="btn-secondary flex-1 rounded-control py-control-y text-sm font-medium transition-colors">
+              className="btn-secondary btn-cta flex-1 transition-colors">
               Make changes
             </button>
             {/* Shown even when it can't be used. Hiding it would leave the user
@@ -784,7 +784,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               // treatment, so spelling it out by hand here only risked drifting
               // from it — which it had, ending up indistinguishable from the
               // secondary button beside it.
-              className={`btn-primary flex-1 transition-all ${
+              className={`btn-primary btn-cta flex-1 transition-all ${
                 canSaveFromReview ? 'active:scale-[.99]' : ''
               }`}
             >
@@ -795,7 +795,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
           <>
             {(step > 1 || voiceDraft) && (
               <button type="button" onClick={goBack}
-                className="btn-secondary flex-1 rounded-control py-control-y text-sm font-medium transition-colors">
+                className="btn-secondary btn-cta flex-1 transition-colors">
                 Back
               </button>
             )}
@@ -803,7 +803,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               type="button"
               onClick={goNext}
               disabled={nextDisabled}
-              className={`flex-1 rounded-control py-control-y text-sm font-medium transition-all ${
+              className={`btn-cta flex-1 font-medium transition-all ${
                 nextDisabled
                   ? 'bg-bg-raised text-text-secondary cursor-not-allowed'
                   : 'btn-primary active:scale-[.99]'

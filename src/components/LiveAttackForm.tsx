@@ -248,7 +248,7 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
           type="button"
           onClick={goNext}
           disabled={nextDisabled}
-          className={`btn-primary flex-1 transition-all ${nextDisabled ? '' : 'active:scale-[.99]'}`}
+          className={`btn-primary btn-cta flex-1 transition-all ${nextDisabled ? '' : 'active:scale-[.99]'}`}
         >
           {step === totalSteps ? 'Save' : 'Next'}
         </button>

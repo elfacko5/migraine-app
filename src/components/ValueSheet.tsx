@@ -53,7 +53,7 @@ export function ValueSheet({ title, hint, unit, unitOne, steps: stepsIn, value, 
         </div>
         <div className="flex items-center justify-center gap-4">
           <button type="button" aria-label="Less" disabled={i === 0} onClick={() => setV(steps[i - 1])}
-            className="flex size-14 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:[color:color-mix(in_srgb,var(--color-text-secondary)_55%,var(--color-bg-surface))]">−</button>
+            className="flex size-16 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:[color:color-mix(in_srgb,var(--color-text-secondary)_55%,var(--color-bg-surface))]">−</button>
           <div className="min-w-[6rem] text-center" aria-live="polite">
             <span className="block text-[2.5rem] font-semibold tabular-nums leading-none text-text-primary">{v}</span>
             <span className="block text-sm text-text-secondary">{v <= 1 ? unitOne : unit}</span>
@@ -61,7 +61,7 @@ export function ValueSheet({ title, hint, unit, unitOne, steps: stepsIn, value, 
             {note && <span className="block text-xs text-text-secondary">{note}</span>}
           </div>
           <button type="button" aria-label="More" disabled={i === steps.length - 1} onClick={() => setV(steps[i + 1])}
-            className="flex size-14 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:[color:color-mix(in_srgb,var(--color-text-secondary)_55%,var(--color-bg-surface))]">+</button>
+            className="flex size-16 items-center justify-center rounded-full text-2xl text-text-primary ring-1 ring-inset ring-border-control disabled:[color:color-mix(in_srgb,var(--color-text-secondary)_55%,var(--color-bg-surface))]">+</button>
         </div>
         {onClear && clearNote && <p className="text-center text-xs text-text-secondary">{clearNote}</p>}
         <div className="flex flex-wrap gap-2">

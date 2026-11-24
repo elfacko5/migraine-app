@@ -35,7 +35,7 @@ interface Props {
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section className="space-y-1.5">
-      <h3 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{label}</h3>
+      <h3 className="text-xs uppercase tracking-wider font-semibold text-text-secondary">{label}</h3>
       {/* gap-4, not gap-2 — see the note on Pill: the expanded touch targets
           need 16px between rows to stay clear of each other. */}
       <div className="flex flex-wrap gap-x-2 gap-y-4">{children}</div>

@@ -405,7 +405,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
             {/* Nothing behind step 1 any more — the wizard is the whole flow */}
             {step > 1 && (
               <button type="button" onClick={goBack}
-                className="btn-secondary flex-1 rounded-control py-control-y text-sm font-medium transition-colors">
+                className="btn-secondary btn-cta flex-1 transition-colors">
                 Back
               </button>
             )}
@@ -414,7 +414,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
               // Says why, for a control whose disabled state is otherwise a
               // dead end — the same title `LogForm` gives its own.
               title={nextDisabled ? 'Select a pain area first' : undefined}
-              className="btn-primary flex-1 rounded-control py-control-y text-sm font-medium transition-colors">
+              className="btn-primary btn-cta flex-1 transition-colors">
               {step === TOTAL_STEPS ? 'Save update' : 'Next'}
             </button>
       </div>

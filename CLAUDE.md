@@ -87,6 +87,9 @@ Structures take a role from `@theme` in `src/index.css`, **never a raw step**.
 | **Default** | Footer action, full width | `btn-primary w-full` |
 | **`.btn-compact`** | Action inside a card, hugs text | `btn-primary btn-compact` |
 | **`.btn-inline`** | Inline action (52px) | `btn-primary btn-inline` |
+| **`.btn-cta`** | Pinned footer of a logging wizard (56px, 14px radius, 17px) | `btn-primary btn-cta flex-1` |
+
+`.btn-cta` is only for the six logging wizards' own pinned footer (LogForm, QuickUpdateForm, LiveAttackForm, PastAttackForm, UpdateAttackForm, EndAttackForm) — both buttons of a step-navigation footer take it, never just the primary. Every other footer (Sheet, ProfileSubPage, ConfirmDialog, the Default role above) stays as it was.
 
 - **Outline on pressable controls:** `--color-border-control` (3:1). Hairlines between readable content: `--color-bg-border`.
 - **Disabled `btn-primary`/`btn-secondary`:** automatic muted `bg-raised` treatment with dimmed label (a `color-mix`). Never `disabled:opacity-40`.

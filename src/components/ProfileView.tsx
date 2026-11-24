@@ -539,7 +539,7 @@ function ReminderDiagnostics() {
   return (
     <section className="space-y-2 border-t border-bg-border pt-5">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-wider font-medium text-text-secondary label-caps">Reminders</p>
+        <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary label-caps">Reminders</p>
         <button
           type="button"
           onClick={refresh}

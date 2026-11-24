@@ -410,7 +410,7 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
           type="button"
           onClick={() => onUnits(Math.max(1, entry.amount - 1))}
           aria-label="One fewer"
-          className="tap-44 flex size-compact items-center justify-center rounded-full bg-bg-base text-lg text-text-primary ring-1 ring-inset ring-border-control"
+          className="flex size-target items-center justify-center rounded-full bg-bg-base text-lg text-text-primary ring-1 ring-inset ring-border-control"
         >
           −
         </button>
@@ -421,7 +421,7 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
           type="button"
           onClick={() => onUnits(entry.amount + 1)}
           aria-label="One more"
-          className="tap-44 flex size-compact items-center justify-center rounded-full bg-bg-base text-lg text-text-primary ring-1 ring-inset ring-border-control"
+          className="flex size-target items-center justify-center rounded-full bg-bg-base text-lg text-text-primary ring-1 ring-inset ring-border-control"
         >
           +
         </button>

@@ -80,7 +80,7 @@ export function InsightSection({ title, children, note, info }: Props) {
           title still has to line up closely with "ATTACK DAYS PER MONTH"
           reading as the section's own label, not as indented content. */}
       <div className="flex items-center justify-between gap-2 px-2">
-        <h2 className="text-xs uppercase tracking-wider font-medium text-text-secondary">{title}</h2>
+        <h2 className="text-xs uppercase tracking-wider font-semibold text-text-secondary">{title}</h2>
         {info && (
           <button
             type="button"

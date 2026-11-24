@@ -412,7 +412,7 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
         <button
           type="button"
           onClick={goNext}
-          className="btn-primary flex-1 transition-all active:scale-[.99]"
+          className="btn-primary btn-cta flex-1 transition-all active:scale-[.99]"
         >
           {stepIndex === totalSteps - 1 ? 'Finish' : 'Next'}
         </button>

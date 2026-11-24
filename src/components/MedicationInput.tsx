@@ -102,7 +102,7 @@ export function MedicationInput({
     <div className="space-y-3">
       {recentMeds.length > 0 && (
         <div className="space-y-1.5">
-          <p id="my-meds-label" className="text-xs uppercase tracking-wider font-medium text-text-secondary">My medications</p>
+          <p id="my-meds-label" className="text-xs uppercase tracking-wider font-semibold text-text-secondary">My medications</p>
           {/* **One medication per reading, so a radio group** (2026-10-28).
               It was `aria-pressed` with `ChipCheck` — the multi-select
               pattern symptoms and reliefs use — for a choice that is in fact

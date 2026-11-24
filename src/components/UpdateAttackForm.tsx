@@ -468,7 +468,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
           onClick={goNext}
           disabled={nextDisabled}
           title={nextDisabled ? 'Rate at least one pain area first' : undefined}
-          className={`btn-primary flex-1 transition-all ${nextDisabled ? '' : 'active:scale-[.99]'}`}
+          className={`btn-primary btn-cta flex-1 transition-all ${nextDisabled ? '' : 'active:scale-[.99]'}`}
         >
           {stepIndex === totalSteps - 1 ? 'Save update' : 'Next'}
         </button>

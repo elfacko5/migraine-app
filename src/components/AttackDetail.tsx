@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Attack, Medication } from '../types';
-import { NOTHING_UNUSUAL } from '../types';
+import { NOTHING_UNUSUAL, PAIN_QUALITY_OPTIONS } from '../types';
 import { formatDate, formatTime, formatDuration, isoToLocalInput, localInputToIso } from '../utils/format';
 import { attackDoseOutcomes, attackMaxSeverity, hasKnownDuration, maxSeverity, type DoseOutcome } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
@@ -29,7 +29,7 @@ interface Props {
   onEndAttack?: () => void;
   /** Attack-level metadata only — never snapshots. Omit to hide the Edit
    *  details action entirely. */
-  onSaveDetails?: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>>) => void;
+  onSaveDetails?: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality'>>) => void;
   triggerOptions?: string[];
   onAddTrigger?: (label: string) => void;
   /** The library — for each drug's type letter. */
@@ -294,12 +294,15 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         {/* Read-only. Impact is asked once, inside 24h of the end, on Today;
             offering it here would invite an answer reconstructed days later,
             so an unanswered one shows nothing rather than an empty control. */}
-        {(impact || attack.triggers.length > 0 || attack.wokeWithMigraine) && (
+        {(impact || attack.triggers.length > 0 || attack.wokeWithMigraine || (attack.painQuality && attack.painQuality.length > 0)) && (
           <dl className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
             {impact && <Row term="Impact on your day" value={impact} />}
+            {attack.painQuality && attack.painQuality.length > 0 && (
+              <Row term="What it was like" value={attack.painQuality.join(', ')} />
+            )}
             {attack.triggers.length > 0 && (
               <Row
-                term="Different the day before"
+                term="The two days before"
                 value={
                   attack.triggers.filter((t) => t !== NOTHING_UNUSUAL).join(', ')
                     || 'Nothing unusual'
@@ -322,7 +325,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
         {ongoing && onEndAttack ? (
           <button type="button" onClick={onEndAttack} className="btn-secondary flex-1">End attack</button>
         ) : onSaveDetails ? (
-          <button type="button" onClick={() => setEditing(true)} className="btn-secondary flex-1">Edit</button>
+          <button type="button" onClick={() => setEditing(true)} className="btn-secondary flex-1">Edit this attack</button>
         ) : null}
         {onAddUpdate && (
           <button type="button" onClick={onAddUpdate} className="btn-primary flex-[1.1]">Add update</button>
@@ -438,11 +441,13 @@ function PainChart({ attack, letterFor }: { attack: Attack; letterFor: (name: st
 /**
  * "Edit details" — attack-level metadata only.
  *
- * The scope is the whole design (docs/editing-assessment.md): the three
- * fields here describe the episode rather than any one reading, and all three
- * are already rewritten elsewhere in the app today (`endAttack` writes `end`;
- * `wokeWithMigraine` and `triggers` are set at creation and never revisited).
- * Nothing here can reach `snapshots`.
+ * The scope is the whole design (docs/editing-assessment.md): the fields here
+ * describe the episode rather than any one reading, and all are already
+ * rewritten elsewhere in the app today (`endAttack` writes `end`;
+ * `wokeWithMigraine`, `triggers` and `painQuality` are set at creation and
+ * otherwise never revisited — this is the only other place that can change
+ * them, per A5/A4(i) of docs/redesign-v4-diff.md). Nothing here can reach
+ * `snapshots`.
  *
  * `impact` is absent on purpose and must stay absent. It is asked once, in a
  * 24-hour window, and left unanswered for good if that passes — a level
@@ -454,9 +459,10 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
   triggerOptions: string[];
   onAddTrigger?: (label: string) => void;
   onCancel: () => void;
-  onSave: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>>) => void;
+  onSave: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality'>>) => void;
 }) {
   const [triggers, setTriggers] = useState<string[]>(attack.triggers.filter((t) => t !== NOTHING_UNUSUAL));
+  const [painQuality, setPainQuality] = useState<string[]>(attack.painQuality ?? []);
   const [woke, setWoke] = useState<boolean>(attack.wokeWithMigraine ?? false);
   const [end, setEnd] = useState<string>(() => isoToLocalInput(attack.end ?? undefined));
   // Whether the user has actually touched the end-time field this visit —
@@ -473,12 +479,13 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
   const minTime = attack.snapshots[attack.snapshots.length - 1].time;
 
   function save() {
-    const patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end'>> = {
+    const patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality'>> = {
       // The sentinel never round-trips back in from this generic triggers
       // picker — it has no chip for it and no way to re-add it, so a real
       // selection here always means "the two days before" is answered with
       // something specific, not "nothing unusual" any more.
       triggers,
+      painQuality,
       wokeWithMigraine: woke,
     };
     // Sent when the value actually changed, or — for an attack whose end is
@@ -556,7 +563,14 @@ function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSav
         )}
 
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-text-primary">Triggers</h3>
+          <h3 className="text-sm font-medium text-text-primary">
+            Felt like <span className="font-normal text-text-secondary">— pick any</span>
+          </h3>
+          <ChipSelector options={PAIN_QUALITY_OPTIONS} selected={painQuality} onChange={setPainQuality} />
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-text-primary">The two days before</h3>
           <ChipSelector
             options={triggerOptions}
             selected={triggers}

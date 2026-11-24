@@ -82,11 +82,26 @@
      diamonds). */
   --radius-control: 0.75rem;   /* buttons, full-width option rows */
   --radius-card:    1.25rem;   /* v3 cards and option tiles */
-  --radius-sheet:   1rem;      /* dialogs and the + menu */
+  /* 16px -> 20px, same as --radius-card (v4 token decision 5B, 2026-11-24):
+     a sheet's corners were tighter than the cards sitting inside it. One
+     radius for every large container now. */
+  --radius-sheet:   1.25rem;   /* dialogs and the + menu */
   --radius-chip:    0.5rem;    /* presets and pick chips */
   --radius-field:   0.5rem;    /* text inputs and DateTimeField */
-  --radius-segment: 0.375rem;  /* segments, Qty pills, severity cells */
+  /* 6px -> 10px (v4 token decision, "clean batch", 2026-11-24): the canvas's
+     segmented controls and severity cells measured 10-14px, nowhere near the
+     old 6. Lands on --radius-badge's own value — a coincidence of this pass,
+     not a merge of the two roles. */
+  --radius-segment: 0.625rem;  /* segments, Qty pills, severity cells */
   --radius-badge:   0.625rem;  /* T / C / P letter badge, dose pill */
+  /* Flow-CTA radius (v4 Patterns.html, "56 high, 14 radius, 17" for a pinned
+     footer action) — only the default `.btn-primary`/`.btn-secondary`/
+     `.btn-tertiary` size uses this. `.btn-compact` and `.btn-inline` stay on
+     --radius-control: "bigger footer CTA only", not the full two-tier button
+     system (B decision, 2026-11-22). Not a public shape role (no call site
+     reaches for `rounded-control-lg` directly) — scoped to the button layer
+     below, the same way --spacing-row is scoped to SettingsRow. */
+  --radius-control-lg: 0.875rem;
 
   /* Lidd-local, temporary: collapse when the drift is decided.
      Each of these is a role above at a different value, kept separate so
@@ -113,6 +128,26 @@
      everywhere else, this is one specific row height a v4 settings-style
      list measured at. */
   --spacing-row:     calc(var(--spacing) * 14);  /* 56px list row */
+  /* Flow-CTA height (v4 Patterns.html / B decision, 2026-11-22): "bigger
+     footer CTA only" — the default `.btn-primary`/`.btn-secondary`/
+     `.btn-tertiary` size. Numerically the same as --spacing-row, but a
+     different role (a button's height, not a list row's) that happens to
+     land on the same step of the scale — the two are not merged on purpose,
+     the same way --spacing-row isn't --spacing-target. */
+  --spacing-cta:     calc(var(--spacing) * 14);  /* 56px flow-CTA button */
+
+  /* Switch size (v4 token decision 9, "Resolved", 2026-11-24): the package's
+     default switch is 48x27 (vendor/code-ds/src/tokens/roles.css); the canvas
+     measured Today's attack-mode switch at a bespoke 40x24 and Reminders' at
+     a bespoke 48x28, and settled on one size, 46x27, everywhere. Overridden
+     here rather than in the vendored file, same as every other package role
+     Lidd customises (this @theme block imports after roles.css and wins).
+     46/27/23/2 don't sit on the 4px spacing scale, so these are literal rem,
+     not calc(var(--spacing) * n) like the package's own definition. */
+  --spacing-switch-w:      2.875rem;   /* 46px track width */
+  --spacing-switch-h:      1.6875rem;  /* 27px track height */
+  --spacing-switch-thumb:  1.4375rem;  /* 23px thumb */
+  --spacing-switch-inset:  0.125rem;   /* 2px gap around the thumb */
 
   /* ── Padding roles (phase 3) ──────────────────────────
      Only for structures that repeat; everything else stays on Tailwind's
@@ -122,7 +157,11 @@
   --spacing-control-y:         calc(var(--spacing) * 3);
   --spacing-control-compact-x: calc(var(--spacing) * 5);    /* btn-compact */
   --spacing-control-compact-y: calc(var(--spacing) * 2.5);
-  --spacing-gutter:            calc(var(--spacing) * 4);    /* px-gutter */
+  /* 16px -> 20px (v4 "clean batch", page padding, 2026-11-24): screen edge
+     padding measured 20px on the canvas against code's 16. Verify at 375px
+     after this change — this is the one token edit in this pass wide enough
+     to shift where every screen's content wraps. */
+  --spacing-gutter:            calc(var(--spacing) * 5);    /* px-gutter */
   --spacing-gutter-wide:       calc(var(--spacing) * 6);    /* sm:px-gutter-wide */
 
   /* ── Color tokens — warm dark ────────────────────────
@@ -357,14 +396,30 @@
      `.btn-primary`'s own font-size already 16px) — only height needed a
      name. Scoped to call sites that are their own single-screen confirm
      (Data's Save file, Feedback's Send, the Logs filter sheet's Show
-     results, Headache impact's Done screens) — not the logging wizards
-     (LogForm, QuickUpdateForm, EndAttackDialog), which stay at the current
-     44px pending their own pass: those are the flows this redesign
-     deliberately does last, since they change stored data and the
-     notification handler. Not the medication add/edit flows either — both
-     were only just rebuilt, carefully, off a different design source; this
-     pass doesn't reopen them. */
+     results, Headache impact's Done screens) — not the logging wizards,
+     which take `.btn-cta` below instead. Not the medication add/edit flows
+     either — both were only just rebuilt, carefully, off a different design
+     source; this pass doesn't reopen them. */
   .btn-inline { min-height: 3.25rem; }
+
+  /* **A fourth size: "flow CTA"** (pattern library — "56 high, 14 radius,
+     17px" for "full-width, pinned to the bottom, advances or commits a
+     flow"). For the logging wizards' own pinned footer: LogForm,
+     QuickUpdateForm, LiveAttackForm, PastAttackForm, UpdateAttackForm,
+     EndAttackForm. Those flows change stored data and the notification
+     handler, so this redesign held their footer size back until their own
+     structural pass landed (2026-11) — it has now, and this is that pass's
+     remaining piece. Both buttons of a step-navigation footer (Back +
+     Next) take it, matching the pattern library's own `.secb`, which carries
+     no height/radius override of its own and so inherits the same 56/14 as
+     `.pri` — a flow's two footer buttons are always one size. Not a
+     five-tier system: everything outside these six files' pinned footers
+     stays on the default, `.btn-compact` or `.btn-inline` as before. */
+  .btn-cta {
+    border-radius: var(--radius-control-lg);
+    min-height: var(--spacing-cta);
+    font-size: var(--text-base);
+  }
 
   /* A disabled primary is a *muted* button, never a faded accent one — the
      treatment the logging wizard spells out by hand at each call site. Here

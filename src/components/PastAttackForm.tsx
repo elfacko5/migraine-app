@@ -426,7 +426,7 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
           type="button"
           onClick={goNext}
           disabled={nextDisabled}
-          className={`btn-primary flex-1 transition-all ${nextDisabled ? '' : 'active:scale-[.99]'}`}
+          className={`btn-primary btn-cta flex-1 transition-all ${nextDisabled ? '' : 'active:scale-[.99]'}`}
         >
           {step === totalSteps ? 'Save attack' : 'Next'}
         </button>
