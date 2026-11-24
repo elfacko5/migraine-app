@@ -75,20 +75,22 @@ export function OngoingAttackBanner({ attack, onEnd, onAddUpdate, onOpenDetail, 
       onOpenDetail={onOpenDetail}
       topAction={topAction}
     >
-      {/* **Add an update and End attack, side by side, both secondary**
-          (2026-10-28) — which reverses the 2026-10-26 call that left End
-          attack alone here. That call was right while the FAB was a direct
-          tap to "Add update": the hero's copy of it was the same action in a
-          second, louder place. Since the FAB opens a menu, adding an update
-          from it costs an extra tap, so the card's own shortcut earns its
-          place back — the card is the fast path, the + menu the consistent
-          one (Sunny's spec, deliberately duplicated).
+      {/* **Add an update and End attack, side by side** (2026-10-28) — which
+          reverses the 2026-10-26 call that left End attack alone here. That
+          call was right while the FAB was a direct tap to "Add update": the
+          hero's copy of it was the same action in a second, louder place.
+          Since the FAB opens a menu, adding an update from it costs an extra
+          tap, so the card's own shortcut earns its place back — the card is
+          the fast path, the + menu the consistent one (Sunny's spec,
+          deliberately duplicated).
 
-          Neither is promoted to `btn-primary`: the FAB is still the one solid
-          accent target on Today, and an accent fill here would rebuild the
-          competition the earlier change removed. Add an update leads because
-          it is what an ongoing attack is usually opened for. */}
-      <button type="button" onClick={onAddUpdate} className="btn-secondary btn-compact">
+          **Add an update promoted to `btn-primary`** (v4 hero pass,
+          2026-11-24) — confirmed against `docs/redesign-v4/screens/01-today`
+          (`TodayOngoingDark.html`'s `.btn.pri`/`.btn.sec`). This reverses the
+          2026-10-28 reasoning that kept both secondary so the FAB stayed the
+          one accent target on Today; the board makes the hero's own shortcut
+          the accent one instead; see `docs/decisions.md`. */}
+      <button type="button" onClick={onAddUpdate} className="btn-primary btn-compact">
         Add an update
       </button>
       <button type="button" onClick={onEnd} className="btn-secondary btn-compact">

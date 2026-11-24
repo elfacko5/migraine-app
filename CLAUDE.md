@@ -308,7 +308,7 @@ Attack-free: `AttackFreeCard` with greeting + "X days / since your last attack".
 
 - Gradients from `bg-bg-base` to `bg-bg-base/0` (never `transparent`). Horizontal stop past image's left edge (40% for 36% image start).
 - Art box 40px + inset below top. Text centred against artwork, `max-w-[64%]`.
-- Ongoing: Add update + End attack (`btn-secondary btn-compact`). Neither promoted to primary.
+- Ongoing: Add update (`btn-primary btn-compact`) + End attack (`btn-secondary btn-compact`) — confirmed against the v4 board (2026-11-24), which reverses the earlier "neither promoted" call.
 - Attack mode button top-left z-45. Hero not `isolate`.
 - Headline 44px semibold. Ongoing = elapsed time + trajectory + severity text (never colour-coded on illustration).
 
