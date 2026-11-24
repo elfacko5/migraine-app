@@ -15,19 +15,28 @@ matching section of `CLAUDE.md` for anything you are about to touch.
 
 ## Before writing the component
 
-Do these three things first. They take a minute and they are the whole point.
+Do these four things first. They take a minute and they are the whole point.
 
-1. **Find the nearest existing thing and read it.** Not something similar in
+1. **Check `docs/redesign-v4-diff.md` for this screen first.** It is the
+   decided target, not a proposal — section C lists the per-screen changes,
+   section G the rollout order, section A the resolved decisions. If the
+   screen has a v4 board and a settled decision, build to *that*, even where
+   it differs from what's currently shipped. Only fall through to step 2 when
+   the screen has no v4 board (section E lists the gaps) or the diff doc
+   defers it (section F: code is ahead, don't regress).
+2. **Find the nearest existing thing and read it.** Not something similar in
    spirit — the closest actual component. A card on Today → read
    `OngoingAttackBanner`. A sub-page → read an existing `ProfileSubPage`
    caller. A multi-step flow → read `LogForm`. Copy its structure and class
-   choices rather than re-deriving them.
-2. **Grep for the primitive before hand-rolling one.** `btn-`, `chipClass`,
+   choices rather than re-deriving them — unless step 1 just told you that
+   component is pre-v4 and due for a pass, in which case read it to see what
+   has to change, not to copy.
+3. **Grep for the primitive before hand-rolling one.** `btn-`, `chipClass`,
    `Sheet`, `ProfileSubPage`, `ConfirmDialog`, `InsightSection`, `HomeCard`,
    `MedIcon`, `sevFill`. If a shared thing exists, a local copy of it is a bug
    in waiting — the severity thresholds and the impact labels both had to be
    rescued from exactly that.
-3. **Ask what surface it sits on.** `bg-base` (page) → `bg-surface` (card) →
+4. **Ask what surface it sits on.** `bg-base` (page) → `bg-surface` (card) →
    `bg-raised` (card on card) → `bg-elevated`. Picking the wrong one is the
    most common reason a new block looks bolted on.
 

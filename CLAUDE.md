@@ -8,7 +8,7 @@ Rules for working in this codebase. Reasoning behind each rule lives in `docs/`;
 | [`docs/voice-parsing.md`](docs/voice-parsing.md) | changing any rule in `src/utils/voiceParse.ts` |
 | [`docs/viewport-architecture.md`](docs/viewport-architecture.md) | touching the app shell's height, offset, or overlay positioning |
 | [`docs/notifications.md`](docs/notifications.md) | changing how a reminder is scheduled, sounded, or answered |
-| [`docs/redesign-v3/index.html`](docs/redesign-v3/index.html) | building or changing any v3 screen (supersedes older artboards) |
+| [`docs/redesign-v4-diff.md`](docs/redesign-v4-diff.md) | building or changing **any** screen's look — the decided rollout, in order, against `docs/redesign-v4/`; supersedes `redesign-v3` and every older artboard |
 | [`docs/today-cards.md`](docs/today-cards.md) | restyling `HomeCard` or swapping its artwork |
 | [`docs/palette.md`](docs/palette.md) | changing a colour token or adding hardcoded hex |
 | [`docs/plan-medication-flows.md`](docs/plan-medication-flows.md) | changing medication add/edit/guides/remove flows or dose matching |
