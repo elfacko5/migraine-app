@@ -199,7 +199,15 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
       <SideLabel labels={view.sideLabels} side="left"
         className="text-[0.65rem] font-medium uppercase tracking-wider text-text-secondary"/>
 
-      <svg viewBox={view.viewBox} className="block w-full max-w-[230px]"
+      {/* 230px -> 195px (2026-11-24, June's report): the diagram pushed the
+          1-10 severity grid below the fold, so seeing it meant scrolling
+          first. Measured on a 390×844 viewport: at 230px the severity
+          card's own bottom ran ~35px past the pinned footer's top; at 195px
+          it clears with ~19px to spare, so the grid is on screen as soon as
+          an area is tapped. Smaller screens (iPhone SE-class, 667pt)
+          still need a short scroll — shrinking further to avoid that would
+          make the zones too small to tap reliably. */}
+      <svg viewBox={view.viewBox} className="block w-full max-w-[195px]"
         aria-label={`${view.label} of head — tap a region to select it`}>
         <defs>
           <clipPath id={clip}>
