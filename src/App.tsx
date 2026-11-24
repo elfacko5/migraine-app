@@ -35,6 +35,7 @@ const TAB_TITLES: Record<Tab, string> = {
 };
 import { LogForm } from './components/LogForm';
 import { LiveAttackForm } from './components/LiveAttackForm';
+import { PastAttackForm } from './components/PastAttackForm';
 import { QuickUpdateForm } from './components/QuickUpdateForm';
 import { OngoingAttackBanner } from './components/OngoingAttackBanner';
 import { AttackFreeCard } from './components/AttackFreeCard';
@@ -420,7 +421,23 @@ export default function App() {
     voiceHandledRef.current = false;
   }
 
-  async function handleLogSave(snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean, doseReadings: Array<Omit<Snapshot, 'source'>> = []) {
+  async function handleLogSave(
+    snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean, doseReadings: Array<Omit<Snapshot, 'source'>> = [],
+    // Past-attack-only metadata, passed straight into `startAttack` rather
+    // than set with a follow-up `updateAttackDetails` call — that call would
+    // map over this render's own `attacks`, which still doesn't contain the
+    // attack `startAttack` just committed, and silently overwrite it back
+    // out of existence (caught on-device: a past-attack save with
+    // painQuality or endUnknown set vanished with nothing in the console).
+    // Deliberately no `impact` param here: asking it at past-log time would
+    // be exactly the recall bias `attackAwaitingImpact`'s own reasoning
+    // rejects (a judgement about what the attack cost, reconstructed after
+    // the fact) — the existing Today prompt already covers a past attack
+    // that ended inside its own 24h window, and one older than that is
+    // meant to stay unanswered.
+    endUnknown?: boolean,
+    painQuality?: string[],
+  ) {
     const wantsReminders = notifConfig.enabled && !end;
     // Ask before scheduling, not after. startAttack schedules as a side effect,
     // and a reminder scheduled while permission is still undecided is accepted
@@ -437,6 +454,7 @@ export default function App() {
     startAttack(
       stampSnapshot(snapshot, medications), triggersSel, notifConfig, end, wokeWithMigraine,
       doseReadings.map((r) => stampSnapshot(r, medications)),
+      endUnknown, painQuality,
     );
     // "Attack mode when I start an attack" (Display page, opt-in). Only for
     // an attack that's still going — a retrospective log is someone looking
@@ -698,12 +716,11 @@ export default function App() {
             ]}
       />
 
-      {/* Log attack sheet. The v4 3-step LiveAttackForm replaces LogForm for
-          a manual, starting-now log — voice drafts (live or past) and any
-          past-attack log still go through LogForm, which keeps the step-0
-          voice review screen and the symptoms/reliefs/triggers steps a past
-          log and a dictated one both still need. See LiveAttackForm's own
-          doc comment. */}
+      {/* Log attack sheet. The v4 LiveAttackForm/PastAttackForm replace
+          LogForm for manual entry — voice drafts (live or past) still open
+          LogForm, which keeps the step-0 voice review screen and the
+          symptoms/reliefs/triggers steps a dictated log still needs. See
+          LiveAttackForm's own doc comment. */}
       <Sheet
         open={logSheetOpen}
         onClose={closeLogSheet}
@@ -711,18 +728,7 @@ export default function App() {
         flush
         bareHeader
       >
-        {!logPast && !voiceDraft ? (
-          <LiveAttackForm
-            recentMeds={recentMeds}
-            medications={medications}
-            attacks={attacks}
-            defaultNotifConfig={defaultNotifConfig}
-            textScale={textScale}
-            onTextScale={setTextScale}
-            onClose={closeLogSheet}
-            onSave={handleLogSave}
-          />
-        ) : (
+        {voiceDraft ? (
           <LogForm
             past={logPast}
             triggers={sortedTriggers}
@@ -740,6 +746,34 @@ export default function App() {
             onClose={closeLogSheet}
             onSave={handleLogSave}
             voiceDraft={voiceDraft}
+          />
+        ) : logPast ? (
+          <PastAttackForm
+            triggers={sortedTriggers}
+            symptoms={sortedSymptoms}
+            reliefs={sortedReliefs}
+            recentMeds={recentMeds}
+            medications={medications}
+            attacks={attacks}
+            defaultNotifConfig={defaultNotifConfig}
+            textScale={textScale}
+            onTextScale={setTextScale}
+            onAddSymptom={addSymptom}
+            onAddRelief={addRelief}
+            onAddTrigger={addTrigger}
+            onClose={closeLogSheet}
+            onSave={handleLogSave}
+          />
+        ) : (
+          <LiveAttackForm
+            recentMeds={recentMeds}
+            medications={medications}
+            attacks={attacks}
+            defaultNotifConfig={defaultNotifConfig}
+            textScale={textScale}
+            onTextScale={setTextScale}
+            onClose={closeLogSheet}
+            onSave={handleLogSave}
           />
         )}
       </Sheet>

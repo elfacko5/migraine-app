@@ -1,5 +1,6 @@
 import { localInputToIso } from './format';
 import { doseOptions, effectiveDoseMode, resolveDoseMs, type DoseMode } from './doseTime';
+import { FOLLOW_UP_TARGET_MS } from './stats';
 
 // Pick-any medication entry with per-dose cards (v4 redesign, 2026-11-23):
 // any number of medicines, and any number of doses of one medicine, in a
@@ -16,6 +17,14 @@ export interface DoseEntry {
   /** Local-input form, used only when `mode === 'manual'`. */
   time: string;
   amount: number;
+  /** Severity about two hours after this dose — past/ended attacks only,
+   *  and only while the window applies (see `followUpApplies`). `null` is
+   *  "not answered", never "no pain" — same rule as `LogForm`'s own single-
+   *  dose follow-up, generalised to any dose entry of any medicine. Saved as
+   *  an ordinary `Snapshot` at dose + 2h, never a stored "helped" verdict:
+   *  `followUpReading`/`doseHelped` (stats.ts) read it back the same way
+   *  they already read a live attack's own two-hour reading. */
+  followUp: number | null;
 }
 
 export interface SelectedMedication {
@@ -28,7 +37,7 @@ export interface SelectedMedication {
 }
 
 export function newDoseEntry(mode: DoseMode = 'now'): DoseEntry {
-  return { key: crypto.randomUUID(), mode, time: '', amount: 1 };
+  return { key: crypto.randomUUID(), mode, time: '', amount: 1, followUp: null };
 }
 
 /** A dose entry's own resolved time, clamped into the attack's window —
@@ -39,4 +48,15 @@ export function doseEntryMs(entry: DoseEntry, startMs: number, endMs: number | n
   const mode = effectiveDoseMode(entry.mode, doseOptions(startMs, endMs, nowMs));
   const manualIso = entry.time ? localInputToIso(entry.time) : new Date(nowMs).toISOString();
   return resolveDoseMs(mode, manualIso, startMs, endMs, nowMs);
+}
+
+/**
+ * Whether "…and about 2 hours after?" applies to a dose at `doseMs`: the
+ * attack has a real end (not ongoing) and the two-hour mark lands before
+ * it. Without a real window there is nothing honest to ask — same rule
+ * `LogForm`'s `followUpWindow` already applies to its one dose, here usable
+ * per dose entry so any number of medicines/doses can each be asked.
+ */
+export function followUpApplies(doseMs: number, endMs: number | null): boolean {
+  return endMs !== null && doseMs + FOLLOW_UP_TARGET_MS < endMs;
 }

@@ -116,6 +116,15 @@ export function useAttacks(userId: string | null) {
     // rather than added afterwards, because `addSnapshots` maps over the
     // `attacks` of the current render, which can't yet contain this one.
     extraSnapshots: Array<Omit<Snapshot, 'source'>> = [],
+    // Same reasoning, same fix, for attack-level metadata a past-attack log
+    // can set at creation time: a follow-up `updateAttackDetails(attack.id,
+    // ...)` call right after this one would map over this render's own
+    // `attacks`, which still doesn't contain the attack just committed here
+    // — silently overwriting it back out of existence. Caught on-device
+    // (2026-11-23): PastAttackForm's save vanished silently whenever
+    // painQuality or endUnknown was set, with nothing in the console.
+    endUnknown?: boolean,
+    painQuality?: string[],
   ): Attack => {
     const attack: Attack = {
       id: Date.now(),
@@ -128,6 +137,8 @@ export function useAttacks(userId: string | null) {
       notificationConfig,
       updatedAt: new Date().toISOString(),
       wokeWithMigraine,
+      ...(endUnknown ? { endUnknown: true } : {}),
+      ...(painQuality && painQuality.length > 0 ? { painQuality } : {}),
     };
     commit([attack, ...attacks]);
     if (notificationConfig.enabled && !end) {

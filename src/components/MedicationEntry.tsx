@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Attack, Medication } from '../types';
-import { isoToLocalInput } from '../utils/format';
+import { formatTime, isoToLocalInput } from '../utils/format';
+import { sevTextClass } from '../utils/severity';
 import { chipClass } from '../utils/chipStyles';
 import { RadioDot } from './RadioDot';
 import { ChipCheck } from './ChipCheck';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { DOSE_LABELS, doseOptions, effectiveDoseMode, type DoseMode } from '../utils/doseTime';
-import { doseEntryMs, newDoseEntry, type DoseEntry, type SelectedMedication } from '../utils/doseEntries';
+import { doseEntryMs, followUpApplies, newDoseEntry, type DoseEntry, type SelectedMedication } from '../utils/doseEntries';
+import { FOLLOW_UP_TARGET_MS } from '../utils/stats';
 import { ClassBadge } from './ClassBadge';
 import { classLetter } from '../utils/medClasses';
 import {
@@ -26,6 +28,12 @@ interface Props {
   startMs: number;
   endMs: number | null;
   nowMs: number;
+  /** Where a dose's "…and about 2 hours after?" slider starts when opened —
+   *  the attack's own worst reading, so the first move is relative to
+   *  something real. Omit to leave every dose's follow-up prompt off (the
+   *  live flow, where the attack hasn't ended yet and the question can't
+   *  apply to any dose regardless). */
+  followUpStart?: number;
 }
 
 const LOOKS_LIKE_UNITS = /^\d{1,2}\s*[a-z]+s?$/i;
@@ -38,7 +46,7 @@ const HAS_STRENGTH = /\d\s*(mg|mcg|µg|g|ml)\b/i;
  * logging flows — see `docs/redesign-v4-diff.md` and `doseEntries.ts`.
  */
 export function MedicationEntry({
-  value, onChange, recentMeds = [], medications = [], attacks = [], startMs, endMs, nowMs,
+  value, onChange, recentMeds = [], medications = [], attacks = [], startMs, endMs, nowMs, followUpStart,
 }: Props) {
   const [customOpen, setCustomOpen] = useState(() => recentMeds.length === 0);
   const [customName, setCustomName] = useState('');
@@ -220,6 +228,8 @@ export function MedicationEntry({
                   })}
                   onTime={(key, t) => updateDose(selected.name, key, { time: t })}
                   onRemoveDose={(key) => removeDose(selected.name, key)}
+                  followUpStart={followUpStart}
+                  onFollowUp={(key, v) => updateDose(selected.name, key, { followUp: v })}
                 />
               );
             })}
@@ -244,6 +254,8 @@ export function MedicationEntry({
                   })}
                   onTime={(key, t) => updateDose(selected.name, key, { time: t })}
                   onRemoveDose={(key) => removeDose(selected.name, key)}
+                  followUpStart={followUpStart}
+                  onFollowUp={(key, v) => updateDose(selected.name, key, { followUp: v })}
                 />
               );
             })}
@@ -311,7 +323,7 @@ export function MedicationEntry({
  * medicine alike — the two differ only in how they got into `value` and how
  * removal is wired, never in what the card itself looks like.
  */
-function MedicineCard({ selected, library, attacks, options, startMs, endMs, nowMs, onDeselect, onAddDose, onUnits, onMode, onTime, onRemoveDose }: {
+function MedicineCard({ selected, library, attacks, options, startMs, endMs, nowMs, onDeselect, onAddDose, onUnits, onMode, onTime, onRemoveDose, followUpStart, onFollowUp }: {
   selected: SelectedMedication;
   library: Medication | null;
   attacks: Attack[];
@@ -325,6 +337,8 @@ function MedicineCard({ selected, library, attacks, options, startMs, endMs, now
   onMode: (key: string, mode: DoseMode, prevMode: DoseMode, time: string) => void;
   onTime: (key: string, t: string) => void;
   onRemoveDose: (key: string) => void;
+  followUpStart?: number;
+  onFollowUp: (key: string, v: number | null) => void;
 }) {
   const unit = library?.unitLabel?.trim() || DEFAULT_UNIT;
   return (
@@ -352,6 +366,8 @@ function MedicineCard({ selected, library, attacks, options, startMs, endMs, now
             onMode={(m) => onMode(d.key, m, d.mode, d.time)}
             onTime={(t) => onTime(d.key, t)}
             onRemove={() => onRemoveDose(d.key)}
+            followUpStart={followUpStart}
+            onFollowUp={(v) => onFollowUp(d.key, v)}
           />
         ))}
         <DoseLimitNote library={library} attacks={attacks} name={selected.name} doses={selected.doses} startMs={startMs} endMs={endMs} nowMs={nowMs} />
@@ -364,7 +380,7 @@ function MedicineCard({ selected, library, attacks, options, startMs, endMs, now
 }
 
 /** One dose's quantity + time, inside a selected medicine's card. */
-function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUnits, onMode, onTime, onRemove }: {
+function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUnits, onMode, onTime, onRemove, followUpStart, onFollowUp }: {
   entry: DoseEntry;
   removable: boolean;
   unit: string;
@@ -376,6 +392,8 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
   onMode: (m: DoseMode) => void;
   onTime: (t: string) => void;
   onRemove: () => void;
+  followUpStart?: number;
+  onFollowUp: (v: number | null) => void;
 }) {
   const mode = effectiveDoseMode(entry.mode, options);
   const openRef = useRef<DateTimeFieldHandle>(null);
@@ -439,6 +457,14 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
           />
         )}
       </div>
+      {followUpStart !== undefined && followUpApplies(doseEntryMs(entry, startMs, endMs, nowMs), endMs) && (
+        <FollowUpRow
+          atMs={doseEntryMs(entry, startMs, endMs, nowMs) + FOLLOW_UP_TARGET_MS}
+          value={entry.followUp}
+          start={followUpStart}
+          onChange={onFollowUp}
+        />
+      )}
       {removable && (
         <button
           type="button"
@@ -447,6 +473,68 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
         >
           Remove this dose
         </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * "…and about 2 hours after?" for one dose entry — the per-dose
+ * generalisation of `LogForm`'s own `FollowUpPrompt`. Saved as an ordinary
+ * reading at dose + 2h (see `DoseEntry.followUp`), never a stored verdict;
+ * `doseHelped`/`attackDoseOutcomes` derive "helped" from it afterwards the
+ * same way they already do for a live attack's two-hour check-in.
+ */
+function FollowUpRow({ atMs, value, start, onChange }: {
+  atMs: number;
+  value: number | null;
+  start: number;
+  onChange: (v: number | null) => void;
+}) {
+  return (
+    <div className="space-y-2.5 rounded-control bg-bg-raised p-3">
+      <div>
+        <p className="text-sm font-medium text-text-primary">…and about 2 hours after?</p>
+        <p className="text-xs text-text-secondary">Around {formatTime(new Date(atMs).toISOString())}. Optional.</p>
+      </div>
+      {value === null ? (
+        <button type="button" onClick={() => onChange(start)} className="btn-secondary btn-compact">
+          Add how bad it was
+        </button>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-secondary">How bad</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-bold tabular-nums ${sevTextClass(value)}`}>{value}</span>
+              <button
+                type="button"
+                onClick={() => onChange(null)}
+                className="text-text-secondary hover:text-text-primary transition-colors"
+                aria-label="Remove the 2-hour reading"
+              >
+                <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                  <line x1="4" y1="4" x2="12" y2="12" />
+                  <line x1="12" y1="4" x2="4" y2="12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-text-secondary w-7">None</span>
+            <input
+              type="range"
+              min={0}
+              max={10}
+              step={1}
+              value={value}
+              aria-label="Severity about 2 hours after the dose"
+              onChange={(e) => onChange(Number(e.target.value))}
+              className="flex-1"
+            />
+            <span className="text-xs text-text-secondary w-12 text-right">Severe</span>
+          </div>
+        </div>
       )}
     </div>
   );
