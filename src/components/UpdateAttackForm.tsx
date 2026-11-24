@@ -118,30 +118,40 @@ interface HelpRow {
  * for an attack that already has an `end`.
  */
 function doseHelpRows(attack: Attack, nowMs: number): HelpRow[] {
-  const out: HelpRow[] = [];
+  const raw: HelpRow[] = [];
   const snaps = attack.snapshots;
   for (let i = 0; i < snaps.length; i++) {
     const med = snaps[i].medication;
     const name = med?.name?.trim();
-    if (!med || !name || isRetired(name) || out.some((o) => o.name === name)) continue;
+    if (!med || !name || isRetired(name) || raw.some((o) => o.name === name)) continue;
     const before = maxSeverity(snaps[i]);
     const follow = followUpReading(snaps, i);
     const doseMs = new Date(snaps[i].time).getTime();
     const area = peakArea(snaps[i].areas);
     if (follow) {
-      out.push({ name, dose: med.dose, amount: med.amount, doseTimeIso: snaps[i].time, state: 'answered', word: doseOutcomeWord(before, maxSeverity(follow)), peakArea: area });
+      raw.push({ name, dose: med.dose, amount: med.amount, doseTimeIso: snaps[i].time, state: 'answered', word: doseOutcomeWord(before, maxSeverity(follow)), peakArea: area });
       continue;
     }
     const age = nowMs - doseMs;
     if (age >= FOLLOW_UP_MAX_MS) continue; // window closed — nothing to ask
-    // An attack that already ended too soon after this dose for a reading
-    // to ever land past the 1h floor has nothing to wait for — left out
-    // entirely rather than shown as "too soon to tell", which would read as
-    // temporary when it never becomes answerable.
-    if (attack.end && new Date(attack.end).getTime() - doseMs < FOLLOW_UP_MIN_MS) continue;
-    out.push({ name, dose: med.dose, amount: med.amount, doseTimeIso: snaps[i].time, state: age < FOLLOW_UP_MIN_MS ? 'too-soon' : 'ask', peakArea: area });
+    // Gated on the real +2h mark, not the 1h floor `followUpReading` itself
+    // accepts — `submit` always places this answer *before* the primary
+    // "how bad now" reading (so it never becomes the attack's newest
+    // snapshot), which means the primary reading is always at least as
+    // close to +2h as this one whenever the dose is under two hours old,
+    // and so always wins the match instead. Asking earlier than that would
+    // collect an answer that saves but is never the one counted.
+    raw.push({ name, dose: med.dose, amount: med.amount, doseTimeIso: snaps[i].time, state: age < FOLLOW_UP_TARGET_MS ? 'too-soon' : 'ask', peakArea: area });
   }
-  return out;
+  if (!attack.end) return raw;
+  // An attack that already ended too soon after a dose for any reading to
+  // ever clear the padded +2h mark (the same padding `rowEligible` applies)
+  // has nothing to wait for — left out entirely rather than shown as "too
+  // soon to tell", which would read as temporary when it can never be
+  // answered.
+  const endMs = new Date(attack.end).getTime();
+  const padded = FOLLOW_UP_TARGET_MS + 1000 * raw.length;
+  return raw.filter((row) => row.state === 'answered' || endMs - new Date(row.doseTimeIso).getTime() >= padded);
 }
 
 function blank(defaultTime: string): FormState {
@@ -199,9 +209,9 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   }, [form.timeMode]);
 
   // Computed once, when the sheet opens — a step disappearing mid-flow
-  // because the clock ticked past FOLLOW_UP_MIN_MS would be a worse surprise
-  // than the (rare) case of answering a dose a few minutes before the
-  // window technically opened.
+  // because the clock ticked past FOLLOW_UP_TARGET_MS would be a worse
+  // surprise than the (rare) case of answering a dose a few minutes before
+  // the window technically opened.
   const [helpRows] = useState<HelpRow[]>(() => doseHelpRows(attack, openedAt));
 
   // Most recently logged dose, if any — the "Taken anything since?" step's
@@ -225,24 +235,25 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   const peakSeverityNow = Math.max(0, ...Object.values(form.areas));
 
   // Whether a "did it help?" answer for `row` would land far enough past
-  // its dose to actually register with `followUpReading` once this update
+  // its dose to actually win `followUpReading`'s match once this update
   // saves at `resolvedUpdateMs` — `helpRows`' own `state` was decided
   // against the clock when the sheet opened (deliberately, so the step
   // doesn't vanish mid-flow), but the update's own time can since move
   // earlier, including all the way down to `minTime` on a just-ended
-  // attack whose own end fell inside the dose's 1h dead zone. Answering
-  // anyway would store a reading `followUpReading` skips outright — worse
-  // than just not offering it, since it looks saved but never counts.
+  // attack.
   //
-  // Padded by `helpRows.length` seconds, not just the bare 1h floor: `submit`
+  // Gated on +2h, not the 1h floor `followUpReading` itself would still
+  // accept: `submit` always places this answer *before* the primary
+  // reading, so a gap under two hours leaves the primary reading at
+  // `resolvedUpdateMs` closer to the +2h mark every time, and it wins the
+  // match instead — the slider answer would still save, just never be the
+  // one counted. Padded by `helpRows.length` seconds on top of that for the
+  // same reason `doseHelpRows` pads its own "never eligible" check: `submit`
   // staggers every answered row a further second or so earlier to keep each
-  // one strictly before the primary reading, so a gap only barely over 1h
-  // can still land under the floor once that stagger is applied. One second
-  // per row in `helpRows` (never just the answered ones, which can't be
-  // known yet while this is only deciding what to show) is already more
-  // headroom than `submit` can ever actually use.
+  // one strictly before the primary reading, so a gap only barely over 2h
+  // can still land under the +2h mark once that stagger is applied.
   const rowEligible = (row: HelpRow) =>
-    resolvedUpdateMs - new Date(row.doseTimeIso).getTime() >= FOLLOW_UP_MIN_MS + 1000 * helpRows.length;
+    resolvedUpdateMs - new Date(row.doseTimeIso).getTime() >= FOLLOW_UP_TARGET_MS + 1000 * helpRows.length;
 
   const nextDisabled = kind === 'now' && Object.keys(form.areas).length === 0;
 
@@ -298,18 +309,15 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
     }
     // Aimed at `doseTime + 2h` (the real mark `followUpReading` measures
     // against) but always kept *before* the primary reading, never at or
-    // after it. The "ask" state only requires the dose be an hour old, so
-    // the literal +2h mark can still be in the future relative to right now
-    // — landing it on the primary reading's own moment would make this
-    // single-area reading the attack's newest snapshot, which every "last
-    // reading = current state" reader (a later no-change copy, the
+    // after it — landing it on the primary reading's own moment would make
+    // this single-area reading the attack's newest snapshot, which every
+    // "last reading = current state" reader (a later no-change copy, the
     // reminder body, the next update's own `prev`) would then take as the
-    // whole picture. Floored at `doseTime + 1h` for the same reason as the
-    // ceiling: a manually backdated update time could otherwise push it
-    // under `followUpReading`'s own 1h dead zone, where it's skipped rather
-    // than matched, even though the eligibility check above already
-    // guaranteed this dose is really that old. Staggered a second apart so
-    // two answered rows in one update don't collide on the same timestamp.
+    // whole picture. `rowEligible` already guarantees the dose is at least
+    // two hours old by `resolvedUpdateMs`, so the target is always at or
+    // before "now" — this floor only exists as a defensive lower bound,
+    // never expected to bind. Staggered a second apart so two answered rows
+    // in one update don't collide on the same timestamp.
     const answeredHelpRows = helpRows.filter((row) => helpAnswers[row.name] !== undefined && row.peakArea && rowEligible(row));
     answeredHelpRows.forEach((row, i) => {
       const doseMs = new Date(row.doseTimeIso).getTime();
