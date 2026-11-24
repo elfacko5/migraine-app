@@ -128,11 +128,15 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
       key: `${s.time}-${i}`,
       time: s.time,
       // A reading with no areas at all (EndAttackForm's own closing "what
-      // was it like" snapshot) hasn't reported a pain score — `maxSeverity`
-      // reads it as 0, which isn't one.
-      title: s.source === 'notification_no_change' ? `No change · pain ${maxSeverity(s)}`
-        : Object.keys(s.areas).length === 0 ? 'Update'
-        : `Pain ${maxSeverity(s)}`,
+      // was it like" snapshot, or — per lessons learned — a no-change reply
+      // carried forward from one) hasn't reported a pain score —
+      // `maxSeverity` reads it as 0, which isn't one. Checked before the
+      // `notification_no_change` case, not after: a no-change reading can
+      // itself be area-less when it carried one forward from such a
+      // reading, and "No change · pain 0" is exactly as wrong as "Pain 0".
+      title: Object.keys(s.areas).length === 0
+        ? (s.source === 'notification_no_change' ? 'No change' : 'Update')
+        : (s.source === 'notification_no_change' ? `No change · pain ${maxSeverity(s)}` : `Pain ${maxSeverity(s)}`),
       more: [
         Object.entries(s.areas).sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n} ${v}`).join(' · '),
         s.medication?.name ? `Took ${s.medication.name}` : null,

@@ -863,7 +863,12 @@ export function attackDoseOutcomes(attack: Attack, now: number = Date.now()): Do
       ? (doseHelped(before, after) ? 'helped' : 'not-helped')
       : attack.end === null && age < FOLLOW_UP_MAX_MS ? 'pending' : 'no-reading';
     const doseMs = new Date(snaps[i].time).getTime();
-    const nextSnap = after === null ? snaps.slice(i + 1).find((x) => new Date(x.time).getTime() > doseMs) : undefined;
+    // Same "no areas, no score" rule as `followUpReading` just above — a
+    // reading with none (End's own closing snapshot) isn't a pain value to
+    // show as "next was 0", it just didn't report one.
+    const nextSnap = after === null
+      ? snaps.slice(i + 1).find((x) => new Date(x.time).getTime() > doseMs && Object.keys(x.areas).length > 0)
+      : undefined;
     const next = nextSnap ? { severity: maxSeverity(nextSnap), afterMs: new Date(nextSnap.time).getTime() - doseMs } : null;
     out.push({ name, dose: med.dose, amount: med.amount, time: snaps[i].time, verdict, before, after, next });
   }

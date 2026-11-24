@@ -117,6 +117,12 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   const prev = attack.snapshots[attack.snapshots.length - 1];
   const minTime = prev.time;
   const maxTime = attack.end ?? new Date().toISOString();
+  // The last reading that actually rated an area — not simply `prev`, which
+  // can itself carry none (EndAttackForm's own closing "what was it like"
+  // reading, symptoms/reliefs only). Carrying *that* forward into a
+  // no-change reading would state a severity nobody gave; `minTime`/
+  // `maxTime` above still bound against `prev` itself, unchanged.
+  const lastScored = [...attack.snapshots].reverse().find((s) => Object.keys(s.areas).length > 0) ?? prev;
   const attackStartMs = new Date(attack.snapshots[0].time).getTime();
   const attackEndMs = attack.end ? new Date(attack.end).getTime() : null;
 
@@ -183,18 +189,22 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   }
 
   // Same record `QuickUpdateForm`'s own no-change path writes: the previous
-  // reading's severities, carried forward at this reading's own time,
-  // tagged `notification_no_change` rather than `manual` so the plateau
-  // analytics count it as "held", not as a gap.
-  // `prev.areas`, not `lastKnownAreas` — matching the other two writers of
-  // this same source (the notification's own no-change reply, and
-  // QuickUpdateForm's). Per-area lookback would resurrect an area the user
-  // had since stopped re-rating: severity has no zero, so dropping an area
-  // from a later full reading *is* how "this one eased" gets said, and A2
-  // leaves "how areas not re-rated are recorded" an open question — not
-  // something to settle differently in just one of three call sites.
+  // *scored* reading's severities, carried forward at this reading's own
+  // time, tagged `notification_no_change` rather than `manual` so the
+  // plateau analytics count it as "held", not as a gap.
+  // `lastScored.areas`, not `lastKnownAreas` — matching the other two
+  // writers of this same source (the notification's own no-change reply,
+  // and QuickUpdateForm's own `prev.areas`, which on an attack with no
+  // area-less readings is the exact same value). Per-area lookback would
+  // resurrect an area the user had since stopped re-rating: severity has no
+  // zero, so dropping an area from a later full reading *is* how "this one
+  // eased" gets said, and A2 leaves "how areas not re-rated are recorded"
+  // an open question — not something to settle differently in just one of
+  // three call sites. `lastScored` only steps past `prev` itself when `prev`
+  // carries no areas at all, which isn't that question — it's a reading
+  // that never reported a severity in the first place.
   function submitNoChange() {
-    onNoChange({ time: new Date(resolvedUpdateMs).toISOString(), areas: { ...prev.areas }, symptoms: [], reliefs: [], medication: null, note: null });
+    onNoChange({ time: new Date(resolvedUpdateMs).toISOString(), areas: { ...lastScored.areas }, symptoms: [], reliefs: [], medication: null, note: null });
   }
 
   function submit() {
@@ -227,10 +237,9 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
 
     // Never actually read before the primary event overwrites it (every
     // `dose`/`followUp` event before the primary resolves through
-    // `areasAsOf` instead) — kept as `prev.areas` rather than
-    // `lastKnownAreas` only so this starting value doesn't quietly imply a
-    // different "no change" policy than `submitNoChange` just settled on.
-    let runningAreas = { ...prev.areas };
+    // `areasAsOf` instead) — kept as `lastScored.areas` rather than
+    // `lastKnownAreas` for the same reason `submitNoChange` is, just above.
+    let runningAreas = { ...lastScored.areas };
     let openingMedication: Omit<Snapshot, 'source'>['medication'] = null;
     let openingClaimed = false;
     const extraSnapshots: Array<Omit<Snapshot, 'source'>> = [];
