@@ -14,6 +14,7 @@ import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { TextScaleControl } from './TextScaleControl';
 import type { TextScale } from '../hooks/useSettings';
 import { SymptomIcon, ReliefIcon } from './drawnIcons';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface Props {
   attack: Attack;
@@ -28,6 +29,10 @@ interface Props {
   onAddRelief: (r: string) => void;
   onClose: () => void;
   onSave: (snapshot: Omit<Snapshot, 'source'>, extraSnapshots: Array<Omit<Snapshot, 'source'>>) => void;
+  // Carries the previous reading's severities forward, marked `notification_no_change`
+  // — `QuickUpdateForm`'s own "Finish now" path, kept reachable from the new
+  // flow too (see this file's doc comment).
+  onNoChange: (snapshot: Omit<Snapshot, 'source'>) => void;
 }
 
 interface FormState {
@@ -48,6 +53,39 @@ function peakArea(areas: Record<string, number>): string | null {
   let best: string | null = null;
   for (const [k, v] of Object.entries(areas)) if (best === null || v > areas[best]) best = k;
   return best;
+}
+
+/** How each area stood at its own most recent reading — not just the
+ *  attack's single latest snapshot, which can itself be a one-area
+ *  follow-up reading and so say nothing about every other area that was
+ *  genuinely logged more recently than never. This is what A2's "the
+ *  severity control shows how *that area* was last logged" means read
+ *  literally: per area, not per snapshot. */
+function lastKnownAreas(snapshots: Snapshot[]): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (let i = snapshots.length - 1; i >= 0; i--) {
+    for (const [area, sev] of Object.entries(snapshots[i].areas)) {
+      if (!(area in result)) result[area] = sev;
+    }
+  }
+  return result;
+}
+
+/** The areas actually on record at `ms`, read from the attack's *existing*
+ *  history only — never from this update's own new "how bad now" reading,
+ *  which didn't exist yet at any time before it's saved. A new dose entry
+ *  backdated earlier than the attack's latest existing reading (e.g. "When
+ *  it started") must be given the state that was really true back then, not
+ *  today's current severities — the bug a straight `prev.areas` seed can't
+ *  tell apart from the ordinary, much more common case of a dose dated
+ *  after everything already logged. */
+function areasAsOf(snapshots: Snapshot[], ms: number): Record<string, number> {
+  let result: Record<string, number> = {};
+  for (const s of snapshots) {
+    if (new Date(s.time).getTime() > ms) break;
+    result = s.areas;
+  }
+  return result;
 }
 
 type HelpRowState = 'answered' | 'ask' | 'too-soon';
@@ -113,14 +151,15 @@ function blank(defaultTime: string): FormState {
  * the count entirely when this attack has no medication old enough to ask
  * about yet.
  *
- * **No "Finish now"/no-change shortcut.** `QuickUpdateForm` had one, reached
- * from a form left entirely blank; this flow's first step is itself the
- * pain-area entry and is required, same as `LiveAttackForm`/`PastAttackForm`'s
- * own area step, so there is no longer a blank state that control would
- * apply to. Logging "nothing changed" from a reminder notification is
- * unaffected — that path never opens this sheet.
+ * **"Nothing changed" survives as a header link on step 1 only**, not a
+ * "Finish now" reachable from every step — this flow's first step is
+ * itself the required pain-area entry, so the old "form left entirely
+ * blank" trigger no longer exists, but CLAUDE.md's Quick-update rule still
+ * promises the shortcut and `notification_no_change` is still a real,
+ * first-class plateau-analytics source worth keeping reachable from inside
+ * the app, not only from a reminder's own quick reply.
  */
-export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], textScale, onTextScale, onAddSymptom, onAddRelief, onClose, onSave }: Props) {
+export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], textScale, onTextScale, onAddSymptom, onAddRelief, onClose, onSave, onNoChange }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
   const minTime = prev.time;
   const maxTime = attack.end ?? new Date().toISOString();
@@ -135,6 +174,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   });
   const [helpAnswers, setHelpAnswers] = useState<Record<string, number>>({});
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [confirmNoChange, setConfirmNoChange] = useState(false);
   const timeInputRef = useRef<DateTimeFieldHandle>(null);
 
   function set<K extends keyof FormState>(key: K, val: FormState[K]) {
@@ -188,6 +228,14 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
     else onClose();
   }
 
+  // Same record `QuickUpdateForm`'s own no-change path writes: the previous
+  // reading's severities, carried forward at this reading's own time,
+  // tagged `notification_no_change` rather than `manual` so the plateau
+  // analytics count it as "held", not as a gap.
+  function submitNoChange() {
+    onNoChange({ time: new Date(resolvedUpdateMs).toISOString(), areas: { ...prev.areas }, symptoms: [], reliefs: [], medication: null, note: null });
+  }
+
   function submit() {
     const nowMs = Date.now();
     const nowArea = peakArea(form.areas);
@@ -208,28 +256,34 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         }
       }
     }
-    // Recorded at this update's own moment, not at `doseTime + 2h` — the
-    // "ask" state already requires only that the dose be at least an hour
-    // old (the mockup's own rule), not that two hours have actually passed,
-    // so a literal `+2h` timestamp could land in the future. `followUpReading`
-    // matches whichever later reading falls closest to +2h inside the 1–4h
-    // window, same as an answered reminder does whenever it's answered — it
-    // doesn't need the reading dated at exactly the mark. Staggered a second
-    // apart, after the primary reading, so two answered rows in one update
-    // don't collide on the same timestamp.
-    //
-    // Floored at `doseTime + 1h` regardless — a manually backdated update
-    // time could otherwise land the reading *inside* `followUpReading`'s own
-    // dead zone below the 1h mark, where it's skipped rather than matched,
-    // and the eligibility check above already guaranteed this dose really is
-    // at least that old.
-    let helpTick = 0;
-    for (const row of helpRows) {
-      const value = helpAnswers[row.name];
-      if (value === undefined || !row.peakArea) continue;
-      const floor = new Date(row.doseTimeIso).getTime() + FOLLOW_UP_MIN_MS;
-      events.push({ ms: Math.max(resolvedUpdateMs, floor) + 1000 * ++helpTick, kind: 'followUp', area: row.peakArea, value });
-    }
+    // Aimed at `doseTime + 2h` (the real mark `followUpReading` measures
+    // against) but always kept *before* the primary reading, never at or
+    // after it. The "ask" state only requires the dose be an hour old, so
+    // the literal +2h mark can still be in the future relative to right now
+    // — landing it on the primary reading's own moment would make this
+    // single-area reading the attack's newest snapshot, which every "last
+    // reading = current state" reader (a later no-change copy, the
+    // reminder body, the next update's own `prev`) would then take as the
+    // whole picture. Floored at `doseTime + 1h` for the same reason as the
+    // ceiling: a manually backdated update time could otherwise push it
+    // under `followUpReading`'s own 1h dead zone, where it's skipped rather
+    // than matched, even though the eligibility check above already
+    // guaranteed this dose is really that old. Staggered a second apart so
+    // two answered rows in one update don't collide on the same timestamp.
+    const answeredHelpRows = helpRows.filter((row) => helpAnswers[row.name] !== undefined && row.peakArea);
+    answeredHelpRows.forEach((row, i) => {
+      const doseMs = new Date(row.doseTimeIso).getTime();
+      const floor = doseMs + FOLLOW_UP_MIN_MS;
+      // One whole second reserved per answered row, nearest the primary
+      // reading last — keeps every one of them strictly before it even
+      // when `floor` would otherwise land past the ceiling (a manually
+      // backdated update time, picked earlier than this dose's own +1h
+      // mark): the ceiling always wins that clash, trading a few minutes
+      // off the nominal 1h floor for never landing on or after "now".
+      const ceiling = resolvedUpdateMs - 1000 * (answeredHelpRows.length - i);
+      const target = Math.min(doseMs + FOLLOW_UP_TARGET_MS, ceiling);
+      events.push({ ms: Math.min(Math.max(floor, target), ceiling), kind: 'followUp', area: row.peakArea!, value: helpAnswers[row.name] });
+    });
 
     events.sort((a, b) => a.ms - b.ms);
 
@@ -252,7 +306,17 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         openingMedication = ev.medication;
         openingClaimed = true;
       } else {
-        extraSnapshots.push({ time: new Date(ev.ms).toISOString(), areas: { ...runningAreas }, symptoms: [], reliefs: [], medication: ev.medication, note: null });
+        // A dose dated before this update's own reading (e.g. "When it
+        // started", or any manual time earlier than `prev.time`) gets the
+        // state that was actually on record *at its own moment* — never
+        // `runningAreas`, which by this point can already reflect today's
+        // "how bad now" answer and would otherwise assert a severity this
+        // dose was never really logged against. One at or after the
+        // primary reading correctly keeps using `runningAreas`, which by
+        // then *is* that reading (refreshed by any dose-outcome answers
+        // processed since).
+        const areas = ev.ms < resolvedUpdateMs ? areasAsOf(attack.snapshots, ev.ms) : runningAreas;
+        extraSnapshots.push({ time: new Date(ev.ms).toISOString(), areas: { ...areas }, symptoms: [], reliefs: [], medication: ev.medication, note: null });
       }
     }
 
@@ -317,14 +381,23 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
           <div className="min-w-0">
             <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{STEP_TITLES[kind]}</h1>
             <p className="mt-1.5 text-sm text-text-secondary">
-              {kind === 'now' && <>Required · {elapsed} in · worst {worst}<span className="text-severity-high ml-0.5">*</span></>}
+              {kind === 'now' && <>Required<span className="text-severity-high ml-0.5">*</span> · {elapsed} in · worst {worst}</>}
               {kind === 'help' && 'Optional · for doses already logged this attack'}
               {kind === 'meds' && (lastDose ? `Optional · ${lastDose.name} at ${formatTime(lastDose.time)} is already logged` : 'Optional')}
               {kind === 'else' && 'Optional · pick any'}
             </p>
           </div>
-          <div className="shrink-0">
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
             <TextScaleControl scale={textScale} onScale={onTextScale} />
+            {kind === 'now' && (
+              <button
+                type="button"
+                onClick={() => setConfirmNoChange(true)}
+                className="tap-44-y px-1 py-1 text-xs font-medium text-accent-light transition-colors hover:text-accent"
+              >
+                Nothing changed
+              </button>
+            )}
           </div>
         </div>
 
@@ -362,7 +435,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
                 openRef={timeInputRef}
               />
             )}
-            <AreaSeverityPicker value={form.areas} onChange={(v) => set('areas', v)} previousValue={prev.areas} />
+            <AreaSeverityPicker value={form.areas} onChange={(v) => set('areas', v)} previousValue={lastKnownAreas(attack.snapshots)} />
           </div>
         )}
 
@@ -439,6 +512,16 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         onKeepGoing={() => setDiscardOpen(false)}
         onSaveAndClose={submit}
         onDiscard={onClose}
+      />
+
+      <ConfirmDialog
+        open={confirmNoChange}
+        title="Log that nothing has changed?"
+        message={`This saves a reading at ${formatTime(new Date(resolvedUpdateMs).toISOString())} carrying your last entry forward — same pain areas and severities. Go back if you want to record something different.`}
+        confirmLabel="Log no change"
+        cancelLabel="Go back"
+        onConfirm={() => { setConfirmNoChange(false); submitNoChange(); }}
+        onCancel={() => setConfirmNoChange(false)}
       />
     </div>
   );

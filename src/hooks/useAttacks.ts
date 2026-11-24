@@ -169,7 +169,13 @@ export function useAttacks(userId: string | null) {
       if (mine.length === 0) return a;
       const updated: Attack = {
         ...a,
-        snapshots: [...a.snapshots, ...mine.map((e) => ({ ...e.snapshot, source: e.source }))],
+        // Sorted, not just appended — `mine` can carry a backdated reading
+        // (an Update flow entry dated before the attack's own latest one),
+        // and everything downstream (the timeline, `followUpReading`'s own
+        // scan, "the last snapshot is the current state") assumes the array
+        // is in time order the way `startAttack`'s own sort already keeps it.
+        snapshots: [...a.snapshots, ...mine.map((e) => ({ ...e.snapshot, source: e.source }))]
+          .sort((x, y) => x.time.localeCompare(y.time)),
         updatedAt,
       };
       touched.push(updated);

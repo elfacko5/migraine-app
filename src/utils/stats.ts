@@ -726,15 +726,16 @@ export function followUpReading(snaps: Snapshot[], i: number): Snapshot | null {
 export const doseHelped = (before: number, after: number) => after <= before / 2 || after <= 3;
 
 /**
- * The same two numbers, read out in the v4 flows' warmer register (A1) —
- * "Helped" is exactly `doseHelped`, so Insights' and Logs' counts never
- * diverge from what a dose-outcome card says. There is no fourth, stored
- * answer: this is always computed from `before`/`after`, never tapped.
+ * The same two numbers, read out in the v4 flows' own warmer words (A1:
+ * "helped / a bit / no") — "Helped" is exactly `doseHelped`, so Insights'
+ * and Logs' counts never diverge from what a dose-outcome card says. There
+ * is no fourth, stored answer: this is always computed from `before`/
+ * `after`, never tapped.
  */
-export type DoseOutcomeWord = 'Helped' | 'A bit' | "Didn't help";
+export type DoseOutcomeWord = 'Helped' | 'A bit' | 'No';
 export function doseOutcomeWord(before: number, after: number): DoseOutcomeWord {
   if (doseHelped(before, after)) return 'Helped';
-  return after < before ? 'A bit' : "Didn't help";
+  return after < before ? 'A bit' : 'No';
 }
 
 /** `since` scopes it to the same window as `medicationDaysInWindow`, and on
