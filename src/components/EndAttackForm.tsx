@@ -116,7 +116,8 @@ interface FormState {
  * that reads `end` (the 24h impact window, chiefly).
  */
 export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, onTextScale, onAddSymptom, onAddRelief, onAddTrigger, onClose, onSave }: Props) {
-  const minTime = attack.snapshots[attack.snapshots.length - 1].time;
+  const prev = attack.snapshots[attack.snapshots.length - 1];
+  const minTime = prev.time;
   const minMs = new Date(minTime).getTime();
 
   const [openedAt] = useState(() => Date.now());
@@ -196,10 +197,19 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
     // The closing reading only exists when there's something to carry —
     // "also had"/"what did you try" describing the attack overall, not a
     // pain reading (End has no severity step of its own). Skipped entirely
-    // rather than saved empty: a reading with no areas, no symptoms and no
-    // reliefs is pure noise on the timeline.
+    // rather than saved empty: a reading with no symptoms and no reliefs is
+    // pure noise on the timeline.
+    //
+    // Carries `prev.areas` forward rather than saving with none — an
+    // area-less reading becoming the attack's own newest snapshot reads as
+    // "pain 0" in AttackDetail's timeline, drops the pain-over-time chart to
+    // zero at the very end, and blanks the "last" column everywhere that
+    // reads "the latest reading" for the current/ending severity. The pain
+    // genuinely was still whatever it last was at the moment the attack
+    // ended — the same "carry the last entry forward" fact a no-change
+    // reading already states elsewhere in the app, not a fabricated one.
     if (form.symptoms.length > 0 || form.reliefs.length > 0) {
-      extraSnapshots.push({ time: endIso, areas: {}, symptoms: form.symptoms, reliefs: form.reliefs, medication: null, note: null });
+      extraSnapshots.push({ time: endIso, areas: { ...prev.areas }, symptoms: form.symptoms, reliefs: form.reliefs, medication: null, note: null });
     }
     onSave(endIso, endUnknown, form.impact, extraSnapshots, form.triggers, form.painQuality);
   }

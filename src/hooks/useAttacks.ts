@@ -244,7 +244,13 @@ export function useAttacks(userId: string | null) {
         end, endUnknown,
         ...(impact !== undefined ? { impact } : {}),
         ...(triggers !== undefined ? { triggers } : {}),
-        ...(painQuality && painQuality.length > 0 ? { painQuality } : {}),
+        // `!== undefined`, not "only when non-empty" — unlike `startAttack`'s
+        // own painQuality param (a brand-new attack has nothing to clear),
+        // `EndAttackForm` seeds this field from the attack's existing value
+        // and lets it edit down to nothing, same as `triggers` just above.
+        // Writing only non-empty arrays would make an attack that already
+        // had pain quality un-clearable from this flow.
+        ...(painQuality !== undefined ? { painQuality } : {}),
         updatedAt: new Date().toISOString(),
       };
       return updated;
