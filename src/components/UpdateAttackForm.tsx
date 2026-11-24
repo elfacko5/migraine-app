@@ -321,13 +321,15 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
     const answeredHelpRows = helpRows.filter((row) => helpAnswers[row.name] !== undefined && row.peakArea && rowEligible(row));
     answeredHelpRows.forEach((row, i) => {
       const doseMs = new Date(row.doseTimeIso).getTime();
+      // `rowEligible` already guarantees at least two hours (plus this same
+      // padding) between the dose and `resolvedUpdateMs`, so this floor is
+      // never expected to bind — kept only as a defensive lower bound, not
+      // because the clash it originally guarded against (a manual update
+      // time earlier than the dose's own +1h mark) can still happen.
       const floor = doseMs + FOLLOW_UP_MIN_MS;
       // One whole second reserved per answered row, nearest the primary
-      // reading last — keeps every one of them strictly before it even
-      // when `floor` would otherwise land past the ceiling (a manually
-      // backdated update time, picked earlier than this dose's own +1h
-      // mark): the ceiling always wins that clash, trading a few minutes
-      // off the nominal 1h floor for never landing on or after "now".
+      // reading last — keeps every one of them strictly before it, never
+      // on or after "now".
       const ceiling = resolvedUpdateMs - 1000 * (answeredHelpRows.length - i);
       const target = Math.min(doseMs + FOLLOW_UP_TARGET_MS, ceiling);
       events.push({ ms: Math.min(Math.max(floor, target), ceiling), kind: 'followUp', area: row.peakArea!, value: helpAnswers[row.name] });
@@ -498,11 +500,12 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
               <DoseHelpRow
                 key={row.name}
                 // Downgraded to "too soon" the moment this update's own
-                // time no longer leaves an hour between the dose and it —
-                // answering past that point would store a reading
-                // `followUpReading` skips outright, so the row stops
-                // offering to collect one rather than take an answer that
-                // silently never counts.
+                // time no longer leaves two hours between the dose and it
+                // — answering before that point would store a reading
+                // that loses `followUpReading`'s match to the primary
+                // "how bad now" reading, so the row stops offering to
+                // collect one rather than take an answer that silently
+                // never counts.
                 row={row.state === 'ask' && !rowEligible(row) ? { ...row, state: 'too-soon' } : row}
                 value={helpAnswers[row.name] ?? null}
                 onChange={(v) => setHelpAnswers((a) => {
