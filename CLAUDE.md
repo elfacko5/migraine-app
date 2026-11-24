@@ -234,7 +234,7 @@ Period control in top bar (`SegmentedControl`, labels `7d / 30d / 3m / All`). Ev
 - Blocks 32px apart. Section card padding `p-card`. Stat tile labels 12px (sole exception to 14px floor).
 - Order: period control → stat tiles → monthly sections → rest.
 - `MigraineDaysChart`: counts days not attacks (`attackDayKeys`). 15-day ICHD line. Period narrows months shown, never the counting. Under 7d draws week strip (dots, not cells). Month in progress named in caption.
-- `MedicationInsights`: days + response in same window (`medicationDaysInWindow`). Filtered on snapshot time. Overuse gated on `monthScale` (7/30 only). `guideForName` is the only threshold source. Response: severity halved or ≤3 at dose + 2h. Unmeasured doses shown not hidden. Wording never concludes — supportive, not diagnostic.
+- `MedicationInsights` (v4 rebuild, 2026-11-24): per-drug card, monthly bars (`medicationDaysByMonth`) against that drug's own guideline — `guideForName` is the only threshold source, checked per month directly (every bar is already a true calendar month, no window-length gate needed). "Doses" / "checked at 2h" / "helped" stay window-scoped (`medicationDaysInWindow` / `medicationResponse`, filtered on snapshot time), independent of how many months the bars show — same split `MigraineDaysChart` and the rest of Insights already use. "Helped" is a bare count beside "checked at 2h", not the old three-clause sentence (`docs/decisions.md`'s "Open — the medication response line", resolved 2026-11-24). Unmeasured doses shown not hidden. Wording never concludes — supportive, not diagnostic.
 - Logs filter: `LogsFilterPanel.tsx` + `logFilters.ts`. Pain-area filter is now a Side filter. Logs open on all time.
 
 ## Settings tab (internally `profile`)

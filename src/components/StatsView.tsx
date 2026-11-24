@@ -180,24 +180,18 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
   // months the window actually touches, so "7 days" shows one or two rather
   // than six. All time is capped at 12 — the bars are one row each, but an
   // unbounded chart is a different component.
-  //
-  // `monthScale` gates the overuse marker: the thresholds are stated per
-  // month, so a 3-month or all-time count would sail past 10 without meaning
-  // anything. Under a month it can only under-warn, which is the safe way to
-  // be wrong.
-  const { since, monthsShown, monthScale, rangeFrom, rangeTo } = useMemo(() => {
+  const { since, monthsShown, rangeFrom, rangeTo } = useMemo(() => {
     // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     if (period === 'all') {
       const first = attacks.reduce<number>(
         (min, a) => Math.min(min, new Date(a.snapshots[0].time).getTime()), now);
-      return { since: null, monthsShown: Math.min(12, monthsBetween(first, now)), monthScale: false, rangeFrom: first, rangeTo: now };
+      return { since: null, monthsShown: Math.min(12, monthsBetween(first, now)), rangeFrom: first, rangeTo: now };
     }
     const cutoff = now - PERIOD_MS[period];
     return {
       since: cutoff,
       monthsShown: monthsBetween(cutoff, now),
-      monthScale: PERIOD_MS[period] <= PERIOD_MS['30d'],
       rangeFrom: cutoff,
       rangeTo: now,
     };
@@ -341,8 +335,8 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
         guides={guides}
         deleted={deleted}
         since={since}
+        months={monthsShown}
         windowLabel={PERIOD_SUB[period]}
-        monthScale={monthScale}
       />
 
       {!hasEnoughData ? (

@@ -573,58 +573,74 @@ export function classDaysInWindow(
 
 export interface MedMonth {
   name: string;
-  /** YYYY-MM → number of distinct local days a dose was logged. */
-  byMonth: Map<string, number>;
-  /** Days in the current calendar month so far. */
-  thisMonth: number;
-  /**
-   * Doses in the current calendar month. Days is the number the overuse
-   * thresholds are stated in, but two doses in a day is a different exposure
-   * from one and the day count can't show it — so both are kept.
-   */
-  dosesThisMonth: number;
+  /** Trimmed to the requested month count, oldest first — same shape
+   *  `migraineDaysByMonth` returns, so a caller can treat the two the same
+   *  way. */
+  months: MonthDays[];
+  /** Doses across the shown months. Days is the number the overuse
+   *  thresholds are stated in, but two doses in a day is a different
+   *  exposure from one and the day count can't show it — so both are kept. */
+  doses: number;
 }
 
 /**
- * Days per month on which each medication was logged — days, not doses, since
- * that is the unit every overuse threshold is stated in. Two doses of the
- * same drug in one day are one day.
+ * Days per calendar month on which each medication was logged — days, not
+ * doses, since that is the unit every overuse threshold is stated in. Two
+ * doses of the same drug in one day are one day. Built for Insights'
+ * per-drug monthly bars (v4 sweep, 2026-11-24) — same `months`/`now` shape as
+ * `migraineDaysByMonth`, clock read here rather than by the caller.
  *
  * Only counts what was logged inside an attack, which is the only place
  * medication exists in this app. Taking something without logging an attack
  * under-reports here, and the UI says so rather than implying the count is
- * complete.
+ * complete. Returns every drug ever logged, even one with an all-zero row
+ * across the shown months (last taken outside that range) — the caller's
+ * own window decides which drugs are worth showing at all.
  */
-export function medicationDaysByMonth(attacks: Attack[], now: number = Date.now()): MedMonth[] {
-  const seen = new Map<string, Map<string, Set<string>>>();
+export function medicationDaysByMonth(attacks: Attack[], months: number, now: number = Date.now()): MedMonth[] {
+  const days = new Map<string, Map<string, Set<string>>>();
   const doses = new Map<string, Map<string, number>>();
   for (const a of attacks) {
     for (const snap of a.snapshots) {
       const name = snap.medication?.name?.trim();
       if (!name || isRetired(name)) continue;
+      const t = new Date(snap.time).getTime();
+      if (t > now) continue;
       const d = new Date(snap.time);
       const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const month = day.slice(0, 7);
-      if (!seen.has(name)) seen.set(name, new Map());
-      const months = seen.get(name)!;
-      if (!months.has(month)) months.set(month, new Set());
-      months.get(month)!.add(day);
+      if (!days.has(name)) days.set(name, new Map());
+      const dm = days.get(name)!;
+      if (!dm.has(month)) dm.set(month, new Set());
+      dm.get(month)!.add(day);
       if (!doses.has(name)) doses.set(name, new Map());
-      const dm = doses.get(name)!;
-      dm.set(month, (dm.get(month) ?? 0) + 1);
+      const dosesMap = doses.get(name)!;
+      dosesMap.set(month, (dosesMap.get(month) ?? 0) + 1);
     }
   }
 
   const cur = new Date(now);
-  const thisMonthKey = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
-  return [...seen.entries()]
-    .map(([name, months]) => ({
+  const cols: { month: string; label: string; complete: boolean }[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(cur.getFullYear(), cur.getMonth() - i, 1);
+    cols.push({
+      month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleDateString(undefined, { month: 'short' }),
+      complete: i > 0,
+    });
+  }
+
+  // Not filtered to drugs with a day inside the shown months: a caller
+  // already decides which drugs are relevant (its own window, usually wider
+  // than `months`), and a drug last taken outside that range still belongs
+  // on screen with an honestly all-zero set of bars, not missing entirely.
+  return [...days.entries()]
+    .map(([name, dm]) => ({
       name,
-      byMonth: new Map([...months.entries()].map(([m, days]) => [m, days.size])),
-      thisMonth: months.get(thisMonthKey)?.size ?? 0,
-      dosesThisMonth: doses.get(name)?.get(thisMonthKey) ?? 0,
+      months: cols.map((c) => ({ ...c, days: dm.get(c.month)?.size ?? 0 })),
+      doses: cols.reduce((sum, c) => sum + (doses.get(name)?.get(c.month) ?? 0), 0),
     }))
-    .sort((a, b) => b.thisMonth - a.thisMonth || a.name.localeCompare(b.name));
+    .sort((a, b) => b.doses - a.doses || a.name.localeCompare(b.name));
 }
 
 /**

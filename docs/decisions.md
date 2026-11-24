@@ -2028,6 +2028,19 @@ counts days, and two numbers on one card that mean different things must say
 which is which), and the **passive** on the missing-reading clause — never "you
 didn't log it", because a reading being absent is not someone having failed.
 
+**Resolved by the v4 rebuild (2026-11-24, June): a fourth form, not one of the
+three above.** The card itself changed shape — monthly bars per drug against
+that drug's own guideline, replacing the single days+response summary this
+line sat under. The v4 board draws only "checked at 2h" with no helped
+language at all; an agent built that first and nearly closed this item on its
+own say-so, which review correctly flagged as not its call to make. June's
+actual answer: visually match the board, but keep a "helped" figure next to
+"checked at 2h" — a bare count, not the three-clause sentence. What ships is
+"`N` checked at 2h · `N` helped": shorter than all three parked forms, still
+answering the clinical question the long form could not drop. The two things
+any replacement was to keep — "doses" never "times", and the passive on the
+missing-reading clause — both carried over unchanged.
+
 ## Today, v3 (2026-10-26)
 
 Today was rebuilt from the v3 canvas (`docs/today-v3-handoff.md`, rows v3.3 and v3.4, hero B). It is a redesign of what shipped, not a new screen: the same components, restyled, plus four new blocks. One commit per section of the handoff. The how is in `docs/today-cards.md`; this is what changed and why.
