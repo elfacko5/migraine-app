@@ -200,16 +200,18 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
     // rather than saved empty: a reading with no symptoms and no reliefs is
     // pure noise on the timeline.
     //
-    // Carries `prev.areas` forward rather than saving with none — an
-    // area-less reading becoming the attack's own newest snapshot reads as
-    // "pain 0" in AttackDetail's timeline, drops the pain-over-time chart to
-    // zero at the very end, and blanks the "last" column everywhere that
-    // reads "the latest reading" for the current/ending severity. The pain
-    // genuinely was still whatever it last was at the moment the attack
-    // ended — the same "carry the last entry forward" fact a no-change
-    // reading already states elsewhere in the app, not a fabricated one.
+    // **Deliberately saved with no areas, never `prev.areas` copied
+    // forward.** That was tried and reverted: a copied severity is an
+    // invented reading the user never gave, and anything that reads "the
+    // latest reading" as a real score — chiefly `followUpReading`, which
+    // would then grade an unanswered dose "didn't help" against a number
+    // from *before* it was even taken — can't tell it apart from one they
+    // did. The honest fix is the other direction: readers that want "the
+    // last reading with a pain score" skip one with none, the way
+    // `attackLatestSeverity` (stats.ts) already does, rather than this flow
+    // fabricating a score to keep them simple.
     if (form.symptoms.length > 0 || form.reliefs.length > 0) {
-      extraSnapshots.push({ time: endIso, areas: { ...prev.areas }, symptoms: form.symptoms, reliefs: form.reliefs, medication: null, note: null });
+      extraSnapshots.push({ time: endIso, areas: {}, symptoms: form.symptoms, reliefs: form.reliefs, medication: null, note: null });
     }
     onSave(endIso, endUnknown, form.impact, extraSnapshots, form.triggers, form.painQuality);
   }

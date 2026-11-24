@@ -46,6 +46,17 @@ export function SeverityBreakdown({ attack }: Props) {
 
   const areas = [...new Set(snaps.flatMap((s) => Object.keys(s.areas)))];
 
+  // The last reading that rated *any* area — not simply the attack's last
+  // snapshot, which can itself carry none (EndAttackForm's own closing
+  // "what was it like" reading, symptoms/reliefs only). That reading never
+  // mentions an area on purpose, not because the user stopped re-rating one;
+  // comparing against it would blank every row's "last" column instead of
+  // just the areas genuinely absent from the last real rating.
+  let lastScoredIndex = snaps.length - 1;
+  for (let i = snaps.length - 1; i >= 0; i--) {
+    if (Object.keys(snaps[i].areas).length > 0) { lastScoredIndex = i; break; }
+  }
+
   const rows: Row[] = areas.map((area) => {
     const points = snaps
       .map((s, i) => ({ i, v: s.areas[area] }))
@@ -59,7 +70,7 @@ export function SeverityBreakdown({ attack }: Props) {
       // wizard starts blank every time, so a missing area can equally mean
       // "it stopped" or "I only logged the worst one". Rendering it as 0
       // would assert something nobody said.
-      now: last.i === snaps.length - 1 ? last.v : null,
+      now: last.i === lastScoredIndex ? last.v : null,
       points,
     };
   });

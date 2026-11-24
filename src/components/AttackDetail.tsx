@@ -94,7 +94,13 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
   // area absent from the last reading is **not recorded**, never "gone" — the
   // update wizard starts blank, so the app cannot tell "it stopped" from "I
   // only logged the worst one" (the rule SeverityBreakdown was built on).
-  const last = attack.snapshots[attack.snapshots.length - 1];
+  //
+  // The last reading *with any area at all* — not simply the attack's last
+  // snapshot, which can itself carry none (EndAttackForm's own closing
+  // "what was it like" reading, symptoms/reliefs only). That reading isn't
+  // a pain score to read "every area, not recorded" against; it just hasn't
+  // said anything about pain, the same way a reading before it might not.
+  const last = [...attack.snapshots].reverse().find((s) => Object.keys(s.areas).length > 0) ?? attack.snapshots[attack.snapshots.length - 1];
   const areaNames = [...new Set(attack.snapshots.flatMap((s) => Object.keys(s.areas)))];
   const areas = areaNames
     .map((name) => ({
@@ -121,7 +127,12 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
     ...[...attack.snapshots].reverse().map((s, i) => ({
       key: `${s.time}-${i}`,
       time: s.time,
-      title: s.source === 'notification_no_change' ? `No change · pain ${maxSeverity(s)}` : `Pain ${maxSeverity(s)}`,
+      // A reading with no areas at all (EndAttackForm's own closing "what
+      // was it like" snapshot) hasn't reported a pain score — `maxSeverity`
+      // reads it as 0, which isn't one.
+      title: s.source === 'notification_no_change' ? `No change · pain ${maxSeverity(s)}`
+        : Object.keys(s.areas).length === 0 ? 'Update'
+        : `Pain ${maxSeverity(s)}`,
       more: [
         Object.entries(s.areas).sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n} ${v}`).join(' · '),
         s.medication?.name ? `Took ${s.medication.name}` : null,
@@ -378,12 +389,19 @@ function outcomeText(o: DoseOutcome): string {
  * severity ramp — the numbers are printed in the cards below.
  */
 function PainChart({ attack, letterFor }: { attack: Attack; letterFor: (name: string) => string | null }) {
-  const values = attack.snapshots.map(maxSeverity);
+  // A reading with no areas at all (EndAttackForm's own closing "what was
+  // it like" snapshot) hasn't reported a pain score — plotting it as 0
+  // would draw a drop to zero that was never logged. Every dose-carrying
+  // snapshot already has at least one area (the medication step always sits
+  // on a reading with areas), so filtering here never drops a dose's own
+  // marker, and `doses` below indexes into this same filtered array.
+  const scored = attack.snapshots.filter((s) => Object.keys(s.areas).length > 0);
+  const values = scored.map(maxSeverity);
   const n = values.length;
   const x = (i: number) => 26 + (n === 1 ? 150 : (i * 296) / (n - 1));
   const y = (v: number) => 100 - v * 9;
   const d = values.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)} ${y(v)}`).join(' ');
-  const doses = attack.snapshots
+  const doses = scored
     .map((s, i) => ({ i, name: s.medication?.name?.trim() }))
     .filter((m): m is { i: number; name: string } => !!m.name && !isRetired(m.name));
   const label = `Pain over time: ${values.join(', ')}${doses.length ? `. Doses: ${doses.map((m) => m.name).join(', ')}` : ''}`;

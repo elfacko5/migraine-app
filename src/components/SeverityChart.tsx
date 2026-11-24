@@ -10,10 +10,13 @@ import { useUiTheme } from '../hooks/useUiTheme';
 // categorical-colour problem.
 export function SeveritySparkline({ attack }: { attack: Attack }) {
   const theme = useUiTheme();
-  const data = attack.snapshots.map((s) => {
-    const maxSev = Math.max(0, ...Object.values(s.areas));
-    return { time: new Date(s.time).getTime(), v: maxSev };
-  });
+  // A reading with no areas at all (EndAttackForm's own closing "what was
+  // it like" snapshot, symptoms/reliefs only) isn't a pain score of 0 —
+  // it just didn't report one, so it's left out of the line rather than
+  // plotted as a drop to zero.
+  const data = attack.snapshots
+    .filter((s) => Object.keys(s.areas).length > 0)
+    .map((s) => ({ time: new Date(s.time).getTime(), v: Math.max(0, ...Object.values(s.areas)) }));
   if (data.length < 2) return null;
 
   return (
