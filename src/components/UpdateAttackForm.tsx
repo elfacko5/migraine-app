@@ -60,13 +60,13 @@ function lastKnownAreas(snapshots: Snapshot[]): Record<string, number> {
   return result;
 }
 
-/** The areas actually on record at `ms` — whichever existing snapshot is
- *  the nearest one at or before it, taken whole — read from the attack's
- *  *existing* history only, never from this update's own new "how bad now"
- *  reading, which didn't exist yet at any time before it's saved. A new
- *  dose entry backdated earlier than the attack's latest existing reading
- *  (e.g. "When it started") must be given the state that was really true
- *  back then, not today's current severities.
+/** The areas actually on record at `ms` — whichever existing scored
+ *  snapshot is the nearest one at or before it, taken whole — read from the
+ *  attack's *existing* history only, never from this update's own new "how
+ *  bad now" reading, which didn't exist yet at any time before it's saved.
+ *  A new dose entry backdated earlier than the attack's latest existing
+ *  reading (e.g. "When it started") must be given the state that was really
+ *  true back then, not today's current severities.
  *
  *  Deliberately *not* `lastKnownAreas`'s per-area lookback here: that would
  *  reconstruct this dose's "before" state as of `ms` by walking each area
@@ -75,12 +75,20 @@ function lastKnownAreas(snapshots: Snapshot[]): Record<string, number> {
  *  the same ambiguity `submitNoChange` backed away from, for the same
  *  reason. Taking one snapshot's areas wholesale can itself be a one-area
  *  follow-up reading; that's an accepted, pre-existing shape already
- *  possible from Past/Live's own follow-up events, not a new one. */
+ *  possible from Past/Live's own follow-up events, not a new one.
+ *
+ *  **Does skip a reading with no areas at all**, unlike the one-area case
+ *  above — that isn't a smaller version of a real reading, it's not a
+ *  severity reading at all (EndAttackForm's own closing "what was it like"
+ *  snapshot). Backdating a new dose to land just after one — reachable once
+ *  Edit pushes an attack's end past its own closing reading — would
+ *  otherwise hand that dose an empty "before" state that becomes a
+ *  permanent, unrewritable part of its record. */
 function areasAsOf(snapshots: Snapshot[], ms: number): Record<string, number> {
   let result: Record<string, number> = {};
   for (const s of snapshots) {
     if (new Date(s.time).getTime() > ms) break;
-    result = s.areas;
+    if (Object.keys(s.areas).length > 0) result = s.areas;
   }
   return result;
 }
