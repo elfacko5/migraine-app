@@ -430,8 +430,8 @@ function PainChart({ attack, letterFor }: { attack: Attack; letterFor: (name: st
           </g>
         ))}
         {n > 1
-          ? <path d={d} fill="none" className="stroke-accent" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          : <circle cx={x(0)} cy={y(values[0])} r="4" className="fill-accent" />}
+          ? <path d={d} fill="none" className="stroke-accent-light" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          : <circle cx={x(0)} cy={y(values[0])} r="4" className="fill-accent-light" />}
       </svg>
       <p className="text-xs text-text-secondary">Highest place at each update · lettered lines are doses</p>
     </div>

@@ -309,7 +309,7 @@ export function MedicationEntry({
           onClick={() => setCustomOpen(true)}
           className="tap-44-y btn-tertiary min-h-0 rounded-control py-2 text-sm font-medium transition-colors"
         >
-          + Add a medication
+          + Add a medicine
         </button>
       )}
     </div>
