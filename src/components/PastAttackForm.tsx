@@ -192,10 +192,8 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
     let openingMedication: Omit<Snapshot, 'source'>['medication'] = null;
     let openingClaimed = false;
     const extraSnapshots: Array<Omit<Snapshot, 'source'>> = [];
-    let latestMs = resolvedStartMs;
 
     for (const ev of events) {
-      latestMs = Math.max(latestMs, ev.ms);
       if (ev.followUpArea) {
         // The follow-up reading itself still reports only the one area
         // asked about — same "not recorded" rule as LogForm's own follow-up
@@ -217,9 +215,17 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
       }
     }
 
-    // Never before the start, and — for an unknown end — never fabricated as
-    // "now": the latest real snapshot time this attack actually has.
-    const resolvedEndMs = endKnown ? boundEndMs! : Math.max(resolvedStartMs, latestMs);
+    // For an unknown end, the placeholder is the start — never the latest
+    // dose/follow-up time. A dose entry defaults to "Just now"
+    // (`newDoseEntry`), so a placeholder derived from dose times is `nowMs`
+    // again the moment any dose is added without its time being changed —
+    // the exact bug this was meant to fix, just reachable through a second
+    // path review caught ("no dose at all" wasn't the only way to hit it).
+    // `endUnknown` already tells every duration-reading caller not to trust
+    // this value, so anchoring it to the one timestamp the user gave on
+    // purpose (the start) is the safest placeholder, even though a dose can
+    // now carry its own (separately honest) recorded time past it.
+    const resolvedEndMs = endKnown ? boundEndMs! : resolvedStartMs;
     const clampedEndMs = Math.max(resolvedEndMs, resolvedStartMs);
 
     onSave(
@@ -438,12 +444,24 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
 
 /**
  * The three-way "discard this draft?" choice (`MrgPastStopDark` in the v4
- * boards) — `ConfirmDialog`'s own backdrop/focus/escape handling, since that
+ * boards) — `ConfirmDialog`'s own backdrop/focus/inert handling, since that
  * component only supports a confirm/cancel pair and this needs a third,
  * non-destructive middle action ("Save and close"). Same `fixed inset-0`
  * positioning `ConfirmDialog` itself uses for the same reason: a short-lived
  * alert overlay, never visible across the cold-launch resize that the
  * shell's own `position: fixed` ban is about.
+ *
+ * **Escape here is not reliable, and neither is `ConfirmDialog`'s own.** The
+ * Sheet underneath also listens for Escape on `window` and calls its own
+ * `onClose` (closing the whole sheet, discarding the draft) — both listeners
+ * fire, in registration order, and nothing here can suppress one already
+ * added to the same target before this dialog opened. A keyboard Escape
+ * while this is open both "keeps going" *and* closes the sheet, which nets
+ * out to the draft being lost regardless. Fixing it needs Sheet itself to
+ * know a nested dialog is open, not a fix local to this component — left
+ * for when a flow's keyboard behaviour actually matters enough to touch
+ * Sheet's own Escape handling. The backdrop click and the explicit "Keep
+ * going" button are both unaffected and work correctly.
  */
 function DiscardDialog({ open, onKeepGoing, onSaveAndClose, onDiscard }: {
   open: boolean;
