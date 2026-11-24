@@ -11,9 +11,15 @@ import {
 interface Props {
   value: Record<string, number>;
   onChange: (next: Record<string, number>) => void;
+  /** How each area stood at the last reading — the update flow's own "the
+   *  severity control shows how that area was last logged, inline" rule
+   *  (docs/redesign-v4-diff.md A2, rejecting the board's single-worst-area
+   *  card but keeping this one piece of it). Purely a reference: the area
+   *  still starts unselected and the value is never pre-filled from it. */
+  previousValue?: Record<string, number>;
 }
 
-export function AreaSeverityPicker({ value, onChange }: Props) {
+export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [activeViewId, setActiveViewId] = useState<string>(VIEWS[0].id);
   const [activeArea, setActiveArea] = useState<string | null>(null);
@@ -121,7 +127,12 @@ export function AreaSeverityPicker({ value, onChange }: Props) {
       {active && (
         <div className="rounded-inset border border-bg-border bg-bg-raised/30 px-4 py-3 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-text-primary">{active}</span>
+            <span className="text-sm font-medium text-text-primary">
+              {active}
+              {previousValue?.[active] !== undefined && (
+                <span className="ml-1.5 font-normal text-text-secondary">· was {previousValue[active]}</span>
+              )}
+            </span>
             <div className="flex items-center gap-2">
               <span className={`text-sm font-bold tabular-nums ${sevText(value[active])}`}>{value[active]}</span>
               <button type="button" onClick={removeActive}

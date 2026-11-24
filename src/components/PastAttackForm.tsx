@@ -123,7 +123,11 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
 
   const startMs = new Date(localInputToIso(form.startTime)).getTime();
   const hasEndTime = form.endTime.trim() !== '';
-  const endMsForBounds = hasEndTime ? new Date(localInputToIso(form.endTime)).getTime() : Date.now();
+  // Bounds doses/follow-ups while the form is open. An unknown end is
+  // treated like "ongoing" here (null) — relative presets bound to now,
+  // without asserting a real end that isn't known. `nextDisabled` already
+  // guarantees one of the two is true by the time step 3 is reachable.
+  const endMsForBounds = hasEndTime ? new Date(localInputToIso(form.endTime)).getTime() : null;
 
   const nextDisabled =
     (step === 1 && (!form.startTime || !(hasEndTime || form.endUnknownFlag))) ||
@@ -151,37 +155,72 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
     const resolvedStartMs = new Date(localInputToIso(form.startTime)).getTime();
     const endKnown = form.endTime.trim() !== '';
     const endUnknown = form.endUnknownFlag && !endKnown;
-    const resolvedEndMs = endKnown ? new Date(localInputToIso(form.endTime)).getTime() : nowMs;
-    // Never before the start — the picker bounds this already, but a
-    // defensive clamp costs nothing and a second reading never should
-    // precede the first.
-    const clampedEndMs = Math.max(resolvedEndMs, resolvedStartMs);
+    // While resolving dose/follow-up times, an unknown end is bounded like
+    // "ongoing" (null) rather than asserted as a real end. The *stored* end
+    // is derived below from whatever times this attack actually ends up
+    // with — never "now": for a backfilled attack "now" can be days or
+    // weeks after it really ended, which would both wildly overcount
+    // ICHD attack-days (attackDayKeys counts every day from start to end)
+    // and land inside the Today impact prompt's 24h window, asking about
+    // impact for a long-over attack — exactly what this flow exists to not
+    // do. Caught in review before this ever reached a phone.
+    const boundEndMs = endKnown ? new Date(localInputToIso(form.endTime)).getTime() : null;
 
+    // Every dose and follow-up, resolved to a real timestamp and sorted into
+    // time order — not grouped by medicine — because a later dose's own
+    // "full state" reading has to reflect whatever was most recently
+    // reported, not the original opening severities. Processing medicine by
+    // medicine would let a second medicine's dose, entered after an earlier
+    // follow-up already reported a lower number, restate the original
+    // (higher) severity as if nothing had changed.
     const peak = peakArea(form.areas);
-    let openingMedication: Omit<Snapshot, 'source'>['medication'] = null;
-    let openingClaimed = false;
-    const extraSnapshots: Array<Omit<Snapshot, 'source'>> = [];
-
+    interface Ev { ms: number; medication: Omit<Snapshot, 'source'>['medication']; followUpArea?: string; followUpValue?: number }
+    const events: Ev[] = [];
     for (const med of form.meds) {
       for (const dose of med.doses) {
-        const doseMs = doseEntryMs(dose, resolvedStartMs, clampedEndMs, nowMs);
+        const doseMs = doseEntryMs(dose, resolvedStartMs, boundEndMs, nowMs);
         const medication = { name: med.name, dose: med.dose, ...(dose.amount ? { amount: dose.amount } : {}) };
-        if (!openingClaimed && Math.abs(doseMs - resolvedStartMs) < 60_000) {
-          openingMedication = medication;
-          openingClaimed = true;
-        } else {
-          extraSnapshots.push({
-            time: new Date(doseMs).toISOString(), areas: { ...form.areas }, symptoms: [], reliefs: [], medication, note: null,
-          });
-        }
-        if (dose.followUp !== null && peak && followUpApplies(doseMs, clampedEndMs)) {
-          extraSnapshots.push({
-            time: new Date(doseMs + FOLLOW_UP_TARGET_MS).toISOString(),
-            areas: { [peak]: dose.followUp }, symptoms: [], reliefs: [], medication: null, note: null,
-          });
+        events.push({ ms: doseMs, medication });
+        if (dose.followUp !== null && peak && followUpApplies(doseMs, boundEndMs)) {
+          events.push({ ms: doseMs + FOLLOW_UP_TARGET_MS, medication: null, followUpArea: peak, followUpValue: dose.followUp });
         }
       }
     }
+    events.sort((a, b) => a.ms - b.ms);
+
+    let runningAreas = { ...form.areas };
+    let openingMedication: Omit<Snapshot, 'source'>['medication'] = null;
+    let openingClaimed = false;
+    const extraSnapshots: Array<Omit<Snapshot, 'source'>> = [];
+    let latestMs = resolvedStartMs;
+
+    for (const ev of events) {
+      latestMs = Math.max(latestMs, ev.ms);
+      if (ev.followUpArea) {
+        // The follow-up reading itself still reports only the one area
+        // asked about — same "not recorded" rule as LogForm's own follow-up
+        // — but it updates the running state a later dose's full-state
+        // reading will carry forward.
+        runningAreas = { ...runningAreas, [ev.followUpArea]: ev.followUpValue! };
+        extraSnapshots.push({
+          time: new Date(ev.ms).toISOString(), areas: { [ev.followUpArea]: ev.followUpValue! }, symptoms: [], reliefs: [], medication: null, note: null,
+        });
+        continue;
+      }
+      if (!openingClaimed && Math.abs(ev.ms - resolvedStartMs) < 60_000) {
+        openingMedication = ev.medication;
+        openingClaimed = true;
+      } else {
+        extraSnapshots.push({
+          time: new Date(ev.ms).toISOString(), areas: { ...runningAreas }, symptoms: [], reliefs: [], medication: ev.medication, note: null,
+        });
+      }
+    }
+
+    // Never before the start, and — for an unknown end — never fabricated as
+    // "now": the latest real snapshot time this attack actually has.
+    const resolvedEndMs = endKnown ? boundEndMs! : Math.max(resolvedStartMs, latestMs);
+    const clampedEndMs = Math.max(resolvedEndMs, resolvedStartMs);
 
     onSave(
       {
@@ -387,38 +426,75 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
         </button>
       </div>
 
-      {discardOpen && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center">
-          <div className="absolute inset-0 bg-bg-base/70" onClick={() => setDiscardOpen(false)} />
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-label="Discard this draft?"
-            className="relative w-full max-w-2xl space-y-3 rounded-t-sheet border border-bg-border bg-bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+      <DiscardDialog
+        open={discardOpen}
+        onKeepGoing={() => setDiscardOpen(false)}
+        onSaveAndClose={submit}
+        onDiscard={onClose}
+      />
+    </div>
+  );
+}
+
+/**
+ * The three-way "discard this draft?" choice (`MrgPastStopDark` in the v4
+ * boards) — `ConfirmDialog`'s own backdrop/focus/escape handling, since that
+ * component only supports a confirm/cancel pair and this needs a third,
+ * non-destructive middle action ("Save and close"). Same `fixed inset-0`
+ * positioning `ConfirmDialog` itself uses for the same reason: a short-lived
+ * alert overlay, never visible across the cold-launch resize that the
+ * shell's own `position: fixed` ban is about.
+ */
+function DiscardDialog({ open, onKeepGoing, onSaveAndClose, onDiscard }: {
+  open: boolean;
+  onKeepGoing: () => void;
+  onSaveAndClose: () => void;
+  onDiscard: () => void;
+}) {
+  const keepGoingRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onKeepGoing(); };
+    window.addEventListener('keydown', onKey);
+    keepGoingRef.current?.focus();
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onKeepGoing]);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[60] flex items-end justify-center ${open ? '' : 'pointer-events-none'}`}
+      aria-hidden={!open}
+      inert={!open}
+      style={{ visibility: open ? 'visible' : 'hidden', transition: `visibility 0s linear ${open ? '0s' : '200ms'}` }}
+    >
+      <div className="absolute inset-0 bg-bg-base/70" onClick={onKeepGoing} />
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-label="Discard this draft?"
+        className="relative w-full max-w-2xl space-y-3 rounded-t-sheet border border-bg-border bg-bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+      >
+        <h2 className="text-lg font-medium text-text-primary">Discard this draft?</h2>
+        <p className="text-sm text-text-secondary">
+          Nothing is saved yet. Save what you've entered so far, or discard the whole thing.
+        </p>
+        <div className="space-y-2 pt-1">
+          <button ref={keepGoingRef} type="button" onClick={onKeepGoing} className="btn-primary w-full">
+            Keep going
+          </button>
+          <button type="button" onClick={onSaveAndClose} className="btn-secondary w-full rounded-control py-control-y text-sm font-medium transition-colors">
+            Save and close
+          </button>
+          <button
+            type="button"
+            onClick={onDiscard}
+            className="w-full rounded-control px-control-x py-2.5 text-sm font-medium text-bg-base transition-colors bg-severity-high hover:opacity-90"
           >
-            <h2 className="text-lg font-medium text-text-primary">Discard this draft?</h2>
-            <p className="text-sm text-text-secondary">
-              This attack is already saved — where it hurt and how bad. Everything after that step is optional, so you
-              can save what you have and finish the rest later.
-            </p>
-            <div className="space-y-2 pt-1">
-              <button type="button" onClick={() => setDiscardOpen(false)} className="btn-primary w-full">
-                Keep going
-              </button>
-              <button type="button" onClick={submit} className="btn-secondary w-full rounded-control py-control-y text-sm font-medium transition-colors">
-                Save and close
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full rounded-control px-control-x py-2.5 text-sm font-medium text-bg-base transition-colors bg-severity-high hover:opacity-90"
-              >
-                Discard this draft
-              </button>
-            </div>
-          </div>
+            Discard this draft
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
