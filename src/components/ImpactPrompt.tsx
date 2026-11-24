@@ -1,5 +1,6 @@
 import type { Attack } from '../types';
 import { IMPACT_OPTIONS } from '../utils/impact';
+import { TODAY_CARD } from '../utils/todayCard';
 
 // The predicate deciding *whether* to show this — `attackAwaitingImpact` — is
 // in utils/impact.ts, not here: a component file that also exports a plain
@@ -20,7 +21,7 @@ interface Props {
 // in the same breath as closing the attack down.
 export function ImpactPrompt({ onAnswer, onDismiss }: Props) {
   return (
-    <div className="relative rounded-inset bg-bg-surface p-card">
+    <div className={`relative ${TODAY_CARD}`}>
       <button
         type="button"
         onClick={onDismiss}

@@ -672,7 +672,7 @@ export default function App() {
             )}
 
             {!ongoingAttack && !lastAttackEnd && (
-              <div className="rounded-inset border border-dashed border-bg-border p-10 text-center space-y-2">
+              <div className="rounded-card border border-dashed border-bg-border p-10 text-center space-y-2">
                 {/* "when you're ready" is the dossier's §9.4 empty state: the
                     app doesn't chase, and a first entry shouldn't feel owed. */}
                 <p className="text-text-secondary text-sm">

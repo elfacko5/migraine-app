@@ -1,3 +1,5 @@
+import { TODAY_CARD } from '../utils/todayCard';
+
 interface Props {
   onStart: () => void;
   onDismiss: () => void;
@@ -30,7 +32,7 @@ interface Props {
  */
 export function Hit6Prompt({ onStart, onDismiss, first }: Props) {
   return (
-    <div className="rounded-inset bg-bg-surface p-card">
+    <div className={TODAY_CARD}>
       <p className="text-sm text-text-primary">
         {first
           ? 'How much are headaches affecting your life?'
