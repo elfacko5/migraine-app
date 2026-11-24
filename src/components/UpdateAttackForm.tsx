@@ -71,19 +71,26 @@ function lastKnownAreas(snapshots: Snapshot[]): Record<string, number> {
   return result;
 }
 
-/** The areas actually on record at `ms`, read from the attack's *existing*
- *  history only — never from this update's own new "how bad now" reading,
- *  which didn't exist yet at any time before it's saved. A new dose entry
- *  backdated earlier than the attack's latest existing reading (e.g. "When
- *  it started") must be given the state that was really true back then, not
- *  today's current severities — the bug a straight `prev.areas` seed can't
- *  tell apart from the ordinary, much more common case of a dose dated
- *  after everything already logged. */
+/** The areas actually on record *as of* `ms`, read from the attack's
+ *  *existing* history only — never from this update's own new "how bad
+ *  now" reading, which didn't exist yet at any time before it's saved. A
+ *  new dose entry backdated earlier than the attack's latest existing
+ *  reading (e.g. "When it started") must be given the state that was
+ *  really true back then, not today's current severities.
+ *
+ *  Per-area lookback, same as `lastKnownAreas`, just bounded by `ms`
+ *  instead of "now" — the nearest reading at or before `ms` can itself be
+ *  a one-area follow-up, and taking its areas wholesale would hand a
+ *  backdated dose the same "only one area" picture `lastKnownAreas` exists
+ *  to avoid. Scans every snapshot rather than stopping at the first one
+ *  past `ms`, so it doesn't depend on the array already being time-sorted. */
 function areasAsOf(snapshots: Snapshot[], ms: number): Record<string, number> {
-  let result: Record<string, number> = {};
-  for (const s of snapshots) {
-    if (new Date(s.time).getTime() > ms) break;
-    result = s.areas;
+  const result: Record<string, number> = {};
+  for (let i = snapshots.length - 1; i >= 0; i--) {
+    if (new Date(snapshots[i].time).getTime() > ms) continue;
+    for (const [area, sev] of Object.entries(snapshots[i].areas)) {
+      if (!(area in result)) result[area] = sev;
+    }
   }
   return result;
 }
@@ -211,6 +218,17 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   const resolvedUpdateMs = Math.min(Math.max(updateMs, new Date(minTime).getTime()), new Date(maxTime).getTime());
   const peakSeverityNow = Math.max(0, ...Object.values(form.areas));
 
+  // Whether a "did it help?" answer for `row` would land far enough past
+  // its dose to actually register with `followUpReading` once this update
+  // saves at `resolvedUpdateMs` — `helpRows`' own `state` was decided
+  // against the clock when the sheet opened (deliberately, so the step
+  // doesn't vanish mid-flow), but the update's own time can since move
+  // earlier, including all the way down to `minTime` on a just-ended
+  // attack whose own end fell inside the dose's 1h dead zone. Answering
+  // anyway would store a reading `followUpReading` skips outright — worse
+  // than just not offering it, since it looks saved but never counts.
+  const rowEligible = (row: HelpRow) => resolvedUpdateMs - new Date(row.doseTimeIso).getTime() >= FOLLOW_UP_MIN_MS;
+
   const nextDisabled = kind === 'now' && Object.keys(form.areas).length === 0;
 
   function goNext() {
@@ -233,7 +251,10 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   // tagged `notification_no_change` rather than `manual` so the plateau
   // analytics count it as "held", not as a gap.
   function submitNoChange() {
-    onNoChange({ time: new Date(resolvedUpdateMs).toISOString(), areas: { ...prev.areas }, symptoms: [], reliefs: [], medication: null, note: null });
+    // `lastKnownAreas`, not `prev.areas` — the latest snapshot can itself be
+    // a one-area follow-up reading, and "nothing changed" promises *every*
+    // area carries forward, matching the hint the picker itself just showed.
+    onNoChange({ time: new Date(resolvedUpdateMs).toISOString(), areas: lastKnownAreas(attack.snapshots), symptoms: [], reliefs: [], medication: null, note: null });
   }
 
   function submit() {
@@ -270,7 +291,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
     // than matched, even though the eligibility check above already
     // guaranteed this dose is really that old. Staggered a second apart so
     // two answered rows in one update don't collide on the same timestamp.
-    const answeredHelpRows = helpRows.filter((row) => helpAnswers[row.name] !== undefined && row.peakArea);
+    const answeredHelpRows = helpRows.filter((row) => helpAnswers[row.name] !== undefined && row.peakArea && rowEligible(row));
     answeredHelpRows.forEach((row, i) => {
       const doseMs = new Date(row.doseTimeIso).getTime();
       const floor = doseMs + FOLLOW_UP_MIN_MS;
@@ -287,7 +308,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
 
     events.sort((a, b) => a.ms - b.ms);
 
-    let runningAreas = { ...prev.areas };
+    let runningAreas = lastKnownAreas(attack.snapshots);
     let openingMedication: Omit<Snapshot, 'source'>['medication'] = null;
     let openingClaimed = false;
     const extraSnapshots: Array<Omit<Snapshot, 'source'>> = [];
@@ -393,7 +414,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
               <button
                 type="button"
                 onClick={() => setConfirmNoChange(true)}
-                className="tap-44-y px-1 py-1 text-xs font-medium text-accent-light transition-colors hover:text-accent"
+                className="tap-44-y px-1 py-1 text-sm font-medium text-accent-light transition-colors hover:text-accent"
               >
                 Nothing changed
               </button>
@@ -444,7 +465,13 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
             {helpRows.map((row) => (
               <DoseHelpRow
                 key={row.name}
-                row={row}
+                // Downgraded to "too soon" the moment this update's own
+                // time no longer leaves an hour between the dose and it —
+                // answering past that point would store a reading
+                // `followUpReading` skips outright, so the row stops
+                // offering to collect one rather than take an answer that
+                // silently never counts.
+                row={row.state === 'ask' && !rowEligible(row) ? { ...row, state: 'too-soon' } : row}
                 value={helpAnswers[row.name] ?? null}
                 onChange={(v) => setHelpAnswers((a) => {
                   const next = { ...a };
