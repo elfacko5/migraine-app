@@ -213,14 +213,40 @@ export function useAttacks(userId: string | null) {
   // but the flag says that timestamp is a placeholder, not a fact — every
   // duration figure must check it (`hasKnownDuration` in stats.ts) before
   // treating `end` as trustworthy.
-  const endAttack = useCallback((attackId: number, time?: string, impact?: Attack['impact'], endUnknown = false) => {
+  const endAttack = useCallback((
+    attackId: number,
+    time?: string,
+    impact?: Attack['impact'],
+    endUnknown = false,
+    // The End flow's own dose-outcome readings and closing "what was it
+    // like" snapshot, plus the two-days-before/felt-like attack metadata it
+    // can set at the same moment — written in this same commit for the same
+    // reason `startAttack`'s own trailing params are (see its comment): a
+    // follow-up `addSnapshots`/`updateAttackDetails` call right after this
+    // one would map over this render's own `attacks`, which still doesn't
+    // reflect the end just committed here.
+    extraSnapshots: Array<Omit<Snapshot, 'source'>> = [],
+    triggers?: string[],
+    painQuality?: string[],
+  ) => {
     const end = time ?? new Date().toISOString();
     let updated: Attack | undefined;
     commit(attacks.map((a) => {
       if (a.id !== attackId) return a;
       // Only written when answered — an unanswered question must not land in
       // the record as "no impact".
-      updated = { ...a, end, endUnknown, ...(impact !== undefined ? { impact } : {}), updatedAt: new Date().toISOString() };
+      updated = {
+        ...a,
+        ...(extraSnapshots.length ? {
+          snapshots: [...a.snapshots, ...extraSnapshots.map((s) => ({ ...s, source: 'manual' as const }))]
+            .sort((x, y) => x.time.localeCompare(y.time)),
+        } : {}),
+        end, endUnknown,
+        ...(impact !== undefined ? { impact } : {}),
+        ...(triggers !== undefined ? { triggers } : {}),
+        ...(painQuality && painQuality.length > 0 ? { painQuality } : {}),
+        updatedAt: new Date().toISOString(),
+      };
       return updated;
     }));
     cancelNotification(attackId);

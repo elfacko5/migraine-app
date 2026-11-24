@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import type { Tab, Snapshot, Medication } from './types';
+import type { Tab, Snapshot, Medication, Attack } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
 import { useMedications } from './hooks/useMedications';
@@ -22,7 +22,7 @@ import { AddSheet } from './components/AddSheet';
 import { formatTime } from './utils/format';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
-import { EndAttackDialog } from './components/EndAttackDialog';
+import { EndAttackForm } from './components/EndAttackForm';
 
 const TAB_TITLES: Record<Tab, string> = {
   // A greeting rather than the app's name: the user already knows which app
@@ -482,6 +482,29 @@ export default function App() {
     ];
     addSnapshots(entries);
     closeUpdateSheet();
+  }
+
+  // EndAttackForm's own save — the end time/flag/impact plus any dose-
+  // outcome readings and the closing "what was it like" snapshot, and the
+  // two attack-level fields (triggers, painQuality) this flow can also set,
+  // all in the one `endAttack` call (see that hook's own comment on why).
+  function handleEndFlowSave(
+    endTime: string,
+    endUnknown: boolean,
+    impact: Attack['impact'] | undefined,
+    extraSnapshots: Array<Omit<Snapshot, 'source'>>,
+    triggersSel: string[],
+    painQuality: string[],
+  ) {
+    if (!ongoingAttack) return;
+    endAttack(
+      ongoingAttack.id, endTime, impact, endUnknown,
+      extraSnapshots.map((s) => stampSnapshot(s, medications)),
+      triggersSel, painQuality,
+    );
+    setEndConfirmOpen(false);
+    if (updateAttackId === ongoingAttack.id) closeUpdateSheet();
+    if (detailAttack?.id === ongoingAttack.id) setDetailAttackId(null);
   }
   return (
     <AppRoot>
@@ -1024,25 +1047,25 @@ export default function App() {
         )}
       </Sheet>
 
-      {/* End-attack confirmation — lets the user end it now or at an earlier time */}
+      {/* End-attack flow — the v4 EndAttackForm replaces EndAttackDialog's
+          single question entirely; there's no voice carve-out to preserve
+          here, unlike the other three logging flows. */}
       {ongoingAttack && (
-        <EndAttackDialog
-          open={endConfirmOpen}
-          minTime={ongoingAttack.snapshots[ongoingAttack.snapshots.length - 1].time}
-          onCancel={() => setEndConfirmOpen(false)}
-          onConfirm={(endTime) => {
-            // No impact here any more — it's asked by ImpactPrompt on Today
-            // for 24h after the end, and stays answerable in AttackDetail.
-            endAttack(ongoingAttack.id, endTime);
-            setEndConfirmOpen(false);
-            // Ending can be reached from inside the update sheet, which is
-            // showing an attack that no longer has anything to update.
-            if (updateAttackId === ongoingAttack.id) closeUpdateSheet();
-            // …and from the detail sheet, which would otherwise sit there
-            // still offering "End attack" for an attack that just ended.
-            if (detailAttack?.id === ongoingAttack.id) setDetailAttackId(null);
-          }}
-        />
+        <Sheet open={endConfirmOpen} onClose={() => setEndConfirmOpen(false)} title="End attack" flush bareHeader>
+          <EndAttackForm
+            attack={ongoingAttack}
+            symptoms={sortedSymptoms}
+            reliefs={sortedReliefs}
+            triggers={sortedTriggers}
+            textScale={textScale}
+            onTextScale={setTextScale}
+            onAddSymptom={addSymptom}
+            onAddRelief={addRelief}
+            onAddTrigger={addTrigger}
+            onClose={() => setEndConfirmOpen(false)}
+            onSave={handleEndFlowSave}
+          />
+        </Sheet>
       )}
     </div>
     </AppRoot>

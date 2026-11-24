@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Attack, Medication, Snapshot } from '../types';
 import { isoToLocalInput, localInputToIso, formatTime, formatDuration } from '../utils/format';
-import { maxSeverity, attackMaxSeverity, followUpReading, doseOutcomeWord, FOLLOW_UP_MIN_MS, FOLLOW_UP_MAX_MS, FOLLOW_UP_TARGET_MS, type DoseOutcomeWord } from '../utils/stats';
-import { isRetired } from '../utils/retired';
+import { attackMaxSeverity, FOLLOW_UP_TARGET_MS } from '../utils/stats';
 import { doseEntryMs, followUpApplies, type SelectedMedication } from '../utils/doseEntries';
-import { sevTextClass } from '../utils/severity';
+import { peakArea, doseHelpRows, rowEligible, placeDoseOutcomeEvents, type HelpRow } from '../utils/doseOutcomes';
 import { chipClass } from '../utils/chipStyles';
 import { RadioDot } from './RadioDot';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationEntry } from './MedicationEntry';
+import { DoseOutcomeRow } from './DoseOutcomeRow';
 import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { TextScaleControl } from './TextScaleControl';
@@ -42,17 +42,6 @@ interface FormState {
   meds: SelectedMedication[];
   symptoms: string[];
   reliefs: string[];
-}
-
-/** The area a dose's own "about 2 hours after?" reading is recorded
- *  against — the worst one *at the time of that dose*, same rule
- *  `PastAttackForm`/`LogForm` use for their own follow-up area. Not the same
- *  area as this update's own "how bad now" peak: a dose logged earlier in
- *  the attack is scored against the state it was actually taken into. */
-function peakArea(areas: Record<string, number>): string | null {
-  let best: string | null = null;
-  for (const [k, v] of Object.entries(areas)) if (best === null || v > areas[best]) best = k;
-  return best;
 }
 
 /** How each area stood at its own most recent reading — not just the
@@ -94,64 +83,6 @@ function areasAsOf(snapshots: Snapshot[], ms: number): Record<string, number> {
     result = s.areas;
   }
   return result;
-}
-
-type HelpRowState = 'answered' | 'ask' | 'too-soon';
-
-interface HelpRow {
-  name: string;
-  dose: string;
-  amount?: number;
-  doseTimeIso: string;
-  state: HelpRowState;
-  word?: DoseOutcomeWord;
-  peakArea: string | null;
-}
-
-/**
- * Doses already logged earlier in this attack that a "did it help?" reading
- * could still apply to — the first dose of each (unretired) drug, same scope
- * as `attackDoseOutcomes` (stats.ts), but windowed against `nowMs` directly
- * rather than that function's ongoing-attack-only `pending` gate: a past
- * attack being backfilled here can still take a reading for a dose that's
- * old enough and inside the window, which `attackDoseOutcomes` never offers
- * for an attack that already has an `end`.
- */
-function doseHelpRows(attack: Attack, nowMs: number): HelpRow[] {
-  const raw: HelpRow[] = [];
-  const snaps = attack.snapshots;
-  for (let i = 0; i < snaps.length; i++) {
-    const med = snaps[i].medication;
-    const name = med?.name?.trim();
-    if (!med || !name || isRetired(name) || raw.some((o) => o.name === name)) continue;
-    const before = maxSeverity(snaps[i]);
-    const follow = followUpReading(snaps, i);
-    const doseMs = new Date(snaps[i].time).getTime();
-    const area = peakArea(snaps[i].areas);
-    if (follow) {
-      raw.push({ name, dose: med.dose, amount: med.amount, doseTimeIso: snaps[i].time, state: 'answered', word: doseOutcomeWord(before, maxSeverity(follow)), peakArea: area });
-      continue;
-    }
-    const age = nowMs - doseMs;
-    if (age >= FOLLOW_UP_MAX_MS) continue; // window closed — nothing to ask
-    // Gated on the real +2h mark, not the 1h floor `followUpReading` itself
-    // accepts — `submit` always places this answer *before* the primary
-    // "how bad now" reading (so it never becomes the attack's newest
-    // snapshot), which means the primary reading is always at least as
-    // close to +2h as this one whenever the dose is under two hours old,
-    // and so always wins the match instead. Asking earlier than that would
-    // collect an answer that saves but is never the one counted.
-    raw.push({ name, dose: med.dose, amount: med.amount, doseTimeIso: snaps[i].time, state: age < FOLLOW_UP_TARGET_MS ? 'too-soon' : 'ask', peakArea: area });
-  }
-  if (!attack.end) return raw;
-  // An attack that already ended too soon after a dose for any reading to
-  // ever clear the padded +2h mark (the same padding `rowEligible` applies)
-  // has nothing to wait for — left out entirely rather than shown as "too
-  // soon to tell", which would read as temporary when it can never be
-  // answered.
-  const endMs = new Date(attack.end).getTime();
-  const padded = FOLLOW_UP_TARGET_MS + 1000 * raw.length;
-  return raw.filter((row) => row.state === 'answered' || endMs - new Date(row.doseTimeIso).getTime() >= padded);
 }
 
 function blank(defaultTime: string): FormState {
@@ -234,27 +165,6 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   const resolvedUpdateMs = Math.min(Math.max(updateMs, new Date(minTime).getTime()), new Date(maxTime).getTime());
   const peakSeverityNow = Math.max(0, ...Object.values(form.areas));
 
-  // Whether a "did it help?" answer for `row` would land far enough past
-  // its dose to actually win `followUpReading`'s match once this update
-  // saves at `resolvedUpdateMs` — `helpRows`' own `state` was decided
-  // against the clock when the sheet opened (deliberately, so the step
-  // doesn't vanish mid-flow), but the update's own time can since move
-  // earlier, including all the way down to `minTime` on a just-ended
-  // attack.
-  //
-  // Gated on +2h, not the 1h floor `followUpReading` itself would still
-  // accept: `submit` always places this answer *before* the primary
-  // reading, so a gap under two hours leaves the primary reading at
-  // `resolvedUpdateMs` closer to the +2h mark every time, and it wins the
-  // match instead — the slider answer would still save, just never be the
-  // one counted. Padded by `helpRows.length` seconds on top of that for the
-  // same reason `doseHelpRows` pads its own "never eligible" check: `submit`
-  // staggers every answered row a further second or so earlier to keep each
-  // one strictly before the primary reading, so a gap only barely over 2h
-  // can still land under the +2h mark once that stagger is applied.
-  const rowEligible = (row: HelpRow) =>
-    resolvedUpdateMs - new Date(row.doseTimeIso).getTime() >= FOLLOW_UP_TARGET_MS + 1000 * helpRows.length;
-
   const nextDisabled = kind === 'now' && Object.keys(form.areas).length === 0;
 
   function goNext() {
@@ -307,33 +217,11 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         }
       }
     }
-    // Aimed at `doseTime + 2h` (the real mark `followUpReading` measures
-    // against) but always kept *before* the primary reading, never at or
-    // after it — landing it on the primary reading's own moment would make
-    // this single-area reading the attack's newest snapshot, which every
-    // "last reading = current state" reader (a later no-change copy, the
-    // reminder body, the next update's own `prev`) would then take as the
-    // whole picture. `rowEligible` already guarantees the dose is at least
-    // two hours old by `resolvedUpdateMs`, so the target is always at or
-    // before "now" — this floor only exists as a defensive lower bound,
-    // never expected to bind. Staggered a second apart so two answered rows
-    // in one update don't collide on the same timestamp.
-    const answeredHelpRows = helpRows.filter((row) => helpAnswers[row.name] !== undefined && row.peakArea && rowEligible(row));
-    answeredHelpRows.forEach((row, i) => {
-      const doseMs = new Date(row.doseTimeIso).getTime();
-      // `rowEligible` already guarantees at least two hours (plus this same
-      // padding) between the dose and `resolvedUpdateMs`, so this floor is
-      // never expected to bind — kept only as a defensive lower bound, not
-      // because the clash it originally guarded against (a manual update
-      // time earlier than the dose's own +1h mark) can still happen.
-      const floor = doseMs + FOLLOW_UP_MIN_MS;
-      // One whole second reserved per answered row, nearest the primary
-      // reading last — keeps every one of them strictly before it, never
-      // on or after "now".
-      const ceiling = resolvedUpdateMs - 1000 * (answeredHelpRows.length - i);
-      const target = Math.min(doseMs + FOLLOW_UP_TARGET_MS, ceiling);
-      events.push({ ms: Math.min(Math.max(floor, target), ceiling), kind: 'followUp', area: row.peakArea!, value: helpAnswers[row.name] });
-    });
+    // `placeDoseOutcomeEvents` (doseOutcomes.ts) keeps every answered row
+    // strictly before the primary reading — see its own doc comment for why.
+    for (const he of placeDoseOutcomeEvents(helpRows, helpAnswers, resolvedUpdateMs)) {
+      events.push({ ms: he.ms, kind: 'followUp', area: he.area, value: he.value });
+    }
 
     events.sort((a, b) => a.ms - b.ms);
 
@@ -497,7 +385,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         {kind === 'help' && (
           <div className="space-y-3">
             {helpRows.map((row) => (
-              <DoseHelpRow
+              <DoseOutcomeRow
                 key={row.name}
                 // Downgraded to "too soon" the moment this update's own
                 // time no longer leaves two hours between the dose and it
@@ -506,7 +394,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
                 // "how bad now" reading, so the row stops offering to
                 // collect one rather than take an answer that silently
                 // never counts.
-                row={row.state === 'ask' && !rowEligible(row) ? { ...row, state: 'too-soon' } : row}
+                row={row.state === 'ask' && !rowEligible(row, resolvedUpdateMs, helpRows.length) ? { ...row, state: 'too-soon' } : row}
                 value={helpAnswers[row.name] ?? null}
                 onChange={(v) => setHelpAnswers((a) => {
                   const next = { ...a };
@@ -585,85 +473,6 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         onConfirm={() => { setConfirmNoChange(false); submitNoChange(); }}
         onCancel={() => setConfirmNoChange(false)}
       />
-    </div>
-  );
-}
-
-/**
- * One already-logged dose's "did it help?" row. `answered` just reads back
- * `doseOutcomeWord`; `too-soon` is informational, not a choice; `ask` reuses
- * `MedicationEntry`'s own follow-up slider shape so the two mechanisms read
- * as one thing, not two — see this file's own doc comment on why there is
- * no Yes/A bit/No tap here.
- */
-function DoseHelpRow({ row, value, onChange }: {
-  row: HelpRow;
-  value: number | null;
-  onChange: (v: number | null) => void;
-}) {
-  const atText = formatTime(row.doseTimeIso);
-  const label = `${row.name}${row.dose ? ` · ${row.dose}` : ''} · ${atText}`;
-
-  if (row.state === 'answered') {
-    return (
-      <div className="flex items-center justify-between gap-3 rounded-control bg-bg-raised p-3">
-        <span className="text-sm text-text-primary">{label}</span>
-        <span className="text-sm font-medium text-accent-light">{row.word}</span>
-      </div>
-    );
-  }
-
-  if (row.state === 'too-soon') {
-    return (
-      <div className="flex items-center justify-between gap-3 rounded-control bg-bg-raised p-3">
-        <span className="text-sm text-text-primary">{label}</span>
-        <span className="text-sm text-text-secondary">Too soon to tell</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2.5 rounded-control bg-bg-raised p-3">
-      <p className="text-sm text-text-primary">{label}</p>
-      {value === null ? (
-        <button type="button" onClick={() => onChange(5)} className="btn-secondary btn-compact">
-          Add how bad it was
-        </button>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-text-secondary">How bad, about 2h after</span>
-            <div className="flex items-center gap-2">
-              <span className={`text-sm font-bold tabular-nums ${sevTextClass(value)}`}>{value}</span>
-              <button
-                type="button"
-                onClick={() => onChange(null)}
-                className="text-text-secondary hover:text-text-primary transition-colors"
-                aria-label="Remove this reading"
-              >
-                <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
-                  <line x1="4" y1="4" x2="12" y2="12" />
-                  <line x1="12" y1="4" x2="4" y2="12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-text-secondary w-7">None</span>
-            <input
-              type="range"
-              min={0}
-              max={10}
-              step={1}
-              value={value}
-              aria-label={`Severity about 2 hours after ${row.name}`}
-              onChange={(e) => onChange(Number(e.target.value))}
-              className="flex-1"
-            />
-            <span className="text-xs text-text-secondary w-12 text-right">Severe</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
