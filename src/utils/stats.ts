@@ -725,6 +725,18 @@ export function followUpReading(snaps: Snapshot[], i: number): Snapshot | null {
  *  halved, or down to mild. */
 export const doseHelped = (before: number, after: number) => after <= before / 2 || after <= 3;
 
+/**
+ * The same two numbers, read out in the v4 flows' warmer register (A1) —
+ * "Helped" is exactly `doseHelped`, so Insights' and Logs' counts never
+ * diverge from what a dose-outcome card says. There is no fourth, stored
+ * answer: this is always computed from `before`/`after`, never tapped.
+ */
+export type DoseOutcomeWord = 'Helped' | 'A bit' | "Didn't help";
+export function doseOutcomeWord(before: number, after: number): DoseOutcomeWord {
+  if (doseHelped(before, after)) return 'Helped';
+  return after < before ? 'A bit' : "Didn't help";
+}
+
 /** `since` scopes it to the same window as `medicationDaysInWindow`, and on
  *  the same key — the dose's own time. Two figures in one block measured over
  *  different windows is exactly the drift this page keeps correcting. */

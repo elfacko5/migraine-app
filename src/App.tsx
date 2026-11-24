@@ -37,6 +37,7 @@ import { LogForm } from './components/LogForm';
 import { LiveAttackForm } from './components/LiveAttackForm';
 import { PastAttackForm } from './components/PastAttackForm';
 import { QuickUpdateForm } from './components/QuickUpdateForm';
+import { UpdateAttackForm } from './components/UpdateAttackForm';
 import { OngoingAttackBanner } from './components/OngoingAttackBanner';
 import { AttackFreeCard } from './components/AttackFreeCard';
 import { ImpactPrompt } from './components/ImpactPrompt';
@@ -467,6 +468,21 @@ export default function App() {
     if (updateAttackId !== null) addSnapshot(updateAttackId, stampSnapshot(snapshot, medications), source);
     closeUpdateSheet();
   }
+
+  // UpdateAttackForm's own save — a primary reading plus any new doses and
+  // dose-outcome readings, all at their own real times, committed together
+  // the same way `handleLogSave` bundles `extraSnapshots` into one call. One
+  // entry per attack carries `reschedule: true`; `addSnapshots` only checks
+  // whether *any* of an attack's entries ask for it.
+  function handleUpdateFlowSave(snapshot: Omit<Snapshot, 'source'>, extraSnapshots: Array<Omit<Snapshot, 'source'>>) {
+    if (updateAttackId === null) return;
+    const entries: SnapshotEntry[] = [
+      { attackId: updateAttackId, snapshot: stampSnapshot(snapshot, medications), source: 'manual', reschedule: true },
+      ...extraSnapshots.map((s) => ({ attackId: updateAttackId, snapshot: stampSnapshot(s, medications), source: 'manual' as const, reschedule: false })),
+    ];
+    addSnapshots(entries);
+    closeUpdateSheet();
+  }
   return (
     <AppRoot>
     <div
@@ -779,24 +795,44 @@ export default function App() {
       </Sheet>
 
       {/* Quick update sheet — targets the ongoing attack (FAB/banner) or any
-          past attack (its own detail sheet's "Add update") */}
+          past attack (its own detail sheet's "Add update"). The v4
+          UpdateAttackForm replaces QuickUpdateForm for manual entry only — a
+          voice draft still opens QuickUpdateForm, same carve-out as the log
+          sheet above. */}
       {updateAttack && (
         <Sheet open={!!updateAttackId} onClose={closeUpdateSheet} title="Add update" flush bareHeader>
-          <QuickUpdateForm
-            attack={updateAttack}
-            symptoms={sortedSymptoms}
-            reliefs={sortedReliefs}
-            recentMeds={recentMeds}
-            medications={medications}
-            attacks={attacks}
-            textScale={textScale}
-            onTextScale={setTextScale}
-            onAddSymptom={addSymptom}
-            onAddRelief={addRelief}
-            onSave={handleUpdateSave}
-            onClose={closeUpdateSheet}
-            voiceDraft={voiceDraft}
-          />
+          {voiceDraft ? (
+            <QuickUpdateForm
+              attack={updateAttack}
+              symptoms={sortedSymptoms}
+              reliefs={sortedReliefs}
+              recentMeds={recentMeds}
+              medications={medications}
+              attacks={attacks}
+              textScale={textScale}
+              onTextScale={setTextScale}
+              onAddSymptom={addSymptom}
+              onAddRelief={addRelief}
+              onSave={handleUpdateSave}
+              onClose={closeUpdateSheet}
+              voiceDraft={voiceDraft}
+            />
+          ) : (
+            <UpdateAttackForm
+              attack={updateAttack}
+              symptoms={sortedSymptoms}
+              reliefs={sortedReliefs}
+              recentMeds={recentMeds}
+              medications={medications}
+              attacks={attacks}
+              textScale={textScale}
+              onTextScale={setTextScale}
+              onAddSymptom={addSymptom}
+              onAddRelief={addRelief}
+              onSave={handleUpdateFlowSave}
+              onClose={closeUpdateSheet}
+            />
+          )}
         </Sheet>
       )}
 
