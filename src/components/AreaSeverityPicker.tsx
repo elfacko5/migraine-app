@@ -128,7 +128,7 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
 
       {/* Single severity slider — follows the focused area */}
       {active && (
-        <div className="rounded-inset border border-bg-border bg-bg-raised/30 px-4 py-3 space-y-2">
+        <div className="rounded-control border border-bg-border bg-bg-raised/30 px-4 py-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-text-primary">
               {active}

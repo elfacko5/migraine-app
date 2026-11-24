@@ -217,7 +217,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
                   </p>
                 </div>
               </div>
-              <p className={`flex items-start gap-2.5 rounded-inset bg-bg-base px-3.5 py-2.5 text-sm text-text-primary ${
+              <p className={`flex items-start gap-2.5 rounded-control bg-bg-base px-3.5 py-2.5 text-sm text-text-primary ${
                 o.verdict === 'helped' ? 'ring-2 ring-inset ring-accent' : ''
               }`}>
                 <VerdictMark verdict={o.verdict} className="mt-0.5 h-4 w-4 shrink-0" />

@@ -306,7 +306,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
             </div>
 
             {step === 1 && voiceDraft && (
-              <div className="mb-4 rounded-inset border border-accent/40 bg-accent/10 p-3 text-xs text-text-secondary space-y-1">
+              <div className="mb-4 rounded-control border border-accent/40 bg-accent/10 p-3 text-xs text-text-secondary space-y-1">
                 <p className="font-medium text-accent-light">🎙️ Filled in from your voice note</p>
                 {voiceDraft.matched.length > 0 ? (
                   <ul className="list-disc pl-4 space-y-0.5">
@@ -385,7 +385,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
                 above it, not a message about it. `aria-hidden` is wrong here
                 (it is real information), so it stays readable but inert. */}
             {caption && (
-              <div className="mt-4 flex items-start gap-2.5 rounded-inset border border-bg-border bg-bg-raised/50 px-3 py-2.5">
+              <div className="mt-4 flex items-start gap-2.5 rounded-control border border-bg-border bg-bg-raised/50 px-3 py-2.5">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
                   strokeLinecap="round" strokeLinejoin="round"
                   className="mt-px h-3.5 w-3.5 shrink-0 text-text-secondary" aria-hidden="true">

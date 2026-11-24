@@ -481,7 +481,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
           return (
             <div className="space-y-3">
               {areaNames.length > 0 && (
-                <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-2">
+                <div className="rounded-control border border-bg-border bg-bg-raised p-card space-y-2">
                   <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">Pain areas</p>
                   <ul className="space-y-1.5">
                     {/* Per area, not off the single all-areas flag: a
@@ -513,7 +513,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                 </div>
               )}
 
-              <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-2">
+              <div className="rounded-control border border-bg-border bg-bg-raised p-card space-y-2">
                 <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">Started</p>
                 {/* "I woke up with it" answers *whether* but not *when*, and
                     the form's untouched default is "Just now" — which would
@@ -539,7 +539,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               {/* Each dose with a time of its own is listed separately, because
                   each becomes its own reading on the attack's timeline. */}
               {voiceDraft.doses.length > 0 && (
-                <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-2">
+                <div className="rounded-control border border-bg-border bg-bg-raised p-card space-y-2">
                   <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">Medication</p>
                   <ul className="space-y-1.5">
                     {voiceDraft.doses.map((d, i) => (
@@ -569,7 +569,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                 ['Symptoms', form.symptoms.join(', ')],
                 ['Triggers', form.triggers.join(', ')],
               ].filter(([, value]) => value).map(([label, value]) => (
-                <div key={label} className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-2">
+                <div key={label} className="rounded-control border border-bg-border bg-bg-raised p-card space-y-2">
                   <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">{label}</p>
                   <p className="text-base text-text-primary">{value}</p>
                 </div>
@@ -582,7 +582,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                 </p>
               )}
 
-              <div className="rounded-inset border border-bg-border bg-bg-raised/50 p-card space-y-2">
+              <div className="rounded-control border border-bg-border bg-bg-raised/50 p-card space-y-2">
                 {/* "What Siri heard", not "what you said" — the quotes are
                     verbatim of the transcript, which is not necessarily
                     verbatim of the user. When a field looks wrong, this is
@@ -609,7 +609,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
           return (
             <div className="space-y-4">
               {/* Start time card */}
-              <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-3">
+              <div className="rounded-control border border-bg-border bg-bg-raised p-card space-y-3">
                 <div>
                   <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">Start time</p>
                   <p className="mt-1 text-lg font-medium text-text-primary">{startDisplay}</p>
@@ -647,7 +647,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
               </div>
 
               {/* End time card */}
-              <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-3">
+              <div className="rounded-control border border-bg-border bg-bg-raised p-card space-y-3">
                 <div>
                   <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">End time</p>
                   <p className="mt-1 text-lg font-medium text-text-primary">{endDisplay}</p>
@@ -870,7 +870,7 @@ function FollowUpPrompt({ at, value, start, onChange }: {
   onChange: (v: number | null) => void;
 }) {
   return (
-    <div className="rounded-inset border border-bg-border bg-bg-raised p-card space-y-3">
+    <div className="rounded-control border border-bg-border bg-bg-raised p-card space-y-3">
       <div>
         <p className="text-sm font-medium text-text-primary">…and about 2 hours after?</p>
         <p className="text-xs text-text-secondary">Around {formatTime(at)}. Optional.</p>
