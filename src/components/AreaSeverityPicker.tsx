@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { SideLabel } from './SideLabel';
 import { useUiTheme } from '../hooks/useUiTheme';
+import { chipClass } from '../utils/chipStyles';
 import {
   VIEWS, type DiagramView,
   headFill, lineColor, dividerColor, detailColor, disabledFill, disabledHatch,
   disabledLine, hoverFill, badgeFill, badgeText,
   sevText, sevFill, sevStroke,
 } from './headDiagram';
+
+const SEVERITIES = Array.from({ length: 10 }, (_, i) => i + 1);
 
 interface Props {
   value: Record<string, number>;
@@ -146,12 +149,30 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-text-secondary w-7">Low</span>
-            <input type="range" min={1} max={10} step={1} value={value[active]}
-              onChange={(e) => setSev(Number(e.target.value))}
-              className="flex-1"/>
-            <span className="text-xs text-text-secondary w-12 text-right">Severe</span>
+          {/* Button grid, not a slider (pattern library, 2026-11-24) — the
+              redesign's `UpdNowDark` board draws each value as its own tap
+              target rather than a point on a continuous track. 1-10, not the
+              design's 0-10: every area that's selected already carries a
+              severity (defaulted to 5), so there's no "unset" state for a 0
+              cell to mean. Previous value marked with a dashed outline
+              (outline, not a ring — it's already carrying the selection
+              ring) rather than redrawn as selected. */}
+          <div className="grid grid-cols-5 gap-1.5" role="group"
+            aria-label={`${active} severity, 1 to 10`}>
+            {SEVERITIES.map((s) => {
+              const isOn = value[active] === s;
+              const wasThis = previousValue?.[active] === s;
+              return (
+                <button key={s} type="button" aria-pressed={isOn}
+                  aria-label={wasThis ? `${s}, last time` : `${s}`}
+                  onClick={() => setSev(s)}
+                  className={`min-h-[2.75rem] rounded-control text-base font-medium tabular-nums transition-colors ${chipClass(isOn)} ${
+                    wasThis && !isOn ? 'outline outline-1 outline-dashed outline-border-control -outline-offset-1' : ''
+                  }`}>
+                  {s}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
