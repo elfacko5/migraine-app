@@ -45,7 +45,7 @@ Vite 8 + React 19 + TypeScript (strict) + Tailwind CSS v4 + Recharts + `@supabas
 
 ## Native iOS shell (Capacitor)
 
-`ios/` is a Xcode project wrapping the Vite build in WKWebView. Full details in [`docs/native-ios.md`](docs/native-ios.md). Key rules:
+`ios/` is a Xcode project wrapping the Vite build in WKWebView. Key rules:
 
 - The `App` target has a **build-web-assets run-script phase** (always out of date, fails if nvm missing). Pressing Run in Xcode is enough.
 - `appId` in `capacitor.config.ts` must match `PRODUCT_BUNDLE_IDENTIFIER` (`com.sunny.migrainetracker2`).
@@ -177,7 +177,7 @@ All reads/writes through hooks (`useAttacks`, `useUserPrefs`, `useMedications`, 
 
 ## Notification architecture
 
-Full details in [`docs/notifications.md`](docs/notifications.md). Two backends chosen at runtime: native (`@capacitor/local-notifications`) and web (service worker `setTimeout`).
+Two backends chosen at runtime: native (`@capacitor/local-notifications`) and web (service worker `setTimeout`).
 
 **Key rules:**
 - `onNotificationAction` carries no data — don't route payloads through it.
@@ -192,7 +192,7 @@ Full details in [`docs/notifications.md`](docs/notifications.md). Two backends c
 
 ## Voice logging
 
-Two entry points (Siri App Intent + Shortcut deep link), both landing in `App.tsx` → `LogForm` or `QuickUpdateForm`. Nothing auto-submits. Full rules in [`docs/voice-parsing.md`](docs/voice-parsing.md).
+Two entry points (Siri App Intent + Shortcut deep link), both landing in `App.tsx` → `LogForm` or `QuickUpdateForm`. Nothing auto-submits.
 
 **Handoff:** Intent writes `CapacitorStorage.pendingVoiceEntry` to UserDefaults; `consumePendingVoiceEntry()` reads it. Key duplicated in Swift and TS. Web layer **waits** (`awaitPendingVoiceEntry`) rather than reading once. Three answers handed as JSON, stay separate — `started` parsed only by `parseStartOffset`.
 
@@ -207,7 +207,7 @@ Two entry points (Siri App Intent + Shortcut deep link), both landing in `App.ts
 
 ## Home-screen widget (WidgetKit)
 
-`ios/App/LiddWidget/`. Full details in [`docs/widget.md`](docs/widget.md). Key rules:
+`ios/App/LiddWidget/`. Key rules:
 
 - Widget never reads the diary — `widgetSnapshot.ts` builds the payload; extension only draws.
 - Uses `LiddWidgetPlugin` + App Group `group.com.sunny.migrainetracker2` (not `@capacitor/preferences`).
@@ -244,7 +244,7 @@ Six questions, scored 36–78. One per screen, no auto-advance. Prompts on Today
 
 ## Medications
 
-Full flow details in [`docs/plan-medication-flows.md`](docs/plan-medication-flows.md). `Medication` type in `src/types/index.ts`. Four flows from Settings → My medications: Overview, Monthly guides, Add (`AddMedicationWizard`), Edit (`EditMedicationForm`).
+`Medication` type in `src/types/index.ts`. Four flows from Settings → My medications: Overview, Monthly guides, Add (`AddMedicationWizard`), Edit (`EditMedicationForm`).
 
 **Core rules:**
 - `dose` is derived, never typed. Nothing may assume `strength`/`quantity` exist.
@@ -278,7 +278,7 @@ Full flow details in [`docs/plan-medication-flows.md`](docs/plan-medication-flow
 
 ### Viewport architecture
 
-**Don't revert to `position: fixed`.** Full details in [`docs/viewport-architecture.md`](docs/viewport-architecture.md).
+**Don't revert to `position: fixed`.**
 
 Root: `position: relative`, `height: var(--app-height, 100dvh)`, `translateY(var(--app-offset, 0px))`, `overflow-hidden`. Everything floating is `position: absolute` against the root. Scrolling in nested `h-full overflow-y-auto` div. `html`/`body`: `overflow: hidden; height: 100%`.
 
@@ -301,7 +301,7 @@ Attack-free: `AttackFreeCard` with greeting + "X days / since your last attack".
 
 ### Today hero cards
 
-`HomeCard` — full-bleed hero, drawn artwork (`heroArt.tsx`). Rules in [`docs/today-cards.md`](docs/today-cards.md):
+`HomeCard` — full-bleed hero, drawn artwork (`heroArt.tsx`). Rules:
 
 - Gradients from `bg-bg-base` to `bg-bg-base/0` (never `transparent`). Horizontal stop past image's left edge (40% for 36% image start).
 - Art box 40px + inset below top. Text centred against artwork, `max-w-[64%]`.
@@ -362,8 +362,6 @@ Drill-down (enter from right, back chevron). Tiles for duration/peak/side, span,
 - For past attacks too (backfilling). `addSnapshot` skips reminder scheduling when attack has `end`.
 
 ## Shared components
-
-Details in [`docs/component-rules.md`](docs/component-rules.md).
 
 - **`ChipSelector`**: pill toggles with "Add custom…". States from `chipStyles.ts`.
 - **`MedicationInput`**: chip row first (from `recentMeds`), free-text behind ghost button. Quantity quick-pick outside collapsible. Radio groups with `RadioDot`. Dose-time card in new-attack wizard only.
