@@ -256,6 +256,27 @@
      assumed. */
   --color-selected-fill:  #2e3a31;
 
+  /* ── Insights categorical palette (v4 decision A7, 2026-11-22) ──
+     A closed 5-colour set for Insights' frequency/category charts only —
+     never for pain intensity, which stays on the severity ramp above even
+     inside an Insights chart. Insights is the one carve-out from the no-
+     purple/no-blue rule: both hues measure ~30-35% saturation (muted, not
+     the saturated blue photophobia guidance warns against), and Insights
+     isn't read mid-attack the way Today and the wizards are. Still checked
+     against attack mode, since Insights stays reachable there — these pass
+     comfortably (6.2-9.2:1 on every attack-mode surface, better than dark,
+     so attack reuses these values rather than getting its own block, the
+     same reuse CHART_COLORS in StatsView.tsx already does for tick/line
+     colours). Values and hue order (blue/purple/dusty-rose/gold/tan) are
+     `docs/redesign-v4/reference/TokenDecisions.html` decision 12, "Resolved".
+     Dark values clear 3:1 (WCAG 1.4.11, the floor for a graphical bar/icon)
+     against bg-raised with room to spare: 6.17 / 5.58 / 5.41 / 6.83 / 6.15:1. */
+  --color-chart-1: #8fb3c9;  /* blue */
+  --color-chart-2: #ab9fcb;  /* purple */
+  --color-chart-3: #d0948c;  /* dusty-rose */
+  --color-chart-4: #c9b58c;  /* gold */
+  --color-chart-5: #d6a476;  /* tan */
+
   /* ── Hero illustration ──────────────────────────────
      The two fills `heroArt.tsx` draws the Today hero with. Decorative only,
      so no contrast target of their own — the headline that runs over them
@@ -308,6 +329,18 @@
   --color-positive:       #4f6b57;
   --color-ill-1:          #c9a98a;
   --color-ill-2:          #a9bfad;
+  /* Insights categorical palette, light (A11: every new token gets its light
+     value derived and measured when it's added, even though the screen-by-
+     screen light pass itself waits until last). Same hue, same saturation,
+     lightness brought down — the dark values are light pastels that read at
+     1.5-2.3:1 on a light page, nowhere near the 3:1 floor; these measure
+     4.52-4.63:1 against bg-raised, 5.51-5.66:1 against the page, matching
+     the severity ramp's own light-mode derivation just above. */
+  --color-chart-1: #3d667f;
+  --color-chart-2: #69559d;
+  --color-chart-3: #98493e;
+  --color-chart-4: #715d35;
+  --color-chart-5: #875629;
   /* Light raises by going darker, not lighter — the same inversion
      bg-raised already follows. 12.61:1 on the page against text-primary's
      10.59:1, 10.32:1 on bg-raised; both clear of a near-black extreme. */

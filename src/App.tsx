@@ -709,7 +709,15 @@ export default function App() {
         {/* ── Insights tab ─────────────────────────── */}
         {tab === 'stats' && (
           <section className="space-y-4">
-            <StatsView attacks={attacks} medications={medications} guides={guides} deleted={deleted} period={statsPeriod} />
+            <StatsView
+              attacks={attacks}
+              medications={medications}
+              guides={guides}
+              deleted={deleted}
+              period={statsPeriod}
+              onAttackClick={(a) => setDetailAttackId(a.id)}
+              onAdd={() => { setLogPast(false); setLogSheetOpen(true); }}
+            />
           </section>
         )}
 
