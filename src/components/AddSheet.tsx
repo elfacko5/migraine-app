@@ -99,7 +99,7 @@ export function AddSheet({ open, ongoing, actions, onClose }: {
         {/* Drag-handle affordance — decorative; this sheet dismisses by tap,
             not drag, but the design draws the handle regardless. 36×5
             (pattern library), not the 40×5 this screen's own board draws. */}
-        <span aria-hidden="true" className="mx-auto h-[5px] w-9 rounded-full bg-[#5a554c]" />
+        <span aria-hidden="true" className="mx-auto h-[5px] w-9 rounded-full bg-text-secondary" />
         <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
         {/* The action rows sit on their own bg-bg-raised card — a card on the
             sheet's own bg-bg-surface card, per the surface-stacking rule. */}

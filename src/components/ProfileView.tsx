@@ -544,7 +544,7 @@ function ReminderDiagnostics() {
           type="button"
           onClick={refresh}
           disabled={busy}
-          className="tap-44-y btn-secondary min-h-0 rounded-control-sm px-3 py-1.5 text-xs font-medium transition-colors active:opacity-60 disabled:opacity-40"
+          className="tap-44-y btn-secondary min-h-0 rounded-control-sm px-3 py-1.5 text-xs font-medium transition-colors active:opacity-60"
         >
           {busy ? 'Checking…' : 'Refresh'}
         </button>
