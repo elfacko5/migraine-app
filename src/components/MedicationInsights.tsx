@@ -76,6 +76,11 @@ export function MedicationInsights({
   return (
     <InsightSection
       title="Medication"
+      // No section card — the v4 board sits this heading straight on the
+      // page, each drug already its own card (`.mc` in the board, not
+      // nested in a `.card`). A section fill around cards that are already
+      // filled was just a border.
+      bare
       // Reference points, not a verdict. The app counts days and says what the
       // guideline numbers are; deciding what they mean is a conversation with
       // a doctor, and the wording must not pre-empt it.
@@ -111,7 +116,7 @@ export function MedicationInsights({
           const deletedName = isDeletedName(med.name, medications, deleted);
 
           return (
-            <div key={med.name} className="space-y-3.5 rounded-card bg-bg-raised p-card">
+            <div key={med.name} className="space-y-3.5 rounded-card bg-bg-surface p-card">
               <div className="flex flex-wrap items-center gap-3">
                 <span
                   aria-hidden="true"

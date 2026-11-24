@@ -44,9 +44,15 @@ interface Props {
    *  showing. Use this instead of `note` when the caption itself is what's
    *  crowding the section. */
   info?: React.ReactNode;
+  /** Skips the section's own card — for the one section (Medication) whose
+   *  v4 board sits straight on the page, each row already carried as its own
+   *  card. A second fill around cards that are already filled is just a
+   *  border. Never combine with `note`: there would be nothing for its inner
+   *  outline to separate. */
+  bare?: boolean;
 }
 
-export function InsightSection({ title, children, note, info }: Props) {
+export function InsightSection({ title, children, note, info, bare }: Props) {
   const [showInfo, setShowInfo] = useState(false);
   return (
     <section className="space-y-2">
@@ -104,16 +110,18 @@ export function InsightSection({ title, children, note, info }: Props) {
           reads as two different apps rather than as a deliberate difference.
           The inner box stays at `p-3`: it is nested inside this one, not a
           peer of the tiles. */}
-      <div className="space-y-2 rounded-group bg-bg-surface p-card">
-        {note ? (
-          <>
-            <div className="rounded-inset border border-bg-border p-3">{children}</div>
-            <p className="text-xs text-text-secondary">{note}</p>
-          </>
-        ) : (
-          children
-        )}
-      </div>
+      {bare ? children : (
+        <div className="space-y-2 rounded-group bg-bg-surface p-card">
+          {note ? (
+            <>
+              <div className="rounded-inset border border-bg-border p-3">{children}</div>
+              <p className="text-xs text-text-secondary">{note}</p>
+            </>
+          ) : (
+            children
+          )}
+        </div>
+      )}
 
       {info && (
         <ConfirmDialog
