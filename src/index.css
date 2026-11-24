@@ -106,12 +106,37 @@
 
   /* Lidd-local, temporary: collapse when the drift is decided.
      Each of these is a role above at a different value, kept separate so
-     this pass moves no pixels. */
-  --radius-group:      1rem;     /* a card at 16px: Settings groups, Insights cards */
-  --radius-inset:      0.75rem;  /* a card at 12px: pre-v3 nested boxes, Hit6 and impact prompts */
-  --radius-control-sm: 0.5rem;   /* a control at 8px: segmented tracks, buttons overriding btn-* */
-  --radius-field-lg:   1rem;     /* a field at 16px: the v3 medication editor */
-  --radius-badge-sm:   0.5rem;   /* a badge at 8px: the small letter badge */
+     this pass moves no pixels.
+     v4 sweep, 2026-11-24: Settings groups and the Data export/import card
+     moved to --radius-card (confirmed 20px against docs/redesign-v4/screens
+     16-data and 15-medications' own `.grp`/`.card`). Insights' own card
+     stayed here — its boards (09-insights) measure 18px, which matches
+     neither this token nor --radius-card, so it's unmoved pending its own
+     decision, not folded into either existing role by guess. */
+  --radius-group:      1rem;     /* a card at 16px: Insights cards only now */
+  /* v4 sweep, 2026-11-24: most nested wizard/notice boxes (LogForm,
+     QuickUpdateForm, the dose-time card, AreaSeverityPicker's severity box,
+     AttackDetail's dose-outcome line, the Display preview card) moved to
+     --radius-control — confirmed 12px against the flow boards' `.warn` and
+     Display's own `.previewCard`. Hit6Prompt and ImpactPrompt moved too, but
+     onto `TODAY_CARD` (--radius-card), not here — both are top-level Today
+     cards, same as CheckInCard/WeekCard, which happened to be mis-filed into
+     this bucket originally. Only Hit6View's own result card is left: HIT-6
+     has no v4 board at all (docs/redesign-v4's own gap list), so there's
+     nothing to confirm a move against. */
+  --radius-inset:      0.75rem;  /* a card at 12px: Hit6View's result card only (no v4 board to check against) */
+  /* v4 sweep, 2026-11-24: still load-bearing for two different open
+     questions, not one leftover drift value — segmented-control tracks
+     (SegmentedControl, AreaSeverityPicker's view toggle) because the board's
+     14px track + 44px segment is a taller control CLAUDE.md's own B-table
+     already flags "open in the design", and small inline buttons (Refresh,
+     Delete, Clear all, Cancel) that override btn-secondary/btn-tertiary down
+     to a shorter height with no v4 equivalent drawn at that size. */
+  --radius-control-sm: 0.5rem;   /* a control at 8px: segmented tracks (height/radius open), small inline button overrides (no board) */
+  /* --radius-badge-sm removed (v4 sweep, 2026-11-24): ClassBadge's third,
+     26px `small` size had no v4 counterpart — v4 only decided 28px (default)
+     and 40px (large, beside a page heading) — so it collapsed into the
+     default and this token had no call sites left. */
 
   /* ── Control-size roles (phase 3) ─────────────────────
      `size-target`, `min-h-target`, `size-compact`. Written on the spacing

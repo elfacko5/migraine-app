@@ -76,7 +76,7 @@ Structures take a role from `@theme` in `src/index.css`, **never a raw step**.
 | Size | `size-target` / `min-h-target` (44px) · `size-compact` (36px) | `h-11 w-11`, `h-9 w-9` |
 | Padding | `p-card` · `px-control-x` + `py-control-y` · `px-control-compact-x` + `py-control-compact-y` · `px-gutter` + `sm:px-gutter-wide` | `p-4`, `px-4 py-3`, etc. |
 
-`group`, `inset`, `control-sm`, `field-lg`, `badge-sm` are temporary drift tokens — never use in new code.
+`group`, `inset`, `control-sm` are temporary drift tokens — never use in new code. (`field-lg` and `badge-sm` collapsed away in the v4 sweep, 2026-11-24 — nothing left using them.)
 
 ## Buttons
 

@@ -201,7 +201,7 @@ export function MedicationEntry({
                     aria-pressed={false}
                     className={`flex min-h-[3.625rem] w-full items-center gap-3 rounded-card px-4 py-2.5 text-left transition-colors ${chipClass(false)}`}
                   >
-                    <ClassBadge small>{classLetter(library?.class) ?? '–'}</ClassBadge>
+                    <ClassBadge>{classLetter(library?.class) ?? '–'}</ClassBadge>
                     <span className="min-w-0 flex-1">
                       <span className="block text-base font-medium text-text-primary">{med.name}</span>
                       {med.dose && <span className="block text-sm text-text-secondary">{med.dose}</span>}
@@ -344,7 +344,7 @@ function MedicineCard({ selected, library, attacks, options, startMs, endMs, now
   return (
     <div className="overflow-hidden rounded-card bg-bg-surface ring-1 ring-inset ring-accent">
       <button type="button" onClick={onDeselect} aria-pressed className="flex min-h-[3.625rem] w-full items-center gap-3 px-4 py-2.5 text-left">
-        <ClassBadge small>{classLetter(library?.class) ?? '–'}</ClassBadge>
+        <ClassBadge>{classLetter(library?.class) ?? '–'}</ClassBadge>
         <span className="min-w-0 flex-1">
           <span className="block text-base font-medium text-text-primary">{selected.name}</span>
           {selected.dose && <span className="block text-sm text-text-secondary">{selected.dose}</span>}

@@ -97,7 +97,7 @@ export function AttackCard({ attack, onClick, isOngoing, medications = [] }: Pro
         <span aria-hidden="true" className="flex min-h-[1.875rem] flex-wrap items-center gap-2">
           {outcomes.map((o) => (
             <span key={o.name} className="inline-flex items-center gap-1 rounded-badge bg-bg-base py-0.5 pl-0.5 pr-2 text-text-primary">
-              <ClassBadge small>{classLetter(findMedication(medications, o.name)?.class) ?? '–'}</ClassBadge>
+              <ClassBadge>{classLetter(findMedication(medications, o.name)?.class) ?? '–'}</ClassBadge>
               <VerdictMark verdict={o.verdict} />
             </span>
           ))}
