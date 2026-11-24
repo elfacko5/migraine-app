@@ -53,7 +53,7 @@ Design colour values match the existing palette closely (page `#1B1A18`, card `#
 | Heading | 26/600 | tab titles 34px, `text-2xl` 28 | Design says code adopts 26 (decision 16). Hero headline 32 in design vs 44 in code |
 | Sheet radius | 20 | 16 (`--radius-sheet`) | Design: code moves to 20 |
 | Flow CTA | 56 high, 14 radius, 17 | `.btn-primary` 12 radius, 44px | Pattern's own "spot-check" item. Also: design has two button sizes by role (56/14/17 flow, 52/12/16 inline) |
-| Segmented control | 44px segments, 10–14 radius | 6 (`--radius-segment`) | Flagged open in the design |
+| Segmented control | 44px segments, 10–14 radius | 6 (`--radius-segment`) | **Decided 2026-11-24 (June): adopt the design's 44px segment / 14px track, filled `bg-bg-surface` track with no border, accent-bordered tinted selected state.** `SegmentedControl` and `AreaSeverityPicker`'s view toggle both moved. |
 | Toggle | 46×27 everywhere | check `Switch` in `settingsUi` | Design converts Today 40×24 and Reminders 48×28 |
 | List row / badge | 56 row, 28 badge | check against medications rows | Decision 8 |
 | Stepper | 44 inline, 64 in value sheet | | Decision 9 |

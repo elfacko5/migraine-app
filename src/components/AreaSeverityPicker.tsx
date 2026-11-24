@@ -65,16 +65,13 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Front / Back view toggle.
-          Sized as a segmented control (32px overall), not as a pair of
-          buttons: at the old height it carried the same weight as the
-          wizard's primary/secondary actions and read as something to press
-          to continue, rather than as a switch between two views of the same
-          step. Everything here is scaled to fit that 32px — 2px of track
-          padding around a 28px segment. `bg-bg-raised/15`, matching
-          `SegmentedControl` — same shape, same fill, see the note there. */}
+      {/* Front / Back view toggle. Same shape as `SegmentedControl` — filled
+          `bg-bg-surface` track, 44px segments, accent-bordered tinted
+          selected state — matched by hand rather than shared because this
+          one carries a count badge the generic component doesn't need (v4
+          sweep, 2026-11-24, see `SegmentedControl`'s own note). */}
       <div className="flex justify-center">
-        <div className="inline-flex h-8 items-center gap-0.5 rounded-control-sm border border-border-control bg-bg-raised/15 p-0.5">
+        <div className="inline-flex items-center gap-1 rounded-control-lg bg-bg-surface p-1">
           {VIEWS.map((v) => {
             const isActive = v.id === activeViewId;
             const n = selectedCount(v);
@@ -84,15 +81,13 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
                 type="button"
                 onClick={() => setActiveViewId(v.id)}
                 aria-pressed={isActive}
-                // `--color-selected` fill, not the solid accent fill — the
-                // app's rule is that solid means "press this to act" and
-                // this is a switch between two views of one step. No ring:
-                // the segment sits inside a bordered track that already
-                // draws the boundary, and a ring on top of it reads as a
-                // box in a box. Text stays primary, not accent-light
-                // (pattern library, 2026-11-23 — see chipStyles.ts).
-                className={`tap-44-y flex h-7 items-center gap-1.5 rounded-segment px-4 text-xs font-medium transition-colors ${
-                  isActive ? 'bg-selected-fill text-text-primary font-semibold' : 'text-text-secondary hover:text-text-primary'
+                // `--color-selected-fill` tint plus an accent border, not the
+                // solid accent fill — solid means "press this to act" and
+                // this is a switch between two views of one step. Text stays
+                // primary, not accent-light (pattern library, 2026-11-23 —
+                // see chipStyles.ts).
+                className={`tap-44-y flex min-h-target items-center gap-1.5 rounded-segment border px-4 text-xs font-medium transition-colors ${
+                  isActive ? 'border-accent bg-selected-fill text-text-primary font-semibold' : 'border-transparent text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {v.label}

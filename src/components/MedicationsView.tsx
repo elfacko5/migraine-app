@@ -60,12 +60,34 @@ export function MedicationsView({ medications, onEdit, onAddNew, onOpenGuides, o
                 <Chevron />
               </button>
             ))}
+            {/* Last row in the same group, not a button below it — matching
+                `docs/redesign-v4/screens/15-medications/MedsPlainDark.html`'s
+                `.row` with a dashed badge (v4 sweep, 2026-11-24). Dashed +
+                muted border-control, not the accent ring `ClassBadge` uses
+                for a real type letter: this badge means "add", not "class".
+                Wording is June's own call, not the board's "Add a medicine" —
+                kept distinct from it deliberately (2026-11-24). */}
+            <button
+              type="button"
+              onClick={onAddNew}
+              className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left text-accent-light transition-colors hover:bg-bg-elevated"
+            >
+              <span
+                aria-hidden="true"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-badge border border-dashed border-border-control bg-bg-base text-xs font-bold"
+              >
+                +
+              </span>
+              <span className="text-sm font-medium">Add medication</span>
+            </button>
           </SettingsGroup>
         )}
 
-        <button type="button" onClick={onAddNew} className="btn-secondary w-full">
-          <span aria-hidden="true">+ </span>Add a medicine
-        </button>
+        {items.length === 0 && (
+          <button type="button" onClick={onAddNew} className="btn-secondary w-full">
+            <span aria-hidden="true">+ </span>Add medication
+          </button>
+        )}
 
         {/* One row to the monthly guides (frame 15d). */}
         <SettingsGroup raised>

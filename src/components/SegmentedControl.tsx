@@ -1,6 +1,9 @@
-// One-of-N switch, drawn as a bordered track with a tinted active segment.
+// One-of-N switch, drawn as a filled track with a tinted, accent-bordered
+// active segment. Matches `docs/redesign-v4/screens/09-insights`'s `.seg`
+// exactly (v4 sweep, 2026-11-24, June's call — this control was previously
+// flagged "open in the design" in CLAUDE.md's B table; it's now decided).
 //
-// It is the shape `AreaSeverityPicker`'s Front/Back toggle already used, made
+// It is the shape `AreaSeverityPicker`'s Front/Back toggle also uses, made
 // shared when the Insights period moved into the top bar (2026-09-02, on
 // Sunny's instruction): the pills scrolled away with the page, so half way
 // down Insights there was nothing saying which period the figures answered.
@@ -9,27 +12,19 @@
 //
 // The rules it inherits, and the reasons they are not knobs:
 //
-// - **32px overall — a 28px segment inside a 2px track.** At button height it
-//   carries the same weight as a primary action and reads as something to
-//   press to continue, rather than as a switch between views of one thing.
-// - **The active segment is a tint, never the solid accent.** Solid accent
-//   means *act* in this app (`btn-primary`, the FAB); a chosen option is a
-//   state. See `chipStyles.ts`.
-// - **No ring on the segment.** It sits inside a bordered track that already
-//   draws the boundary, and a ring on top of that reads as a box in a box.
-// - **The track's border is `border-control`**, not `bg-border`: this is the
-//   outline of something you press, which WCAG 1.4.11 wants at 3:1.
-// - **The track's own fill is `bg-bg-raised/15`, not `/40`** (2026-09-23,
-//   Sunny's call — it read as too strong on Insights, where it's the first
-//   thing under the title on a page with little else that dark yet). The
-//   border alone still carries the WCAG floor this needs as a control, so the
-//   fill was free to come down; it isn't dropped to nothing, because a track
-//   with a border and no fill at all reads as an unfinished box rather than a
-//   quiet one. This palette's dark end is compressed (the same reason the
-//   head diagram's disabled regions need a hatch, not a tone, to read as a
-//   different surface) — don't chase this lower expecting a cleaner look; the
-//   lever that actually worked here was opacity, not a search for a better
-//   hex.
+// - **44px segments in a 4px track** (v4 board measurement) — a touch
+//   target, not a thumbnail of one; the track's own padding is what keeps it
+//   from reading as button-height chrome, not a shrunk segment.
+// - **The active segment is a tint plus an accent border, never the solid
+//   accent fill.** Solid accent means *act* in this app (`btn-primary`, the
+//   FAB); a chosen option is a state. `--color-selected-fill` (`#2e3a31`)
+//   and `--color-accent` are the same values the board's `.on` rule uses.
+// - **The track itself has no border and no accent region of its own** — the
+//   boundary is carried by each segment's own (invisible-unless-active)
+//   border, not by the track, so an unselected segment reads as part of one
+//   filled surface rather than a box inside a box.
+// - **The track's fill is `bg-bg-surface`**, matching the board's literal
+//   `#262421` — one step up from the page, same tier as a card.
 //
 // `fill` makes the segments share the width equally instead of hugging their
 // labels — for a control that owns its row, where hugging leaves it floating.
@@ -49,7 +44,7 @@ export function SegmentedControl<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className={`${fill ? 'flex w-full' : 'inline-flex'} h-8 items-center gap-0.5 rounded-control-sm border border-border-control bg-bg-raised/15 p-0.5`}
+      className={`${fill ? 'flex w-full' : 'inline-flex'} items-center gap-1 rounded-control-lg bg-bg-surface p-1`}
     >
       {options.map((o) => {
         const isActive = o.value === value;
@@ -63,9 +58,9 @@ export function SegmentedControl<T extends string>({
             // segments and room to spare, this one has four and has to hold
             // "3 months" at 375px. `truncate` is the backstop at the largest
             // text sizes; `min-w-0` is what lets it engage inside a flex item.
-            className={`tap-44-y flex h-7 min-w-0 items-center justify-center rounded-segment px-2 text-xs font-medium transition-colors ${
+            className={`tap-44-y flex min-h-target min-w-0 items-center justify-center rounded-segment border px-2 text-xs font-medium transition-colors ${
               fill ? 'flex-1' : ''
-            } ${isActive ? 'bg-selected-fill text-text-primary font-semibold' : 'text-text-secondary hover:text-text-primary'}`}
+            } ${isActive ? 'border-accent bg-selected-fill text-text-primary font-semibold' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
           >
             <span className="truncate">{o.label}</span>
           </button>

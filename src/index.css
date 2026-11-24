@@ -99,9 +99,11 @@
      `.btn-primary`/`.btn-secondary`/`.btn-tertiary` size, which stays on
      --radius-control: "bigger footer CTA only" means the six logging
      wizards' own footer, not every default button (B decision, 2026-11-22).
-     Not a public shape role (no call site reaches for `rounded-control-lg`
-     directly) — scoped to the button layer below, the same way --spacing-row
-     is scoped to SettingsRow. */
+     Second call site added 2026-11-24 (June's call, resolving the B-table's
+     "open in the design" flag): the segmented-control track also measures
+     14px on the Insights board (`.seg`) — `SegmentedControl` and
+     `AreaSeverityPicker`'s view toggle now reach for `rounded-control-lg`
+     directly, so it's no longer scoped to the button layer alone. */
   --radius-control-lg: 0.875rem;
 
   /* Lidd-local, temporary: collapse when the drift is decided.
@@ -125,14 +127,13 @@
      has no v4 board at all (docs/redesign-v4's own gap list), so there's
      nothing to confirm a move against. */
   --radius-inset:      0.75rem;  /* a card at 12px: Hit6View's result card only (no v4 board to check against) */
-  /* v4 sweep, 2026-11-24: still load-bearing for two different open
-     questions, not one leftover drift value — segmented-control tracks
-     (SegmentedControl, AreaSeverityPicker's view toggle) because the board's
-     14px track + 44px segment is a taller control CLAUDE.md's own B-table
-     already flags "open in the design", and small inline buttons (Refresh,
+  /* v4 sweep, 2026-11-24: segmented-control tracks moved off this onto
+     --radius-control-lg (June decided the board's 14px track + 44px segment
+     now, resolving the B-table's "open in the design" flag). Still
+     load-bearing for one open question — small inline buttons (Refresh,
      Delete, Clear all, Cancel) that override btn-secondary/btn-tertiary down
      to a shorter height with no v4 equivalent drawn at that size. */
-  --radius-control-sm: 0.5rem;   /* a control at 8px: segmented tracks (height/radius open), small inline button overrides (no board) */
+  --radius-control-sm: 0.5rem;   /* a control at 8px: small inline button overrides only (no board at that size) */
   /* --radius-badge-sm removed (v4 sweep, 2026-11-24): ClassBadge's third,
      26px `small` size had no v4 counterpart — v4 only decided 28px (default)
      and 40px (large, beside a page heading) — so it collapsed into the
