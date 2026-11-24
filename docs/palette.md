@@ -246,8 +246,6 @@ together proves nothing. `text-accent` turns out to be unused anywhere in `src/`
 |---|---|---|---|
 | `FreqBars` count · `MigraineDaysChart` month label — 14px secondary on `bg-elevated` | 4.58 | 4.82 | 4.87 |
 | Chart content — 14px primary on `bg-elevated` | 7.33 | 8.20 | 7.79 |
-| `StatCard` label — 12px secondary on `bg-raised/60` | 5.66 | 4.93 | 5.89 |
-| `StatCard` value — 28px primary | 9.06 | 9.78 | 9.43 |
 | Disabled button / chip-off label — secondary on `bg-raised` | 5.08 | 5.36 | 5.42 |
 | Chip-on label — `accent-light` on `accent/20` over `bg-raised` | 4.67 | 4.78 | 4.68 |
 
@@ -262,9 +260,6 @@ route is closed in attack mode: its elevated sits only 1.11 from `bg-raised`, an
 enough to clear 4.5 collapses the two together (1.03 apart at `#28241b`, and still only 4.48). Dark
 had room because its elevated goes *lighter* than raised. Attack mode remains the lower-contrast of
 the two themes — dark's secondary reads 6.46 on its own page against this 6.24.
-
-The 12px `StatCard` labels are the documented type-scale exception. They pass 1.4.3 comfortably —
-the divergence there is from the app's own 14px caption floor, not from WCAG.
 
 ### 1.4.11 Non-text contrast — UI components and states, 3:1
 

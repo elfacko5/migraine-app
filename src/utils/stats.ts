@@ -161,34 +161,6 @@ export function avgPreResolutionPlateauSnapshots(attacks: Attack[]): number {
   return parseFloat((counts.reduce((s, c) => s + c, 0) / counts.length).toFixed(1));
 }
 
-// **Not "streaks".** The dossier's §9.2 is explicit that streak and badge
-// mechanics backfire in a health tracker: nobody may feel they *broke* a
-// streak by having more migraines, and pain-free days must not be
-// celebrated — reward the logging habit, never the health outcome. These two
-// figures are still worth showing (consecutive migraine days is what status
-// migrainosus looks like; time since the last attack is a plain fact), so the
-// numbers stay and the game goes. The names go too, because a function called
-// `currentPainFreeStreak` invites the label back.
-export function consecutiveMigraineDays(attacks: Attack[]): number {
-  if (attacks.length === 0) return 0;
-  const days = new Set(attacks.map((a) => calendarDay(a.snapshots[0].time)));
-  const today = calendarDay(new Date().toISOString());
-  let count = 0;
-  let d = today;
-  while (days.has(d)) { count++; d = prevDay(d); }
-  return count;
-}
-
-export function daysSinceLastMigraine(attacks: Attack[]): number {
-  if (attacks.length === 0) return 0;
-  const days = new Set(attacks.map((a) => calendarDay(a.snapshots[0].time)));
-  const today = calendarDay(new Date().toISOString());
-  let count = 0;
-  let d = today;
-  while (!days.has(d)) { count++; d = prevDay(d); if (count > 3650) break; }
-  return count;
-}
-
 // Map attacks to (time, maxSeverity) for recharts.
 export function severityTimeline(attack: Attack): { time: number; [area: string]: number }[] {
   return attack.snapshots.map((s) => ({
@@ -298,16 +270,6 @@ export function avgTimeToPeak(attacks: Attack[]): number | null {
 
 function msBetween(a: string, b: string): number {
   return new Date(b).getTime() - new Date(a).getTime();
-}
-
-function calendarDay(iso: string): string {
-  return iso.slice(0, 10);
-}
-
-function prevDay(day: string): string {
-  const d = new Date(day + 'T12:00:00');
-  d.setDate(d.getDate() - 1);
-  return calendarDay(d.toISOString());
 }
 
 /**

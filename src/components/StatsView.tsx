@@ -6,7 +6,7 @@ import {
 import type { Attack, DeletedMedName, MedGuides, Medication } from '../types';
 import { formatDateShort } from '../utils/format';
 import {
-  attackMaxSeverity, consecutiveMigraineDays, daysSinceLastMigraine,
+  attackMaxSeverity,
   areaFrequency, avgTimeToPeak, avgAttackLength, attackDayKeys,
   triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
 } from '../utils/stats';
@@ -106,20 +106,6 @@ interface Props {
    *  there's no ongoing attack to choose between logging now and adding an
    *  update, so the menu would be one tap of nothing to decide. */
   onAdd: () => void;
-}
-
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="rounded-inset bg-bg-raised/60 border border-bg-border/60 p-card">
-      {/* 12px, below the 14px caption floor the rest of the app keeps. These
-          are labels on a number that is itself 28px — the figure carries the
-          card, the label only has to name it — and at 14px a two-word label
-          wrapped to two lines and made every tile taller. */}
-      <p className="text-[0.75rem] uppercase tracking-wider font-medium text-text-secondary">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-text-primary leading-none">{value}</p>
-      {sub && <p className="mt-1 text-[0.75rem] text-text-secondary">{sub}</p>}
-    </div>
-  );
 }
 
 // A figure in the "Typical attack" group — a bare value over a plain-language
@@ -241,8 +227,6 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
       count: filtered.length,
       attackDays: attackDaySet.size,
       avgSeverity,
-      inARow: consecutiveMigraineDays(attacks),
-      daysSince: daysSinceLastMigraine(attacks),
       avgLength,
       timeToPeak,
       severityTrend,
@@ -251,7 +235,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
       symptoms: symptomFrequency(filtered),
       reliefs: reliefFrequency(filtered),
     };
-  }, [attacks, filtered]);
+  }, [filtered]);
 
   if (attacks.length === 0) {
     // v4 "InsightsEmptyDark" — a drawn tile (the Insights tab's own trend-line
@@ -297,19 +281,10 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
         {' · '}{stats.count} attack{stats.count === 1 ? '' : 's'}
       </p>
 
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && (
         <div className="py-12 text-center text-text-secondary text-sm">
           No attacks in this period.
         </div>
-      ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {/* Plain observations, not streaks — see the note on
-                `consecutiveMigraineDays`. Neither is a run to protect or
-                break; one says what is happening now, the other when it last
-                happened. */}
-            <StatCard label="Days in a row" value={stats.inARow} sub="with an attack" />
-            <StatCard label="Days since" value={stats.daysSince} sub="last attack" />
-          </div>
       )}
 
       {/* These ignore the period filter — "days per month" and the overuse

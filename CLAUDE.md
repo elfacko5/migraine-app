@@ -112,7 +112,7 @@ Dark is default. `color-scheme: dark` globally. **Never use `dark:` prefixes.** 
 
 **SVG/Recharts mirror tokens by hand** — theme-aware functions via `useUiTheme()`. Change a token → change these too: `headDiagram.ts`, `SeverityChart.tsx`, `SeverityBreakdown.tsx`, `HeadHeatmap.tsx`, `StatsView.tsx`, `AreaSeverityPicker.tsx`. Plus `Color.liddSeverity` in the widget extension.
 
-**Type:** Lexend variable (400–700), self-hosted. Emphasis is `font-medium` (500); `font-bold` for headline numbers only. No light/thin weight. Body floor 16px, caption floor 14px (exception: stat tile labels at 12px). Text scale 87.5%–150%. `BottomNav` and `AttackModePill` cap their font sizes. Atkinson Hyperlegible Next is opt-in (`data-font="atkinson"`).
+**Type:** Lexend variable (400–700), self-hosted. Emphasis is `font-medium` (500); `font-bold` for headline numbers only. No light/thin weight. Body floor 16px, caption floor 14px, no exceptions (the one that existed, `StatCard`'s 12px label, was removed with the component, 2026-11-24). Text scale 87.5%–150%. `BottomNav` and `AttackModePill` cap their font sizes. Atkinson Hyperlegible Next is opt-in (`data-font="atkinson"`).
 
 ### Attack mode
 
