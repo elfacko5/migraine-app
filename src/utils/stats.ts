@@ -715,6 +715,13 @@ export function followUpReading(snaps: Snapshot[], i: number): Snapshot | null {
     const dt = new Date(snaps[j].time).getTime() - doseTime;
     if (dt < FOLLOW_UP_MIN_MS) continue;
     if (dt > FOLLOW_UP_MAX_MS) break;
+    // A reading with no pain areas at all reports nothing about severity —
+    // `EndAttackForm`'s own closing "what was it like" snapshot is exactly
+    // this (symptoms/reliefs only, no severity step of its own) — so it's
+    // not a candidate "after" reading. Without this, `maxSeverity` reads it
+    // as 0, which would always pass `doseHelped` regardless of what was
+    // actually logged.
+    if (Object.keys(snaps[j].areas).length === 0) continue;
     const delta = Math.abs(dt - TARGET_MS);
     if (!best || delta < best.delta) best = { delta, snap: snaps[j] };
   }

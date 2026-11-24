@@ -3,7 +3,7 @@ import type { Attack, Snapshot } from '../types';
 import { PAIN_QUALITY_OPTIONS, NOTHING_UNUSUAL } from '../types';
 import { isoToLocalInput, localInputToIso, formatDatetime } from '../utils/format';
 import { attackMaxSeverity } from '../utils/stats';
-import { doseHelpRows, placeDoseOutcomeEvents, type HelpRow } from '../utils/doseOutcomes';
+import { doseHelpRows, rowEligible, placeDoseOutcomeEvents, type HelpRow } from '../utils/doseOutcomes';
 import { chipClass } from '../utils/chipStyles';
 import { RadioDot } from './RadioDot';
 import { DoseOutcomeRow } from './DoseOutcomeRow';
@@ -58,8 +58,21 @@ const END_IMPACT_LABELS: Record<NonNullable<Attack['impact']>, string> = {
   3: 'In bed',
 };
 
-function blank(): FormState {
-  return { endMode: 'now', manualTime: isoToLocalInput(), impact: undefined, painQuality: [], symptoms: [], reliefs: [], triggers: [] };
+// Triggers and pain quality start from whatever the attack already has —
+// both are stable metadata editable at any time (A5), and this step is
+// often the *only* time they're set for an attack that was logged live
+// (LiveAttackForm never asks either). Starting blank would mean skipping
+// this step on Finish silently wiped out an answer given earlier via
+// AttackDetail's own "Add", and starting fresh would make a *picked* answer
+// overwrite rather than add to one already on record — same `[]` default
+// `endAttack`'s trailing params already treat as "say nothing", so an
+// attack with real triggers reaching this step with an empty array would
+// have them erased outright.
+function blank(attack: Attack): FormState {
+  return {
+    endMode: 'now', manualTime: isoToLocalInput(), impact: undefined,
+    painQuality: attack.painQuality ?? [], symptoms: [], reliefs: [], triggers: attack.triggers,
+  };
 }
 
 interface FormState {
@@ -107,7 +120,7 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
   const minMs = new Date(minTime).getTime();
 
   const [openedAt] = useState(() => Date.now());
-  const [form, setForm] = useState<FormState>(blank);
+  const [form, setForm] = useState<FormState>(() => blank(attack));
   const [discardOpen, setDiscardOpen] = useState(false);
   const manualInputRef = useRef<DateTimeFieldHandle>(null);
 
@@ -119,10 +132,20 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
     if (form.endMode === 'manual') manualInputRef.current?.open();
   }, [form.endMode]);
 
-  // Resolved, then clamped into [last reading, now] — a relative preset
-  // ("2h ago") can land before the attack's own last reading on a short
-  // attack, and a manual pick is minute-precision against second-precision
-  // snapshots, same clamp `EndAttackDialog` always applied.
+  // A relative preset that would land before the attack's own last reading
+  // (a short attack, ending under an hour or two after its own last update)
+  // isn't offered at all, rather than offered and silently clamped to
+  // something else on Finish — same rule `doseOptions` (doseTime.ts)
+  // already follows for a dose-time preset outside its own window.
+  const endOptions = END_OPTIONS.filter((o) => {
+    if (o.value === 'hour1') return openedAt - 60 * 60 * 1000 >= minMs;
+    if (o.value === 'hour2') return openedAt - 2 * 60 * 60 * 1000 >= minMs;
+    return true;
+  });
+
+  // Resolved, then clamped into [last reading, now] — a manual pick is
+  // minute-precision against second-precision snapshots, same clamp
+  // `EndAttackDialog` always applied.
   const rawEndMs = (() => {
     switch (form.endMode) {
       case 'now': return openedAt;
@@ -242,7 +265,7 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
         {kind === 'when' && (
           <div className="space-y-5">
             <div role="radiogroup" aria-label="When it ended" className="flex flex-wrap gap-2">
-              {END_OPTIONS.map((o) => (
+              {endOptions.map((o) => (
                 <button
                   key={o.value}
                   type="button"
@@ -288,7 +311,12 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
             {helpRows.map((row) => (
               <DoseOutcomeRow
                 key={row.name}
-                row={row}
+                // Downgraded to "too soon" the moment step 1's chosen end
+                // time no longer leaves two hours between the dose and it
+                // — same re-check `UpdateAttackForm` applies, needed here
+                // too since step 1 (where the end time is set) always comes
+                // before this one.
+                row={row.state === 'ask' && !rowEligible(row, resolvedEndMs, helpRows.length) ? { ...row, state: 'too-soon' } : row}
                 value={helpAnswers[row.name] ?? null}
                 onChange={(v) => setHelpAnswers((a) => {
                   const next = { ...a };
