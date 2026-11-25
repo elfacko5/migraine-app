@@ -298,7 +298,7 @@ Invariants: `--app-height` tracks real viewport (trusts `window.screen` on cold 
 
 ### Today below the hero
 
-Every block is borderless 20px `TODAY_CARD`, 14px apart, **last 30 days** (never "this month"). Order: impact question → week card (2+ attacks in 7d) → 2h check-in → dose card → overuse banners (at 70%) → days and attacks tiles. Attack mode keeps reduced branch + check-in.
+Every block is borderless 20px `TODAY_CARD`, 14px apart, **last 30 days** (never "this month"). Order: week card (2+ attacks in 7d) → 2h check-in → dose card → overuse banners (at 70%) → days and attacks tiles. Attack mode keeps reduced branch + check-in.
 
 Attack-free: `AttackFreeCard` with greeting + "X days / since your last attack". No "attack-free for" (reads as score). `greeting()` reads clock inside util. `useNowTick` for all live durations — never bare `setInterval` (iOS suspends background timers).
 
@@ -334,7 +334,7 @@ One row per area: name, sparkline, peak, now. Rows sorted by peak descending. Mi
 Drill-down (enter from right, back chevron). Tiles for duration/peak/side, span, pain-over-time chart, drug cards with timing + outcome, where-it-hurt areas, symptom tiles, last 3 updates, impact/triggers/woke-with.
 
 - Footer: ongoing = End + Update; ended = Edit + Update. "Add update" offered on past attacks too.
-- **Edit is metadata-only** (`updateAttackDetails`): `wokeWithMigraine`, `end`, `triggers`. **`impact` excluded** — asked once within 24h via `ImpactPrompt` on Today (`attackAwaitingImpact`), session-only dismissal. `setImpact` for already-ended attacks, must remove key to clear (never write 0).
+- **Edit is metadata-only** (`updateAttackDetails`): `wokeWithMigraine`, `end`, `triggers`. **`impact` excluded** — asked once, live, as `EndAttackForm`'s own step; `endAttack` is the only writer, and an attack ended outside that flow (slept-through, skipped, or backfilled via `PastAttackForm`) stays permanently unanswered. No Today fallback (`ImpactPrompt` removed 2026-11-25).
 - `ConfirmDialog` for delete. `EndAttackDialog` reused (Just now / Earlier presets, minute-precision clamping).
 
 ## Pain areas

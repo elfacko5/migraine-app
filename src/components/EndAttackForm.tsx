@@ -42,8 +42,8 @@ const END_OPTIONS: { value: EndMode; label: string }[] = [
 
 // The v4 flows' own wording for the four impact degrees (A3/A8) — the same
 // `Attack['impact']` 0-3 value `IMPACT_OPTIONS` (impact.ts) already uses for
-// the Today prompt, AttackDetail and the Logs filter, just read out in the
-// newer register. Not unified with `IMPACT_OPTIONS` itself: that's a
+// AttackDetail and the Logs filter, just read out in the newer register.
+// Not unified with `IMPACT_OPTIONS` itself: that's a
 // decision of its own (docs/redesign-v4-diff.md notes the two vocabularies
 // as a known, accepted gap), not something to settle quietly inside one
 // flow's own step.
