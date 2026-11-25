@@ -378,7 +378,7 @@ function MedicineCard({ selected, library, attacks, options, startMs, endMs, now
       ))}
       <DoseLimitNote library={library} attacks={attacks} name={selected.name} doses={selected.doses} startMs={startMs} endMs={endMs} nowMs={nowMs} />
       <div className="flex min-h-row items-center px-4">
-        <button type="button" onClick={onAddDose} className="tap-44-y min-h-0 py-1.5 text-base font-medium text-accent-light transition-colors hover:text-accent">
+        <button type="button" onClick={onAddDose} className="tap-44-y min-h-0 py-1.5 text-sm font-medium text-accent-light transition-colors hover:text-accent">
           + Add another dose
         </button>
       </div>
