@@ -363,6 +363,20 @@
   --color-text-secondary: var(--color-content-muted);
   --color-bg-raised:      #262218;
   --color-bg-elevated:    #2f2a1f;
+  --color-border-subtle:  #403d33;
+  /* Attack mode doesn't set these: it keeps dark's values. Light does set
+     them, so without them here a light-theme user saw near-black headline
+     text and a brown pain box on the dark card (review, 2026-11-25). */
+  --color-text-strong:    #d8d2c6;
+  --color-severity-low:   #8fb096;
+  --color-severity-mid:   #c39257;
+  --color-severity-high:  #c68880;
+  --color-selected-fill:  #2e3a31;
+  --color-accent:         #7fa187;
+  --color-on-accent:      #14140f;
+  --color-selected:       #31382d;
+  --color-on-selected:    #93ae99;
+  --color-accent-light:   var(--color-on-selected);
   color: var(--color-content);
 }
 

@@ -358,6 +358,18 @@ function FontOption({ name, family, selected, onSelect }: {
 function TextSizePage({ textScale, onTextScale, systemText, onSystemText, onBack }: {
   textScale: TextScale; onTextScale: (s: TextScale) => void; systemText: boolean; onSystemText: (on: boolean) => void; onBack: () => void;
 }) {
+  // useSettings re-measures the iPhone's size when the app comes back to the
+  // front, but only by writing a CSS variable — nothing React sees. Render
+  // again on the same events (a tick later, so its measurement has landed),
+  // or the row keeps naming the size from before a trip to iPhone Settings.
+  const [, setReturned] = useState(0);
+  useEffect(() => {
+    if (!systemText) return;
+    const again = () => { if (document.visibilityState === 'visible') setTimeout(() => setReturned((n) => n + 1), 0); };
+    document.addEventListener('visibilitychange', again);
+    window.addEventListener('focus', again);
+    return () => { document.removeEventListener('visibilitychange', again); window.removeEventListener('focus', again); };
+  }, [systemText]);
   const phoneSize = systemText ? measuredPhoneSize() : null;
   return (
     <ProfileSubPage title="Text size" onClose={onBack}>
@@ -375,7 +387,7 @@ function TextSizePage({ textScale, onTextScale, systemText, onSystemText, onBack
         </SettingsList>
 
         {systemText ? (
-          <p className="text-xs text-text-secondary">To change it, go to iPhone Settings, then Display &amp; Brightness.</p>
+          <p className="text-xs text-text-secondary">To change it, go to iPhone Settings, then Display &amp; Brightness, then Text Size.</p>
         ) : (
           <div className="space-y-2">
             <SectionLabel>Size</SectionLabel>
@@ -492,13 +504,16 @@ const SAMPLE_ATTACK: Attack = {
 function DisplayPreviewCard({ attack = false }: { attack?: boolean }) {
   const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
   const zoom = attack ? Math.max(1, 20 / rootPx) : 1;
+  const attackModeOn = document.documentElement.dataset.theme === 'attack';
   return (
     // In attack colours the card sits on a patch of attack mode's own page
     // (bg-base inside .attack-preview): on this everyday page its surface
     // was within a shade of the background and read as no card at all.
     <div aria-hidden="true" inert className={`relative ${attack ? 'attack-preview rounded-card bg-bg-base p-3' : ''}`} style={zoom > 1 ? { zoom } : undefined}>
       <AttackCard attack={SAMPLE_ATTACK} onClick={() => {}} />
-      {attack && <div className="pointer-events-none absolute inset-0 rounded-card bg-[#14140f]/35" />}
+      {/* The dim, at BrightnessOverlay's floor — left off when attack mode
+          is really on, since its own dim already covers the whole screen. */}
+      {attack && !attackModeOn && <div className="pointer-events-none absolute inset-0 rounded-card bg-bg-base/35" />}
     </div>
   );
 }
