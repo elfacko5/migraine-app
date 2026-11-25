@@ -114,7 +114,7 @@ export function HistoryView({
         <button
           type="button"
           onClick={() => onAttackClick(tooShort[0])}
-          className="flex min-h-14 w-full items-center gap-3 rounded-card px-4 py-2.5 text-left ring-1 ring-inset ring-bg-border transition-colors hover:bg-bg-surface"
+          className="flex min-h-14 w-full items-center gap-3 rounded-card px-control-x py-control-y text-left ring-1 ring-inset ring-bg-border transition-colors hover:bg-bg-surface"
         >
           <span className="min-w-0 flex-1">
             <span className="block text-[0.9375rem] font-medium text-text-strong">

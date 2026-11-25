@@ -185,8 +185,8 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
             `confirmedReal` only — the readings stay as logged — and the
             card, and the Logs banner, go away. */}
         {looksTooShort(attack) && (
-          <div role="status" className="flex items-center gap-3 rounded-card bg-warning-surface py-3.5 pl-4 pr-3 ring-1 ring-inset ring-warning/40">
-            <span aria-hidden="true" className="flex size-9 flex-none items-center justify-center rounded-full bg-warning/20 text-warning">
+          <div role="status" className="flex items-center gap-3 rounded-card bg-warning-surface p-card ring-1 ring-inset ring-warning/40">
+            <span aria-hidden="true" className="flex size-compact flex-none items-center justify-center rounded-full bg-warning/20 text-warning">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5l3 2" />
