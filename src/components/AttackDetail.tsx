@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Attack, Medication } from '../types';
 import { NOTHING_UNUSUAL } from '../types';
-import { formatDate, formatTime, formatDatetime, formatDuration } from '../utils/format';
+import { formatDate, formatTime, formatDatetime, formatDuration, upToText } from '../utils/format';
 import { attackDoseOutcomes, attackMaxSeverity, hasKnownDuration, looksTooShort, type DoseOutcome } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
 import { unitsLabel } from '../utils/medGuardrails';
@@ -297,10 +297,7 @@ function LengthTile({ attack }: { attack: Attack }) {
     if (!attack.wokeAt) {
       return <Tile label="ended in sleep" figure={<MoonIcon className="h-8 w-8 text-accent-light" />} />;
     }
-    // Whole hours, rounded up: it's a ceiling, not a measurement.
-    const mins = Math.ceil((new Date(attack.wokeAt).getTime() - new Date(start).getTime()) / 60_000);
-    const text = mins < 60 ? `${mins}m` : `${Math.ceil(mins / 60)}h`;
-    return <Tile label="length" figure={<span className={figureText}>up to {text}</span>} />;
+    return <Tile label="length" figure={<span className={figureText}>up to {upToText(start, attack.wokeAt)}</span>} />;
   }
   return (
     <Tile

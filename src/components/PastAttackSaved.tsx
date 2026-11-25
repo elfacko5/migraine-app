@@ -1,5 +1,5 @@
 import type { Attack, Medication } from '../types';
-import { formatDate, formatDuration } from '../utils/format';
+import { formatDate, formatDuration, upToText } from '../utils/format';
 import { attackDoseOutcomes, hasKnownDuration } from '../utils/stats';
 import { SummaryFooter, SummaryList } from './AttackSummaryParts';
 import { useHeadingFocus } from '../hooks/useHeadingFocus';
@@ -17,7 +17,8 @@ import { amountText, beforeText, marksOf, outcomeText, worstText, type SummaryRo
  * says is what was written. Where the board breaks a settled rule, the rule
  * wins (see `utils/attackSummary.ts` for the shared ones):
  * - no "Stopped you" row — impact is asked only in `EndAttackForm`;
- * - "gone when you woke up" has no length: "ended in sleep", as on Detail.
+ * - "gone when you woke up" has no length: "ended in sleep", or "up to Xh"
+ *   once a wake-up time is given — as on Detail (`upToText`).
  */
 export function PastAttackSaved({ attack, medications, onAddAnother, onDone }: {
   attack: Attack;
@@ -28,7 +29,14 @@ export function PastAttackSaved({ attack, medications, onAddAnother, onDone }: {
   const headingRef = useHeadingFocus();
 
   const start = attack.snapshots[0].time;
-  const length = hasKnownDuration(attack) ? formatDuration(start, attack.end) : 'ended in sleep';
+  // Same three cases as Detail's LengthTile: a known length; an unknown end
+  // with a wake-up time is a ceiling ("up to 3h", rounded up); without one,
+  // "ended in sleep". Past attacks can now carry `wokeAt` from the form.
+  const length = hasKnownDuration(attack)
+    ? formatDuration(start, attack.end)
+    : attack.wokeAt
+      ? `up to ${upToText(start, attack.wokeAt)}`
+      : 'ended in sleep';
   const quality = attack.painQuality ?? [];
   const symptoms = marksOf(attack, 'symptoms');
   const reliefs = marksOf(attack, 'reliefs');

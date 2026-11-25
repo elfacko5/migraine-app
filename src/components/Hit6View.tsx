@@ -83,6 +83,10 @@ export function Hit6View({ entries, signedIn, onSubmit, onDelete, onClose }: Pro
     const tone = hit6Tone(result);
     return (
       <ProfileSubPage
+        // A key per stage: a fresh page, so its heading takes focus and is
+        // announced (review of db053be — the same instance never refocused,
+        // and VoiceOver heard nothing after Next or Start).
+        key="done"
         title="Headache impact"
         titleInPage
         onClose={onClose}
@@ -123,6 +127,7 @@ export function Hit6View({ entries, signedIn, onSubmit, onDelete, onClose }: Pro
     const isLast = i === HIT6_QUESTIONS.length - 1;
     return (
       <ProfileSubPage
+        key={`q${i}`}
         title={HIT6_QUESTIONS[i]}
         titleInPage
         barTitle={`Step ${i + 1} of ${HIT6_QUESTIONS.length}`}
@@ -173,6 +178,7 @@ export function Hit6View({ entries, signedIn, onSubmit, onDelete, onClose }: Pro
   // ── Intro (05-0) ──────────────────────────────────────────────────────
   return (
     <ProfileSubPage
+      key="intro"
       title="Headache impact"
       titleInPage
       onClose={onClose}
@@ -246,28 +252,43 @@ export function Hit6View({ entries, signedIn, onSubmit, onDelete, onClose }: Pro
 }
 
 /** The scale, 36 to 78, in the instrument's four bands, with the score
- *  marked. Decorative — the number and the band label above say it all. */
+ *  marked. Decorative — the number and the band label above say it all.
+ *
+ *  Band edges sit **between** whole scores (49.5, 55.5, 59.5), so every
+ *  score's marker lands inside its own band — with edges on the scores
+ *  themselves, 49, 55 and 59 sat on the gap and a 59 could read as "a lot"
+ *  (review of db053be). Segments and marker share one coordinate (`pct`);
+ *  the 2px gaps are cut from each segment, not added between them. */
 function ScoreBar({ score }: { score: number }) {
-  // "some" sits under 50–59 together, as on the board (the 56–59 band has no
-  // word of its own there).
-  const labels = [
-    { text: 'little', at: pct((36 + 49) / 2) },
-    { text: 'some', at: pct((50 + 59) / 2) },
-    { text: 'a lot', at: pct((60 + 78) / 2) },
-  ];
+  const edge = (b: (typeof HIT6_BANDS)[number]) => ({
+    from: pct(Math.max(HIT6_MIN, b.from - 0.5)),
+    to: pct(Math.min(HIT6_MAX, b.to + 0.5)),
+  });
+  // A word under three bands, centred on each. "some" sits over 50–55 only —
+  // the board stretched it over 56–59 too, which put a "Substantial impact"
+  // score under "some". 56–59 has no word: too narrow, and the pill names it.
+  const labels = HIT6_BANDS.filter((b) => b.short).map((b) => {
+    const e = edge(b);
+    return { text: b.short, at: (e.from + e.to) / 2 };
+  });
   return (
     <div aria-hidden="true" className="mt-5">
-      <div className="relative">
-        <div className="flex h-2 gap-0.5 overflow-hidden rounded-full">
-          {HIT6_BANDS.map((b) => (
+      <div className="relative h-2">
+        {HIT6_BANDS.map((b, i) => {
+          const e = edge(b);
+          const first = i === 0;
+          const last = i === HIT6_BANDS.length - 1;
+          return (
             <span
               key={b.from}
-              className={`h-full ${TONE_BG[b.tone]}`}
-              // Inclusive bands: 36–49 is 14 points of the 42-point span.
-              style={{ flexGrow: b.to - b.from + (b.from === HIT6_MIN ? 0 : 1) }}
+              className={`absolute inset-y-0 ${TONE_BG[b.tone]} ${first ? 'rounded-l-full' : ''} ${last ? 'rounded-r-full' : ''}`}
+              style={{
+                left: first ? `${e.from}%` : `calc(${e.from}% + 1px)`,
+                width: `calc(${e.to - e.from}% - ${(first ? 0 : 1) + (last ? 0 : 1)}px)`,
+              }}
             />
-          ))}
-        </div>
+          );
+        })}
         <span
           className="absolute -top-1 h-4 w-1 -translate-x-1/2 rounded-full bg-text-strong ring-2 ring-bg-surface"
           style={{ left: `${pct(score)}%` }}

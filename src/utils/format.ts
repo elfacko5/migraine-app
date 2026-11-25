@@ -104,3 +104,12 @@ export function everyLabel(min: number): string {
   if (min === 60) return 'Every hour';
   return `Every ${min / 60} h`;
 }
+
+/** The ceiling on an attack that ended in sleep, from its start to the wake
+ *  time: "45m" under an hour, else whole hours rounded **up** ("3h") — it's
+ *  the most it can have been, not a measurement. Shared by Detail's length
+ *  tile and the past-attack summary so the two never disagree. */
+export function upToText(startIso: string, wokeAtIso: string): string {
+  const mins = Math.max(0, Math.ceil((new Date(wokeAtIso).getTime() - new Date(startIso).getTime()) / 60_000));
+  return mins < 60 ? `${mins}m` : `${Math.ceil(mins / 60)}h`;
+}

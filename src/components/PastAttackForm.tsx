@@ -173,7 +173,14 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
     // With the chip on, a time is when they woke — not an end.
     const endKnown = hasTime && !form.endUnknownFlag;
     const endUnknown = form.endUnknownFlag;
-    const wokeAtIso = endUnknown && hasTime ? localInputToIso(form.endTime) : undefined;
+    // Never before the start: the start can be moved past a time already
+    // picked, and nothing re-clamps the end field. A known end is clamped
+    // below (`clampedEndMs`); a wake-up time gets the same rule Detail's
+    // editor applies (review of db053be — Detail showed "up to -45m").
+    const pickedIso = hasTime ? localInputToIso(form.endTime) : null;
+    const wokeAtIso = endUnknown && pickedIso
+      ? new Date(Math.max(new Date(pickedIso).getTime(), resolvedStartMs)).toISOString()
+      : undefined;
     // While resolving dose/follow-up times, an unknown end is bounded like
     // "ongoing" (null) rather than asserted as a real end. The *stored* end
     // is derived below from whatever times this attack actually ends up
@@ -182,7 +189,7 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
     // (attackDayKeys counts every day from start to end). Caught in review
     // before this ever reached a phone.
     // A wake-up time bounds doses too: nothing was taken after it ended.
-    const boundEndMs = hasTime ? new Date(localInputToIso(form.endTime)).getTime() : null;
+    const boundEndMs = pickedIso ? Math.max(new Date(pickedIso).getTime(), resolvedStartMs) : null;
 
     // Every dose and follow-up, resolved to a real timestamp and sorted into
     // time order — not grouped by medicine — because a later dose's own
