@@ -204,22 +204,32 @@ function peakRange(peaks: number[]): string {
   return lo === hi ? `All ${lo}` : `Between ${lo} and ${hi}`;
 }
 
-// Ranked horizontal frequency bars (most-frequent first).
-function FreqBars({ data, color }: { data: Freq[]; color: string }) {
-  const max = data[0]?.count ?? 1;
+// Ranked horizontal frequency bars (most-frequent first), as the v4 board
+// draws them (2026-11-25): a plain count — no "×" — under one "attacks, of N"
+// caption, and each bar's length is its share of **all** the period's
+// attacks, not of the top item. Scaled to the top item, a thing noted once
+// in ten attacks drew a full bar whenever nothing was noted more, which read
+// as "always".
+function FreqBars({ data, color, total }: { data: Freq[]; color: string; total: number }) {
   return (
-    <div className="space-y-2.5">
-      {data.slice(0, 8).map((f) => (
-        <div key={f.name} className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-text-primary truncate pr-2">{f.name}</span>
-            <span className="text-text-secondary tabular-nums shrink-0">{f.count}×</span>
-          </div>
-          <div className="h-2 rounded-full bg-bg-border/40 overflow-hidden">
-            <div className="h-full rounded-full" style={{ width: `${(f.count / max) * 100}%`, background: color }} />
-          </div>
-        </div>
-      ))}
+    <div>
+      <p className="mb-2 text-right text-xs text-text-secondary">attacks, of {total}</p>
+      <ul role="list" className="space-y-3">
+        {data.slice(0, 8).map((f) => (
+          <li key={f.name} className="space-y-1.5">
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="truncate text-text-primary">{f.name}</span>
+              <span className="shrink-0 font-medium tabular-nums text-text-primary">
+                {f.count}
+                <span className="sr-only"> of {total} attacks</span>
+              </span>
+            </div>
+            <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-bg-border/40">
+              <div className="h-full rounded-full" style={{ width: `${Math.min(1, f.count / Math.max(1, total)) * 100}%`, background: color }} />
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -232,14 +242,14 @@ function FreqBars({ data, color }: { data: Freq[]; color: string }) {
 // now carries its explanation behind the "More info" icon rather than some
 // behind it and some not, which read as an inconsistency once a few sections
 // had it and the rest didn't).
-function FreqSection({ title, data, color, info, icon, iconTone }: {
-  title: string; data: Freq[]; color: string; info?: React.ReactNode;
+function FreqSection({ title, data, color, total, info, icon, iconTone }: {
+  title: string; data: Freq[]; color: string; total: number; info?: React.ReactNode;
   icon?: React.ReactNode; iconTone?: string;
 }) {
   if (data.length === 0) return null;
   return (
     <InsightSection title={title} info={info} icon={icon} iconTone={iconTone}>
-      <FreqBars data={data} color={color} />
+      <FreqBars data={data} color={color} total={total} />
     </InsightSection>
   );
 }
@@ -584,6 +594,18 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
             </InsightSection>
           )}
 
+          {/* Section order is the v4 board's (2026-11-25): Pain over time,
+              Symptoms, Where it hurt, What you tried, In the two days before. */}
+          {/* Symptom/trigger frequency used to reuse the severity-mid/high
+              colours (2026-09-02) — the same mismatch `HeadHeatmap`'s own
+              comment warns about: severity means *pain intensity* everywhere
+              else it appears, and reusing it here for *how often* put two
+              different variables behind the same hue. Now chart-3/chart-4,
+              the Insights-only categorical palette (A7/decision 12). */}
+          <FreqSection title="Symptoms" data={stats.symptoms} color={chartColors.chart3} total={filtered.length}
+            icon={PulseGlyph} iconTone="bg-chart-3/16 text-chart-3"
+            info="Attacks that included each symptom, not readings — one count per attack no matter how many times it was logged."
+          />
           {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
             <InsightSection title="Where it hurt"
@@ -595,6 +617,10 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
             </InsightSection>
           )}
 
+          <FreqSection title="What you tried" data={stats.reliefs} color={chartColors.chart1} total={filtered.length}
+            icon={LeafGlyph} iconTone="bg-chart-1/16 text-chart-1"
+            info="Attacks in which each relief was tried at least once. This counts use, not whether it helped."
+          />
           {/* Trigger / symptom / relief / medication frequency */}
           {/* "In the two days before" — v4 decision A4(ii): a relabel of the
               same `Attack.triggers` data (never a new field), reframed away
@@ -607,24 +633,11 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
           <FreqSection
             title="In the two days before"
             data={stats.triggers}
+            total={filtered.length}
             color={chartColors.chart4}
             icon={LookBackGlyph}
             iconTone="bg-chart-4/16 text-chart-4"
             info="What you noted in the two days before each attack — recorded on attack days only, so there's no count of days when the same thing happened and no attack followed. Not something shown to bring one on."
-          />
-          {/* Symptom/trigger frequency used to reuse the severity-mid/high
-              colours (2026-09-02) — the same mismatch `HeadHeatmap`'s own
-              comment warns about: severity means *pain intensity* everywhere
-              else it appears, and reusing it here for *how often* put two
-              different variables behind the same hue. Now chart-3/chart-4,
-              the Insights-only categorical palette (A7/decision 12). */}
-          <FreqSection title="Symptoms" data={stats.symptoms} color={chartColors.chart3}
-            icon={PulseGlyph} iconTone="bg-chart-3/16 text-chart-3"
-            info="Attacks that included each symptom, not readings — one count per attack no matter how many times it was logged."
-          />
-          <FreqSection title="What you tried"  data={stats.reliefs}  color={chartColors.chart1}
-            icon={LeafGlyph} iconTone="bg-chart-1/16 text-chart-1"
-            info="Attacks in which each relief was tried at least once. This counts use, not whether it helped."
           />
         </>
       )}
