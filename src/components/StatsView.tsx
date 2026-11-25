@@ -7,7 +7,7 @@ import type { Attack, DeletedMedName, MedGuides, Medication } from '../types';
 import { formatDateShort } from '../utils/format';
 import {
   attackMaxSeverity,
-  areaFrequency, avgTimeToPeak, avgAttackLength, attackDayKeys,
+  areaFrequency, avgTimeToPeak, avgAttackLength,
   triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
 } from '../utils/stats';
 import { HeadHeatmap } from './HeadHeatmap';
@@ -234,14 +234,14 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
 
     const areas = areaFrequency(filtered);
 
-    // Calendar days with an attack in this period, de-duplicated across
-    // overlapping attacks — one attack past midnight is two days.
-    const attackDaySet = new Set<string>();
-    for (const a of filtered) for (const k of attackDayKeys(a)) attackDaySet.add(k);
+    // Attacks already there on waking. A flag set at logging time, so an
+    // attack logged without it counts as not — the denominator is every
+    // attack in the period, the same "x of n" the Symptoms section uses.
+    const wokeWith = filtered.filter((a) => a.wokeWithMigraine).length;
 
     return {
       count: filtered.length,
-      attackDays: attackDaySet.size,
+      wokeWith,
       avgSeverity,
       avgLength,
       timeToPeak,
@@ -379,7 +379,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
         <>
           {/* Typical attack — the averages that used to be loose stat tiles,
               grouped (v4). `avgTimeToPeak` and `avgAttackLength` already
-              existed; "attack days" and the grouping are new. */}
+              existed; "woke up with it" and the grouping are new. */}
           <InsightSection
             title="Typical attack"
             icon={ClockGlyph}
@@ -387,7 +387,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
             // No section card: the grid is the card (`.facts` on the board),
             // its cells divided by 1px gaps rather than padded inside a fill.
             bare
-            info="Across the attacks in this period. Peak is each attack's own worst reading, averaged. Length and time to the peak leave out any attack still going, since a peak can still rise. Attack days counts calendar days with an attack — one attack past midnight is two."
+            info="Across the attacks in this period. Peak is each attack's own worst reading, averaged. Length and time to the peak leave out any attack still going, since a peak can still rise. Woke up with it counts the attacks that were already there when you woke."
           >
             <div className="grid grid-cols-[repeat(auto-fit,minmax(9.375rem,1fr))] gap-px overflow-hidden rounded-card bg-bg-raised">
               <TypicalStat value={stats.avgSeverity} label="average peak pain" />
@@ -397,7 +397,10 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
               {stats.timeToPeak !== null && (
                 <TypicalStat value={formatTypicalDuration(stats.timeToPeak * 60)} label="to the peak" />
               )}
-              <TypicalStat value={stats.attackDays} label={`attack day${stats.attackDays === 1 ? '' : 's'}`} />
+              {/* Was "attack days" (from the v4 board) until 2026-11-25 —
+                  replaced because it counts how often, not what an attack is
+                  like, and repeated the Attack days chart above. */}
+              <TypicalStat value={`${stats.wokeWith} of ${stats.count}`} label="woke up with it" />
               {/* With a figure missing (length or time to peak while every
                   attack is still going) the grid has an empty slot, which
                   would show as a block of the divider colour. Filled with a
