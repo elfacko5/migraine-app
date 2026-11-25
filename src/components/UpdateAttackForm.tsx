@@ -11,8 +11,6 @@ import { MedicationEntry } from './MedicationEntry';
 import { DoseOutcomeRow } from './DoseOutcomeRow';
 import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
-import { TextScaleControl } from './TextScaleControl';
-import type { TextScale } from '../hooks/useSettings';
 import { SymptomIcon, ReliefIcon } from './drawnIcons';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -23,8 +21,6 @@ interface Props {
   recentMeds: Array<{ name: string; dose: string }>;
   medications?: Medication[];
   attacks?: Attack[];
-  textScale: TextScale;
-  onTextScale: (s: TextScale) => void;
   onAddSymptom: (s: string) => void;
   onAddRelief: (r: string) => void;
   onClose: () => void;
@@ -121,7 +117,7 @@ function blank(defaultTime: string): FormState {
  * first-class plateau-analytics source worth keeping reachable from inside
  * the app, not only from a reminder's own quick reply.
  */
-export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], textScale, onTextScale, onAddSymptom, onAddRelief, onClose, onSave, onNoChange }: Props) {
+export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], onAddSymptom, onAddRelief, onClose, onSave, onNoChange }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
   const minTime = prev.time;
   const maxTime = attack.end ?? new Date().toISOString();
@@ -305,6 +301,8 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col">
+      {/* Circle fill `bg-bg-raised`, not `bg-bg-surface` — see the note in
+          `LiveAttackForm`'s own flow header. */}
       <div
         className="relative flex items-center gap-2 px-3.5 pb-0 pt-3.5"
         style={{ paddingTop: 'calc(0.875rem + env(safe-area-inset-top))' }}
@@ -314,7 +312,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
             type="button"
             onClick={goBack}
             aria-label="Back"
-            className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-surface text-text-primary transition-colors hover:bg-bg-raised"
+            className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
               <path d="m15 18-6-6 6-6" />
@@ -328,7 +326,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
           type="button"
           onClick={requestClose}
           aria-label="Close"
-          className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-surface text-text-primary transition-colors hover:bg-bg-raised"
+          className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" className="h-5 w-5" aria-hidden="true">
             <path d="M7 7l10 10M17 7 7 17" />
@@ -348,7 +346,6 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1.5">
-            <TextScaleControl scale={textScale} onScale={onTextScale} />
             {kind === 'now' && (
               <button
                 type="button"

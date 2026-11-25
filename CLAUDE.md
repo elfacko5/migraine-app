@@ -102,7 +102,7 @@ Dark is default. `color-scheme: dark` globally. **Never use `dark:` prefixes.** 
 
 **Palette rules (see [`docs/palette.md`](docs/palette.md) for measured values):**
 - No saturated blue. Accent is low-saturation sage. No `#fff`, `#000`, or max-contrast pairing.
-- Four surfaces: `bg-base` (page) · `bg-surface` (card) · `bg-raised` (card on card) · `bg-elevated` (reserved, no current call site).
+- Four surfaces: `bg-base` (page) · `bg-surface` (card) · `bg-raised` (card on card) · `bg-elevated` (hover state one step up from `bg-raised` — the flow-header circle buttons, 2026-11-24).
 - Key tokens: `--color-bg-base` `#1b1a18` · `--color-text-primary` `#cdc7bb` (deliberately not dossier's `#e4dfd6`) · `--color-accent` `#7fa187` · severity `#8fb096` / `#c39257` / `#c68880`.
 - **Check new severity colours against `bg-raised`**, not just the page.
 - Three token values deliberately differ from the dossier's — don't "restore" them.

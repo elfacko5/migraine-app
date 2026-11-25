@@ -9,8 +9,6 @@ import { RadioDot } from './RadioDot';
 import { DoseOutcomeRow } from './DoseOutcomeRow';
 import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
-import { TextScaleControl } from './TextScaleControl';
-import type { TextScale } from '../hooks/useSettings';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -19,8 +17,6 @@ interface Props {
   symptoms: string[];
   reliefs: string[];
   triggers: string[];
-  textScale: TextScale;
-  onTextScale: (s: TextScale) => void;
   onAddSymptom: (s: string) => void;
   onAddRelief: (r: string) => void;
   onAddTrigger: (t: string) => void;
@@ -115,7 +111,7 @@ interface FormState {
  * duration figures doesn't make a wildly-wrong one harmless everywhere else
  * that reads `end` (the 24h impact window, chiefly).
  */
-export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, onTextScale, onAddSymptom, onAddRelief, onAddTrigger, onClose, onSave }: Props) {
+export function EndAttackForm({ attack, symptoms, reliefs, triggers, onAddSymptom, onAddRelief, onAddTrigger, onClose, onSave }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
   const minTime = prev.time;
   const minMs = new Date(minTime).getTime();
@@ -226,6 +222,8 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col">
+      {/* Circle fill `bg-bg-raised`, not `bg-bg-surface` — see the note in
+          `LiveAttackForm`'s own flow header. */}
       <div
         className="relative flex items-center gap-2 px-3.5 pb-0 pt-3.5"
         style={{ paddingTop: 'calc(0.875rem + env(safe-area-inset-top))' }}
@@ -235,7 +233,7 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
             type="button"
             onClick={goBack}
             aria-label="Back"
-            className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-surface text-text-primary transition-colors hover:bg-bg-raised"
+            className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
               <path d="m15 18-6-6 6-6" />
@@ -249,7 +247,7 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
           type="button"
           onClick={requestClose}
           aria-label="Close"
-          className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-surface text-text-primary transition-colors hover:bg-bg-raised"
+          className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" className="h-5 w-5" aria-hidden="true">
             <path d="M7 7l10 10M17 7 7 17" />
@@ -258,20 +256,15 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, textScale, 
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-gutter sm:px-gutter-wide pt-5 pb-4 flex flex-col">
-        <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
-          <div className="min-w-0">
-            <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{STEP_TITLES[kind]}</h1>
-            <p className="mt-1.5 text-sm text-text-secondary">
-              {kind === 'when' && <>Required<span className="text-severity-high ml-0.5">*</span> · started {formatDatetime(attack.snapshots[0].time)} · worst {attackMaxSeverity(attack)}</>}
-              {kind === 'help' && 'Optional · for doses already logged this attack'}
-              {kind === 'impact' && 'Optional'}
-              {kind === 'like' && 'Optional · pick any'}
-              {kind === 'before' && 'Optional · pick any'}
-            </p>
-          </div>
-          <div className="shrink-0">
-            <TextScaleControl scale={textScale} onScale={onTextScale} />
-          </div>
+        <div className="mb-5 shrink-0">
+          <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{STEP_TITLES[kind]}</h1>
+          <p className="mt-1.5 text-sm text-text-secondary">
+            {kind === 'when' && <>Required<span className="text-severity-high ml-0.5">*</span> · started {formatDatetime(attack.snapshots[0].time)} · worst {attackMaxSeverity(attack)}</>}
+            {kind === 'help' && 'Optional · for doses already logged this attack'}
+            {kind === 'impact' && 'Optional'}
+            {kind === 'like' && 'Optional · pick any'}
+            {kind === 'before' && 'Optional · pick any'}
+          </p>
         </div>
 
         {kind === 'when' && (

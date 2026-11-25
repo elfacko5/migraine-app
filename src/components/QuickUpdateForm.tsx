@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { Attack, Medication, Snapshot } from '../types';
-import type { TextScale } from '../hooks/useSettings';
 import type { VoiceDraft } from '../utils/voiceParse';
 import { isoToLocalInput, localInputToIso, formatTime, formatDatetime } from '../utils/format';
 import { maxSeverity } from '../utils/stats';
@@ -10,7 +9,6 @@ import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { ChipSelector } from './ChipSelector';
 import { SymptomIcon, ReliefIcon } from './drawnIcons';
 import { MedicationInput } from './MedicationInput';
-import { TextScaleControl } from './TextScaleControl';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface Props {
@@ -23,8 +21,6 @@ interface Props {
    *  when the next one falls due by the gap the user entered. */
   medications?: Medication[];
   attacks?: Attack[];
-  textScale: TextScale;
-  onTextScale: (s: TextScale) => void;
   onAddSymptom: (s: string) => void;
   onAddRelief: (r: string) => void;
   onSave: (snapshot: Omit<Snapshot, 'source'>, source?: Snapshot['source']) => void;
@@ -125,7 +121,7 @@ function lastEntryCaption(step: number, prev: Snapshot, medications: Medication[
   return null;
 }
 
-export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], textScale, onTextScale, onAddSymptom, onAddRelief, onSave, onClose, voiceDraft }: Props) {
+export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], onAddSymptom, onAddRelief, onSave, onClose, voiceDraft }: Props) {
   const prev = attack.snapshots[attack.snapshots.length - 1];
   // A new update must land after the last reading, and — for a past attack —
   // no later than when it ended (an ongoing attack has no such ceiling
@@ -289,20 +285,14 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
 
       {/* Scrolling content — the only scrolling region */}
       <div className="flex-1 min-h-0 overflow-y-auto px-gutter sm:px-gutter-wide pt-5 pb-4 flex flex-col">
-            {/* Section header — H2 title + instruction, with the text-size stepper
-                pinned to its right. */}
-            <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
-              <div className="min-w-0">
-                <h2 className="text-xl font-medium text-text-primary">{STEP_LABELS[step - 1]}</h2>
-                <p className="mt-1 text-sm text-text-secondary">
-                  {STEP_SUBHEADS[step - 1]}
-                  {/* The required marker `LogForm` already uses on this step. */}
-                  {step === 2 && <span className="text-severity-high ml-0.5">*</span>}
-                </p>
-              </div>
-              <div className="shrink-0">
-                <TextScaleControl scale={textScale} onScale={onTextScale} />
-              </div>
+            {/* Section header — H2 title + instruction. */}
+            <div className="mb-5 shrink-0">
+              <h2 className="text-xl font-medium text-text-primary">{STEP_LABELS[step - 1]}</h2>
+              <p className="mt-1 text-sm text-text-secondary">
+                {STEP_SUBHEADS[step - 1]}
+                {/* The required marker `LogForm` already uses on this step. */}
+                {step === 2 && <span className="text-severity-high ml-0.5">*</span>}
+              </p>
             </div>
 
             {step === 1 && voiceDraft && (

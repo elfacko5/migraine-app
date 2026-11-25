@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Attack, Medication, NotificationConfig, Snapshot } from '../types';
 import { PAIN_QUALITY_OPTIONS, NOTHING_UNUSUAL } from '../types';
-import type { TextScale } from '../hooks/useSettings';
 import { isoToLocalInput, localInputToIso } from '../utils/format';
 import { doseEntryMs, followUpApplies, type SelectedMedication } from '../utils/doseEntries';
 import { FOLLOW_UP_TARGET_MS } from '../utils/stats';
@@ -10,7 +9,6 @@ import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationEntry } from './MedicationEntry';
 import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
-import { TextScaleControl } from './TextScaleControl';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
 import { SunriseIcon } from './icons';
 
@@ -22,8 +20,6 @@ interface Props {
   medications?: Medication[];
   attacks?: Attack[];
   defaultNotifConfig: NotificationConfig;
-  textScale: TextScale;
-  onTextScale: (s: TextScale) => void;
   onAddSymptom: (s: string) => void;
   onAddRelief: (r: string) => void;
   onAddTrigger: (t: string) => void;
@@ -106,7 +102,7 @@ function peakArea(areas: Record<string, number>): string | null {
  * whose end falls inside its own 24h window; one older than that is meant
  * to stay unanswered.
  */
-export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medications = [], attacks = [], defaultNotifConfig, textScale, onTextScale, onAddSymptom, onAddRelief, onAddTrigger, onClose, onSave }: Props) {
+export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medications = [], attacks = [], defaultNotifConfig, onAddSymptom, onAddRelief, onAddTrigger, onClose, onSave }: Props) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(blank);
   const [discardOpen, setDiscardOpen] = useState(false);
@@ -251,6 +247,8 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col">
+      {/* Circle fill `bg-bg-raised`, not `bg-bg-surface` — see the note in
+          `LiveAttackForm`'s own flow header. */}
       <div
         className="relative flex items-center gap-2 px-3.5 pb-0 pt-3.5"
         style={{ paddingTop: 'calc(0.875rem + env(safe-area-inset-top))' }}
@@ -260,7 +258,7 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
             type="button"
             onClick={goBack}
             aria-label="Back"
-            className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-surface text-text-primary transition-colors hover:bg-bg-raised"
+            className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
               <path d="m15 18-6-6 6-6" />
@@ -274,7 +272,7 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
           type="button"
           onClick={requestClose}
           aria-label="Close"
-          className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-surface text-text-primary transition-colors hover:bg-bg-raised"
+          className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" className="h-5 w-5" aria-hidden="true">
             <path d="M7 7l10 10M17 7 7 17" />
@@ -283,14 +281,9 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-gutter sm:px-gutter-wide pt-5 pb-4 flex flex-col">
-        <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
-          <div className="min-w-0">
-            <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{STEP_LABELS[step - 1]}</h1>
-            <p className="mt-1.5 text-sm text-text-secondary">{STEP_SUBHEADS[step - 1]}</p>
-          </div>
-          <div className="shrink-0">
-            <TextScaleControl scale={textScale} onScale={onTextScale} />
-          </div>
+        <div className="mb-5 shrink-0">
+          <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{STEP_LABELS[step - 1]}</h1>
+          <p className="mt-1.5 text-sm text-text-secondary">{STEP_SUBHEADS[step - 1]}</p>
         </div>
 
         {step === 1 && (

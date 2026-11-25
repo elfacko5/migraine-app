@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Attack, Medication, NotificationConfig, Snapshot } from '../types';
-import type { TextScale } from '../hooks/useSettings';
 import type { VoiceDraft } from '../utils/voiceParse';
 import { isoToLocalInput, localInputToIso, formatDatetime, formatTime } from '../utils/format';
 import { doseAtStart, doseOptions, effectiveDoseMode, resolveDoseMs, type DoseMode } from '../utils/doseTime';
@@ -11,7 +10,6 @@ import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationInput } from './MedicationInput';
 import { ChipSelector } from './ChipSelector';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
-import { TextScaleControl } from './TextScaleControl';
 import { SunriseIcon } from './icons';
 import { RadioDot } from './RadioDot';
 
@@ -26,8 +24,6 @@ interface Props {
    *  itself — a drug with no limits set behaves exactly as it always did. */
   medications?: Medication[];
   attacks?: Attack[];
-  textScale: TextScale;
-  onTextScale: (s: TextScale) => void;
   onAddTrigger: (t: string) => void;
   onAddSymptom: (s: string) => void;
   onAddRelief: (r: string) => void;
@@ -211,7 +207,7 @@ const STEP_SUBHEADS = [
   'Anything that might have set it off?',
 ];
 
-export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, medications, attacks, textScale, onTextScale, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave, voiceDraft, past = false }: Props) {
+export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recentMeds, medications, attacks, onAddTrigger, onAddSymptom, onAddRelief, onClose, onSave, voiceDraft, past = false }: Props) {
   // Step 0 is the voice review screen and exists only for a voice draft; manual
   // logging starts at 1 as it always has.
   const [step, setStep] = useState(voiceDraft ? 0 : 1);
@@ -453,19 +449,14 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
 
         {/* Section header — H2 title + instruction, with the text-size stepper
             pinned to its right. */}
-        <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
-          <div className="min-w-0">
-            <h2 className="text-xl font-medium text-text-primary">
-              {step === 0 ? "Here's what I heard" : STEP_LABELS[step - 1]}
-            </h2>
-            <p className="mt-1 text-sm text-text-secondary">
-              {step === 0 ? 'Check it over before saving.' : STEP_SUBHEADS[step - 1]}
-              {step === 2 && <span className="text-severity-high ml-0.5">*</span>}
-            </p>
-          </div>
-          <div className="shrink-0">
-            <TextScaleControl scale={textScale} onScale={onTextScale} />
-          </div>
+        <div className="mb-5 shrink-0">
+          <h2 className="text-xl font-medium text-text-primary">
+            {step === 0 ? "Here's what I heard" : STEP_LABELS[step - 1]}
+          </h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            {step === 0 ? 'Check it over before saving.' : STEP_SUBHEADS[step - 1]}
+            {step === 2 && <span className="text-severity-high ml-0.5">*</span>}
+          </p>
         </div>
 
         {/* ── Step 0: voice review (voice drafts only) ──

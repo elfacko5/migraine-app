@@ -785,8 +785,6 @@ export default function App() {
             recentMeds={recentMeds}
             medications={medications}
             attacks={attacks}
-            textScale={textScale}
-            onTextScale={setTextScale}
             onAddTrigger={addTrigger}
             onAddSymptom={addSymptom}
             onAddRelief={addRelief}
@@ -803,8 +801,6 @@ export default function App() {
             medications={medications}
             attacks={attacks}
             defaultNotifConfig={defaultNotifConfig}
-            textScale={textScale}
-            onTextScale={setTextScale}
             onAddSymptom={addSymptom}
             onAddRelief={addRelief}
             onAddTrigger={addTrigger}
@@ -817,8 +813,6 @@ export default function App() {
             medications={medications}
             attacks={attacks}
             defaultNotifConfig={defaultNotifConfig}
-            textScale={textScale}
-            onTextScale={setTextScale}
             onClose={closeLogSheet}
             onSave={handleLogSave}
           />
@@ -840,8 +834,6 @@ export default function App() {
               recentMeds={recentMeds}
               medications={medications}
               attacks={attacks}
-              textScale={textScale}
-              onTextScale={setTextScale}
               onAddSymptom={addSymptom}
               onAddRelief={addRelief}
               onSave={handleUpdateSave}
@@ -856,8 +848,6 @@ export default function App() {
               recentMeds={recentMeds}
               medications={medications}
               attacks={attacks}
-              textScale={textScale}
-              onTextScale={setTextScale}
               onAddSymptom={addSymptom}
               onAddRelief={addRelief}
               onSave={handleUpdateFlowSave}
@@ -1065,8 +1055,6 @@ export default function App() {
             symptoms={sortedSymptoms}
             reliefs={sortedReliefs}
             triggers={sortedTriggers}
-            textScale={textScale}
-            onTextScale={setTextScale}
             onAddSymptom={addSymptom}
             onAddRelief={addRelief}
             onAddTrigger={addTrigger}

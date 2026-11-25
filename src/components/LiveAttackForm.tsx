@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Attack, Medication, NotificationConfig, Snapshot } from '../types';
-import type { TextScale } from '../hooks/useSettings';
 import { isoToLocalInput, localInputToIso } from '../utils/format';
 import { doseEntryMs } from '../utils/doseEntries';
 import { chipClass } from '../utils/chipStyles';
@@ -8,7 +7,6 @@ import { RadioDot } from './RadioDot';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationEntry, type SelectedMedication } from './MedicationEntry';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
-import { TextScaleControl } from './TextScaleControl';
 import { SunriseIcon } from './icons';
 
 interface Props {
@@ -16,8 +14,6 @@ interface Props {
   medications?: Medication[];
   attacks?: Attack[];
   defaultNotifConfig: NotificationConfig;
-  textScale: TextScale;
-  onTextScale: (s: TextScale) => void;
   onClose: () => void;
   onSave: (
     snapshot: Omit<Snapshot, 'source'>,
@@ -61,7 +57,7 @@ const STEP_SUBHEADS = [
  * it works today matters more than this flow covering that case too. See
  * docs/voice-parsing.md.
  */
-export function LiveAttackForm({ recentMeds, medications = [], attacks = [], defaultNotifConfig, textScale, onTextScale, onClose, onSave }: Props) {
+export function LiveAttackForm({ recentMeds, medications = [], attacks = [], defaultNotifConfig, onClose, onSave }: Props) {
   const [step, setStep] = useState(1);
   const [startMode, setStartMode] = useState<StartMode>('now');
   const [startTime, setStartTime] = useState(() => isoToLocalInput());
@@ -139,7 +135,14 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
       {/* Flow header — 40px circle back (hidden on step 1) / step count / 40px
           circle close. Matches the v4 step-flow header pattern exactly;
           "Back" moves here from the footer, which now carries only the one
-          forward action. */}
+          forward action.
+
+          **Circle fill is `bg-bg-raised`, not `bg-bg-surface`** (June's
+          report, 2026-11-24) — the sheet's own root is `bg-bg-surface`
+          (`Sheet.tsx`), so a same-tone circle on it had zero contrast and
+          read as no background at all. `bg-bg-raised` is the next surface up
+          from the sheet's own tone, same nesting rule as everywhere else;
+          hover steps up again to `bg-bg-elevated`. */}
       <div
         className="relative flex items-center gap-2 px-3.5 pb-0 pt-3.5"
         style={{ paddingTop: 'calc(0.875rem + env(safe-area-inset-top))' }}
@@ -149,7 +152,7 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
             type="button"
             onClick={() => setStep((s) => s - 1)}
             aria-label="Back"
-            className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-surface text-text-primary transition-colors hover:bg-bg-raised"
+            className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
               <path d="m15 18-6-6 6-6" />
@@ -163,7 +166,7 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-surface text-text-primary transition-colors hover:bg-bg-raised"
+          className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" className="h-5 w-5" aria-hidden="true">
             <path d="M7 7l10 10M17 7 7 17" />
@@ -172,14 +175,9 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-gutter sm:px-gutter-wide pt-5 pb-4 flex flex-col">
-        <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
-          <div className="min-w-0">
-            <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{STEP_LABELS[step - 1]}</h1>
-            {STEP_SUBHEADS[step - 1] && <p className="mt-1.5 text-sm text-text-secondary">{STEP_SUBHEADS[step - 1]}</p>}
-          </div>
-          <div className="shrink-0">
-            <TextScaleControl scale={textScale} onScale={onTextScale} />
-          </div>
+        <div className="mb-5 shrink-0">
+          <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{STEP_LABELS[step - 1]}</h1>
+          {STEP_SUBHEADS[step - 1] && <p className="mt-1.5 text-sm text-text-secondary">{STEP_SUBHEADS[step - 1]}</p>}
         </div>
 
         {step === 1 && (
