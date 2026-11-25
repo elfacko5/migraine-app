@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip,
+  LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   ResponsiveContainer,
 } from 'recharts';
 import type { Attack, DeletedMedName, MedGuides, Medication } from '../types';
@@ -39,7 +39,8 @@ const LOW_DATA_THRESHOLD = 5;
 const CHART_COLORS: Record<UiTheme, {
   tick: string; tooltipBg: string; tooltipBorder: string; label: string; item: string; line: string;
   accent: string;
-  chart3: string; chart4: string;
+  grid: string;
+  chart2: string; chart3: string; chart4: string;
 }> = {
   dark: {
     tick: '#a39d92', tooltipBg: '#302d29', tooltipBorder: '#3a3733',
@@ -51,13 +52,15 @@ const CHART_COLORS: Record<UiTheme, {
     // Attack reuses dark's hex, like accent above: these clear 6.2:1+
     // against every attack-mode surface (measured), so there's nothing
     // attack-specific to derive.
-    chart3: '#d0948c', chart4: '#c9b58c',
+    grid: '#3a3733',
+    chart2: '#ab9fcb', chart3: '#d0948c', chart4: '#c9b58c',
   },
   attack: {
     tick: '#9a9689', tooltipBg: '#262218', tooltipBorder: '#34322a',
     label: '#9a9689', item: '#c9c4b8', line: '#93ae99',
     accent: '#7fa187',
-    chart3: '#d0948c', chart4: '#c9b58c',
+    grid: '#34322a',
+    chart2: '#ab9fcb', chart3: '#d0948c', chart4: '#c9b58c',
   },
   light: {
     tick: '#5a554c', tooltipBg: '#e2dcd0', tooltipBorder: '#d5cec0',
@@ -66,7 +69,8 @@ const CHART_COLORS: Record<UiTheme, {
     // Derived and measured, same method as --color-chart-3/4 in index.css:
     // same hue/saturation as dark, lightness brought down to clear 3:1 on a
     // light page (4.58:1 / 4.63:1 against bg-raised).
-    chart3: '#98493e', chart4: '#715d35',
+    grid: '#d5cec0',
+    chart2: '#69559d', chart3: '#98493e', chart4: '#715d35',
   },
 };
 
@@ -135,6 +139,20 @@ const ClockGlyph = (
     <path d="M12 8v4l3 2" />
   </svg>
 );
+
+// The board's rising-line glyph for "Pain over time".
+const TrendGlyph = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 19h16" />
+    <path d="M5 15l4-5 4 3 6-7" />
+  </svg>
+);
+
+/** Two attacks further apart than this aren't joined on "Pain over time":
+ *  a line across weeks with nothing logged reads as pain held all along.
+ *  The v4 board joins 5 days and breaks 17; a week sits between. */
+const TREND_BREAK_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Ranked horizontal frequency bars (most-frequent first).
 function FreqBars({ data, color }: { data: Freq[]; color: string }) {
@@ -218,20 +236,18 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
 
     const timeToPeak = avgTimeToPeak(filtered);
 
-    // `filtered` is newest-first (see `useAttacks`), so the most recent 12
-    // are the *first* 12 — take those, then reverse for left-to-right
-    // chronological reading. Found while writing this section's caption
-    // (2026-09-24): it used to reverse first and slice second, which took
-    // the *oldest* 12 in the period whenever there were more than 12 —
-    // silently wrong for anyone logging more than a dozen attacks inside a
-    // 3-month or all-time window, which chronic migraine is exactly the case
-    // for.
-    const severityTrend = [...filtered].slice(0, 12).reverse().map((a) => ({
-      // No weekday: a dozen of these sit along one axis and "Fri " on each
-      // is three characters of noise per label.
-      date: formatDateShort(a.snapshots[0].time),
-      severity: attackMaxSeverity(a),
-    }));
+    // Every attack in the period, oldest first, placed by its start time
+    // (v4 board, 2026-11-25). The old cap of the 12 most recent existed
+    // because each point took a category slot with its own date label; on a
+    // time axis points take their date's place and nothing crowds. A gap of
+    // more than `TREND_BREAK_MS` inserts a null, which breaks the line.
+    const severityTrend: { t: number; severity: number | null }[] = [];
+    for (const a of [...filtered].reverse()) {
+      const t = new Date(a.snapshots[0].time).getTime();
+      const prev = severityTrend[severityTrend.length - 1];
+      if (prev && t - prev.t > TREND_BREAK_MS) severityTrend.push({ t: (prev.t + t) / 2, severity: null });
+      severityTrend.push({ t, severity: attackMaxSeverity(a) });
+    }
 
     const areas = areaFrequency(filtered);
 
@@ -290,6 +306,20 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
       </div>
     );
   }
+
+  const trendPoints = stats.severityTrend.filter(
+    (p): p is { t: number; severity: number } => p.severity !== null,
+  );
+  // Date labels on the time axis: the window's two ends, plus each 1st of a
+  // month that sits clear of both: an end label is anchored at the edge and
+  // a month label centred, so a quarter of the span keeps them apart at
+  // phone width (12% overlapped, measured 2026-11-25).
+  const trendTicks = [rangeFrom];
+  for (let m = new Date(new Date(rangeFrom).getFullYear(), new Date(rangeFrom).getMonth() + 1, 1); m.getTime() < rangeTo; m.setMonth(m.getMonth() + 1)) {
+    const t = m.getTime(), span = rangeTo - rangeFrom;
+    if (t - rangeFrom > span * 0.25 && rangeTo - t > span * 0.25) trendTicks.push(t);
+  }
+  trendTicks.push(rangeTo);
 
   const hasEnoughData = attacks.length >= LOW_DATA_THRESHOLD;
 
@@ -434,36 +464,49 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
             </div>
           </InsightSection>
 
-          {/* Severity trend. Stays on the accent/line colour, never the
-              Insights chart-N palette: it plots pain severity, and A7/decision
-              12's own text is explicit that the categorical set is "never for
-              pain intensity, which stays on the severity ramp... even inside
-              an Insights chart" — true even though the source mock draws this
-              one line in chart-2 purple, which contradicts its own rule. */}
-          {stats.severityTrend.length >= 2 && (
+          {/* Severity trend, drawn as the v4 board: icon tile, chart-2
+              purple, gridlines, points placed by date. **Purple is Sunny's
+              call (2026-11-25)**, knowingly against A7's "never for pain
+              intensity" — the board itself draws it purple, and this line is
+              a trend of peaks, not a severity-coded mark. The y axis starts
+              at 1: no reading is ever 0, so a 0 row was space for a value
+              that can't occur. */}
+          {trendPoints.length >= 2 && (
             <InsightSection title="Pain over time"
-              info="Peak severity for the most recent attacks in this period, oldest to newest. Up to 12 shown."
+              icon={TrendGlyph}
+              iconTone="bg-chart-2/16 text-chart-2"
+              info="Each attack's worst pain in this period, placed by the day it started. Attacks more than a week apart aren't joined by the line."
             >
-              <div>
-                {/* left/right and top/bottom were lopsided — measured, not
-                    eyeballed (2026-09-23, Sunny's call): the plot area sat
-                    40px in from the card's left edge against 8px on the
-                    right, and XAxis's default 30px band left ~16px of dead
-                    air under a single 10px line of date labels. `left` is
-                    pulled in further to match the y-axis labels' own width
-                    rather than Recharts' default reservation, and `height`
-                    on XAxis is set to what one line of its own tick text
-                    actually needs. */}
-                <ResponsiveContainer width="100%" height={140}>
-                  <LineChart data={stats.severityTrend} margin={{ top: 4, right: 8, bottom: 0, left: -38 }}>
-                    <XAxis dataKey="date" tick={{ fill: chartColors.tick, fontSize: '0.625rem' }} axisLine={false} tickLine={false} interval="preserveStartEnd" height={20} tickMargin={4} />
-                    <YAxis domain={[0, 10]} ticks={[0, 5, 10]} tick={{ fill: chartColors.tick, fontSize: '0.625rem' }} axisLine={false} tickLine={false} />
+              <div role="img" aria-label={`Worst pain of ${trendPoints.length} attacks from ${formatDateShort(new Date(rangeFrom).toISOString())} to ${formatDateShort(new Date(rangeTo).toISOString())}, placed by date. ${trendPoints.map((p) => `${formatDateShort(new Date(p.t).toISOString())} ${p.severity}`).join(', ')}.`}>
+                {/* `left` pulls the plot in to the y labels' own width
+                    rather than Recharts' default reservation (2026-09-23,
+                    measured); `height` on XAxis is one line of its tick
+                    text. */}
+                <ResponsiveContainer width="100%" height={160}>
+                  <LineChart data={stats.severityTrend} margin={{ top: 8, right: 4, bottom: 0, left: -32 }}>
+                    <CartesianGrid vertical={false} stroke={chartColors.grid} />
+                    <XAxis
+                      dataKey="t" type="number" scale="time" domain={[rangeFrom, rangeTo]}
+                      ticks={trendTicks} interval={0}
+                      tick={({ x, y, payload, index }) => (
+                        <text x={x} y={y} dy={12} fill={chartColors.tick} fontSize="0.75rem"
+                          textAnchor={index === 0 ? 'start' : index === trendTicks.length - 1 ? 'end' : 'middle'}>
+                          {formatDateShort(new Date(payload.value).toISOString())}
+                        </text>
+                      )}
+                      axisLine={false} tickLine={false} height={26} tickMargin={4}
+                    />
+                    <YAxis domain={[1, 10]} ticks={[1, 5, 10]} tick={{ fill: chartColors.tick, fontSize: '0.75rem' }} axisLine={false} tickLine={false} />
                     <Tooltip
                       contentStyle={{ background: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: 8, fontSize: '0.75rem' }}
                       labelStyle={{ color: chartColors.label }}
                       itemStyle={{ color: chartColors.item }}
+                      labelFormatter={(t) => formatDateShort(new Date(Number(t)).toISOString())}
+                      formatter={(v) => [v, 'Worst pain']}
                     />
-                    <Line type="monotone" dataKey="severity" stroke={chartColors.line} strokeWidth={2} dot={{ r: 3, fill: chartColors.line }} isAnimationActive={false} />
+                    <Line type="linear" dataKey="severity" stroke={chartColors.chart2} strokeWidth={2.5}
+                      dot={{ r: 4, fill: chartColors.chart2, stroke: 'none' }} activeDot={{ r: 5, stroke: 'none' }}
+                      connectNulls={false} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
