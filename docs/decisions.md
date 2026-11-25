@@ -1450,7 +1450,13 @@ device end to end.
     `handleLogSave` wraps with the close); "Add another" remounts the form via
     `pastFormKey`; the discard dialog's Save still closes without a summary.
     It sits on `bg-base`, not the sheet's `bg-surface`, or the card vanishes.
-    **End still open.**
+    **End built 2026-11-25** (`AttackEndedSummary.tsx`): `ongoingAttack` is
+    null the instant the end is saved, so App holds `endedAttackId` to keep
+    the sheet mounted on the summary, and `openEndFlow` clears it on every
+    open. Unknown end: sub-line "Started …", Ended row "Gone when you woke
+    up", no length. "Open the entry" closes the sheet and opens Detail. Row
+    readings shared with Past in `utils/attackSummary.ts`; card and footer in
+    `AttackSummaryParts.tsx`.
     - **Past**: nothing on Today changes when an older attack is backfilled,
       so the sheet closing is the only signal; it's a read-back of recalled
       data while it's fresh; "Add another past attack" makes batch entry

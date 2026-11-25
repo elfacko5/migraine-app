@@ -23,6 +23,7 @@ import { formatTime } from './utils/format';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
 import { EndAttackForm } from './components/EndAttackForm';
+import { AttackEndedSummary } from './components/AttackEndedSummary';
 
 const TAB_TITLES: Record<Tab, string> = {
   // A greeting rather than the app's name: the user already knows which app
@@ -86,6 +87,12 @@ export default function App() {
   // "Edit details" save left the sheet rendering its own pre-edit copy.
   const [detailAttackId, setDetailAttackId] = useState<number | null>(null);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+  // The attack the End flow just ended, while its sheet shows the summary.
+  // `ongoingAttack` is null the moment the end is saved, so the sheet would
+  // otherwise unmount under it. Cleared on every open, so a later End never
+  // starts on an old summary.
+  const [endedAttackId, setEndedAttackId] = useState<number | null>(null);
+  const openEndFlow = () => { setEndedAttackId(null); setEndConfirmOpen(true); };
   const [profileSheet, setProfileSheet] = useState<ProfileSection | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
 
@@ -240,6 +247,7 @@ export default function App() {
 
   const updateAttack = attacks.find((a) => a.id === updateAttackId) ?? null;
   const detailAttack = attacks.find((a) => a.id === detailAttackId) ?? null;
+  const endedAttack = endedAttackId === null ? null : attacks.find((a) => a.id === endedAttackId && a.end !== null) ?? null;
 
   // Voice logging has two entry points, both ending here:
   //
@@ -503,7 +511,8 @@ export default function App() {
       extraSnapshots.map((s) => stampSnapshot(s, medications)),
       triggersSel, painQuality,
     );
-    setEndConfirmOpen(false);
+    // The sheet stays open on the summary (`AttackEndedSummary`).
+    setEndedAttackId(ongoingAttack.id);
     if (updateAttackId === ongoingAttack.id) closeUpdateSheet();
     if (detailAttack?.id === ongoingAttack.id) setDetailAttackId(null);
   }
@@ -606,7 +615,7 @@ export default function App() {
               <OngoingAttackBanner
                 attack={ongoingAttack}
                 topAction={heroAttackMode}
-                onEnd={() => setEndConfirmOpen(true)}
+                onEnd={openEndFlow}
                 onAddUpdate={() => setUpdateAttackId(ongoingAttack.id)}
                 onOpenDetail={() => setDetailAttackId(ongoingAttack.id)}
               />
@@ -742,7 +751,7 @@ export default function App() {
         actions={ongoingAttack
           ? [
               { label: 'Add an update', detail: `Started ${formatTime(ongoingAttack.snapshots[0].time)}`, onSelect: () => setUpdateAttackId(ongoingAttack.id) },
-              { label: 'End attack', onSelect: () => setEndConfirmOpen(true) },
+              { label: 'End attack', onSelect: openEndFlow },
             ]
           : [
               { label: 'Log an attack', detail: 'Starting now', onSelect: () => { setLogPast(false); setLogSheetOpen(true); } },
@@ -1045,7 +1054,7 @@ export default function App() {
             // Only for the attack actually in progress — an ended one has
             // nothing to end. Opens the same dialog the Today tab uses, so
             // its presets and minute-vs-second clamping aren't duplicated.
-            onEndAttack={detailAttack.end === null ? () => setEndConfirmOpen(true) : undefined}
+            onEndAttack={detailAttack.end === null ? openEndFlow : undefined}
             // Attack-level metadata only — the mutation itself refuses to
             // touch snapshots. See docs/editing-assessment.md.
             onSaveDetails={(patch) => updateAttackDetails(detailAttack.id, patch)}
@@ -1063,8 +1072,15 @@ export default function App() {
       {/* End-attack flow — the v4 EndAttackForm replaces EndAttackDialog's
           single question entirely; there's no voice carve-out to preserve
           here, unlike the other three logging flows. */}
-      {ongoingAttack && (
+      {(endedAttack || ongoingAttack) && (
         <Sheet open={endConfirmOpen} onClose={() => setEndConfirmOpen(false)} title="End attack" flush bareHeader>
+          {endedAttack ? (
+            <AttackEndedSummary
+              attack={endedAttack}
+              onOpenEntry={() => { setEndConfirmOpen(false); setDetailAttackId(endedAttack.id); }}
+              onDone={() => setEndConfirmOpen(false)}
+            />
+          ) : ongoingAttack && (
           <EndAttackForm
             attack={ongoingAttack}
             symptoms={sortedSymptoms}
@@ -1076,6 +1092,7 @@ export default function App() {
             onClose={() => setEndConfirmOpen(false)}
             onSave={handleEndFlowSave}
           />
+          )}
         </Sheet>
       )}
     </div>

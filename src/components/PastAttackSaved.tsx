@@ -1,12 +1,9 @@
-import { useEffect, useRef } from 'react';
 import type { Attack, Medication } from '../types';
-import { NOTHING_UNUSUAL } from '../types';
 import { formatDate, formatDuration } from '../utils/format';
-import { attackDoseOutcomes, attackMaxSeverity, doseOutcomeWord, hasKnownDuration, type DoseOutcome } from '../utils/stats';
-import { attackSide, SIDE_LABELS } from '../utils/laterality';
-import { unitsLabel } from '../utils/medGuardrails';
-import { resolveDose } from '../utils/medResolve';
-import { isRetired } from '../utils/retired';
+import { attackDoseOutcomes, hasKnownDuration } from '../utils/stats';
+import { SummaryFooter, SummaryList } from './AttackSummaryParts';
+import { useHeadingFocus } from '../hooks/useHeadingFocus';
+import { amountText, beforeText, marksOf, outcomeText, worstText, type SummaryRow } from '../utils/attackSummary';
 
 /**
  * The closing screen of "Add a past attack": `MrgPastSavedDark` in
@@ -18,12 +15,9 @@ import { isRetired } from '../utils/retired';
  *
  * Reads the **stored** attack `startAttack` returned, not the form, so what it
  * says is what was written. Where the board breaks a settled rule, the rule
- * wins:
+ * wins (see `utils/attackSummary.ts` for the shared ones):
  * - no "Stopped you" row — impact is asked only in `EndAttackForm`;
- * - location is a side ("left side"), never a zone ("left temple");
- * - "gone when you woke up" has no length: "ended in sleep", as on Detail;
- * - a dose's outcome is `doseOutcomeWord` from its 2 h reading (A1), and a
- *   dose without one says so rather than being left out or called "no help".
+ * - "gone when you woke up" has no length: "ended in sleep", as on Detail.
  */
 export function PastAttackSaved({ attack, medications, onAddAnother, onDone }: {
   attack: Attack;
@@ -31,32 +25,29 @@ export function PastAttackSaved({ attack, medications, onAddAnother, onDone }: {
   onAddAnother: () => void;
   onDone: () => void;
 }) {
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  // Focus moves to the heading so a screen reader announces the save; the
-  // step content it replaced no longer exists.
-  useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
+  const headingRef = useHeadingFocus();
 
   const start = attack.snapshots[0].time;
   const length = hasKnownDuration(attack) ? formatDuration(start, attack.end) : 'ended in sleep';
-  const worst = attackMaxSeverity(attack);
-  const side = attackSide(attack);
-  const opening = attack.snapshots[0];
   const quality = attack.painQuality ?? [];
-  const symptoms = opening.symptoms.filter((s) => !isRetired(s));
-  const reliefs = opening.reliefs.filter((r) => !isRetired(r));
-  const before = attack.triggers.filter((t) => t !== NOTHING_UNUSUAL && !isRetired(t)).join(', ')
-    || (attack.triggers.includes(NOTHING_UNUSUAL) ? 'Nothing unusual' : '');
-  const doses = attackDoseOutcomes(attack);
+  const symptoms = marksOf(attack, 'symptoms');
+  const reliefs = marksOf(attack, 'reliefs');
+  const before = beforeText(attack);
+  const note = attack.snapshots[0].note;
 
-  const rows: Array<{ key: string; label: string; value: string }> = [
-    { key: 'worst', label: 'Worst', value: side ? `${worst} · ${SIDE_LABELS[side].toLowerCase()}` : String(worst) },
+  const rows: SummaryRow[] = [
+    { key: 'worst', label: 'Worst', value: worstText(attack) },
     ...(attack.wokeWithMigraine ? [{ key: 'woke', label: 'Woke up with it', value: 'Yes' }] : []),
     ...(quality.length ? [{ key: 'quality', label: 'Felt like', value: quality.join(', ') }] : []),
-    ...doses.map((o, i) => ({ key: `dose-${i}`, label: i === 0 ? 'Taken' : '', value: doseText(o, attack, medications) })),
+    // "Sumatriptan · 1 tablet · helped a bit"
+    ...attackDoseOutcomes(attack).map((o, i) => ({
+      key: `dose-${i}`, label: i === 0 ? 'Taken' : '', srLabel: 'Taken',
+      value: [o.name, amountText(o, attack, medications), outcomeText(o)].filter(Boolean).join(' · '),
+    })),
     ...(symptoms.length ? [{ key: 'symptoms', label: 'Also had', value: symptoms.join(', ') }] : []),
     ...(reliefs.length ? [{ key: 'reliefs', label: 'Tried', value: reliefs.join(', ') }] : []),
     ...(before ? [{ key: 'before', label: 'Two days before', value: before }] : []),
-    ...(opening.note ? [{ key: 'note', label: 'Note', value: opening.note }] : []),
+    ...(note ? [{ key: 'note', label: 'Note', value: note }] : []),
   ];
 
   return (
@@ -79,38 +70,9 @@ export function PastAttackSaved({ attack, medications, onAddAnother, onDone }: {
           </h1>
           <p className="text-sm text-text-secondary">{formatDate(start)} · {length}</p>
         </div>
-
-        <dl className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
-          {rows.map((r) => (
-            <div key={r.key} className="flex min-h-14 items-center gap-3 px-4 py-3">
-              {/* An empty label is a second dose under "Taken"; it still needs
-                  a term for the list to read in order. */}
-              <dt className="max-w-[40%] shrink-0 text-sm text-text-secondary">{r.label || <span className="sr-only">Taken</span>}</dt>
-              <dd className="min-w-0 flex-1 text-right text-base font-semibold text-text-primary [overflow-wrap:anywhere]">{r.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <SummaryList rows={rows} />
       </div>
-
-      <div
-        className="mx-auto flex w-full max-w-2xl flex-col gap-2.5 px-gutter pt-3 sm:px-gutter-wide"
-        style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
-      >
-        <button type="button" onClick={onAddAnother} className="btn-secondary btn-cta w-full">Add another past attack</button>
-        <button type="button" onClick={onDone} className="btn-primary btn-cta w-full">Done</button>
-      </div>
+      <SummaryFooter secondary="Add another past attack" onSecondary={onAddAnother} onDone={onDone} />
     </div>
   );
-}
-
-/** "Sumatriptan · 1 tablet · helped a bit". The words are `doseOutcomeWord`'s
- *  three, read off the 2 h reading; with no reading, that is said instead. */
-function doseText(o: DoseOutcome, attack: Attack, medications: Medication[]): string {
-  const snap = attack.snapshots.find((s) => s.time === o.time && s.medication?.name?.trim() === o.name);
-  const lib = resolveDose(snap?.medication, medications).med;
-  const amount = o.amount ? unitsLabel(o.amount, lib) : o.dose;
-  const outcome = o.after === null
-    ? 'no 2 h reading'
-    : { Helped: 'helped', 'A bit': 'helped a bit', No: 'didn’t help' }[doseOutcomeWord(o.before, o.after)];
-  return [o.name, amount, outcome].filter(Boolean).join(' · ');
 }
