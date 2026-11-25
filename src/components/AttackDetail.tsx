@@ -193,20 +193,23 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
               </svg>
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[0.9375rem] font-semibold text-text-primary">Looks too short to be real</span>
-              <span className="block text-xs text-text-secondary">Attacks under 5 minutes are often started by mistake.</span>
+              {/* Says the fact and hands over the choice (§9.3: user in control,
+                  never imply fault). The board's "Looks too short to be
+                  real" doubted the record itself; this doesn't. */}
+              <span className="block text-[0.9375rem] font-semibold text-text-primary">Under 5 minutes</span>
+              <span className="block text-xs text-text-secondary">If it was started by accident, you can delete it.</span>
             </span>
             {onSaveDetails && (
               <button
                 type="button"
                 onClick={() => onSaveDetails({ confirmedReal: true })}
-                aria-label="Confirm this attack happened"
+                aria-label="Keep this attack"
                 className="inline-flex min-h-target flex-none items-center gap-1.5 px-1 text-sm font-medium text-text-primary"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
                   <path d="M5 12l5 5 9-10" />
                 </svg>
-                Confirm
+                Keep it
               </button>
             )}
           </div>

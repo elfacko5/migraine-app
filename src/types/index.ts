@@ -52,7 +52,7 @@ export interface Attack {
   // attack is excluded. A reader must check this before treating `end` as a
   // trustworthy duration endpoint — never fabricate confidence in a guess.
   endUnknown?: boolean;
-  // Set after Logs/Detail flagged the attack as "too short to be real"
+  // Set after Logs/Detail flagged the attack as under five minutes
   // (under 5 min) and the user confirmed it did happen. Metadata-only, like
   // impact/triggers — never touches snapshots.
   confirmedReal?: boolean;

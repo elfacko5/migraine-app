@@ -118,7 +118,7 @@ export function HistoryView({
         >
           <span className="min-w-0 flex-1">
             <span className="block text-[0.9375rem] font-medium text-text-strong">
-              {tooShort.length === 1 ? '1 attack looks too short' : `${tooShort.length} attacks look too short`}
+              {tooShort.length === 1 ? '1 attack under 5 minutes' : `${tooShort.length} attacks under 5 minutes`}
             </span>
             <span className="block text-xs text-text-secondary">
               {formatDuration(tooShort[0].snapshots[0].time, tooShort[0].end)} · {formatDate(tooShort[0].snapshots[0].time)}
