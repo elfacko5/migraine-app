@@ -239,9 +239,15 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
     // attack in the period, the same "x of n" the Symptoms section uses.
     const wokeWith = filtered.filter((a) => a.wokeWithMigraine).length;
 
+    // Attacks with any dose logged — how many went untreated, which the
+    // per-drug Medication cards (days and doses) never say. Ongoing attacks
+    // count, over the same denominator as `wokeWith`.
+    const tookSomething = filtered.filter((a) => a.snapshots.some((s) => s.medication)).length;
+
     return {
       count: filtered.length,
       wokeWith,
+      tookSomething,
       avgSeverity,
       avgLength,
       timeToPeak,
@@ -387,9 +393,13 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
             // No section card: the grid is the card (`.facts` on the board),
             // its cells divided by 1px gaps rather than padded inside a fill.
             bare
-            info="Across the attacks in this period. Peak is each attack's own worst reading, averaged. Length leaves out any attack still going. Time to the peak counts only the attacks that got worse after the first reading — not one still going, or one already there when you woke — and shows once three have. Woke up with it counts the attacks that were already there when you woke."
+            info="Across the attacks in this period. Peak is each attack's own worst reading, averaged. Length leaves out any attack still going. Time to the peak counts only the attacks that got worse after the first reading — not one still going, or one already there when you woke — and shows once three have. Woke up with it counts the attacks that were already there when you woke. Took something counts the attacks with a medicine logged."
           >
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(9.375rem,1fr))] gap-px overflow-hidden rounded-card bg-bg-raised">
+            {/* Two columns at every width, not auto-fit: with five figures an
+                auto-fit row of four left three empty slots showing as blocks
+                of the divider colour, and only a fixed column count lets the
+                one filler below close the grid. */}
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card bg-bg-raised">
               <TypicalStat value={stats.avgSeverity} label="average peak pain" />
               {stats.avgLength !== null && (
                 <TypicalStat value={formatTypicalDuration(stats.avgLength)} label="long" />
@@ -401,14 +411,18 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
                   replaced because it counts how often, not what an attack is
                   like, and repeated the Attack days chart above. */}
               <TypicalStat value={`${stats.wokeWith} of ${stats.count}`} label="woke up with it" />
-              {/* With one figure missing the grid has an empty slot, which
-                  would show as a block of the divider colour. Filled with a
-                  blank cell instead. Usually it's time to the peak: hidden
-                  until three ended, not-woken-with attacks got worse after
+              {/* "Took something" added 2026-11-25 as a fifth figure, not a
+                  stand-in for a hidden one: a slot that changes meaning with
+                  the data makes the card unreadable between periods. */}
+              <TypicalStat value={`${stats.tookSomething} of ${stats.count}`} label="took something" />
+              {/* An odd count leaves an empty slot, which would show as a
+                  block of the divider colour; filled with a blank cell.
+                  Usually time to the peak is the one hidden: it waits for
+                  three ended, not-woken-with attacks that got worse after
                   their first reading (`avgTimeToPeak`). Length goes missing
                   only while every attack is still going, which hides time to
-                  the peak too — then the two left need no filler. */}
-              {(stats.avgLength === null) !== (stats.timeToPeak === null) && (
+                  the peak too. */}
+              {(3 + (stats.avgLength === null ? 0 : 1) + (stats.timeToPeak === null ? 0 : 1)) % 2 === 1 && (
                 <div aria-hidden="true" className="bg-bg-surface" />
               )}
             </div>
