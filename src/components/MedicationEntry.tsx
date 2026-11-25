@@ -341,37 +341,44 @@ function MedicineCard({ selected, library, attacks, options, startMs, endMs, now
   onFollowUp: (key: string, v: number | null) => void;
 }) {
   const unit = library?.unitLabel?.trim() || DEFAULT_UNIT;
+  // Matches the v4 board (`Live23MedDark` `.grp` / `.rw`): one card of
+  // full-width rows split by `bg-border` hairlines — header, "How much" with
+  // the stepper on the same line, "When did you take it?", "+ Add another
+  // dose" — rather than a nested raised box holding every dose's controls.
+  // `divide-y` draws the hairlines, so a row that renders nothing (the limit
+  // note without limits) leaves no stray line behind. `p-px` keeps those
+  // hairlines inside the inset accent ring instead of drawn across it.
   return (
-    <div className="overflow-hidden rounded-card bg-bg-surface ring-1 ring-inset ring-accent">
+    <div className="divide-y divide-bg-border overflow-hidden rounded-card bg-bg-surface p-px ring-1 ring-inset ring-accent">
       <button type="button" onClick={onDeselect} aria-pressed className="flex min-h-[3.625rem] w-full items-center gap-3 px-4 py-2.5 text-left">
         <ClassBadge>{classLetter(library?.class) ?? '–'}</ClassBadge>
         <span className="min-w-0 flex-1">
-          <span className="block text-base font-medium text-text-primary">{selected.name}</span>
+          <span className="block text-base font-semibold text-text-primary">{selected.name}</span>
           {selected.dose && <span className="block text-sm text-text-secondary">{selected.dose}</span>}
         </span>
         <ChipCheck selected />
       </button>
-      <div className="space-y-3 border-t border-bg-border px-4 py-3">
-        {selected.doses.map((d, i) => (
-          <DoseRow
-            key={d.key}
-            entry={d}
-            removable={i > 0}
-            unit={unit}
-            options={options}
-            startMs={startMs}
-            endMs={endMs}
-            nowMs={nowMs}
-            onUnits={(n) => onUnits(d.key, n)}
-            onMode={(m) => onMode(d.key, m, d.mode, d.time)}
-            onTime={(t) => onTime(d.key, t)}
-            onRemove={() => onRemoveDose(d.key)}
-            followUpStart={followUpStart}
-            onFollowUp={(v) => onFollowUp(d.key, v)}
-          />
-        ))}
-        <DoseLimitNote library={library} attacks={attacks} name={selected.name} doses={selected.doses} startMs={startMs} endMs={endMs} nowMs={nowMs} />
-        <button type="button" onClick={onAddDose} className="tap-44-y min-h-0 py-1.5 text-sm font-medium text-accent-light transition-colors hover:text-accent">
+      {selected.doses.map((d, i) => (
+        <DoseRow
+          key={d.key}
+          entry={d}
+          removable={i > 0}
+          unit={unit}
+          options={options}
+          startMs={startMs}
+          endMs={endMs}
+          nowMs={nowMs}
+          onUnits={(n) => onUnits(d.key, n)}
+          onMode={(m) => onMode(d.key, m, d.mode, d.time)}
+          onTime={(t) => onTime(d.key, t)}
+          onRemove={() => onRemoveDose(d.key)}
+          followUpStart={followUpStart}
+          onFollowUp={(v) => onFollowUp(d.key, v)}
+        />
+      ))}
+      <DoseLimitNote library={library} attacks={attacks} name={selected.name} doses={selected.doses} startMs={startMs} endMs={endMs} nowMs={nowMs} />
+      <div className="flex min-h-row items-center px-4">
+        <button type="button" onClick={onAddDose} className="tap-44-y min-h-0 py-1.5 text-base font-medium text-accent-light transition-colors hover:text-accent">
           + Add another dose
         </button>
       </div>
@@ -402,14 +409,16 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
     if (entry.mode === 'manual') openRef.current?.open();
   }, [entry.mode]);
 
+  // A fragment of rows, not a box: each is a row of the medicine's card, so
+  // the card's own `divide-y` draws the hairline between them.
   return (
-    <div className="space-y-2.5 rounded-control bg-bg-raised p-3">
-      {/* Label above the stepper, not beside it (matching "When did you take
-          it?" below) — sharing a row with two 44px circles left the label
-          squeezed into a sliver, or the row overflowing outright, once text
-          size grew past 100% (reviewer finding, 2026-11-24: the old 36px
-          buttons were already tight here; 44px broke it). */}
-      <div className="space-y-1.5">
+    <>
+      {/* Label and stepper share one row, as the board draws them. The row
+          wraps rather than squeezing: once text size grows past ~100% the
+          label and two 44px circles no longer fit side by side (reviewer
+          finding, 2026-11-24), so the stepper drops under the label instead
+          of the label shrinking to a sliver or the row overflowing. */}
+      <div className="flex min-h-row flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">How much</span>
         <div className="flex items-center gap-3">
           <button
@@ -433,10 +442,12 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
           </button>
         </div>
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-2.5 px-4 py-3">
         <p id={`dose-time-${entry.key}`} className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
           When did you take it?
         </p>
+        {/* In-card radio pills: the board's `.grp .rdc` — 40px tall, a
+            regular-weight label that `CHIP_ON` lifts to semibold. */}
         <div role="radiogroup" aria-labelledby={`dose-time-${entry.key}`} className="flex flex-wrap gap-2">
           {options.map((m) => (
             <button
@@ -445,7 +456,7 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
               role="radio"
               aria-checked={mode === m}
               onClick={() => onMode(m)}
-              className={`tap-44-y inline-flex items-center gap-1.5 rounded-chip px-3 py-1.5 text-sm font-medium transition-colors ${chipClass(mode === m)}`}
+              className={`tap-44-y inline-flex min-h-10 items-center gap-2 rounded-chip px-3.5 text-sm transition-colors ${chipClass(mode === m)}`}
             >
               <RadioDot selected={mode === m} />
               {DOSE_LABELS[m]}
@@ -463,6 +474,15 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
             openRef={openRef}
           />
         )}
+        {removable && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="tap-44-y min-h-0 py-1 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
+          >
+            Remove this dose
+          </button>
+        )}
       </div>
       {followUpStart !== undefined && followUpApplies(doseEntryMs(entry, startMs, endMs, nowMs), endMs) && (
         <FollowUpRow
@@ -472,16 +492,7 @@ function DoseRow({ entry, removable, unit, options, startMs, endMs, nowMs, onUni
           onChange={onFollowUp}
         />
       )}
-      {removable && (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="tap-44-y min-h-0 py-1 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-        >
-          Remove this dose
-        </button>
-      )}
-    </div>
+    </>
   );
 }
 
@@ -499,7 +510,7 @@ function FollowUpRow({ atMs, value, start, onChange }: {
   onChange: (v: number | null) => void;
 }) {
   return (
-    <div className="space-y-2.5 rounded-control bg-bg-raised p-3">
+    <div className="space-y-2.5 px-4 py-3">
       <div>
         <p className="text-sm font-medium text-text-primary">…and about 2 hours after?</p>
         <p className="text-xs text-text-secondary">Around {formatTime(new Date(atMs).toISOString())}. Optional.</p>
@@ -615,7 +626,7 @@ function DoseLimitNote({ library, attacks, name, doses, startMs, endMs, nowMs }:
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 px-4 py-3">
       <p className="text-xs text-text-secondary">
         {library.maxPerDay
           ? `${check.unitsInWindow + totalUnits} of ${library.maxPerDay} in the last 24h`
