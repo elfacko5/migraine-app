@@ -7,7 +7,7 @@ import type { Attack } from '../types';
 // of the four is *unilateral*. So "left" or "right" is half a criterion, while
 // "four areas" is not a fact anyone can act on — a count can't tell one-sided
 // from both-sided, which is exactly the distinction the criterion turns on.
-// That's why the Logs row reports a side rather than a list of zones or a
+// That's why the Side filter and Detail report a side rather than a list of zones or a
 // tally of them.
 //
 // The 20 zones aren't lost: they're still recorded on every snapshot, drawn

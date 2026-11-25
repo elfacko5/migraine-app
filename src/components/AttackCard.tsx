@@ -1,11 +1,10 @@
 import type { Attack } from '../types';
 import { formatDuration } from '../utils/format';
 import { attackMaxSeverity, hasKnownDuration, maxSeverity } from '../utils/stats';
-import { attackSide, SIDE_LABELS } from '../utils/laterality';
 import { sevFillClass } from '../utils/severity';
 import { cardSymptoms, type CardSymptom } from '../utils/cardSymptoms';
 import { useNowTick } from '../hooks/useNowTick';
-import { LightIcon, NauseaIcon, SideGlyph, SoundIcon, TabletIcon } from './drawnIcons';
+import { LightIcon, NauseaIcon, SoundIcon, SymptomIcon, TabletIcon } from './drawnIcons';
 
 // A Logs row — option "D2" of the 2026-11-25 exploration (docs/decisions.md),
 // replacing the v3.10 row. What it carries, and what it deliberately doesn't:
@@ -14,8 +13,12 @@ import { LightIcon, NauseaIcon, SideGlyph, SoundIcon, TabletIcon } from './drawn
 //     or end time and no "peak" label: the times were noise beside the length,
 //     and a label repeated on every row says nothing. The ongoing row keeps
 //     "now", because there the number means something different.
-//   - **One row of small marks:** the side as a head, a tablet and the number of
-//     doses, and the ICHD symptoms (rules in `utils/cardSymptoms.ts`).
+//   - **One row of small marks:** a tablet and the number of doses, and the
+//     symptoms (rules in `utils/cardSymptoms.ts`).
+//   - **Not the side.** Drawn as a head it couldn't be read without a label
+//     (mirrored like the picker, so a left attack shades the right half), and
+//     one attack's side says little: what matters is a pattern, which Insights'
+//     Where it hurt shows and the Side filter can ask for. Detail keeps it.
 //   - **Not whether a medicine helped.** That's a question about a pattern,
 //     which Insights answers per drug, or about one dose, which the attack's
 //     page answers. A ✓/– per row answered neither and made the row busy.
@@ -33,26 +36,26 @@ interface Props {
 }
 
 const SYMPTOM_ICON: Record<CardSymptom, typeof NauseaIcon> = { nausea: NauseaIcon, light: LightIcon, sound: SoundIcon };
-const SYMPTOM_WORD: Record<CardSymptom, string> = { nausea: 'nausea', light: 'light sensitivity', sound: 'sound sensitivity' };
 
-const TOKEN = 'inline-flex h-6 items-center gap-1.5 rounded-lg bg-bg-base px-1.5 text-xs text-text-secondary';
+// The chips sit one surface *up* from the card, not recessed into it: on the
+// phone the `bg-base` recess read as dark holes in the card (2026-11-25).
+const TOKEN = 'inline-flex h-6 items-center gap-1.5 rounded-lg px-1.5 text-xs text-text-secondary';
 
 export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Props) {
   const start = new Date(attack.snapshots[0].time);
   const severity = isOngoing ? maxSeverity(attack.snapshots[attack.snapshots.length - 1]) : attackMaxSeverity(attack);
-  const side = attackSide(attack);
   const doses = attack.snapshots.filter((s) => s.medication?.name?.trim()).length;
-  const { shown, others } = cardSymptoms(attack.snapshots.flatMap((s) => s.symptoms ?? []));
-  const marks = side || doses > 0 || shown.length > 0 || others > 0;
+  const { marks: symptoms, more } = cardSymptoms(attack.snapshots.flatMap((s) => s.symptoms ?? []));
+  const marks = doses > 0 || symptoms.length > 0;
+  const chip = `${TOKEN} ${isOngoing ? 'bg-bg-elevated' : 'bg-bg-raised'}`;
   const length = !hasKnownDuration(attack) && !isOngoing ? 'Length not recorded' : null;
   const day = start.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
   const label = [
     isOngoing ? `Ongoing, pain ${severity} now` : `${day}, ${length ?? formatDuration(attack.snapshots[0].time, attack.end)}, worst pain ${severity}`,
-    side ? SIDE_LABELS[side].toLowerCase() : null,
     doses ? `${doses} ${doses === 1 ? 'dose' : 'doses'}` : 'no medication',
-    ...shown.map((k) => SYMPTOM_WORD[k]),
-    others ? `${others} other ${others === 1 ? 'symptom' : 'symptoms'}` : null,
+    ...symptoms.map((m) => m.name.toLowerCase()),
+    more ? `${more} more ${more === 1 ? 'symptom' : 'symptoms'}` : null,
   ].filter(Boolean).join(', ');
 
   return (
@@ -89,25 +92,20 @@ export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Pr
 
       {marks && (
           <span aria-hidden="true" className="col-start-2 row-start-2 flex flex-wrap gap-1.5 self-start @max-[20rem]:col-end-5">
-            {/* `null` draws nothing — an empty head would read as "neither side". */}
-            {side && (
-              <span className={TOKEN}>
-                <SideGlyph side={side} className="h-[1.125rem] w-auto" />
-              </span>
-            )}
             {doses > 0 && (
-              <span className={`${TOKEN} tabular-nums`}>
+              <span className={`${chip} tabular-nums`}>
                 <TabletIcon className="h-[0.875rem] w-[0.875rem]" />
                 {doses}
               </span>
             )}
-            {(shown.length > 0 || others > 0) && (
-              <span className={TOKEN}>
-                {shown.map((k) => {
-                  const Icon = SYMPTOM_ICON[k];
-                  return <Icon key={k} className="h-4 w-4" />;
+            {symptoms.length > 0 && (
+              <span className={chip}>
+                {symptoms.map((m) => {
+                  if (m.kind === null) return <SymptomIcon key={m.name} name={m.name} className="h-4 w-4" />;
+                  const Icon = SYMPTOM_ICON[m.kind];
+                  return <Icon key={m.kind} className="h-4 w-4" />;
                 })}
-                {others > 0 && <span className="tabular-nums">+{others}</span>}
+                {more > 0 && <span className="tabular-nums">+{more}</span>}
               </span>
             )}
           </span>
