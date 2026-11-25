@@ -58,6 +58,7 @@ import { Hit6View } from './components/Hit6View';
 import { EditMedicationForm } from './components/EditMedicationForm';
 import { AddMedicationWizard } from './components/AddMedicationWizard';
 import { Toast } from './components/Toast';
+import { DELETED_FLAG } from './utils/backup';
 import { AttackModePill } from './components/AttackModePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
 
@@ -103,7 +104,18 @@ export default function App() {
   // returns to Insights rather than to My medications.
   const [insightsGuidesOpen, setInsightsGuidesOpen] = useState(false);
   const [medEditor, setMedEditor] = useState<{ med: Medication } | { isNew: true } | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // Seeded once from the flag Data → Delete all data leaves before reloading,
+  // so the message lands on the fresh, empty app.
+  // The initialiser only reads (StrictMode runs it twice); the effect clears.
+  const [toastMessage, setToastMessage] = useState<string | null>(() => {
+    try {
+      if (sessionStorage.getItem(DELETED_FLAG)) return 'All data on this phone was deleted.';
+    } catch { /* no sessionStorage: no message */ }
+    return null;
+  });
+  useEffect(() => {
+    try { sessionStorage.removeItem(DELETED_FLAG); } catch { /* nothing to clear */ }
+  }, []);
   // The edit form's own answer to a close request (Escape, the backdrop).
   const editCloseRef = useRef<(() => void) | null>(null);
   // Set when either sheet below was opened by voice — the Siri App Intent or
@@ -918,6 +930,8 @@ export default function App() {
             attackCount={attacks.length}
             checkInCount={attacks.reduce((n, a) => n + a.snapshots.length, 0)}
             medCount={medications.length}
+            reminders={defaultNotifConfig}
+            onReminders={setDefaultNotifConfig}
           />
         )}
         {profileSheet === 'about' && (

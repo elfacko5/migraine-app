@@ -119,3 +119,34 @@ export function applyBackup(data: Record<string, string>): void {
     if (k.startsWith(PREFIX)) localStorage.setItem(k, v);
   }
 }
+
+/** Set just before the reload that follows a delete, read once by `App` to
+ *  show the "deleted" message on the fresh page. sessionStorage, not `hd_`:
+ *  it must survive the reload but never the delete itself or an export. */
+export const DELETED_FLAG = 'lidd_deleted_all';
+
+/**
+ * **Delete all data, this phone only** (2026-11-25, Sunny: "phone only for
+ * now" — the diff doc's D3, deleting the account's rows too, is not built).
+ * Removes every `hd_` key: attacks, lists, medicines, HIT-6, reminder default
+ * and display settings — the same set Export writes. Cancels each attack's
+ * reminder first so none fires for an attack that no longer exists.
+ *
+ * The caller signs out *before* this and reloads *after*: signed in, the next
+ * sync would pull everything straight back; and every hook holds its list in
+ * React state, so without a reload the first write would put it back too.
+ */
+export function deleteAllLocalData(cancelReminder: (attackId: number) => void): void {
+  try {
+    const attacks = JSON.parse(localStorage.getItem('hd_attacks') ?? '[]') as { id?: unknown }[];
+    for (const a of attacks) if (typeof a?.id === 'number') cancelReminder(a.id);
+  } catch {
+    /* unreadable list: nothing to cancel */
+  }
+  const keys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith(PREFIX)) keys.push(key);
+  }
+  for (const k of keys) localStorage.removeItem(k);
+}

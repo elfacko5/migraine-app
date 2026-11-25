@@ -95,3 +95,12 @@ export function greeting(now = new Date()): string {
   if (h < 18) return 'Good afternoon';
   return 'Good evening';
 }
+
+/** "Every 2 h" — the Reminders board's own value wording, and never
+ *  "every 1 hours", which the old sentence produced for 60. Shared by the
+ *  Reminders picker and Data's Reminders row. */
+export function everyLabel(min: number): string {
+  if (min < 60) return `Every ${min} min`;
+  if (min === 60) return 'Every hour';
+  return `Every ${min / 60} h`;
+}

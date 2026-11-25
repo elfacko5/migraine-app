@@ -2,18 +2,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FontChoice, TextScale, Theme } from '../hooks/useSettings';
 import type { useAuth } from '../hooks/useAuth';
 import type { Attack, SyncStatus } from '../types';
-import { formatSince, formatDatetime, formatTime } from '../utils/format';
+import { formatSince, formatDatetime, formatTime, everyLabel } from '../utils/format';
 import { useNowTick } from '../hooks/useNowTick';
 import { AttackCard } from './AttackCard';
-import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
+import { exportData, readBackupFile, applyBackup, deleteAllLocalData, DELETED_FLAG, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
 import { SegmentedControl } from './SegmentedControl';
 import { Button, TextField } from 'code-ds';
 import { SectionLabel, SettingsList, SettingsRow, Switch } from './settingsUi';
-import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
+import { pendingReminders, notificationPermission, cancelNotification, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
+import { DeleteAllDialog } from './DeleteAllDialog';
 import appIcon from '../assets/app-icon.png';
 import type { NotificationConfig } from '../types';
 
@@ -647,7 +648,7 @@ function ReminderDiagnostics() {
   return (
     <section className="space-y-2 border-t border-bg-border pt-5">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary label-caps">Reminders</p>
+        <p className="text-xs font-semibold text-text-secondary">What iOS has scheduled</p>
         <button
           type="button"
           onClick={refresh}
@@ -703,14 +704,30 @@ export function RemindersPanel({ value, onChange, onClose }: {
           While an attack is open, a reminder asks how it's going, so the diary has a reading every so often. Applies to attacks from now on.
         </p>
         <NotificationSettings value={value} onChange={onChange} />
+        {/* Moved here from Data (2026-11-25): the v4 Data board has no room
+            for it, and it is about reminders. A read of the OS queue, not a
+            setting, so it sits last and quiet. */}
+        <ReminderDiagnostics />
       </div>
     </ProfileSubPage>
   );
 }
 
-export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount }: {
+/** "On · adaptive" / "On · every hour" / "Off" — the Data board's Reminders row. */
+function remindersSummary(c: NotificationConfig): string {
+  if (!c.enabled) return 'Off';
+  return c.mode === 'adaptive' ? 'On · adaptive' : `On · ${everyLabel(c.fixedIntervalMinutes).toLowerCase()}`;
+}
+
+// Matches docs/redesign-v4/screens/16-data/DataRedesign.html. "Delete all
+// data" deletes from this phone only (see `deleteAllLocalData`); the board's
+// "and from your account" is the diff doc's D3, not built.
+export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount, reminders, onReminders }: {
   auth: ReturnType<typeof useAuth>;
   onClose: () => void;
+  /** The reminder default, for the board's "Manage → Reminders" row. */
+  reminders: NotificationConfig;
+  onReminders: (next: NotificationConfig) => void;
   /** Counts shown on the export-confirm screen before a file is written. */
   attackCount: number;
   checkInCount: number;
@@ -722,8 +739,22 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount }
   const [exportErr, setExportErr] = useState(false);
   // Export now opens a confirm screen first (the v4 DataExport board): it names
   // what the file holds and that it isn't encrypted before anything is written.
-  const [view, setView] = useState<'data' | 'export'>('data');
+  const [view, setView] = useState<'data' | 'export' | 'reminders'>('data');
   const exporting = useRef(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const deleting = useRef(false);
+
+  async function deleteAll() {
+    if (deleting.current) return;
+    deleting.current = true;
+    // Sign out first: otherwise the reload's sync pulls everything back.
+    if (auth.session) {
+      try { await auth.signOut(); } catch (e) { console.error('Sign-out before delete failed:', e); }
+    }
+    deleteAllLocalData(cancelNotification);
+    try { sessionStorage.setItem(DELETED_FLAG, '1'); } catch { /* message is a nicety */ }
+    window.location.reload();
+  }
 
   // The write itself (share sheet on native, download on web). Returns whether
   // it saved, so the confirm screen can step back only on success. It used to
@@ -795,24 +826,37 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount }
     );
   }
 
+  // Reminders opened from Data is a level below Data: its back chevron
+  // returns here, not to Settings. Same panel and state as Settings → Reminders.
+  if (view === 'reminders') {
+    return <RemindersPanel value={reminders} onChange={onReminders} onClose={() => setView('data')} />;
+  }
+
   return (
     <ProfileSubPage title="Data" onClose={onClose}>
-
-        <div className="rounded-card border border-bg-border bg-bg-raised/40 p-card space-y-3">
+      {/* gap-[22px] on the board → space-y-5 (20px), the Reminders page's step. */}
+      <div className="space-y-5">
+        <div className="rounded-card bg-bg-surface p-card">
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setView('export')}
-              className="btn-secondary py-2.5 text-sm font-medium transition-colors"
+              className="btn-secondary btn-inline flex w-full items-center justify-center gap-2 text-base"
             >
-              Export backup
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0" aria-hidden="true">
+                <path d="M12 15V4M8 8l4-4 4 4M5 20h14" />
+              </svg>
+              Export
             </button>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="btn-secondary py-2.5 text-sm font-medium transition-colors"
+              className="btn-secondary btn-inline flex w-full items-center justify-center gap-2 text-base"
             >
-              Import backup
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0" aria-hidden="true">
+                <path d="M12 4v11M8 11l4 4 4-4M5 20h14" />
+              </svg>
+              Import
             </button>
           </div>
           <input
@@ -823,19 +867,46 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount }
             className="hidden"
             onChange={onFile}
           />
-          <p className="text-xs text-text-secondary">
-            Save your attacks, triggers and settings to a file — or restore them on another device.
+          <p className="mt-3.5 text-sm leading-relaxed text-text-secondary">
+            Save a copy of your attacks, medicines and settings to a file, or restore them on another device.
             {' '}{auth.session
-              ? "You're signed in, so this data also syncs automatically."
-              : 'Everything stays on this device; nothing is uploaded unless you sign in above.'}
+              ? 'You’re signed in, so everything also syncs automatically — a file is a backup you keep yourself.'
+              : 'Everything stays on this device; nothing is uploaded unless you sign in.'}
           </p>
-          {importErr && <p className="text-xs text-severity-high">{importErr}</p>}
+          {importErr && <p className="mt-2 text-sm text-severity-high">{importErr}</p>}
           {/* Amber, not the alarm colour: the data is untouched, only the file was not made. */}
           {/* The live region stays in the page and only its text comes and goes: VoiceOver often skips a region that is added already holding text. */}
-          <p role="status" className="text-xs text-severity-mid">{exportErr ? "The backup couldn't be saved. Your data is still on this device." : ''}</p>
+          <p role="status" className="text-sm text-severity-mid empty:hidden">{exportErr ? "The backup couldn't be saved. Your data is still on this device." : ''}</p>
         </div>
 
-        <ReminderDiagnostics />
+        <div>
+          <SectionLabel>Manage</SectionLabel>
+          <SettingsList>
+            <SettingsRow value={remindersSummary(reminders)} onClick={() => setView('reminders')}>Reminders</SettingsRow>
+            {/* A bin, not a chevron: it opens a confirm, not a page (the board's row). */}
+            <SettingsRow bare>
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(true)}
+                className="-mx-card flex w-[calc(100%+2*var(--spacing-card))] items-center gap-3 px-card text-left text-sm text-text-primary transition-colors hover:bg-bg-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
+              >
+                <span className="flex-1">Delete all data</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className="size-5 shrink-0 text-text-secondary" aria-hidden="true">
+                  <path d="M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+                </svg>
+              </button>
+            </SettingsRow>
+          </SettingsList>
+        </div>
+      </div>
+
+      <DeleteAllDialog
+        open={deleteOpen}
+        signedIn={!!auth.session}
+        onExportFirst={() => { setDeleteOpen(false); setView('export'); }}
+        onKeep={() => setDeleteOpen(false)}
+        onDelete={deleteAll}
+      />
 
       <ConfirmDialog
         open={!!pending}

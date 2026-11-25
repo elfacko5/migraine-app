@@ -1,4 +1,5 @@
 import type { NotificationConfig } from '../types';
+import { everyLabel } from '../utils/format';
 import { BellIcon } from './drawnIcons';
 import { RadioDot } from './RadioDot';
 import { SectionLabel, SettingsList, SettingsRow, Switch } from './settingsUi';
@@ -10,13 +11,6 @@ interface Props {
 
 const FIXED_OPTIONS = [30, 60, 120, 240];
 
-/** "Every 2 h" — the board's own value wording ("Every 2 h"), and never
- *  "every 1 hours", which the old sentence produced for 60. */
-function everyLabel(min: number): string {
-  if (min < 60) return `Every ${min} min`;
-  if (min === 60) return 'Every hour';
-  return `Every ${min / 60} h`;
-}
 
 // Matches docs/redesign-v4/screens/reminders/RemindersRedesign.html.
 //
