@@ -189,6 +189,12 @@ const LookBackGlyph = (
   </svg>
 );
 
+// "Between 5 and 9", or "All 7" when there's no range to state.
+function peakRange(peaks: number[]): string {
+  const lo = Math.min(...peaks), hi = Math.max(...peaks);
+  return lo === hi ? `All ${lo}` : `Between ${lo} and ${hi}`;
+}
+
 // Ranked horizontal frequency bars (most-frequent first).
 function FreqBars({ data, color }: { data: Freq[]; color: string }) {
   const max = data[0]?.count ?? 1;
@@ -364,7 +370,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
   const trendLabel = `Worst pain of ${trendPoints.length} attacks from ${day(rangeFrom)} to ${day(rangeTo)}, placed by date. ` + (
     trendPoints.length <= 12
       ? `${trendPoints.map((p) => `${day(p.t)} ${p.severity}`).join(', ')}.`
-      : `Between ${Math.min(...trendPoints.map((p) => p.severity))} and ${Math.max(...trendPoints.map((p) => p.severity))}; latest ${day(trendPoints[trendPoints.length - 1].t)} ${trendPoints[trendPoints.length - 1].severity}.`
+      : `${peakRange(trendPoints.map((p) => p.severity))}; latest ${day(trendPoints[trendPoints.length - 1].t)} ${trendPoints[trendPoints.length - 1].severity}.`
   );
   const trendTicks = [rangeFrom];
   for (let m = new Date(new Date(rangeFrom).getFullYear(), new Date(rangeFrom).getMonth() + 1, 1); m.getTime() < rangeTo; m.setMonth(m.getMonth() + 1)) {
