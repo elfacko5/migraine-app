@@ -262,6 +262,12 @@
   --color-severity-mid:   #c39257;  /* muted amber, used sparingly */
   --color-severity-high:  #c68880;  /* desaturated terracotta, not bright red */
   --color-warning:        #b07a3c;
+  /* v4 "warning-surface" (B, clean batch, 2026-11-22), first used by the
+     attack detail's too-short card (2026-11-25). Amber *icon*, primary text:
+     text-primary 8.7:1, text-secondary 5.4:1, accent-light 6.8:1, the
+     warning icon 3.95:1 (non-text, 3:1 floor). Attack mode keeps this value:
+     its text measures 8.4 / 4.9:1 on it. */
+  --color-warning-surface: #2e2820;
   --color-positive:       #7fa187;
   /* One step brighter than text-primary, for the one or two largest pieces
      of text on a screen (B decision, 2026-11-22) — NOT the design's literal
@@ -361,6 +367,9 @@
   --color-severity-mid:   #7b5020;
   --color-severity-high:  #82423b;
   --color-warning:        #7b5020;
+  /* The design's light value. text-primary 9.4:1, text-secondary 5.9:1,
+     the warning icon 5.6:1. */
+  --color-warning-surface: #efe4d3;
   --color-positive:       #4f6b57;
   --color-ill-1:          #c9a98a;
   --color-ill-2:          #a9bfad;

@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import type { Attack } from '../types';
 import { AttackCard } from './AttackCard';
 import { LightIcon, NauseaIcon, SoundIcon } from './drawnIcons';
+import { looksTooShort } from '../utils/stats';
+import { formatDate, formatDuration } from '../utils/format';
 import {
   applyFilters, sortAttacks, activeFilterChips, filterCount, clearFilterKey,
   DEFAULT_FILTERS, SORT_LABELS,
@@ -43,6 +45,14 @@ export function HistoryView({
   const count = filterCount(filters);
   const total = attacks.length;
   const shown = visible.length;
+  // Across the whole diary, not the filtered view: the banner is about the
+  // record, and a filter shouldn't hide that something may need a look.
+  // Newest first, so Review opens the most recent one; once it's confirmed
+  // or deleted the banner moves on to the next.
+  const tooShort = useMemo(
+    () => attacks.filter(looksTooShort).sort((a, b) => b.id - a.id),
+    [attacks]
+  );
 
   if (total === 0) {
     return (
@@ -98,6 +108,27 @@ export function HistoryView({
           first" is what an unconfigured list already looks like, so a chip
           announcing it would be noise on every visit. Removing it returns to
           newest, which is what "clearing" a sort means. */}
+      {/* The v4 board's "too short" banner (06-logs, `.pend`): a quiet
+          outlined row, not a warning — it asks, it doesn't alarm. */}
+      {tooShort.length > 0 && (
+        <button
+          type="button"
+          onClick={() => onAttackClick(tooShort[0])}
+          className="flex min-h-14 w-full items-center gap-3 rounded-card px-4 py-2.5 text-left ring-1 ring-inset ring-bg-border transition-colors hover:bg-bg-surface"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-[0.9375rem] font-medium text-text-strong">
+              {tooShort.length === 1 ? '1 attack looks too short' : `${tooShort.length} attacks look too short`}
+            </span>
+            <span className="block text-xs text-text-secondary">
+              {formatDuration(tooShort[0].snapshots[0].time, tooShort[0].end)} · {formatDate(tooShort[0].snapshots[0].time)}
+              {tooShort.length > 1 && ' · newest'}
+            </span>
+          </span>
+          <span className="text-sm font-medium text-accent-light">Review</span>
+        </button>
+      )}
+
       {(chips.length > 0 || sort !== 'newest') && (
         // The v4 board's chips (06-logs, `.fc`): 44px plain `bg-surface`
         // pills with a separate muted ×, and a bare accent "Clear" after them.

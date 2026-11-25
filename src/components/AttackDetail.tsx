@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Attack, Medication } from '../types';
 import { NOTHING_UNUSUAL, PAIN_QUALITY_OPTIONS } from '../types';
 import { formatDate, formatTime, formatDuration, isoToLocalInput, localInputToIso } from '../utils/format';
-import { attackDoseOutcomes, attackMaxSeverity, hasKnownDuration, maxSeverity, type DoseOutcome } from '../utils/stats';
+import { attackDoseOutcomes, attackMaxSeverity, hasKnownDuration, looksTooShort, maxSeverity, type DoseOutcome } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
 import { findMedication, unitsLabel } from '../utils/medGuardrails';
 import { classLetter } from '../utils/medClasses';
@@ -29,7 +29,7 @@ interface Props {
   onEndAttack?: () => void;
   /** Attack-level metadata only — never snapshots. Omit to hide the Edit
    *  details action entirely. */
-  onSaveDetails?: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality'>>) => void;
+  onSaveDetails?: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality' | 'confirmedReal'>>) => void;
   triggerOptions?: string[];
   onAddTrigger?: (label: string) => void;
   /** The library — for each drug's type letter. */
@@ -180,6 +180,38 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
       </div>
 
       <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
+        {/* The v4 board's flag (07-detail, `DetailFlagged`). Two ways out:
+            Confirm here, or the bin in the header. Confirming writes
+            `confirmedReal` only — the readings stay as logged — and the
+            card, and the Logs banner, go away. */}
+        {looksTooShort(attack) && (
+          <div role="status" className="flex items-center gap-3 rounded-card bg-warning-surface py-3.5 pl-4 pr-3 ring-1 ring-inset ring-warning/40">
+            <span aria-hidden="true" className="flex size-9 flex-none items-center justify-center rounded-full bg-warning/20 text-warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[0.9375rem] font-semibold text-text-primary">Looks too short to be real</span>
+              <span className="block text-xs text-text-secondary">Attacks under 5 minutes are often started by mistake.</span>
+            </span>
+            {onSaveDetails && (
+              <button
+                type="button"
+                onClick={() => onSaveDetails({ confirmedReal: true })}
+                aria-label="Confirm this attack happened"
+                className="inline-flex min-h-target flex-none items-center gap-1.5 px-1 text-sm font-medium text-text-primary"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                  <path d="M5 12l5 5 9-10" />
+                </svg>
+                Confirm
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-2.5">
           <Tile
             value={!ongoing && !hasKnownDuration(attack) ? '—' : formatDuration(start, attack.end)}

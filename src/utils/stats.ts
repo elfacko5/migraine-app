@@ -884,3 +884,20 @@ export function attackDoseOutcomes(attack: Attack, now: number = Date.now()): Do
   }
   return out;
 }
+
+/** Under this, an ended attack is flagged as possibly started by mistake. */
+export const TOO_SHORT_MS = 5 * 60_000;
+
+/**
+ * An ended attack of known length under five minutes that nobody has said was
+ * real — the v4 "looks too short" flag (A4 iii, 2026-11-22). Ongoing attacks
+ * and "gone when you woke up" ends are never flagged: neither has a length to
+ * judge. Confirming sets `confirmedReal`, metadata only; the readings stay as
+ * logged and nothing is excluded from any count — the flag asks, it doesn't
+ * decide.
+ */
+export function looksTooShort(attack: Attack): boolean {
+  if (!hasKnownDuration(attack) || attack.confirmedReal) return false;
+  const ms = new Date(attack.end!).getTime() - new Date(attack.snapshots[0].time).getTime();
+  return ms >= 0 && ms < TOO_SHORT_MS;
+}
