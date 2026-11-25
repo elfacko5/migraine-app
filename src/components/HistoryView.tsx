@@ -99,16 +99,20 @@ export function HistoryView({
           announcing it would be noise on every visit. Removing it returns to
           newest, which is what "clearing" a sort means. */}
       {(chips.length > 0 || sort !== 'newest') && (
+        // The v4 board's chips (06-logs, `.fc`): 44px plain `bg-surface`
+        // pills with a separate muted ×, and a bare accent "Clear" after them.
+        // Wrapping, where the board clips one line — a filter you can't see is
+        // one you can't remove.
         <div className="flex flex-wrap gap-2">
           {sort !== 'newest' && (
             <button
               type="button"
               onClick={() => onSort('newest')}
-              className="flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent-light ring-1 ring-accent/30 transition-colors hover:bg-accent/25"
+              aria-label={`Remove sort: ${SORT_LABELS[sort]}`}
+              className={CHIP}
             >
               {SORT_LABELS[sort]}
-              <span aria-hidden="true">×</span>
-              <span className="sr-only">Back to newest first</span>
+              <ChipX />
             </button>
           )}
           {chips.map((chip) => (
@@ -116,13 +120,22 @@ export function HistoryView({
               key={chip.key}
               type="button"
               onClick={() => onFilters(clearFilterKey(filters, chip.key))}
-              className="flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent-light ring-1 ring-accent/30 transition-colors hover:bg-accent/25"
+              aria-label={`Remove filter: ${chip.label}`}
+              className={CHIP}
             >
               {chip.label}
-              <span aria-hidden="true">×</span>
-              <span className="sr-only">Remove filter</span>
+              <ChipX />
             </button>
           ))}
+          {chips.length + (sort !== 'newest' ? 1 : 0) > 1 && (
+            <button
+              type="button"
+              onClick={() => { onFilters(DEFAULT_FILTERS); onSort('newest'); }}
+              className="inline-flex min-h-target items-center rounded-full px-1.5 text-[0.9375rem] font-medium text-accent-light"
+            >
+              Clear
+            </button>
+          )}
         </div>
       )}
 
@@ -183,6 +196,19 @@ export function HistoryView({
         </div>
       )}
     </div>
+  );
+}
+
+const CHIP = 'inline-flex min-h-target items-center gap-1.5 rounded-full bg-bg-surface pl-3.5 pr-2 text-[0.9375rem] text-text-primary transition-colors hover:bg-bg-raised';
+
+/** The chip's remove mark: a 28px circle holding a 16px Lucide `x`, muted. */
+function ChipX() {
+  return (
+    <span aria-hidden="true" className="flex size-7 items-center justify-center rounded-full text-text-secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" className="h-4 w-4">
+        <path d="M7 7l10 10M17 7L7 17" />
+      </svg>
+    </span>
   );
 }
 
