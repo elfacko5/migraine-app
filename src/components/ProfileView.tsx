@@ -17,9 +17,11 @@ import { NotificationSettings } from './NotificationSettings';
 import type { NotificationConfig } from '../types';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
-const SCALE_LABELS: Record<TextScale, string> = { xs: 'XS', sm: 'SM', md: 'MD', lg: 'LG', xl: 'XL' };
-// Fixed px values used only in this picker as a visual size-comparison reference.
-const SCALE_PX: Record<TextScale, number> = { xs: 13, sm: 14, md: 16, lg: 19, xl: 22 };
+const SCALE_SPOKEN: Record<TextScale, string> = { xs: 'Extra small', sm: 'Small', md: 'Medium', lg: 'Large', xl: 'Extra large' };
+// The A on each step, from the v4 board.
+const STEP_A_PX: Record<TextScale, number> = { xs: 13, sm: 17, md: 21, lg: 26, xl: 32 };
+// Each step's root size — must match `[data-scale]` in index.css.
+const SCALE_ROOT_PX: Record<TextScale, number> = { xs: 14, sm: 15, md: 16, lg: 22, xl: 24 };
 const SCALE_NAME: Record<TextScale, string> = { xs: 'XS', sm: 'Small', md: 'Medium', lg: 'Large', xl: 'XL' };
 
 export type ProfileSection = 'medications' | 'guides' | 'hit6' | 'display' | 'reminders' | 'account' | 'data' | 'about';
@@ -348,58 +350,83 @@ function FontOption({ name, family, selected, onSelect }: {
   );
 }
 
-// Text size screen — the iPhone-size switch, then either the five-step picker
-// or, when the phone is in charge, where to change it. Picker, labels and
-// preview are unchanged from the old inline section.
+// Text size screen — v4 boards DisplayTextSizeDark / ...IphoneDark. The
+// iPhone switch; then either five steps, each an A drawn at a size that
+// grows with it, the chosen one tinted with an accent outline and named
+// below; or, when the phone is in charge, what it's set to and where to
+// change it. The sample Logs card sits under either and follows the setting.
 function TextSizePage({ textScale, onTextScale, systemText, onSystemText, onBack }: {
   textScale: TextScale; onTextScale: (s: TextScale) => void; systemText: boolean; onSystemText: (on: boolean) => void; onBack: () => void;
 }) {
+  const phoneSize = systemText ? measuredPhoneSize() : null;
   return (
     <ProfileSubPage title="Text size" onClose={onBack}>
-      <div className="space-y-6">
+      <div className="space-y-[1.125rem]">
         <SettingsList>
           <SettingsRow bare>
             <Switch checked={systemText} onCheckedChange={onSystemText}>
               Use iPhone text size
-              <span className="block text-xs text-content-muted">Follows the size set in your iPhone's settings, from XS to XL.</span>
+              <span className="block text-xs text-content-muted">Follows your iPhone settings</span>
             </Switch>
           </SettingsRow>
+          {phoneSize && (
+            <SettingsRow trailing={SCALE_NAME[phoneSize]} trailingTone="primary">Your iPhone is set to</SettingsRow>
+          )}
         </SettingsList>
 
         {systemText ? (
-          <p className="text-sm text-text-secondary">
-            Lidd follows your iPhone's text size. To change it, open iPhone Settings, then Display &amp; Brightness, then Text Size.
-          </p>
+          <p className="text-xs text-text-secondary">To change it, go to iPhone Settings, then Display &amp; Brightness.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <SectionLabel>Size</SectionLabel>
-            <div className="flex overflow-hidden rounded-control border border-border-control">
-              {SCALES.map((s, i) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => onTextScale(s)}
-                  aria-pressed={textScale === s}
-                  className={`flex flex-1 flex-col items-center justify-center gap-1.5 py-3 transition-colors ${
-                    textScale === s ? 'bg-selected-fill text-text-primary font-semibold' : 'bg-bg-raised text-text-secondary hover:bg-bg-border'
-                  } ${i > 0 ? 'border-l border-bg-border' : ''}`}
-                >
-                  {/* A at the absolute size that scale produces — intentional px exception */}
-                  <span aria-hidden="true" style={{ fontSize: `${SCALE_PX[s]}px`, lineHeight: 1 }}>A</span>
-                  <span style={{ fontSize: '0.625rem', letterSpacing: '0.05em' }} className="font-medium uppercase">{SCALE_LABELS[s]}</span>
-                </button>
-              ))}
+            <div role="group" aria-label="Text size" className="flex gap-2">
+              {SCALES.map((s) => {
+                const on = textScale === s;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => onTextScale(s)}
+                    aria-pressed={on}
+                    aria-label={SCALE_SPOKEN[s]}
+                    className={`flex min-h-[3.25rem] flex-1 items-center justify-center rounded-segment ring-inset transition-colors ${
+                      on ? 'bg-selected-fill ring-1 ring-accent' : 'bg-bg-raised'
+                    }`}
+                  >
+                    {/* px on purpose: each A shows its step's size, not the current one. */}
+                    <span
+                      aria-hidden="true"
+                      className={on ? 'font-semibold text-accent' : 'text-text-primary'}
+                      style={{ fontSize: `${STEP_A_PX[s]}px`, lineHeight: 1 }}
+                    >A</span>
+                  </button>
+                );
+              })}
             </div>
-            <p className="text-xs text-text-secondary">
-              {textScale === 'md' ? 'Medium is the default. ' : ''}Every screen grows with it, reflowing rather than clipping — XL is 50% larger. Attack mode makes small text bigger.
-            </p>
+            <p className="text-xs text-text-secondary">{SCALE_NAME[textScale]}{textScale === 'md' ? ' · the default' : ''}</p>
           </div>
         )}
 
         <DisplayPreviewCard />
+        {!systemText && (
+          <p className="text-xs text-text-secondary">Every screen grows with it. Attack mode makes small text bigger.</p>
+        )}
       </div>
     </ProfileSubPage>
   );
+}
+
+// The step nearest the iPhone's own size, from the --system-text that
+// useSettings measures (14–24px, the same range as the steps). Null where
+// it couldn't be measured — outside Apple's WebKit — so the row is left
+// out rather than claiming "Medium".
+function measuredPhoneSize(): TextScale | null {
+  // useSettings writes a 16px fallback when it can't measure; this is its
+  // own test for whether it could.
+  if (typeof CSS === 'undefined' || !CSS.supports('font', '-apple-system-body')) return null;
+  const px = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--system-text'));
+  if (!Number.isFinite(px)) return null;
+  return SCALES.reduce((best, s) => (Math.abs(SCALE_ROOT_PX[s] - px) < Math.abs(SCALE_ROOT_PX[best] - px) ? s : best), 'md');
 }
 
 // What attack mode changes — v4 board DisplayAttackChangesDark: the sample
