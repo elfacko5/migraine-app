@@ -32,7 +32,10 @@ export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'ba
   const titleRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { titleRef.current?.focus({ preventScroll: true }); }, []);
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    // bg-base, not the sheet's own bg-surface: every v4 settings board puts
+    // the page on #1B1A18 with its cards one step up, and on the sheet's
+    // surface a SettingsList card had nothing to stand out from (2026-11-25).
+    <div className="flex flex-col flex-1 min-h-0 bg-bg-base">
       <div
         className="flex items-center gap-3 border-b border-border-subtle px-3 py-3"
         style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
@@ -46,7 +49,8 @@ export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'ba
             type="button"
             onClick={onClose}
             aria-label="Back"
-            className="tap-44 flex size-target items-center justify-center text-text-secondary transition-colors hover:text-text-primary"
+            // Primary, not muted: the board's back chevron is #cdc7bb.
+            className="tap-44 flex size-target items-center justify-center text-text-primary"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
               <path d="m15 18-6-6 6-6" />
