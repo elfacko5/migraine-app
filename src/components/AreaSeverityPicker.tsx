@@ -66,10 +66,10 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
   return (
     <div className="space-y-4">
       {/* Front / Back view toggle. Same shape as `SegmentedControl` — filled
-          `bg-bg-surface` track, 44px segments, accent-bordered tinted
-          selected state — matched by hand rather than shared because this
-          one carries a count badge the generic component doesn't need (v4
-          sweep, 2026-11-24, see `SegmentedControl`'s own note).
+          track, 44px segments, accent-bordered tinted selected state —
+          matched by hand rather than shared because this one carries a count
+          badge the generic component doesn't need (v4 sweep, 2026-11-24, see
+          `SegmentedControl`'s own note).
           **Full width, not hugging the labels** (v4 fix, 2026-11-25): the
           `23-live`/`09-insights` boards both draw `.segs` as a block with no
           `max-width`, so it stretches to the row and its two `.seg` children
@@ -78,8 +78,15 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
           was also `text-xs` (12px), under both the board's own 16px `.seg`
           and CLAUDE.md's body floor — not a deliberate exception like
           `SegmentedControl`'s four-option row, which has that comment and
-          this didn't. */}
-      <div className="flex w-full items-center gap-1 rounded-control-lg bg-bg-surface p-1">
+          this didn't.
+          **Track is `bg-bg-raised`, not `bg-bg-surface`** (June's report,
+          2026-11-25): every call site renders this inside a `flush
+          bareHeader` Sheet, and the sheet's own root is already
+          `bg-bg-surface` (`Sheet.tsx`) — same tone on same tone had zero
+          contrast, so the track (and the unselected "Back" segment sitting
+          on it) read as floating text with no box at all. Same "one surface
+          up from what it sits on" rule as the flow-header circle buttons. */}
+      <div className="flex w-full items-center gap-1 rounded-control-lg bg-bg-raised p-1">
         {VIEWS.map((v) => {
             const isActive = v.id === activeViewId;
             const n = selectedCount(v);

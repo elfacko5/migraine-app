@@ -37,8 +37,23 @@
 export const CHIP_ON =
   'bg-selected-fill text-text-primary font-semibold ring-1 ring-inset ring-accent';
 
+// **Unselected ring colour matches the fill** (June's call, 2026-11-25,
+// overriding the WCAG audit below): Patterns.html's `.rdc`/`.chip` sets
+// `border` to the same hex as `background`, so an unselected chip reads as a
+// borderless filled pill, not a filled pill with a stroke. `ring-bg-raised`
+// keeps the ring (box-shadow, no layout cost — the reasoning above still
+// holds) while making its colour disappear into the fill it sits on.
+//
+// This is a known, accepted regression of the 2026-08-25 palette audit
+// (`docs/decisions.md`): `ring-border-control` existed specifically because
+// an unselected chip's edge then measured 1.15-1.8:1 against its own fill,
+// failing WCAG 1.4.11's 3:1 non-text-contrast floor for UI components, and
+// `ring-bg-raised` puts it back at ~1:1. Accepted deliberately in favour of
+// matching the design pixel-for-pixel; if this chip set gets a non-colour
+// affordance for "pressable" later (the way `ChipCheck` already carries the
+// selected state off colour alone, per that same audit), revisit this.
 export const CHIP_OFF =
-  'bg-bg-raised text-text-secondary ring-1 ring-inset ring-border-control hover:text-text-primary';
+  'bg-bg-raised text-text-secondary ring-1 ring-inset ring-bg-raised hover:text-text-primary';
 
 /** The pair, for the common `className={...}` case. */
 export const chipClass = (selected: boolean) => (selected ? CHIP_ON : CHIP_OFF);
