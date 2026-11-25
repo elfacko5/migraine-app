@@ -114,27 +114,24 @@ export function OtherSymptomIcon({ className = 'h-3.5 w-3.5' }: IconProps) {
 }
 
 /**
- * Attack mode — a flare radiating from a centre, as arcs rather than rays.
+ * Attack mode — a pair of sunglasses: shade for eyes that light hurts.
  *
- * It replaces `FlareUpIcon` (2026-08-25), which was the same idea as *filled*
- * artwork: five concentric scalloped rings in a 39×40 box, carrying more
- * detail than a 20px pill can resolve, so on device it rendered as a small
- * flower or a gear. This is the same metaphor drawn to the contract everything
- * else here follows — five elements, one stroke weight, no interior detail.
+ * Replaced the flare-as-arcs mark on 2026-11-25 (Sunny didn't like it).
+ * Before that, `FlareUpIcon` was the same flare as filled artwork that
+ * rendered as a flower at 20px.
  *
- * **Arcs, not rays, and that is the constraint to respect if it's redrawn.**
- * A dot with straight rays is a sun, and the sun is the *brightness* pill,
- * which sits at the same screen position in the opposite state. A crescent was
- * the other obvious option and is also taken: `MoonIcon` means sleep, as a
- * relief and as a trigger, and all three can be on screen together.
+ * **What it must not be, if it's redrawn:** a sun (a dot with rays means light,
+ * as a symptom, and struck through it is the dark-room relief), a crescent
+ * (`MoonIcon` means sleep, as a relief and a trigger), an open eye (the
+ * Settings menu's Display row) or a mask (`EyeMaskIcon`, a relief). All of
+ * those can share a screen with this one.
  */
 export function AttackModeIcon({ className = 'h-5 w-5' }: IconProps) {
   return svg(className, <>
-    <circle cx="12" cy="12" r="2.25" />
-    <path d="M9 7a6.75 6.75 0 0 0 0 10" />
-    <path d="M15 7a6.75 6.75 0 0 1 0 10" />
-    <path d="M6 3a13.5 13.5 0 0 0 0 18" />
-    <path d="M18 3a13.5 13.5 0 0 1 0 18" />
+    <path d="M2 8.5h20" />
+    <path d="M3 8.5h7.5V12a3.75 3.75 0 0 1-7.5 0z" />
+    <path d="M13.5 8.5H21V12a3.75 3.75 0 0 1-7.5 0z" />
+    <path d="M5.5 11.5l1.5-1.5M16 11.5l1.5-1.5" />
   </>);
 }
 

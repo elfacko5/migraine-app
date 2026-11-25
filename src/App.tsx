@@ -236,7 +236,7 @@ export default function App() {
   // Whether Today is showing its hero. The hero owns the top of the screen in
   // that state, so TopBar stands down — see the note at its call site.
   const heroOnToday = tab === 'log' && !!(ongoingAttack || lastAttackEnd);
-  // The attack mode button's Today placement: the hero's top-right corner.
+  // The attack mode control's Today placement: across the top of the hero.
   const heroAttackMode = <AttackModePill active={attackMode} onToggle={setAttackMode} />;
 
   // Order the pickers' options by how often they've been selected historically,

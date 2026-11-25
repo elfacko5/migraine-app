@@ -50,6 +50,18 @@
       ],
       "port": 5176,
       "autoPort": false
+    },
+    {
+      "name": "migraine-app-attackmode",
+      "runtimeExecutable": "/Users/sunny/.nvm/versions/node/v20.20.2/bin/node",
+      "runtimeArgs": [
+        "node_modules/vite/bin/vite.js",
+        "--port",
+        "5177",
+        "--strictPort"
+      ],
+      "port": 5177,
+      "autoPort": false
     }
   ]
 }

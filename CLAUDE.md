@@ -116,12 +116,12 @@ Dark is default. `color-scheme: dark` globally. **Never use `dark:` prefixes.** 
 
 ### Attack mode
 
-`data-theme="attack"` on `<html>`, reachable from `AttackModePill` (44px icon-only button, `aria-label="Attack mode"` with `aria-pressed`). Overrides light/dark.
+`data-theme="attack"` on `<html>`, reachable from `AttackModePill` on Today (off: 44px pill, sunglasses mark + "Attack mode", `aria-pressed`; on: full-width band "Attack mode on" + **Turn off**, which `HomeCard` measures so the hero text clears it). Focus moves to whichever replaces the pressed control. Overrides light/dark.
 
 - Darker/warmer tokens: `--color-bg-base` `#14140f`, text `#c9c4b8`.
 - Body text floor 20px. All animation cut (`prefers-reduced-motion` honoured for everyone).
 - Dim floor 0.35 in `BrightnessOverlay`, **not** written to `hd_brightness`.
-- Pill icon: arcs (not rays — sun = light/dark switch, moon = sleep). 24px, fills its box.
+- Icon: sunglasses (`AttackModeIcon`, 2026-11-25; replaced the arcs). Never a sun, moon, open eye or mask — all taken.
 - Pill z-45 above scrim z-35. Hero is **not `isolate`**.
 - `SunriseIcon` for "Woke up with this migraine" (not emoji — no full-colour glyphs).
 - Reduced Today: drops month tiles and overuse paragraph; keeps warning line and last-dose row.
@@ -310,7 +310,7 @@ Attack-free: `AttackFreeCard` with greeting + headline "X days attack-free" (lar
 - Gradients from `bg-bg-base` to `bg-bg-base/0` (never `transparent`). Horizontal stop past image's left edge (40% for 36% image start).
 - Art box 40px + inset below top. Text centred against artwork, `max-w-[64%]`.
 - Ongoing: Add update (`btn-primary btn-compact`) + End attack (`btn-secondary btn-compact`).
-- Attack mode button top-left z-45. Hero not `isolate`.
+- Attack mode control across the top, z-45 (pill off, band on). Hero not `isolate`.
 - Headline 44px semibold. Ongoing = elapsed time + trajectory + severity text (never colour-coded on illustration).
 
 ### Sheet

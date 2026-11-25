@@ -2568,3 +2568,14 @@ Sunny, asked whether the v4 board's "removed from this phone and from your accou
 - **The copy promises only what is true.** "What has synced stays in your account". When sync is in error or mid-push it says instead that recent changes haven't synced and would be lost.
 - **The dialog is locked while deleting.** The first version left "Keep my data" live during the sign-out, so it could close the sheet while the delete still ran.
 - *Revisit:* the App Store would require an in-app account deletion (see Platform). That is D3, and it needs a remote delete in `sync.ts`.
+
+## Today's attack mode control: quiet pill off, a band on, sunglasses mark (2026-11-25)
+
+Sunny picked direction B of four mocked in `docs/redesign-v4/proposals/AttackModeSwitchProposals.html` (A the v4 board's labelled switch, C an offer only during an attack, D a panel with the dim slider). This takes up A10's backlogged "labelled switch" in a different form.
+
+- **The problem was the on state.** The icon-only circle (2026-10-28) had to be learned, and on was only a sage ring: once the screen had gone dim and warm, nothing said why or how to undo it. On is now a full-width `bg-selected-fill` band, "Attack mode on" and a **Turn off** button (`aria-label="Turn off attack mode"`).
+- **Off stays small**: the mark plus "Attack mode" in a pill that hugs its text, so it doesn't come back as the second headline the 2026-10-28 change removed.
+- **`HomeCard` measures its top action** (`ResizeObserver`) and keeps the text 24px below it, because at attack mode's 20px root the band wraps to two lines and ran into the "Attack ongoing" label. The 110px floor is unchanged, so the off state moves nothing.
+- **Focus follows the swap**: the pressed control unmounts, so focus moves to its replacement rather than dropping to `body`.
+- **The icon is sunglasses** (Sunny didn't like the arcs). Candidates drawn: sunglasses, a resting eye (rejected: a closed eye means "hide" on iOS), a lowered blind, a half-lit circle (reads as a theme switch). Still not a sun, moon, open eye or mask, which all mean something else here.
+- **Not done:** "turns off once the attack ends" (A10 ii) — the band is where that line would go once it exists. The first-run `TopBar` instance uses the same component; checked only by code, not on screen.

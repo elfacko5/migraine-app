@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 interface Props {
   /**
@@ -88,6 +88,22 @@ interface Props {
  * information, and every fact is in the text beside it.
  */
 export function HomeCard({ art, label, headline, headlineSize, figure, detail, topAction, onOpenDetail, children }: Props) {
+  // The top action is absolute (it must sit above the dim scrim, see below),
+  // so the text can't flow under it — its height is measured instead. Off,
+  // the attack mode pill is 44px and the 110px floor clears it; on, it's a
+  // band that wraps at large text and in attack mode's 20px body, and the
+  // text moves down to keep a 24px gap rather than running underneath.
+  const topRef = useRef<HTMLDivElement>(null);
+  const [topHeight, setTopHeight] = useState(0);
+  useLayoutEffect(() => {
+    const el = topRef.current;
+    if (!el) { setTopHeight(0); return; }
+    const measure = () => setTopHeight(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [topAction]);
   const text = (
     <>
       {/* Deliberately uneven gaps, to spec: 4px under the label so it reads as
@@ -180,9 +196,13 @@ export function HomeCard({ art, label, headline, headlineSize, figure, detail, t
           to have a picture behind it. `items-center` on the band is what
           does it, so the two stay centred on each other however the hero
           grows at larger text sizes. */}
+      {/* Spans the hero's width, so the attack mode control can be a
+          full-width band when on; off, it's a pill hugging the left edge.
+          The wrapper itself takes no taps — only what's drawn in it. */}
       {topAction && (
         <div
-          className="absolute left-4 z-[45]"
+          ref={topRef}
+          className="pointer-events-none absolute inset-x-4 z-[45] flex [&>*]:pointer-events-auto"
           style={{ top: 'calc(0.75rem + env(safe-area-inset-top))' }}
         >
           {topAction}
@@ -190,11 +210,12 @@ export function HomeCard({ art, label, headline, headlineSize, figure, detail, t
       )}
 
       {/* 24px sides and bottom, to spec. The 110px top clears the attack mode
-          button above it, on top of the safe-area inset — added rather than
+          control above it (or its measured height plus 24px, whichever is
+          more), on top of the safe-area inset — added rather than
           substituted, for the same reason as the art box. */}
       <div
         className="relative z-[1] w-full px-6 pb-6"
-        style={{ paddingTop: 'calc(6.875rem + env(safe-area-inset-top))' }}
+        style={{ paddingTop: `calc(max(6.875rem, ${topHeight}px + 2.25rem) + env(safe-area-inset-top))` }}
       >
         {onOpenDetail ? (
           // The text block is the way into the detail view — a hero this
