@@ -249,12 +249,17 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
     // because each point took a category slot with its own date label; on a
     // time axis points take their date's place and nothing crowds. A gap of
     // more than `TREND_BREAK_MS` inserts a null, which breaks the line.
+    // Sorted by start, not taken in list order: `useAttacks` orders by id
+    // (when an attack was *entered*), so a backfilled or imported attack sits
+    // out of date order and the line would run backwards to reach it.
+    const byStart = filtered
+      .map((a) => ({ t: new Date(a.snapshots[0].time).getTime(), severity: attackMaxSeverity(a) }))
+      .sort((x, y) => x.t - y.t);
     const severityTrend: { t: number; severity: number | null }[] = [];
-    for (const a of [...filtered].reverse()) {
-      const t = new Date(a.snapshots[0].time).getTime();
+    for (const p of byStart) {
       const prev = severityTrend[severityTrend.length - 1];
-      if (prev && t - prev.t > TREND_BREAK_MS) severityTrend.push({ t: (prev.t + t) / 2, severity: null });
-      severityTrend.push({ t, severity: attackMaxSeverity(a) });
+      if (prev && p.t - prev.t > TREND_BREAK_MS) severityTrend.push({ t: (prev.t + p.t) / 2, severity: null });
+      severityTrend.push(p);
     }
 
     const areas = areaFrequency(filtered);
@@ -322,6 +327,15 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
   // month that sits clear of both: an end label is anchored at the edge and
   // a month label centred, so a quarter of the span keeps them apart at
   // phone width (12% overlapped, measured 2026-11-25).
+  // The chart's spoken summary. Every point read out up to 12 (the board's
+  // own label does this); past that a list is a minute of VoiceOver, so it
+  // says the range of peaks and the latest instead.
+  const day = (t: number) => formatDateShort(new Date(t).toISOString());
+  const trendLabel = `Worst pain of ${trendPoints.length} attacks from ${day(rangeFrom)} to ${day(rangeTo)}, placed by date. ` + (
+    trendPoints.length <= 12
+      ? `${trendPoints.map((p) => `${day(p.t)} ${p.severity}`).join(', ')}.`
+      : `Between ${Math.min(...trendPoints.map((p) => p.severity))} and ${Math.max(...trendPoints.map((p) => p.severity))}; latest ${day(trendPoints[trendPoints.length - 1].t)} ${trendPoints[trendPoints.length - 1].severity}.`
+  );
   const trendTicks = [rangeFrom];
   for (let m = new Date(new Date(rangeFrom).getFullYear(), new Date(rangeFrom).getMonth() + 1, 1); m.getTime() < rangeTo; m.setMonth(m.getMonth() + 1)) {
     const t = m.getTime(), span = rangeTo - rangeFrom;
@@ -485,7 +499,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
               iconTone="bg-chart-2/16 text-chart-2"
               info="Each attack's worst pain in this period, placed by the day it started. Attacks more than a week apart aren't joined by the line."
             >
-              <div role="img" aria-label={`Worst pain of ${trendPoints.length} attacks from ${formatDateShort(new Date(rangeFrom).toISOString())} to ${formatDateShort(new Date(rangeTo).toISOString())}, placed by date. ${trendPoints.map((p) => `${formatDateShort(new Date(p.t).toISOString())} ${p.severity}`).join(', ')}.`}>
+              <div role="img" aria-label={trendLabel}>
                 {/* `left` pulls the plot in to the y labels' own width
                     rather than Recharts' default reservation (2026-09-23,
                     measured); `height` on XAxis is one line of its tick
@@ -505,7 +519,11 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
                       axisLine={false} tickLine={false} height={26} tickMargin={4}
                     />
                     <YAxis domain={[1, 10]} ticks={[1, 5, 10]} tick={{ fill: chartColors.tick, fontSize: '0.75rem' }} axisLine={false} tickLine={false} />
+                    {/* No cursor line: the gap-breaking nulls are data points at
+                        a made-up midpoint, and a tap near one drew the line at a
+                        date with no attack and no tooltip. */}
                     <Tooltip
+                      cursor={false}
                       contentStyle={{ background: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: 8, fontSize: '0.75rem' }}
                       labelStyle={{ color: chartColors.label }}
                       itemStyle={{ color: chartColors.item }}
