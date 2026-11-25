@@ -43,9 +43,11 @@ export function DeleteAllDialog({ open, signedIn, unsynced, busy, failed, onExpo
   // Focus moves in once, on open — not in the Escape effect, which re-runs
   // on every parent render (`onKeep` is inline) and pulled focus back to
   // Keep each time, e.g. while VoiceOver rested on Delete.
+  // And back to Keep when a sign-out fails: the Delete button was disabled
+  // under focus while busy, which dropped focus to the page.
   useEffect(() => {
     if (open) keepRef.current?.focus();
-  }, [open]);
+  }, [open, failed]);
 
   useEffect(() => {
     if (!open) return;

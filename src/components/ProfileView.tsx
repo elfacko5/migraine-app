@@ -11,7 +11,7 @@ import { ProfileSubPage } from './ProfileSubPage';
 import { SegmentedControl } from './SegmentedControl';
 import { Button, TextField } from 'code-ds';
 import { SectionLabel, SettingsList, SettingsRow, Switch } from './settingsUi';
-import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
+import { pendingReminders, notificationPermission, cancelNotification, clearDeliveredReminders, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
 import { DeleteAllDialog } from './DeleteAllDialog';
@@ -765,7 +765,7 @@ export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount
       setDeleteErr(true);
       return;
     }
-    requestDeleteAndReload();
+    requestDeleteAndReload(cancelNotification, clearDeliveredReminders);
   }
 
   // The write itself (share sheet on native, download on web). Returns whether

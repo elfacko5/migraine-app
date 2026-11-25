@@ -142,14 +142,16 @@ const PENDING_DELETE_FLAG = 'lidd_delete_pending';
  * Reloading first ends every such request with the old page; the delete runs
  * at boot, before React renders, with nothing else alive to race it.
  */
-export function requestDeleteAndReload(): void {
+export function requestDeleteAndReload(
+  cancelReminder: (attackId: number) => void,
+  clearDelivered: () => Promise<void>,
+): void {
   try {
     sessionStorage.setItem(PENDING_DELETE_FLAG, '1');
   } catch {
-    // No sessionStorage: delete in place instead — the race above is rare,
-    // and doing nothing would be worse.
-    deleteHdKeys();
-    try { sessionStorage.setItem(DELETED_FLAG, '1'); } catch { /* no message */ }
+    // No sessionStorage: delete in place instead, with the same cleanup —
+    // the race above is rare, and doing nothing would be worse.
+    deleteNow(cancelReminder, clearDelivered);
   }
   window.location.reload();
 }
@@ -170,6 +172,15 @@ export function runPendingDelete(
   } catch {
     return;
   }
+  deleteNow(cancelReminder, clearDelivered);
+}
+
+/** The delete itself: any `sb-` session, each attack's reminder, every `hd_`
+ *  key, delivered reminders — then the flag for the message. */
+function deleteNow(
+  cancelReminder: (attackId: number) => void,
+  clearDelivered: () => Promise<void>,
+): void {
   for (const k of Object.keys(localStorage)) if (k.startsWith('sb-')) localStorage.removeItem(k);
   try {
     const attacks = JSON.parse(localStorage.getItem('hd_attacks') ?? '[]') as { id?: unknown }[];
