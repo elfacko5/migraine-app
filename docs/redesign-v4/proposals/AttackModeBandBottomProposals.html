@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lidd — "Attack mode on" above the bottom nav, four directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+/* Mock-up only. Attack palette from src/index.css (data-theme="attack"). */
+.attack{--base:#14140f;--surface:#1e1e17;--raised:#262218;--line:#736d5a;--div:#34322a;--text:#c9c4b8;--muted:#9a9689;--accent:#7fa187;--sel:#2e3a31;--sev-mid:#c39257}
+*{box-sizing:border-box}
+body{margin:0;background:#121110;font-family:Lexend,sans-serif;color:#cdc7bb;padding:40px 32px 80px}
+h1,h2,h3,p{margin:0}
+code{font-size:.9em;color:#9bb9a1}
+.page{max-width:1320px;margin:0 auto}
+.intro{max-width:780px;margin-bottom:36px}
+.intro h1{font-size:30px;font-weight:600;margin-bottom:12px}
+.intro p{font-size:16px;line-height:1.55;color:#a39d92;margin-top:8px}
+.intro b{color:#cdc7bb;font-weight:500}
+.opt{border-top:1px solid #3a3733;padding:36px 0 44px}
+.opt h2{font-size:22px;font-weight:600}
+.opt h2 span{color:#7fa187;margin-right:10px}
+.opt .lede{font-size:16px;color:#a39d92;margin-top:6px;max-width:860px;line-height:1.5}
+.row{display:flex;gap:28px;flex-wrap:wrap;margin-top:24px;align-items:flex-start}
+.cap{font-size:14px;color:#a39d92;margin-bottom:10px}
+.notes{flex:1;min-width:260px;font-size:15px;line-height:1.55}
+.notes h3{font-size:14px;font-weight:600;color:#9bb9a1;margin:0 0 6px;text-transform:uppercase;letter-spacing:.04em}
+.notes h3.con{color:#c39257;margin-top:16px}
+.notes ul{margin:0;padding-left:18px}
+.notes li{margin-bottom:4px}
+.rec{background:#262421;border-radius:20px;padding:22px 24px;margin-top:8px;font-size:16px;line-height:1.55}
+.rec h2{font-size:20px;margin-bottom:8px}
+
+/* phone: 375 × 812, attack mode on */
+.phone{width:375px;height:812px;border-radius:32px;overflow:hidden;position:relative;background:var(--base);color:var(--text);flex:none;outline:1px solid #2b2926;font-size:20px}
+.status{position:absolute;top:14px;left:28px;right:28px;display:flex;justify-content:space-between;font-size:15px;font-weight:600;z-index:3}
+.scroll{position:absolute;inset:0;overflow:hidden}
+.art{position:absolute;top:58px;right:0;width:64%;height:430px;z-index:0}
+.fade{position:absolute;left:0;right:0;top:0;height:500px;z-index:0;background:linear-gradient(to right,var(--base) 40%,color-mix(in srgb,var(--base) 55%,transparent) 66%,transparent 90%)}
+.hero{position:relative;z-index:1;padding:108px 24px 24px;max-width:300px}
+.eyebrow{font-size:15px;font-weight:600;letter-spacing:.06em;color:var(--muted);display:flex;align-items:center;gap:8px;text-transform:uppercase}
+.dot{width:9px;height:9px;border-radius:5px;background:var(--accent)}
+.headline{font-size:52px;font-weight:600;line-height:1.1;margin-top:8px}
+.spark{height:2px;background:var(--accent);margin:26px 0 22px;width:230px;position:relative}
+.spark::after{content:"";position:absolute;right:-6px;top:-5px;width:12px;height:12px;border-radius:6px;background:var(--accent)}
+.detail{font-size:20px;line-height:1.4}
+.btns{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-top:22px}
+.b{min-height:44px;border-radius:12px;padding:0 20px;display:inline-flex;align-items:center;font-size:20px;font-weight:600;border:0;font-family:inherit;white-space:nowrap}
+.bp{background:var(--accent);color:var(--base)}
+.bs{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 1px var(--line);font-weight:500}
+.cards{position:relative;z-index:1;display:flex;gap:12px;padding:8px 20px}
+.tile{flex:1;background:var(--surface);border-radius:20px;padding:18px;font-size:16px;color:var(--muted)}
+.tile b{display:block;font-size:34px;color:var(--text);font-weight:700}
+.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* nav */
+.nav{position:absolute;left:0;right:0;bottom:0;height:86px;background:var(--base);border-top:1px solid var(--div);display:flex;justify-content:space-around;align-items:flex-start;padding-top:10px;z-index:5}
+.ti{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;font-weight:500;color:var(--muted);width:64px}
+.ti.on{color:var(--text);font-weight:600}
+.fab{width:58px;height:58px;border-radius:29px;background:var(--accent);color:var(--base);display:flex;align-items:center;justify-content:center;margin-top:-26px}
+
+/* logs page bits */
+.title{font-size:32px;font-weight:600;padding:78px 20px 16px}
+.lrow{margin:0 20px 12px;background:var(--surface);border-radius:20px;padding:16px;display:flex;gap:14px;align-items:center}
+.lrow .d{width:48px;text-align:center;font-size:24px;font-weight:600;line-height:1}
+.lrow .d small{display:block;font-size:14px;color:var(--muted);font-weight:400;margin-top:4px}
+.lrow .m{flex:1;font-size:20px;font-weight:500}
+.sev{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--base)}
+.mh{font-size:15px;color:var(--muted);padding:8px 24px 10px}
+
+/* the four bottom treatments */
+.band{position:absolute;left:16px;right:16px;bottom:102px;z-index:6;display:flex;align-items:center;gap:12px;background:var(--sel);box-shadow:inset 0 0 0 1px var(--accent);border-radius:20px;padding:8px 8px 8px 18px;font-size:18px;font-weight:500}
+.band .t{flex:1;white-space:nowrap}
+.band .b{font-size:18px;min-height:44px;padding:0 18px}
+.chip{position:absolute;left:50%;transform:translateX(-50%);bottom:104px;z-index:6;display:flex;align-items:center;gap:10px;background:var(--sel);box-shadow:inset 0 0 0 1px var(--accent);border-radius:999px;height:44px;padding:0 6px 0 16px;font-size:17px;font-weight:500;white-space:nowrap}
+.chip .x{display:inline-flex;align-items:center;gap:6px;height:34px;border-radius:17px;padding:0 12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);font-size:16px}
+.strip{position:absolute;left:0;right:0;bottom:86px;z-index:6;display:flex;align-items:center;gap:12px;background:var(--sel);border-top:1px solid var(--accent);padding:6px 12px 6px 20px;font-size:17px;font-weight:500;height:56px}
+.strip .t{flex:1}
+.strip .b{font-size:17px;min-height:44px;padding:0 16px}
+.nav.attached{border-top-color:transparent}
+.nav.attached .fab{margin-top:-4px;width:54px;height:54px}
+.tag{position:absolute;bottom:-1px;left:0;right:0;height:0}
+.clear{height:180px}
+.ruler{position:absolute;left:0;right:0;border-top:1px dashed #c39257;z-index:9;opacity:.8}
+.ruler span{position:absolute;right:6px;top:-18px;font-size:11px;color:#c39257}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="intro">
+  <h1>"Attack mode on" above the bottom nav — four directions</h1>
+  <p>What's built now (<code>95bb96f</code>) puts the band across the top of the hero. At attack mode's 20px text it wraps to two lines and pushes the headline down, which makes <b>the top of the screen heavy at exactly the moment it should be quietest</b>. These move it to the bottom, near the thumb and the + button. Off stays as built: the small "Attack mode" pill at the top of the hero.</p>
+  <p>All frames are 375×812 with attack mode on. In each one the text inside the band <b>is fixed in size and stays on one line</b> (as <code>BottomNav</code> fixes its own), with no icon — the pill shows the icon when it's off. The dashed line marks where Today's content now has to stop scrolling.</p>
+</div>
+
+<section class="opt">
+  <h2><span>0</span>For reference: as built</h2>
+  <div class="row">
+    <div><p class="cap">Today, on</p><div class="phone attack" data-f="built"></div></div>
+    <div class="notes"><h3 class="con">What's wrong</h3><ul><li>Two lines at the top; the "Attack ongoing" label and the headline move down 40px.</li><li>"Turn off" is in the far corner from the thumb.</li></ul></div>
+  </div>
+</section>
+
+<section class="opt">
+  <h2><span>A</span>Floating band above the nav, Today only</h2>
+  <p class="lede">The built band, moved: a rounded card, 16px in from each side, floating just above the + button. One line. It appears only on Today; on the other tabs attack mode is turned off from Settings, as now.</p>
+  <div class="row">
+    <div><p class="cap">Today</p><div class="phone attack" data-f="A"></div></div>
+    <div class="notes">
+      <h3>For</h3><ul><li>Smallest change from what's built — same band, new place.</li><li>The hero goes back to how it looks with attack mode off.</li></ul>
+      <h3 class="con">Against</h3><ul><li>Floats over content — Today needs about 60px more bottom space while it's on.</li><li>Only a way out on Today.</li><li>Covers roughly a card's height of the screen you're reading.</li></ul>
+    </div>
+  </div>
+</section>
+
+<section class="opt">
+  <h2><span>B</span>Floating band above the nav, every tab</h2>
+  <p class="lede">A, but on all four tabs while attack mode is on. Undoes the "floating pill on every tab" removal only while it's on — when it's off, nothing floats anywhere.</p>
+  <div class="row">
+    <div><p class="cap">Today</p><div class="phone attack" data-f="A"></div></div>
+    <div><p class="cap">Logs</p><div class="phone attack" data-f="B-logs"></div></div>
+    <div class="notes">
+      <h3>For</h3><ul><li>A way out from any screen, without going to Today or Settings.</li><li>The band says why every screen looks different.</li></ul>
+      <h3 class="con">Against</h3><ul><li>Reverses your earlier call (floating pill removed from every tab).</li><li>Every tab needs the extra bottom space, not only Today.</li></ul>
+    </div>
+  </div>
+</section>
+
+<section class="opt">
+  <h2><span>C</span>A small chip over the + button</h2>
+  <p class="lede">Lighter than a band: a centred chip, "Attack mode on" with a small "Turn off" inside it, sitting above the + button. Works on Today only or on every tab.</p>
+  <div class="row">
+    <div><p class="cap">Today</p><div class="phone attack" data-f="C"></div></div>
+    <div class="notes">
+      <h3>For</h3><ul><li>Least weight anywhere on the screen.</li><li>Covers the least content.</li></ul>
+      <h3 class="con">Against</h3><ul><li>"Turn off" inside a chip is a 34px button — needs an invisible 44px tap area.</li><li>Sits right over the +, the busiest tap spot; mis-taps either way.</li><li>Fixed text in a chip has the least room at 150% text size.</li></ul>
+    </div>
+  </div>
+</section>
+
+<section class="opt">
+  <h2><span>D</span>A strip fixed to the top of the nav</h2>
+  <p class="lede">Not floating: a full-width strip that is part of the nav itself, edge to edge, with the + button settling into the nav instead of rising above it. Reads as "the app is in a mode" rather than as a card. Works on Today only or on every tab.</p>
+  <div class="row">
+    <div><p class="cap">Today</p><div class="phone attack" data-f="D"></div></div>
+    <div class="notes">
+      <h3>For</h3><ul><li>Calmest: no floating card and no rounded shape over the content.</li><li>Content stops above it cleanly — the nav just gets taller.</li><li>Same idea as iOS's call or hotspot bar, which people know as "a mode is on".</li></ul>
+      <h3 class="con">Against</h3><ul><li>The + loses its raised position while it's on (it would cover the strip's text) — a visible change to the nav.</li><li>The nav gets 56px taller, so less of each screen shows.</li></ul>
+    </div>
+  </div>
+</section>
+
+<div class="rec">
+  <h2>My pick: D, on every tab</h2>
+  <p>It takes the weight off the top without putting a floating card over what you're reading, and it looks like part of the app's frame rather than one more thing on the page. On every tab, because once it's part of the nav it would look odd if it disappeared when you switched tabs. If you'd rather not change the nav, A is the closest to what's built.</p>
+</div>
+
+</div>
+
+<script>
+const NAV=(tab,cls='')=>`<div class="nav ${cls}">
+ <span class="ti ${tab==='today'?'on':''}"><svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Today</span>
+ <span class="ti ${tab==='logs'?'on':''}"><svg class="ic" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Logs</span>
+ <span class="fab"><svg class="ic" viewBox="0 0 24 24" style="width:28px;height:28px"><path d="M12 5v14M5 12h14"/></svg></span>
+ <span class="ti"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-5 4 3 5-6"/></svg>Insights</span>
+ <span class="ti"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></svg>Settings</span>
+</div>`;
+const ART=`<svg viewBox="0 0 240 430" width="100%" height="100%"><g fill="none" stroke-width="26"><circle cx="150" cy="215" r="70" stroke="#1e1e17"/><circle cx="150" cy="215" r="120" stroke="#1a1a14"/><path d="M60 40a190 190 0 0 1 240 120" stroke="#3d5442"/></g><circle cx="150" cy="215" r="42" fill="#4a3b2e"/></svg>`;
+const TODAY=(heroTop=108)=>`<div class="status"><span>9:41</span><span>●●●</span></div><div class="scroll"><div class="art">${ART}</div><div class="fade"></div>
+ <div class="hero" style="padding-top:${heroTop}px"><span class="eyebrow"><span class="dot"></span>Attack ongoing</span><div class="headline">2h 15m</div><div class="spark"></div><p class="detail">5 now · peak 6 · right side</p><div class="btns"><span class="b bp">Add an update</span><span class="b bs">End attack</span></div></div>
+ <div class="cards"><div class="tile"><b>1</b>attack day · last 30 days</div><div class="tile"><b>1</b>attack · last 30 days</div></div></div>`;
+const LOGS=`<div class="status"><span>9:41</span><span>●●●</span></div><div class="scroll"><div class="title">Logs</div>
+ <div class="lrow" style="background:var(--raised)"><div class="d">25<small>Wed</small></div><div class="m">2h 15m · ongoing</div><span class="sev" style="background:#c39257">5</span></div>
+ <div class="mh">November</div>
+ <div class="lrow"><div class="d">21<small>Sat</small></div><div class="m">6h 40m</div><span class="sev" style="background:#c68880">8</span></div>
+ <div class="lrow"><div class="d">17<small>Tue</small></div><div class="m">3h 05m</div><span class="sev" style="background:#c39257">5</span></div>
+ <div class="lrow"><div class="d">12<small>Thu</small></div><div class="m">1h 20m</div><span class="sev" style="background:#8fb096">3</span></div>
+ <div class="lrow"><div class="d">6<small>Fri</small></div><div class="m">9h 10m</div><span class="sev" style="background:#c68880">7</span></div></div>`;
+const BAND=`<div class="band"><span class="t">Attack mode on</span><span class="b bs">Turn off</span></div>`;
+const ruler=y=>`<div class="ruler" style="bottom:${y}px"><span>content ends</span></div>`;
+const F={
+ built:`<div style="position:absolute;left:16px;right:16px;top:15px;z-index:6;display:flex;align-items:center;gap:12px;background:var(--sel);box-shadow:inset 0 0 0 1px var(--accent);border-radius:20px;padding:8px 8px 8px 16px;font-size:20px;font-weight:500"><svg class="ic" viewBox="0 0 24 24"><path d="M2 8.5h20"/><path d="M3 8.5h7.5V12a3.75 3.75 0 0 1-7.5 0z"/><path d="M13.5 8.5H21V12a3.75 3.75 0 0 1-7.5 0z"/><path d="M5.5 11.5l1.5-1.5M16 11.5l1.5-1.5"/></svg><span style="flex:1">Attack<br>mode on</span><span class="b bs">Turn off</span></div>`+TODAY(148)+NAV('today'),
+ A:TODAY()+BAND+NAV('today')+ruler(168),
+ 'B-logs':LOGS+BAND+NAV('logs')+ruler(168),
+ C:TODAY()+`<div class="chip">Attack mode on<span class="x">Turn off</span></div>`+NAV('today')+ruler(156),
+ D:TODAY()+`<div class="strip"><span class="t">Attack mode on</span><span class="b bs">Turn off</span></div>`+NAV('today','attached')+ruler(142),
+};
+document.querySelectorAll('[data-f]').forEach(el=>el.innerHTML=F[el.dataset.f]);
+</script>
+</body>
+</html>

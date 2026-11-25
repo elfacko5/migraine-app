@@ -236,7 +236,9 @@ export default function App() {
   // Whether Today is showing its hero. The hero owns the top of the screen in
   // that state, so TopBar stands down — see the note at its call site.
   const heroOnToday = tab === 'log' && !!(ongoingAttack || lastAttackEnd);
-  // The attack mode control's Today placement: across the top of the hero.
+  // The attack mode pill's Today placement: the hero's top-left corner. It
+  // renders nothing while attack mode is on — the way out is then the strip
+  // on the nav.
   const heroAttackMode = <AttackModePill active={attackMode} onToggle={setAttackMode} />;
 
   // Order the pickers' options by how often they've been selected historically,
@@ -599,7 +601,11 @@ export default function App() {
           // grows with env(safe-area-inset-bottom), so a flat reserve tuned
           // against a zero-inset preview leaves content behind the nav on a
           // real device.
-          style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom))' }}
+          //
+          // While attack mode is on, the nav carries its strip (56px + its 1px hairline, pinned
+          // in px so it doesn't grow with the text size) and the reserve
+          // grows by that much on every tab.
+          style={{ paddingBottom: `calc(7rem + ${attackMode ? '57px' : '0px'} + env(safe-area-inset-bottom))` }}
         >
         {/* ── Today tab ───────────────────────────── */}
         {/* Order, top to bottom: hero → week card → two-hour check-in → the
@@ -744,6 +750,8 @@ export default function App() {
         onChange={setTab}
         onAddPress={() => setAddSheetOpen(true)}
         addOpen={addSheetOpen}
+        attackMode={attackMode}
+        onAttackMode={setAttackMode}
       />
       <AddSheet
         open={addSheetOpen}

@@ -1,4 +1,5 @@
 import type { Tab } from '../types';
+import { AttackModeStrip } from './AttackModePill';
 
 interface NavItem { id: Tab; label: string; icon: React.ReactNode }
 
@@ -60,9 +61,13 @@ interface Props {
   onAddPress: () => void;
   /** Whether that sheet is open — the + shows a × while it is. */
   addOpen: boolean;
+  /** While on, the "Attack mode on / Turn off" strip joins the top of the
+   *  bar, on every tab — see `AttackModePill.tsx`. */
+  attackMode: boolean;
+  onAttackMode: (on: boolean) => void;
 }
 
-export function BottomNav({ active, onChange, onAddPress, addOpen }: Props) {
+export function BottomNav({ active, onChange, onAddPress, addOpen, attackMode, onAttackMode }: Props) {
   return (
     <>
       {/* `absolute` (not `fixed`) relative to App's own correctly-sized,
@@ -76,9 +81,17 @@ export function BottomNav({ active, onChange, onAddPress, addOpen }: Props) {
           lands on the prototype's tab tone in dark and light and follows
           attack mode's surfaces with no third value to keep in step. */}
       <nav
-        className="absolute inset-x-0 bottom-0 z-40 border-t border-bg-border bg-[color-mix(in_srgb,var(--color-bg-base)_55%,var(--color-bg-surface))]"
+        className={`absolute inset-x-0 bottom-0 z-40 border-t bg-[color-mix(in_srgb,var(--color-bg-base)_55%,var(--color-bg-surface))] ${attackMode ? 'border-accent' : 'border-bg-border'}`}
         style={{ paddingBottom: 'max(0.375rem, calc(env(safe-area-inset-bottom) - 0.625rem))' }}
       >
+      {/* Part of the bar rather than floating over the page: the selected
+          tint, edge to edge, with a hairline between it and the tabs. The
+          bar's z-40 already sits above the attack-mode dim scrim (z-35). */}
+      {attackMode && (
+        <div className="border-b border-bg-border bg-selected-fill">
+          <AttackModeStrip onToggle={onAttackMode} />
+        </div>
+      )}
       <ul className="mx-auto flex w-full max-w-2xl items-end">
         {LEFT_TABS.map((tab) => (
           <li key={tab.id} className="flex-1">

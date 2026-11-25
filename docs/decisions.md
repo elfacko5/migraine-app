@@ -2573,9 +2573,20 @@ Sunny, asked whether the v4 board's "removed from this phone and from your accou
 
 Sunny picked direction B of four mocked in `docs/redesign-v4/proposals/AttackModeSwitchProposals.html` (A the v4 board's labelled switch, C an offer only during an attack, D a panel with the dim slider). This takes up A10's backlogged "labelled switch" in a different form.
 
+- **Superseded the same day for the on state — see the next entry.** The band at the top of the hero (95bb96f) is gone.
 - **The problem was the on state.** The icon-only circle (2026-10-28) had to be learned, and on was only a sage ring: once the screen had gone dim and warm, nothing said why or how to undo it. On is now a full-width `bg-selected-fill` band, "Attack mode on" and a **Turn off** button (`aria-label="Turn off attack mode"`).
 - **Off stays small**: the mark plus "Attack mode" in a pill that hugs its text, so it doesn't come back as the second headline the 2026-10-28 change removed.
 - **`HomeCard` measures its top action** (`ResizeObserver`) and keeps the text 24px below it, because at attack mode's 20px root the band wraps to two lines and ran into the "Attack ongoing" label. The 110px floor is unchanged, so the off state moves nothing.
 - **Focus follows the swap**: the pressed control unmounts, so focus moves to its replacement rather than dropping to `body`.
 - **The icon is sunglasses** (Sunny didn't like the arcs). Candidates drawn: sunglasses, a resting eye (rejected: a closed eye means "hide" on iOS), a lowered blind, a half-lit circle (reads as a theme switch). Still not a sun, moon, open eye or mask, which all mean something else here.
 - **Not done:** "turns off once the attack ends" (A10 ii) — the band is where that line would go once it exists. The first-run `TopBar` instance uses the same component; checked only by code, not on screen.
+
+## "Attack mode on" moves to the bottom nav, every tab (2026-11-25)
+
+Sunny: with everything scaled up in attack mode, the band at the top of the hero made the top of the screen very heavy. Four bottom placements were mocked in `docs/redesign-v4/proposals/AttackModeBandBottomProposals.html` (A floating band on Today, B the same on every tab, C a chip over the +, D a strip joined to the nav); **Sunny picked D**.
+
+- **On: `AttackModeStrip` inside `BottomNav`**, above the tabs, `bg-selected-fill`, the bar's top edge in accent. Part of the bar, not floating, so the nav's z-40 already clears the dim scrim. On every tab, because as part of the nav it would look odd to vanish on a tab switch — this brings back "a way out from anywhere" only while it's on; when off, nothing floats anywhere, as decided in v3.
+- **Pinned in px**: text `min(1.0625rem, 18px)`, Turn off 44px, strip 56px, so it stays one line at the 20px attack-mode root and the 150% text size. The scroll reserve grows by 57px (strip + hairline) while on.
+- **Off stays at the top**: the pill in the hero's corner (or the first-run `TopBar`), rendering nothing while on. The control jumps between the two when toggled; that happens at the moment the whole screen changes anyway. `HomeCard` went back to its fixed 110px top — the measuring added for the band isn't needed.
+- **Focus hands off**: turning on puts focus on Turn off; turning off returns it to the pill on Today, or to the current tab's nav button elsewhere (Today stays mounted behind other tabs, so the pill only takes focus when it's visible).
+- **Not verified:** on device, and the first-run `TopBar` state on screen.

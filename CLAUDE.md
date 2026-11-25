@@ -112,11 +112,11 @@ Dark is default. `color-scheme: dark` globally. **Never use `dark:` prefixes.** 
 
 **SVG/Recharts mirror tokens by hand** — theme-aware functions via `useUiTheme()`. Change a token → change these too: `headDiagram.ts`, `SeverityChart.tsx`, `SeverityBreakdown.tsx`, `HeadHeatmap.tsx`, `StatsView.tsx`, `AreaSeverityPicker.tsx`. Plus `Color.liddSeverity` in the widget extension.
 
-**Type:** Lexend variable (400–700), self-hosted. Emphasis is `font-medium` (500); `font-bold` for headline numbers only. No light/thin weight. Body floor 16px, caption floor 14px, no exceptions. Text scale 87.5%–150%. `BottomNav` and `AttackModePill` cap their font sizes. Atkinson Hyperlegible Next is opt-in (`data-font="atkinson"`).
+**Type:** Lexend variable (400–700), self-hosted. Emphasis is `font-medium` (500); `font-bold` for headline numbers only. No light/thin weight. Body floor 16px, caption floor 14px, no exceptions. Text scale 87.5%–150%. `BottomNav` and `AttackModeStrip` cap their font sizes. Atkinson Hyperlegible Next is opt-in (`data-font="atkinson"`).
 
 ### Attack mode
 
-`data-theme="attack"` on `<html>`, reachable from `AttackModePill` on Today (off: 44px pill, sunglasses mark + "Attack mode", `aria-pressed`; on: full-width band "Attack mode on" + **Turn off**, which `HomeCard` measures so the hero text clears it). Focus moves to whichever replaces the pressed control. Overrides light/dark.
+`data-theme="attack"` on `<html>`, reachable from `AttackModePill` on Today while off (44px pill, sunglasses mark + "Attack mode", top of the hero / first-run `TopBar`). While on, the pill is gone and `AttackModeStrip` ("Attack mode on" + **Turn off**) joins the top of `BottomNav` on **every tab**, type and height pinned in px (56px; the scroll reserve grows by 57px). Focus hands off between the two. Overrides light/dark.
 
 - Darker/warmer tokens: `--color-bg-base` `#14140f`, text `#c9c4b8`.
 - Body text floor 20px. All animation cut (`prefers-reduced-motion` honoured for everyone).
@@ -277,7 +277,7 @@ Six questions, scored 36–78. One per screen, no auto-advance. Prompts on Today
 
 - Today renders no `TopBar` while hero is on screen. First-run title is "Hello".
 - `TopBar` has no bottom border. Tab titles 34px in `rem`. `TopBar` **must stay inside the scroll div**.
-- Bottom clearance: `calc(7rem + env(safe-area-inset-bottom))`.
+- Bottom clearance: `calc(7rem + env(safe-area-inset-bottom))`, plus 57px while attack mode's strip is on the nav.
 - Header padding: `calc(2rem + env(safe-area-inset-top))`.
 
 ### Viewport architecture
@@ -310,7 +310,7 @@ Attack-free: `AttackFreeCard` with greeting + headline "X days attack-free" (lar
 - Gradients from `bg-bg-base` to `bg-bg-base/0` (never `transparent`). Horizontal stop past image's left edge (40% for 36% image start).
 - Art box 40px + inset below top. Text centred against artwork, `max-w-[64%]`.
 - Ongoing: Add update (`btn-primary btn-compact`) + End attack (`btn-secondary btn-compact`).
-- Attack mode control across the top, z-45 (pill off, band on). Hero not `isolate`.
+- Attack mode pill top-left z-45, off only (on = the nav strip). Hero not `isolate`.
 - Headline 44px semibold. Ongoing = elapsed time + trajectory + severity text (never colour-coded on illustration).
 
 ### Sheet
