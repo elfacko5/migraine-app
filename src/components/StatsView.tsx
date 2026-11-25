@@ -178,6 +178,17 @@ const LeafGlyph = (
   </svg>
 );
 
+// The board's glyph for "In the two days before": a clock with a
+// turn-back arrow, tinted gold to match its bars.
+const LookBackGlyph = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 12a8 8 0 1 0 2.5-5.8" />
+    <path d="M4 4v4h4" />
+    <path d="M12 8v4l3 2" />
+  </svg>
+);
+
 // Ranked horizontal frequency bars (most-frequent first).
 function FreqBars({ data, color }: { data: Freq[]; color: string }) {
   const max = data[0]?.count ?? 1;
@@ -582,6 +593,8 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
             title="In the two days before"
             data={stats.triggers}
             color={chartColors.chart4}
+            icon={LookBackGlyph}
+            iconTone="bg-chart-4/16 text-chart-4"
             info="What you noted in the two days before each attack — recorded on attack days only, so there's no count of days when the same thing happened and no attack followed. Not something shown to bring one on."
           />
           {/* Symptom/trigger frequency used to reuse the severity-mid/high
