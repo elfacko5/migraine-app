@@ -37,10 +37,16 @@ const RETIRED_ENTRIES = [
   // A custom symptom Sunny added at some point, not a DEFAULT_SYMPTOMS entry
   // (2026-09-23, Sunny's call).
   'wobbly legs',
+];
+
+// **No longer offered, but still part of the record.** Unlike the entries
+// above, these were real defaults that real attacks logged, so they must stay
+// on Detail, the timeline, the summaries and the Insights tallies. Only the
+// chip lists drop them (`pruneRetired`, which the union sync also runs); the
+// history paths call `isRetired`, which doesn't look here.
+const UNOFFERED_ENTRIES = [
   // Dropped from DEFAULT_RELIEFS (2026-11-25, June's call from the past-attack
-  // flow). Same reasoning as 'stretching': retiring is what removes them from
-  // stored lists and the synced union. Their drawn icon stays in
-  // `drawnIcons.tsx` so an old timeline still draws it.
+  // flow). Their drawn icon stays in `drawnIcons.tsx` for old timelines.
   'cold compress',
   'hot compress',
 ];
@@ -50,6 +56,7 @@ export function isRetired(name: string | null | undefined): boolean {
   return RETIRED_ENTRIES.includes(name.trim().toLowerCase());
 }
 
+/** For the chip lists only: drops retired *and* no-longer-offered entries. */
 export function pruneRetired(list: string[]): string[] {
-  return list.filter((item) => !isRetired(item));
+  return list.filter((item) => !isRetired(item) && !UNOFFERED_ENTRIES.includes(item.trim().toLowerCase()));
 }

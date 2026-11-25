@@ -590,10 +590,13 @@ function DoseLimitNote({ library, attacks, name, doses, startMs, endMs, nowMs }:
   const resolved = doses
     .map((d) => ({ ms: doseEntryMs(d, startMs, endMs, nowMs), amount: d.amount }))
     .sort((a, b) => a.ms - b.ms);
-  const totalUnits = resolved.reduce((sum, d) => sum + d.amount, 0);
   const latestMs = resolved[resolved.length - 1].ms;
   // The daily total and the 24h count are about the aggregate, so a single
-  // check at the latest time with the summed units is right for those.
+  // check at the latest time with the summed units is right for those —
+  // summing only the entries inside that 24 h. On a past attack longer than a
+  // day, a dose entered 30 h before the latest isn't "in 24 hours".
+  const inWindow = resolved.filter((d) => d.ms > latestMs - 24 * 60 * 60 * 1000);
+  const totalUnits = inWindow.reduce((sum, d) => sum + d.amount, 0);
   const check = checkDose(library, attacks, name, totalUnits, new Date(latestMs).toISOString());
 
   // Grouped by exact resolved time first: two entries deliberately left at
@@ -633,8 +636,8 @@ function DoseLimitNote({ library, attacks, name, doses, startMs, endMs, nowMs }:
           2026-11-25), so the line names the unit and says it counts this one. */}
       <p className="text-xs text-text-secondary">
         {library.maxPerDay
-          ? `${check.unitsInWindow + totalUnits} of ${unitsLabel(library.maxPerDay, library)} in 24 hours, counting ${resolved.length > 1 ? 'these' : 'this one'}`
-          : `${unitsLabel(check.unitsInWindow + totalUnits, library)} in 24 hours, counting ${resolved.length > 1 ? 'these' : 'this one'}`}
+          ? `${check.unitsInWindow + totalUnits} of ${unitsLabel(library.maxPerDay, library)} in 24 hours, counting ${inWindow.length > 1 ? 'these' : 'this one'}`
+          : `${unitsLabel(check.unitsInWindow + totalUnits, library)} in 24 hours, counting ${inWindow.length > 1 ? 'these' : 'this one'}`}
       </p>
       {exceedsIntake && library.maxPerIntake && (
         <p className="text-xs text-severity-mid">

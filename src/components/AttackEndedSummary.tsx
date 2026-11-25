@@ -60,14 +60,20 @@ export function AttackEndedSummary({ attack, onOpenEntry, onDone }: {
     { key: 'ended', label: 'Ended', value: ended },
     { key: 'worst', label: 'Worst', value: worstText(attack) },
     // "Sumatriptan 50 mg" → "Helped a bit"; "Treo 500/50 mg × 2" → …
-    ...doses.map((o, i) => ({
-      key: `dose-${i}`,
-      label: [
+    // With no 2 h reading there is no outcome to put on the right, so the
+    // dose moves into the value under a "Medication" label (as on the past
+    // attack summary) — a name beside an empty value read as a gap and gave
+    // VoiceOver nothing to read.
+    ...doses.map((o, i) => {
+      const what = [
         `${o.name}${o.dose ? ` ${o.dose}` : ''}${o.amount && o.amount > 1 ? ` × ${o.amount}` : ''}`,
         repeated.has(o.name) ? formatTime(o.time) : null,
-      ].filter(Boolean).join(', '),
-      value: capitalise(outcomeText(o)),
-    })),
+      ].filter(Boolean).join(', ');
+      const outcome = outcomeText(o);
+      return outcome
+        ? { key: `dose-${i}`, label: what, value: capitalise(outcome) }
+        : { key: `dose-${i}`, label: 'Medication', value: what };
+    }),
     ...(attack.impact !== undefined ? [{ key: 'impact', label: 'Stopped you', value: END_IMPACT_LABELS[attack.impact] }] : []),
     ...(quality.length ? [{ key: 'quality', label: 'Felt like', value: quality.join(', ') }] : []),
     ...(symptoms.length ? [{ key: 'symptoms', label: 'Also had', value: symptoms.join(', ') }] : []),
