@@ -340,6 +340,32 @@
   --color-ill-2:          #5e7363;
 }
 
+/* ── Attack-mode preview ────────────────────────────────
+   What it changes shows a real Logs card as attack mode draws it, while the
+   page around it is in the everyday theme. Attack's values live on <html>
+   (theme.css `:root[data-theme='attack']` and the block above), so this
+   class repeats them for one subtree. The old-name aliases are declared
+   again too: a custom property's var() resolves where it is declared, so
+   the :root aliases would otherwise carry the everyday values in. Change
+   these with the attack palette. */
+.attack-preview {
+  --color-surface:        #14140f;
+  --color-surface-raised: #1e1e17;
+  --color-content:        #c9c4b8;
+  --color-content-muted:  #9a9689;
+  --color-divider:        #34322a;
+  --color-line:           #736d5a;
+  --color-bg-base:        var(--color-surface);
+  --color-bg-surface:     var(--color-surface-raised);
+  --color-bg-border:      var(--color-divider);
+  --color-border-control: var(--color-line);
+  --color-text-primary:   var(--color-content);
+  --color-text-secondary: var(--color-content-muted);
+  --color-bg-raised:      #262218;
+  --color-bg-elevated:    #2f2a1f;
+  color: var(--color-content);
+}
+
 /* ── Light mode ─────────────────────────────────────────
    Specified in docs/palette.md (measured, not transcribed — same rules as
    dark: no pure white, no saturated blue, contrast checked against the

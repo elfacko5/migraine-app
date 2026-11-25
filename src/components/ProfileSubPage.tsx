@@ -25,6 +25,9 @@ interface Props {
 // from the right (`enterFrom="right"`): these are rows you go one level into
 // from a list, not a modal that interrupts what you were doing. AttackDetail
 // keeps its X for exactly that contrast — it *is* a detour.
+// AttackDetail's header button: 44px, filled bg-raised, primary chevron.
+const CIRCLE_BUTTON = 'flex size-target shrink-0 items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated';
+
 export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'back' }: Props) {
   // A sub-page can replace another inside the same sheet (My medications →
   // Monthly guides), which removes the control that had focus. The title takes
@@ -37,20 +40,18 @@ export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'ba
     // surface a SettingsList card had nothing to stand out from (2026-11-25).
     <div className="flex flex-col flex-1 min-h-0 bg-bg-base">
       <div
-        className="flex items-center gap-3 border-b border-border-subtle px-3 py-3"
+        className="flex items-center gap-3 px-3 py-3"
         style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
       >
-        {/* Pattern library's "List header" (docs/redesign-v4/reference/
-            Patterns.html, 2026-11-23): a bare 44px chevron, no circle fill —
-            the filled-circle treatment is the *flow* header's own (40px,
-            bg-bg-raised), a different role. Title 16/600, not 17/500. */}
+        {/* No rule under the bar, and a filled circle behind the back
+            chevron — AttackDetail's header button, on June's call
+            (2026-11-25) over the boards' bare chevron. Title 16/600. */}
         {dismiss === 'back' ? (
           <button
             type="button"
             onClick={onClose}
             aria-label="Back"
-            // Primary, not muted: the board's back chevron is #cdc7bb.
-            className="tap-44 flex size-target items-center justify-center text-text-primary"
+            className={CIRCLE_BUTTON}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
               <path d="m15 18-6-6 6-6" />
@@ -65,7 +66,7 @@ export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'ba
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="tap-44 flex size-target items-center justify-center text-text-secondary transition-colors hover:text-text-primary"
+            className={CIRCLE_BUTTON}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
               <path d="M18 6 6 18" />

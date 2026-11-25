@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FontChoice, TextScale, Theme } from '../hooks/useSettings';
 import type { useAuth } from '../hooks/useAuth';
-import type { SyncStatus } from '../types';
+import type { Attack, SyncStatus } from '../types';
 import { formatSince, formatDatetime, formatTime } from '../utils/format';
 import { useNowTick } from '../hooks/useNowTick';
-import { sevBadgeClass } from '../utils/severity';
+import { AttackCard } from './AttackCard';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
@@ -300,28 +300,30 @@ export function DisplayPanel({
   );
 }
 
-// Font screen — each option renders a sample in the face it selects, with room
-// for Atkinson's "why you'd pick it" line the two-up tiles had no space for.
-// A left-aligned radio card: OptionTile's ring/mark rules on a full-width row.
+// Font screen — v4 board DisplayFontDark: two tiles, each naming the face
+// above a sample set in it, the chosen one tinted with an accent outline and
+// a check; Atkinson's "why you'd pick it" line sits under both.
 function FontPage({ font, onFont, onBack }: { font: FontChoice; onFont: (f: FontChoice) => void; onBack: () => void }) {
   return (
     <ProfileSubPage title="Font" onClose={onBack}>
-      <div role="radiogroup" aria-label="Font" className="space-y-3">
-        <FontOption name="Lexend" family="'Lexend', sans-serif" selected={font === 'lexend'} onSelect={() => onFont('lexend')} />
-        <FontOption
-          name="Atkinson Hyperlegible Next"
-          family="'Atkinson Hyperlegible Next', sans-serif"
-          selected={font === 'atkinson'}
-          onSelect={() => onFont('atkinson')}
-          hint="Try it if letters like I, l and 1 blur together."
-        />
+      <div className="space-y-3.5">
+        <div role="radiogroup" aria-label="Font" className="space-y-3.5">
+          <FontOption name="Lexend" family="'Lexend', sans-serif" selected={font === 'lexend'} onSelect={() => onFont('lexend')} />
+          <FontOption
+            name="Atkinson Hyperlegible Next"
+            family="'Atkinson Hyperlegible Next', sans-serif"
+            selected={font === 'atkinson'}
+            onSelect={() => onFont('atkinson')}
+          />
+        </div>
+        <p className="text-xs text-text-secondary">Try it if letters like I, l and 1 blur together.</p>
       </div>
     </ProfileSubPage>
   );
 }
 
-function FontOption({ name, family, selected, onSelect, hint }: {
-  name: string; family: string; selected: boolean; onSelect: () => void; hint?: string;
+function FontOption({ name, family, selected, onSelect }: {
+  name: string; family: string; selected: boolean; onSelect: () => void;
 }) {
   return (
     <button
@@ -329,19 +331,19 @@ function FontOption({ name, family, selected, onSelect, hint }: {
       role="radio"
       aria-checked={selected}
       onClick={onSelect}
-      className={`relative block w-full rounded-card p-card text-left ring-inset transition-colors ${
-        selected ? 'bg-accent/10 ring-2 ring-accent' : 'bg-bg-raised ring-1 ring-border-control'
+      className={`relative flex min-h-[5.25rem] w-full flex-col justify-center gap-1.5 rounded-control px-3.5 py-3 text-left ring-inset transition-colors ${
+        selected ? 'bg-selected-fill pr-11 ring-1 ring-accent' : 'bg-bg-raised'
       }`}
     >
-      <span
-        aria-hidden="true"
-        className={`absolute right-3 top-3 h-3.5 w-3.5 rounded-full ring-inset ${selected ? 'ring-[5px] ring-accent' : 'ring-2 ring-current opacity-60'}`}
-      />
-      <span className={`block pr-6 text-text-primary ${selected ? 'font-semibold' : 'font-medium'}`}>{name}</span>
-      <span className="mt-1.5 block text-base text-text-primary" style={{ fontFamily: family }}>
-        Took 1 tablet at 09:15. Right temple.
-      </span>
-      {hint && <span className="mt-2 block text-xs text-text-secondary">{hint}</span>}
+      {/* The face's name stays in Lexend, the app's own voice; only the
+          sample is set in the face it selects. */}
+      <span className="text-xs font-semibold text-text-secondary" style={{ fontFamily: "'Lexend', sans-serif" }}>{name}</span>
+      <span className="text-sm text-text-primary" style={{ fontFamily: family }}>Took 1 tablet at 09:15. Right temple.</span>
+      {selected && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="absolute right-3.5 top-1/2 size-5 -translate-y-1/2 text-accent" aria-hidden="true">
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      )}
     </button>
   );
 }
@@ -438,58 +440,38 @@ function ChangeLine({ children, sub }: { children: React.ReactNode; sub?: string
   );
 }
 
-// Attack mode's own surface and text values (src/theme.css and index.css,
-// `[data-theme='attack']`), mirrored by hand like THEME_SWATCH was: the
-// attack tokens are scoped to <html>, so a card can't borrow them while the
-// page around it is in the everyday theme. Change them with the palette.
-const ATTACK_CARD = {
-  card: '#1e1e17',     // surface-raised
-  line: '#34322a',     // divider
-  chip: '#262218',     // bg-raised
-  text: '#c9c4b8',     // content
-  muted: '#9a9689',    // content-muted
-  dim: 'rgba(20, 20, 15, 0.35)', // the BrightnessOverlay floor, over surface #14140f
+// The sample log on the Text size and What-it-changes screens: the real
+// Logs card (AttackCard) drawn from a made-up attack, so the preview can
+// never show a card the app no longer renders. Not pressable, and hidden
+// from screen readers — it's a picture of a row, not a row.
+const SAMPLE_START = new Date(2024, 5, 24, 9, 15);
+const sampleAt = (min: number) => new Date(SAMPLE_START.getTime() + min * 60_000).toISOString();
+const SAMPLE_ATTACK: Attack = {
+  id: SAMPLE_START.getTime(),
+  snapshots: [
+    { time: sampleAt(0), areas: { 'Temple right': 5, Forehead: 4 }, symptoms: ['Nausea', 'Light sensitivity'], reliefs: [], medication: { name: 'Sumatriptan', dose: '50 mg' }, note: null, source: 'manual' },
+    { time: sampleAt(60), areas: { 'Temple right': 7, Forehead: 5 }, symptoms: [], reliefs: [], medication: null, note: null, source: 'manual' },
+    { time: sampleAt(150), areas: { 'Temple right': 3 }, symptoms: [], reliefs: [], medication: null, note: null, source: 'manual' },
+  ],
+  end: sampleAt(150),
+  triggers: [],
+  notificationConfig: { enabled: false, mode: 'adaptive', fixedIntervalMinutes: 60 },
 };
 
-// The sample log on the Text size and What-it-changes screens — the v4
-// boards' preview card, one layout in two palettes. `attack` draws it as
-// attack mode would: its colours, its 20px body floor (px on purpose, a
-// picture of that mode, not text that follows this screen's scale), and the
-// dim laid over the top. Everyday sizes are rem so the Text size preview
-// grows with the setting it previews.
+// `attack`: the card as attack mode draws it — its palette (`.attack-preview`
+// in index.css), its 20px text floor (zoom by the ratio to this screen's own
+// size, so a page already at 20px or more draws it as is), and the dim
+// laid over the top at BrightnessOverlay's floor.
 function DisplayPreviewCard({ attack = false }: { attack?: boolean }) {
-  const c = attack ? ATTACK_CARD : null;
+  const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const zoom = attack ? Math.max(1, 20 / rootPx) : 1;
   return (
-    <div
-      aria-hidden="true"
-      className={`relative overflow-hidden rounded-control border px-3.5 py-3 ${c ? '' : 'border-bg-border'}`}
-      style={c ? { background: c.card, borderColor: c.line } : undefined}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span
-          className={`font-semibold ${c ? '' : 'text-sm text-text-primary'}`}
-          style={c ? { fontSize: 20, color: c.text } : undefined}
-        >Mon, Jun 24 · 9:15 AM</span>
-        <span
-          className={`shrink-0 rounded-badge px-2.5 py-0.5 font-bold tabular-nums ${sevBadgeClass(7)} ${c ? '' : 'text-sm'}`}
-          style={c ? { fontSize: 20 } : undefined}
-        >7</span>
-      </div>
-      <div className={`mt-1 ${c ? '' : 'text-xs text-text-secondary'}`} style={c ? { fontSize: 16, color: c.muted } : undefined}>
-        <p>2h 30m · 3 readings</p>
-        <p>Right temple, Forehead</p>
-        <p>Impact: <b className={`font-semibold ${c ? '' : 'text-text-primary'}`} style={c ? { color: c.text } : undefined}>a lot</b></p>
-      </div>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {['Nausea', 'Light sensitivity'].map((t) => (
-          <span
-            key={t}
-            className={`rounded-chip px-3 py-1 ${c ? '' : 'bg-bg-raised text-xs text-text-primary'}`}
-            style={c ? { background: c.chip, color: c.text, fontSize: 17 } : undefined}
-          >{t}</span>
-        ))}
-      </div>
-      {c && <div className="pointer-events-none absolute inset-0" style={{ background: c.dim }} />}
+    // In attack colours the card sits on a patch of attack mode's own page
+    // (bg-base inside .attack-preview): on this everyday page its surface
+    // was within a shade of the background and read as no card at all.
+    <div aria-hidden="true" inert className={`relative ${attack ? 'attack-preview rounded-card bg-bg-base p-3' : ''}`} style={zoom > 1 ? { zoom } : undefined}>
+      <AttackCard attack={SAMPLE_ATTACK} onClick={() => {}} />
+      {attack && <div className="pointer-events-none absolute inset-0 rounded-card bg-[#14140f]/35" />}
     </div>
   );
 }
