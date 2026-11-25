@@ -47,9 +47,11 @@ export function PastAttackSaved({ attack, medications, onAddAnother, onDone }: {
     { key: 'worst', label: 'Worst', value: worstText(attack) },
     ...(attack.wokeWithMigraine ? [{ key: 'woke', label: 'Woke up with it', value: 'Yes' }] : []),
     ...(quality.length ? [{ key: 'quality', label: 'Felt like', value: quality.join(', ') }] : []),
-    // "Sumatriptan · 1 tablet · helped a bit"
+    // "Sumatriptan · 1 tablet · helped a bit"; with no 2 h reading it ends
+    // after the amount (`outcomeText` is ''). Label is "Medication", the word
+    // the flow's own step uses, not "Taken" (June, 2026-11-25).
     ...attackDoseOutcomes(attack).map((o, i) => ({
-      key: `dose-${i}`, label: i === 0 ? 'Taken' : '', srLabel: 'Taken',
+      key: `dose-${i}`, label: i === 0 ? 'Medication' : '', srLabel: 'Medication',
       value: [o.name, amountText(o, attack, medications), outcomeText(o)].filter(Boolean).join(' · '),
     })),
     ...(symptoms.length ? [{ key: 'symptoms', label: 'Also had', value: symptoms.join(', ') }] : []),

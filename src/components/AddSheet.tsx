@@ -111,13 +111,16 @@ export function AddSheet({ open, ongoing, actions, onClose }: {
             top/left/right get clipped by this card's own edge, leaving just
             its bottom edge showing as a stray green line under "Log an
             attack". The row already shows `focus-visible:bg-bg-elevated`,
-            so the outline was redundant as well as broken here. */}
+            so the outline was redundant as well as broken here. Tailwind's
+            `outline-none` alone lost to the unlayered ring in index.css, so
+            `data-add-row` carries the rule that actually removes it. */}
         <div className="overflow-hidden rounded-sheet bg-bg-raised">
           {actions.map((a, i) => (
             <button
               key={a.label}
               ref={i === 0 ? firstRef : undefined}
               type="button"
+              data-add-row=""
               onClick={() => { onClose(); a.onSelect(); }}
               className={`flex min-h-[4.5rem] w-full items-center gap-2.5 px-4 py-3.5 text-left outline-none transition-colors hover:bg-bg-elevated focus-visible:bg-bg-elevated ${
                 i > 0 ? 'border-t border-bg-border' : ''

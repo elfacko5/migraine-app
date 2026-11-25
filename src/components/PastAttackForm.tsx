@@ -83,10 +83,13 @@ function blank(): FormState {
 
 const STEP_LABELS = ['When was it?', 'Where does it hurt?', 'Did you take anything?', 'What was it like?', 'Anything else?'];
 const STEP_SUBHEADS = [
-  'Required: when it started and when it ended.',
+  'Required: fill out date and time.',
   'Tap an area, then rate it. Required. The rest is optional.',
-  'Optional · pick any',
-  'Optional · pick any',
+  // Plain "Optional" on all three optional steps (June, 2026-11-25): "pick
+  // any" already sits on the medication list's own label, and the chip
+  // checks say it on step 4.
+  'Optional',
+  'Optional',
   'Optional',
 ];
 
@@ -399,20 +402,20 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
           <div className="space-y-6">
             <section className="space-y-2" aria-labelledby="felt-like-label">
               <h3 id="felt-like-label" className="text-sm font-medium text-text-primary">
-                Felt like <span className="font-normal text-text-secondary">— pick any</span>
+                Felt like
               </h3>
               <ChipSelector options={PAIN_QUALITY_OPTIONS} selected={form.painQuality} onChange={(v) => set('painQuality', v)} />
             </section>
             <section className="space-y-2" aria-labelledby="also-had-label">
               <h3 id="also-had-label" className="text-sm font-medium text-text-primary">
-                Also had <span className="font-normal text-text-secondary">— pick any</span>
+                Also had
               </h3>
               <ChipSelector options={symptoms} selected={form.symptoms} onChange={(v) => set('symptoms', v)}
                 onAddCustom={onAddSymptom} renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
             </section>
             <section className="space-y-2" aria-labelledby="tried-label">
               <h3 id="tried-label" className="text-sm font-medium text-text-primary">
-                What did you try? <span className="font-normal text-text-secondary">— pick any</span>
+                What did you try?
               </h3>
               <ChipSelector options={reliefs} selected={form.reliefs} onChange={(v) => set('reliefs', v)}
                 onAddCustom={onAddRelief} renderIcon={(r) => <ReliefIcon name={r} className="h-4 w-4" />} />

@@ -4,7 +4,7 @@ import type { SummaryRow } from '../utils/attackSummary';
 // readings behind their rows are in `utils/attackSummary.ts`.
 
 /** The label/value card. A row with an empty label continues the one above
- *  (a second dose under "Taken"); `srLabel` gives it a term to read. */
+ *  (a second dose under the first); `srLabel` gives it a term to read. */
 export function SummaryList({ rows }: { rows: SummaryRow[] }) {
   return (
     <dl className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">

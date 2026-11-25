@@ -10,7 +10,8 @@ import { isRetired } from './retired';
 // `AttackEndedSummary` (backlog item 18, `docs/decisions.md`). Both read back
 // the attack **as stored**, and both follow a settled rule wherever their v4
 // board doesn't: location is a side, never a zone; a dose's outcome is
-// `doseOutcomeWord` from its 2 h reading (A1), and a dose without one says so.
+// `doseOutcomeWord` from its 2 h reading (A1), and a dose without one says
+// nothing — "no 2 h reading" was noise on both screens (June, 2026-11-25).
 
 export interface SummaryRow { key: string; label: string; value: string; srLabel?: string }
 
@@ -36,10 +37,11 @@ export function beforeText(attack: Attack): string {
     || (attack.triggers.includes(NOTHING_UNUSUAL) ? 'Nothing unusual' : '');
 }
 
-/** The 2 h outcome in words, or that there was no reading — never "didn't
- *  help" for a dose nobody checked. */
+/** The 2 h outcome in words, or '' when there was no reading — never
+ *  "didn't help" for a dose nobody checked, and no "no 2 h reading" either
+ *  (June, 2026-11-25: most doses never get one, so it was noise). */
 export function outcomeText(o: DoseOutcome): string {
-  if (o.after === null) return 'no 2 h reading';
+  if (o.after === null) return '';
   return { Helped: 'helped', 'A bit': 'helped a bit', No: 'didn’t help' }[doseOutcomeWord(o.before, o.after)];
 }
 

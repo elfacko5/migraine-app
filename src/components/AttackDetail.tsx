@@ -452,9 +452,11 @@ function DoseRow({ outcome: o, attack, medications, letter }: {
   const hours = o.afterMs === null ? 0 : Math.round(o.afterMs / 3_600_000);
   const before = o.before > 0 ? o.before : '–';
   const pain = o.after !== null ? `Pain ${before} → ${o.after}` : o.verdict === 'pending' ? `Pain ${before} → …` : `Pain ${before}`;
+  // No line at all for a dose nobody checked at 2 h — "no 2 h reading" was
+  // noise, most doses never get one (June, 2026-11-25; same on both summaries).
   const under = o.after !== null
     ? `${hours} h later`
-    : o.verdict === 'pending' ? '2 h to come' : 'no 2 h reading';
+    : o.verdict === 'pending' ? '2 h to come' : null;
   return (
     <li className="flex items-center gap-3 px-4 py-3">
       <ClassBadge>{letter ?? <MedIcon name={o.name} dose={o.dose} className="h-4 w-4" />}</ClassBadge>
@@ -471,7 +473,7 @@ function DoseRow({ outcome: o, attack, medications, letter }: {
         </div>
         <div className="ml-auto text-right">
           <p className="whitespace-nowrap text-sm font-medium tabular-nums text-text-primary">{pain}</p>
-          <p className="whitespace-nowrap text-xs text-text-secondary">{under}</p>
+          {under && <p className="whitespace-nowrap text-xs text-text-secondary">{under}</p>}
           {o.verdict === 'helped' && <p className="text-xs font-medium text-accent-light">helped</p>}
         </div>
       </div>

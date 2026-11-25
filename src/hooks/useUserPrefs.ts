@@ -16,7 +16,7 @@ export const DEFAULT_SYMPTOMS = [
 ];
 
 export const DEFAULT_RELIEFS = [
-  'Dark room', 'Quiet room', 'Cold compress', 'Hot compress',
+  'Dark room', 'Quiet room',
   'Peppermint oil', 'Sleep / rest', 'Cold shower', 'Hot shower',
   'Fresh air', 'Hydration', 'Caffeine', 'Eye mask',
   'Food', 'Exercise',

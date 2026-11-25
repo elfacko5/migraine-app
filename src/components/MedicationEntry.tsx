@@ -627,10 +627,14 @@ function DoseLimitNote({ library, attacks, name, doses, startMs, endMs, nowMs }:
 
   return (
     <div className="space-y-1 px-4 py-3">
+      {/* The 24 hours up to this dose, this dose included — not "the last
+          24h" from now, which on a past attack is a different window. Bare
+          "1 in the last 24h" under a dose of 1 read as a mistake (June,
+          2026-11-25), so the line names the unit and says it counts this one. */}
       <p className="text-xs text-text-secondary">
         {library.maxPerDay
-          ? `${check.unitsInWindow + totalUnits} of ${library.maxPerDay} in the last 24h`
-          : `${check.unitsInWindow + totalUnits} in the last 24h`}
+          ? `${check.unitsInWindow + totalUnits} of ${unitsLabel(library.maxPerDay, library)} in 24 hours, counting ${resolved.length > 1 ? 'these' : 'this one'}`
+          : `${unitsLabel(check.unitsInWindow + totalUnits, library)} in 24 hours, counting ${resolved.length > 1 ? 'these' : 'this one'}`}
       </p>
       {exceedsIntake && library.maxPerIntake && (
         <p className="text-xs text-severity-mid">

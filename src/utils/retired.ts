@@ -37,6 +37,12 @@ const RETIRED_ENTRIES = [
   // A custom symptom Sunny added at some point, not a DEFAULT_SYMPTOMS entry
   // (2026-09-23, Sunny's call).
   'wobbly legs',
+  // Dropped from DEFAULT_RELIEFS (2026-11-25, June's call from the past-attack
+  // flow). Same reasoning as 'stretching': retiring is what removes them from
+  // stored lists and the synced union. Their drawn icon stays in
+  // `drawnIcons.tsx` so an old timeline still draws it.
+  'cold compress',
+  'hot compress',
 ];
 
 export function isRetired(name: string | null | undefined): boolean {

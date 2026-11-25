@@ -716,6 +716,15 @@ h1, h2, h3, h4, h5, h6 {
   outline: none;
 }
 
+/* The + sheet's action rows. The first row is focused on open and WebKit can
+   treat that as focus-visible; the card clips the ring to its bottom edge — a
+   stray green line under "Log an attack" (June, 2026-11-25, second report).
+   Same reason as above for a rule here: `outline-none` on the row loses to the
+   unlayered ring. The row shows focus with `bg-bg-elevated` instead. */
+[data-add-row]:focus-visible {
+  outline: none;
+}
+
 /* Labels: uppercase tracking elements */
 .label-caps {
   letter-spacing: 0.02em;

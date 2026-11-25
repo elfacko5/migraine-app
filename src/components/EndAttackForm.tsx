@@ -250,8 +250,8 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, onAddSympto
             {kind === 'when' && <>Required<span className="text-severity-high ml-0.5">*</span> · started {formatDatetime(attack.snapshots[0].time)} · worst {attackMaxSeverity(attack)}</>}
             {kind === 'help' && 'Optional · for doses already logged this attack'}
             {kind === 'impact' && 'Optional'}
-            {kind === 'like' && 'Optional · pick any'}
-            {kind === 'before' && 'Optional · pick any'}
+            {kind === 'like' && 'Optional'}
+            {kind === 'before' && 'Optional'}
           </p>
         </div>
 
@@ -343,20 +343,20 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, onAddSympto
           <div className="space-y-6">
             <section className="space-y-2" aria-labelledby="end-felt-like-label">
               <h3 id="end-felt-like-label" className="text-sm font-medium text-text-primary">
-                Felt like <span className="font-normal text-text-secondary">— pick any</span>
+                Felt like
               </h3>
               <ChipSelector options={PAIN_QUALITY_OPTIONS} selected={form.painQuality} onChange={(v) => set('painQuality', v)} />
             </section>
             <section className="space-y-2" aria-labelledby="end-also-had-label">
               <h3 id="end-also-had-label" className="text-sm font-medium text-text-primary">
-                Also had <span className="font-normal text-text-secondary">— pick any</span>
+                Also had
               </h3>
               <ChipSelector options={symptoms} selected={form.symptoms} onChange={(v) => set('symptoms', v)}
                 onAddCustom={onAddSymptom} renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
             </section>
             <section className="space-y-2" aria-labelledby="end-tried-label">
               <h3 id="end-tried-label" className="text-sm font-medium text-text-primary">
-                What did you try? <span className="font-normal text-text-secondary">— pick any</span>
+                What did you try?
               </h3>
               <ChipSelector options={reliefs} selected={form.reliefs} onChange={(v) => set('reliefs', v)}
                 onAddCustom={onAddRelief} renderIcon={(r) => <ReliefIcon name={r} className="h-4 w-4" />} />

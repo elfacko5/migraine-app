@@ -727,7 +727,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
           <div className="space-y-6">
             <section className="space-y-2" aria-labelledby="symptoms-label">
               <h3 id="symptoms-label" className="text-sm font-medium text-text-primary">
-                Symptoms <span className="font-normal text-text-secondary">— pick any</span>
+                Symptoms
               </h3>
               <ChipSelector options={symptoms} selected={form.symptoms}
                 onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
@@ -735,7 +735,7 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
             </section>
             <section className="space-y-2" aria-labelledby="reliefs-label">
               <h3 id="reliefs-label" className="text-sm font-medium text-text-primary">
-                Relief methods <span className="font-normal text-text-secondary">— pick any</span>
+                Relief methods
               </h3>
               <ChipSelector options={reliefs} selected={form.reliefs}
                 onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief}

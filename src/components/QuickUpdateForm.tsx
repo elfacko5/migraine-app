@@ -346,7 +346,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
               <div className="space-y-6">
                 <section className="space-y-2" aria-labelledby="qu-symptoms-label">
                   <h3 id="qu-symptoms-label" className="text-sm font-medium text-text-primary">
-                    Symptoms <span className="font-normal text-text-secondary">— pick any</span>
+                    Symptoms
                   </h3>
                   <ChipSelector options={symptoms} selected={form.symptoms}
                     onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
@@ -354,7 +354,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
                 </section>
                 <section className="space-y-2" aria-labelledby="qu-reliefs-label">
                   <h3 id="qu-reliefs-label" className="text-sm font-medium text-text-primary">
-                    Relief methods <span className="font-normal text-text-secondary">— pick any</span>
+                    Relief methods
                   </h3>
                   <ChipSelector options={reliefs} selected={form.reliefs}
                     onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief}

@@ -346,7 +346,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
               {kind === 'now' && <>Required<span className="text-severity-high ml-0.5">*</span> · {elapsed} in · worst {worst}</>}
               {kind === 'help' && 'Optional · for doses already logged this attack'}
               {kind === 'meds' && (lastDose ? `Optional · ${lastDose.name} at ${formatTime(lastDose.time)} is already logged` : 'Optional')}
-              {kind === 'else' && 'Optional · pick any'}
+              {kind === 'else' && 'Optional'}
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -442,7 +442,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
           <div className="space-y-6">
             <section className="space-y-2" aria-labelledby="upd-symptoms-label">
               <h3 id="upd-symptoms-label" className="text-sm font-medium text-text-primary">
-                Also had <span className="font-normal text-text-secondary">— pick any</span>
+                Also had
               </h3>
               <ChipSelector options={symptoms} selected={form.symptoms}
                 onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
@@ -450,7 +450,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
             </section>
             <section className="space-y-2" aria-labelledby="upd-reliefs-label">
               <h3 id="upd-reliefs-label" className="text-sm font-medium text-text-primary">
-                What have you tried? <span className="font-normal text-text-secondary">— pick any</span>
+                What have you tried?
               </h3>
               <ChipSelector options={reliefs} selected={form.reliefs}
                 onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief}
