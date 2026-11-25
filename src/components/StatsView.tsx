@@ -401,10 +401,13 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
                   replaced because it counts how often, not what an attack is
                   like, and repeated the Attack days chart above. */}
               <TypicalStat value={`${stats.wokeWith} of ${stats.count}`} label="woke up with it" />
-              {/* With a figure missing (length or time to peak while every
-                  attack is still going) the grid has an empty slot, which
+              {/* With one figure missing the grid has an empty slot, which
                   would show as a block of the divider colour. Filled with a
-                  blank cell instead. */}
+                  blank cell instead. Usually it's time to the peak: hidden
+                  until three ended, not-woken-with attacks got worse after
+                  their first reading (`avgTimeToPeak`). Length goes missing
+                  only while every attack is still going, which hides time to
+                  the peak too — then the two left need no filler. */}
               {(stats.avgLength === null) !== (stats.timeToPeak === null) && (
                 <div aria-hidden="true" className="bg-bg-surface" />
               )}
