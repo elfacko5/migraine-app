@@ -184,9 +184,12 @@ export function OptionTile({ selected, onSelect, className = '', style, compact 
 
 
 // Lidd's switch, 2026-11-25. code-ds's Switch with the v4 board's off state:
-// a filled `line` track (#7D7669) with a `content-muted` knob (#A39D92),
-// where the package draws a page-coloured track with a ring — on a card that
-// read as a hole rather than a control. On is unchanged: accent track,
+// a filled `line` track (#7D7669), where the package draws a page-coloured
+// track with a ring — on a card that read as a hole rather than a control.
+// The knob is page-coloured (`surface`), not the board's #A39D92: that
+// measured 1.7:1 on the track, and with the tracks close in tone the knob's
+// position is what says on or off (WCAG 1.4.11, 3:1). Page colour measures
+// 3.87 dark / 3.85 light / 3.58 attack, and is the on-knob's colour too. On is unchanged: accent track,
 // on-accent knob. The package is vendored and not edited (the medication
 // flows set that precedent), so the markup is repeated here, same contract:
 // label inside the button, track drops below the label when a word won't fit.
@@ -209,7 +212,7 @@ export function Switch({ checked, onCheckedChange, disabled, children }: {
     >
       <span className="min-w-0 grow basis-[min-content] [overflow-wrap:break-word]">{children}</span>
       <span className="relative ml-auto h-switch-h w-switch-w shrink-0 rounded-full bg-line transition-colors motion-reduce:transition-none group-data-[checked]:bg-accent">
-        <BaseSwitch.Thumb className="absolute left-switch-inset top-1/2 size-switch-thumb -translate-y-1/2 rounded-full bg-content-muted transition-[translate,background-color] motion-reduce:transition-none data-[checked]:translate-x-(--spacing-switch-travel) data-[checked]:bg-on-accent" />
+        <BaseSwitch.Thumb className="absolute left-switch-inset top-1/2 size-switch-thumb -translate-y-1/2 rounded-full bg-surface transition-[translate,background-color] motion-reduce:transition-none data-[checked]:translate-x-(--spacing-switch-travel) data-[checked]:bg-on-accent" />
       </span>
     </BaseSwitch.Root>
   );
