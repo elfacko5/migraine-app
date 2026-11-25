@@ -8,6 +8,11 @@ interface Props {
    *  AttackDetail pin theirs. A primary action that scrolls away with the
    *  content is one the user has to go looking for. */
   footer?: React.ReactNode;
+  /** `back` (default): a drill-down entered from the right, back chevron on
+   *  the left. `close`: the same page shown in a sheet that rises from the
+   *  bottom (Insights → Monthly guides) — close X on the right, since a
+   *  bottom sheet with a back chevron says two things at once. */
+  dismiss?: 'back' | 'close';
 }
 
 // Shared shell for every Profile sub-page (My medications, Accessibility,
@@ -20,7 +25,7 @@ interface Props {
 // from the right (`enterFrom="right"`): these are rows you go one level into
 // from a list, not a modal that interrupts what you were doing. AttackDetail
 // keeps its X for exactly that contrast — it *is* a detour.
-export function ProfileSubPage({ title, onClose, children, footer }: Props) {
+export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'back' }: Props) {
   // A sub-page can replace another inside the same sheet (My medications →
   // Monthly guides), which removes the control that had focus. The title takes
   // it, so VoiceOver starts at the page it has just entered.
@@ -36,18 +41,36 @@ export function ProfileSubPage({ title, onClose, children, footer }: Props) {
             Patterns.html, 2026-11-23): a bare 44px chevron, no circle fill —
             the filled-circle treatment is the *flow* header's own (40px,
             bg-bg-raised), a different role. Title 16/600, not 17/500. */}
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Back"
-          className="tap-44 flex size-target items-center justify-center text-text-secondary transition-colors hover:text-text-primary"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
+        {dismiss === 'back' ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Back"
+            className="tap-44 flex size-target items-center justify-center text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+        ) : (
+          <span className="size-target" aria-hidden="true" />
+        )}
         <h2 ref={titleRef} tabIndex={-1} className="flex-1 text-center text-sm font-semibold text-text-primary outline-none">{title}</h2>
-        <span className="size-target" aria-hidden="true" />
+        {dismiss === 'close' ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="tap-44 flex size-target items-center justify-center text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        ) : (
+          <span className="size-target" aria-hidden="true" />
+        )}
       </div>
 
       <div

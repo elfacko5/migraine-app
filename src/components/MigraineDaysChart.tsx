@@ -80,21 +80,28 @@ function MigraineMonths({ attacks, monthCount }: { attacks: Attack[]; monthCount
         </>
       }
     >
-      {/* The board's `.bars`: month, a 12px track on `bg-raised`, the count
-          in strong text. The label column has a minimum, not a fixed width,
-          so "Nov so far" pushes its own track along rather than wrapping. */}
-      <div className="flex flex-col gap-3.5">
+      {/* Month and count on one line above a full-width 12px track — the
+          Medication cards' layout below, used here too (Sunny, 2026-11-25) so
+          every track starts at the same edge and the 15-day line sits at the
+          same place on each, however long "Nov so far" runs. */}
+      <div className="space-y-2.5">
         {months.map((m) => {
           const pct = Math.min(100, (m.days / BAR_MAX) * 100);
           const chronic = m.days >= CHRONIC_DAYS_THRESHOLD;
           const color = chronic ? 'var(--color-severity-high)' : 'var(--color-accent)';
           return (
-            <div key={m.month} className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-              <span className="min-w-[3.25rem] text-sm text-text-primary">
-                {m.label}
-                {!m.complete && <span className="ml-1 text-xs text-text-secondary">so far</span>}
-              </span>
-              <span className="relative block h-3 min-w-0 flex-[1_1_10rem] overflow-hidden rounded-full bg-bg-raised">
+            <div key={m.month} className="space-y-1.5">
+              <div className="flex justify-between gap-2 text-sm text-text-primary">
+                <span>
+                  {m.label}
+                  {!m.complete && <span className="text-text-secondary"> so far</span>}
+                </span>
+                {/* No `+` on the month in progress. It meant "still counting"
+                    and was read as "1 or more" (Sunny, 2026-09-02); "so far"
+                    on the label says it in words. */}
+                <span className="font-semibold tabular-nums text-text-strong">{m.days}</span>
+              </div>
+              <span className="relative block h-3 overflow-hidden rounded-full bg-bg-raised">
                 <span
                   className="absolute inset-y-0 left-0 rounded-full"
                   style={{ width: `${pct}%`, background: m.complete ? color : hatch(color) }}
@@ -109,13 +116,22 @@ function MigraineMonths({ attacks, monthCount }: { attacks: Attack[]; monthCount
                   style={{ left: `${(CHRONIC_DAYS_THRESHOLD / BAR_MAX) * 100}%` }}
                 />
               </span>
-              {/* No `+` on the month in progress. It meant "still counting"
-                  and was read as "1 or more" (Sunny, 2026-09-02); "so far" on
-                  the label says it in words. */}
-              <span className="min-w-5 text-right text-sm font-semibold tabular-nums text-text-strong">{m.days}</span>
             </div>
           );
         })}
+        {/* The 15-day line's label, once, under the last bar and centred on
+            the line (Sunny, 2026-11-25). Unlabelled it was a mark the reader
+            had to decode; the ⓘ text says what the threshold means. Every
+            track is full-width now, so this sits under the line on all of
+            them. */}
+        <div aria-hidden="true" className="relative -mt-1 h-5">
+          <span
+            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs text-text-secondary"
+            style={{ left: `${(CHRONIC_DAYS_THRESHOLD / BAR_MAX) * 100}%` }}
+          >
+            {CHRONIC_DAYS_THRESHOLD} days
+          </span>
+        </div>
       </div>
 
     </InsightSection>

@@ -98,6 +98,10 @@ export default function App() {
   // Which medication the editor sheet is open on: an existing one, or a new
   // one of a given kind. Kept here rather than inside MedicationsView because
   // Sheet anchors to the app root — see the Profile tab notes in CLAUDE.md.
+  // Monthly guides opened from Insights — its own bottom sheet, separate from
+  // the Settings drill-down (`profileSheet === 'guides'`), so closing it
+  // returns to Insights rather than to My medications.
+  const [insightsGuidesOpen, setInsightsGuidesOpen] = useState(false);
   const [medEditor, setMedEditor] = useState<{ med: Medication } | { isNew: true } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   // The edit form's own answer to a close request (Escape, the backdrop).
@@ -679,6 +683,7 @@ export default function App() {
               period={statsPeriod}
               onAttackClick={(a) => setDetailAttackId(a.id)}
               onAdd={() => { setLogPast(false); setLogSheetOpen(true); }}
+              onOpenGuides={() => setInsightsGuidesOpen(true)}
             />
           </section>
         )}
@@ -819,6 +824,24 @@ export default function App() {
           )}
         </Sheet>
       )}
+
+      <Sheet
+        open={insightsGuidesOpen}
+        onClose={() => setInsightsGuidesOpen(false)}
+        title="Monthly guides"
+        flush
+        bareHeader
+      >
+        {insightsGuidesOpen && (
+          <GuidesView
+            medications={medications}
+            guides={guides}
+            onSetGuide={setGuide}
+            onClose={() => setInsightsGuidesOpen(false)}
+            dismiss="close"
+          />
+        )}
+      </Sheet>
 
       {/* Profile sub-pages — one Sheet, contents switched by which row was
           tapped. flush/bareHeader for the same reason as the detail sheet:

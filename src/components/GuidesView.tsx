@@ -35,9 +35,12 @@ interface Props {
   guides: MedGuides;
   onSetGuide: (key: GuideKey, days: number | undefined) => void;
   onClose: () => void;
+  /** Passed to `ProfileSubPage`: `close` when opened as a bottom sheet from
+   *  Insights rather than drilled into from My medications. */
+  dismiss?: 'back' | 'close';
 }
 
-export function GuidesView({ medications, guides, onSetGuide, onClose }: Props) {
+export function GuidesView({ medications, guides, onSetGuide, onClose, dismiss }: Props) {
   const [editing, setEditing] = useState<GuideKey | null>(null);
   const acute = medications.filter((m) => m.kind === 'acute');
   const namesOf = (cls: MedClass) => [...new Set(acute.filter((m) => m.class === cls).map((m) => m.name.trim()))];
@@ -51,7 +54,7 @@ export function GuidesView({ medications, guides, onSetGuide, onClose }: Props) 
   const open = editing ? rows.find((r) => r.key === editing) : null;
 
   return (
-    <ProfileSubPage title="Monthly guides" onClose={onClose}>
+    <ProfileSubPage title="Monthly guides" onClose={onClose} dismiss={dismiss}>
       <div className="space-y-4">
         <p className="text-sm text-text-secondary">Guideline days a month before overuse can start. Check these with your doctor.</p>
         <SettingsGroup raised>

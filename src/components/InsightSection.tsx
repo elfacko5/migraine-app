@@ -55,9 +55,12 @@ interface Props {
    *  the older small-caps label. Sections move to it one at a time as each is
    *  rebuilt against `09-insights/InsightsRedesign`. */
   icon?: React.ReactNode;
+  /** The icon tile's tint and glyph colour — accent unless the board gives
+   *  the section its own chart colour (Medication is `chart-1`). */
+  iconTone?: string;
 }
 
-export function InsightSection({ title, children, note, info, bare, icon }: Props) {
+export function InsightSection({ title, children, note, info, bare, icon, iconTone = 'bg-accent/16 text-accent' }: Props) {
   const [showInfo, setShowInfo] = useState(false);
   return (
     <section className={icon ? 'space-y-3' : 'space-y-2'}>
@@ -94,7 +97,7 @@ export function InsightSection({ title, children, note, info, bare, icon }: Prop
         <div className="flex items-center gap-2.5">
           <span
             aria-hidden="true"
-            className="flex size-8 shrink-0 items-center justify-center rounded-segment bg-accent/16 text-accent [&>svg]:size-[1.125rem]"
+            className={`flex size-8 shrink-0 items-center justify-center rounded-segment ${iconTone} [&>svg]:size-[1.125rem]`}
           >
             {icon}
           </span>

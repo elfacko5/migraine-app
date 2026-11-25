@@ -3,7 +3,7 @@ import {
   medicationDaysInWindow, medicationDaysByMonth, medicationResponse,
   MOH_DAYS_TRIPTAN, MOH_DAYS_SIMPLE,
 } from '../utils/stats';
-import { MedIcon } from './drawnIcons';
+import { MedIcon, TabletIcon } from './drawnIcons';
 import { guideForName } from '../utils/medGuardrails';
 import { isDeletedName, typeOfName } from '../utils/medResolve';
 import { TYPE_OPTIONS } from '../utils/medClasses';
@@ -57,10 +57,12 @@ interface Props {
   guides?: MedGuides;
   /** Names deleted from the library: their days are shown, never marked as overuse. */
   deleted?: DeletedMedName[];
+  /** Opens Monthly guides in a bottom sheet — the link under the last card. */
+  onOpenGuides?: () => void;
 }
 
 export function MedicationInsights({
-  attacks, medications = [], guides = {}, deleted = [], since, months, windowLabel,
+  attacks, medications = [], guides = {}, deleted = [], since, months, windowLabel, onOpenGuides,
 }: Props) {
   const days = medicationDaysInWindow(attacks, since);
   if (days.length === 0) return null;
@@ -76,6 +78,8 @@ export function MedicationInsights({
   return (
     <InsightSection
       title="Medication"
+      icon={<TabletIcon />}
+      iconTone="bg-chart-1/16 text-chart-1"
       // No section card — the v4 board sits this heading straight on the
       // page, each drug already its own card (`.mc` in the board, not
       // nested in a `.card`). A section fill around cards that are already
@@ -125,12 +129,18 @@ export function MedicationInsights({
                   <MedIcon name={med.name} className="h-[1.125rem] w-[1.125rem]" />
                 </span>
                 <span className="min-w-[7.5rem] flex-1">
-                  <span className="block truncate text-base font-semibold text-text-primary">{med.name}</span>
+                  <span className="block truncate text-base font-semibold text-text-strong">{med.name}</span>
                   {classLabel && <span className="block text-xs text-text-secondary">{classLabel}</span>}
                 </span>
               </div>
 
-              <div className="space-y-2">
+              {/* The board's `.mr`: month and count on one line above a
+                  full-width track, so every track starts at the same edge
+                  however long the month label runs ("Nov so far"). The count
+                  is the figure — strong — and "of 10" is muted context; no
+                  "days" after it (Sunny, 2026-11-25), the section says what
+                  is counted. */}
+              <div className="space-y-2.5">
                 {(monthData?.months ?? []).map(({ month, label, days: monthDays, complete }) => {
                   const pct = Math.min(100, (monthDays / barMax) * 100);
                   // Evaluated per month, not against the window total: every
@@ -139,20 +149,23 @@ export function MedicationInsights({
                   // the way the old single-number summary required one.
                   const nearing = limit !== null && monthDays >= limit && !deletedName;
                   return (
-                    <div key={month} className="grid grid-cols-[2.25rem_1fr_3.25rem] items-center gap-2">
-                      <span className="text-xs text-text-secondary">
-                        {label}
-                        {!complete && ' so far'}
-                      </span>
-                      <span className="relative block h-2.5 rounded-full bg-bg-raised">
+                    <div key={month} className="space-y-1.5">
+                      <div className="flex justify-between gap-2 text-sm text-text-primary">
+                        <span>
+                          {label}
+                          {!complete && <span className="text-text-secondary"> so far</span>}
+                        </span>
+                        <span className="tabular-nums">
+                          <span className={`font-semibold ${nearing ? 'text-severity-high' : 'text-text-strong'}`}>{monthDays}</span>
+                          {limit !== null && <span className="text-text-secondary"> of {limit}</span>}
+                        </span>
+                      </div>
+                      <span className="relative block h-2.5 overflow-hidden rounded-full bg-bg-raised">
                         <span
                           aria-hidden="true"
                           className={`absolute inset-y-0 left-0 rounded-full ${style.bar}`}
                           style={{ width: `${pct}%` }}
                         />
-                      </span>
-                      <span className={`text-right text-xs tabular-nums ${nearing ? 'text-severity-high' : 'text-text-primary'}`}>
-                        {limit !== null ? `${monthDays} of ${limit}` : `${monthDays} ${monthDays === 1 ? 'day' : 'days'}`}
                       </span>
                     </div>
                   );
@@ -171,9 +184,19 @@ export function MedicationInsights({
                   sentence `docs/decisions.md`'s open item parked: "doses",
                   never "times"; a reading being absent is passive, never
                   "didn't log it" — both carried over unchanged. */}
-              <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-bg-border pt-3 text-xs text-text-secondary">
-                <span>{med.doses} {med.doses === 1 ? 'dose' : 'doses'}</span>
-                <span>{r?.measured ?? 0} checked at 2h</span>
+              <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-bg-border pt-3 text-xs text-text-primary">
+                {/* Muted glyphs before the first two, as the board's `.mstats`. */}
+                <span className="inline-flex items-center gap-1.5">
+                  <MedIcon name={med.name} className="h-4 w-4 text-text-secondary" />
+                  {med.doses} {med.doses === 1 ? 'dose' : 'doses'}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
+                    strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-text-secondary" aria-hidden="true">
+                    <path d="M5 12l4 4 10-10" />
+                  </svg>
+                  {r?.measured ? r.measured : 'none'} checked at 2h
+                </span>
                 {r && r.measured > 0 && (
                   <span>{r.helped} helped</span>
                 )}
@@ -184,6 +207,23 @@ export function MedicationInsights({
             </div>
           );
         })}
+        {/* The board's `.link` under the last card: every bar above is
+            measured against these numbers, so where they're set is one tap
+            away. Opens as a bottom sheet over Insights (Sunny, 2026-11-25),
+            not a jump to the Settings tab. */}
+        {onOpenGuides && (
+          <button
+            type="button"
+            onClick={onOpenGuides}
+            className="flex min-h-target items-center gap-1.5 text-sm font-medium text-accent-light transition-colors hover:text-accent"
+          >
+            Your monthly guides
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"
+              strokeLinejoin="round" className="h-4 w-4 text-text-secondary" aria-hidden="true">
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </button>
+        )}
       </div>
     </InsightSection>
   );

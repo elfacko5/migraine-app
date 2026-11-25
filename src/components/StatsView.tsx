@@ -92,6 +92,8 @@ interface Props {
   guides?: MedGuides;
   /** Passed through to MedicationInsights: deleted names are not marked as overuse. */
   deleted?: DeletedMedName[];
+  /** Opens Monthly guides as a bottom sheet (owned by `App`, like every sheet). */
+  onOpenGuides?: () => void;
   /** Owned by `App`, because the control that sets it is rendered in the top
    *  bar rather than on this page. Defaults there to 30 days, not 7: every
    *  clinical figure here is monthly — the overuse thresholds, the 15-day
@@ -108,16 +110,37 @@ interface Props {
   onAdd: () => void;
 }
 
-// A figure in the "Typical attack" group — a bare value over a plain-language
-// label, not a bordered tile: these sit together inside one section card.
+// A figure in the "Typical attack" grid — the board's `.fc`: a value over a
+// plain-language label, on its own `bg-surface` cell. The grid's 1px gaps
+// show the `bg-raised` behind it as the dividers between cells.
 function TypicalStat({ value, label }: { value: string | number; label: string }) {
   return (
-    <div>
-      <p className="text-2xl font-bold leading-none text-text-primary">{value}</p>
-      <p className="mt-1 text-xs text-text-secondary">{label}</p>
+    <div className="bg-bg-surface px-4 py-3.5">
+      <p className="text-[1.375rem] font-semibold leading-tight text-text-strong">{value}</p>
+      <p className="mt-0.5 text-xs leading-snug text-text-secondary">{label}</p>
     </div>
   );
 }
+
+// A typical-attack duration as the board writes it: hours to one decimal,
+// ".0" dropped ("9 h", "1.5 h"); under an hour, whole minutes ("40 min"),
+// since "0.7 h" makes the reader do arithmetic.
+function formatTypicalDuration(minutes: number): string {
+  // Rounded first, so 59.6 reads "1 h" rather than "60 min".
+  const m = Math.round(minutes);
+  if (m < 60) return `${m} min`;
+  const h = Math.round((m / 60) * 10) / 10;
+  return `${Number.isInteger(h) ? h : h.toFixed(1)} h`;
+}
+
+// The board's clock glyph for "Typical attack".
+const ClockGlyph = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="8" />
+    <path d="M12 8v4l3 2" />
+  </svg>
+);
 
 // Ranked horizontal frequency bars (most-frequent first).
 function FreqBars({ data, color }: { data: Freq[]; color: string }) {
@@ -156,7 +179,7 @@ function FreqSection({ title, data, color, info }: { title: string; data: Freq[]
   );
 }
 
-export function StatsView({ attacks, medications = [], guides = {}, deleted = [], period, onAttackClick, onAdd }: Props) {
+export function StatsView({ attacks, medications = [], guides = {}, deleted = [], period, onAttackClick, onAdd, onOpenGuides }: Props) {
   const theme = useUiTheme();
   const chartColors = CHART_COLORS[theme];
 
@@ -314,6 +337,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
         since={since}
         months={monthsShown}
         windowLabel={PERIOD_SUB[period]}
+        onOpenGuides={onOpenGuides}
       />
 
       {!hasEnoughData ? (
@@ -366,17 +390,29 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
               existed; "attack days" and the grouping are new. */}
           <InsightSection
             title="Typical attack"
+            icon={ClockGlyph}
+            iconTone="bg-chart-4/16 text-chart-4"
+            // No section card: the grid is the card (`.facts` on the board),
+            // its cells divided by 1px gaps rather than padded inside a fill.
+            bare
             info="Across the attacks in this period. Peak is each attack's own worst reading, averaged. Length and time to the peak leave out any attack still going, since a peak can still rise. Attack days counts calendar days with an attack — one attack past midnight is two."
           >
-            <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(9.375rem,1fr))] gap-px overflow-hidden rounded-card bg-bg-raised">
               <TypicalStat value={stats.avgSeverity} label="average peak pain" />
               {stats.avgLength !== null && (
-                <TypicalStat value={`${Math.floor(stats.avgLength / 60)}h ${stats.avgLength % 60}m`} label="long" />
+                <TypicalStat value={formatTypicalDuration(stats.avgLength)} label="long" />
               )}
               {stats.timeToPeak !== null && (
-                <TypicalStat value={`${stats.timeToPeak}h`} label="to the peak" />
+                <TypicalStat value={formatTypicalDuration(stats.timeToPeak * 60)} label="to the peak" />
               )}
               <TypicalStat value={stats.attackDays} label={`attack day${stats.attackDays === 1 ? '' : 's'}`} />
+              {/* With a figure missing (length or time to peak while every
+                  attack is still going) the grid has an empty slot, which
+                  would show as a block of the divider colour. Filled with a
+                  blank cell instead. */}
+              {(stats.avgLength === null) !== (stats.timeToPeak === null) && (
+                <div aria-hidden="true" className="bg-bg-surface" />
+              )}
             </div>
           </InsightSection>
 
