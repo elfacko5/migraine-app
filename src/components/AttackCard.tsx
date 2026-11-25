@@ -117,7 +117,7 @@ export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Pr
           </span>
       )}
 
-      <span aria-hidden="true" className="col-start-3 row-start-1 row-span-2 flex flex-col items-center gap-0.5 @max-[20rem]:row-span-1">
+      <span aria-hidden="true" className={`col-start-3 row-start-1 row-span-2 flex flex-col items-center gap-0.5 ${marks ? '@max-[20rem]:row-span-1' : ''}`}>
         <span className={`flex h-9 min-w-9 items-center justify-center rounded-segment px-1.5 text-sm font-semibold tabular-nums text-bg-base ${sevFillClass(severity)}`}>
           {severity}
         </span>
