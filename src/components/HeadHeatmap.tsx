@@ -1,9 +1,6 @@
 import { SideLabel } from './SideLabel';
 import { useUiTheme, type UiTheme } from '../hooks/useUiTheme';
-import {
-  VIEWS, type DiagramView,
-  headFill, lineColor, detailColor, disabledLine,
-} from './headDiagram';
+import { VIEWS, type DiagramView, detailColor } from './headDiagram';
 
 export interface AreaStat {
   area: string;
@@ -14,45 +11,44 @@ interface Props {
   data: AreaStat[];
 }
 
-// A single neutral tint, scaled by opacity — not the low/mid/high severity
-// ramp this used to borrow (2026-09-23, Sunny's call). That ramp means *pain
-// severity* everywhere else it appears (Logs, SeverityBreakdown, the picker),
-// and reusing it here for *how often an area comes up* put two different
-// variables behind the same colours — a red zone here didn't mean what a red
-// zone means anywhere else in the app. Every zone already prints its exact
-// count, so the fill only ever has to support scanning for hot spots at a
-// glance, which one hue at varying strength does without implying a second
-// meaning. It also drops the "Less…More attacks" legend below the heads —
-// that existed to explain the gradient, and a fill with only one hue needs no
-// explaining once the numbers are already exact.
+// **One purple, stronger the more often an area came up** (Sunny,
+// 2026-11-25, matching the v4 board's purple heat). The most-logged area in
+// the period is the full `chart-2` purple; an area logged once is the
+// faintest step; everything between is spaced evenly by count. Still one hue,
+// never the severity ramp — that means *pain intensity* everywhere else, and
+// this is *how often* (the 2026-09-23 reasoning still holds; only the hue
+// changed from the neutral text tint to Insights' purple, which A7 allows on
+// Insights). Every zone prints its exact count, so the fill only has to
+// support scanning for hot spots.
 //
-// **Both ends are theme-aware, and light doesn't reuse dark's RGB triples.**
-// The tint is `--color-text-primary` blended toward `headFill` — in dark that
-// text is near-white, so a hotter zone gets *lighter*; in light the same
-// token is near-black, so a hotter zone gets *darker*, which is the same
-// "raise by getting darker" rule the surface tokens follow in light mode
-// (docs/palette.md). Reusing dark's RGB in light mode would have hot zones
-// fading toward white on an already-light head — the opposite of raising.
+// Values mirror `--color-chart-2` and `--color-bg-elevated` by hand, as every
+// SVG here does (CLAUDE.md, "SVG/Recharts mirror tokens by hand").
 const HEAT_RGB: Record<UiTheme, [number, number, number]> = {
-  dark:   [205, 199, 187], // --color-text-primary, dark
-  attack: [205, 199, 187], // attack reuses dark's diagram palette
-  light:  [58, 55, 51],    // --color-text-primary, light
+  dark:   [171, 159, 203], // --color-chart-2, dark (#ab9fcb)
+  attack: [171, 159, 203], // attack reuses dark's chart set (StatsView's CHART_COLORS)
+  light:  [105, 85, 157],  // --color-chart-2, light (#69559d)
 };
+// **The head's own ground, with no outline** (Sunny, 2026-11-25): the
+// silhouette, ears and neck are told apart from the card by fill alone —
+// one surface step up from the card it sits on (`bg-elevated`), rather than
+// the picker's `headFill`, which is within a shade of the card here.
 const HEAD_RGB: Record<UiTheme, [number, number, number]> = {
-  dark:   [43, 40, 35],    // headFill('dark'), as an rgb triple
-  attack: [43, 40, 35],
-  light:  [231, 225, 213], // headFill('light')
+  dark:   [56, 52, 48],    // --color-bg-elevated, dark (#383430)
+  attack: [47, 42, 31],    // --color-bg-elevated, attack (#2f2a1f)
+  light:  [216, 209, 195], // --color-bg-elevated, light (#d8d1c3)
 };
+const rgb = (c: [number, number, number]) => `rgb(${c.join(',')})`;
 
+/** Faintest step, for an area logged once while another was logged more. */
+const HEAT_FLOOR = 0.3;
 function tileOpacity(t: number): number {
-  return 0.2 + t * 0.5;
+  return HEAT_FLOOR + t * (1 - HEAT_FLOOR);
 }
 
-// The exact blended colour of a tile at a given frequency — what the fill
-// path two elements up actually paints on screen at that opacity. Shared by
-// `tileFillColor` (the count's knockout patch, see `CountLabel`) and
-// `countTextFill` below, so the two can never disagree about what a tile
-// actually looks like.
+// The exact blended colour of a tile at a given strength — what the fill
+// path paints on screen at that opacity. Shared by `tileFillColor` (the
+// count's knockout patch, see `CountLabel`) and `countTextFill` below, so the
+// two can never disagree about what a tile actually looks like.
 function tileBgRgb(t: number, theme: UiTheme): [number, number, number] {
   const a = tileOpacity(t);
   const head = HEAD_RGB[theme];
@@ -60,8 +56,7 @@ function tileBgRgb(t: number, theme: UiTheme): [number, number, number] {
   return head.map((c, i) => Math.round(c + (heat[i] - c) * a)) as [number, number, number];
 }
 function tileFillColor(t: number, theme: UiTheme): string {
-  const [r, g, b] = tileBgRgb(t, theme);
-  return `rgb(${r},${g},${b})`;
+  return rgb(tileBgRgb(t, theme));
 }
 
 // WCAG relative luminance / contrast ratio — the same formula the palette's
@@ -134,7 +129,13 @@ interface HeatViewProps {
 
 function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
   const clip = `hm-clip-${view.id}`;
-  const t = (area: string) => (byArea[area] ?? 0) / maxVal;
+  // Strength 0..1 by count: 1 at the most-logged area, 0 at a single log.
+  // With every area at the same count there's nothing to rank — all full.
+  const t = (area: string) => {
+    const n = byArea[area] ?? 0;
+    if (n === 0) return 0; // unfilled; only its label's text colour reads this
+    return maxVal <= 1 ? 1 : (n - 1) / (maxVal - 1);
+  };
 
   return (
     // Labels beside the head, not above it, and no view name — see the
@@ -155,30 +156,20 @@ function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
           </clipPath>
         </defs>
 
-        {/* **No disabled hatch on the ears and neck, unlike the picker**
-            (2026-09-23, Sunny's call, same reasoning as dropping the
-            dividers). The recessed texture exists there to say "you can't
-            tap this" — a distinction that means nothing on a diagram with no
-            tap targets at all. Flat `headFill`, the same ground every
-            zone with nothing to report already sits on, so the ears and neck
-            read as ordinary head rather than a separately-textured region
-            nobody's asked to interpret. */}
+        {/* Head, ears and neck as one flat ground — no hatch (nothing here
+            is tapped, 2026-09-23) and no outline (2026-11-25): the fill
+            alone sets the head off the card. */}
         {view.base.concat(view.inert).map((d, i) => (
-          <path key={`g-${i}`} d={d} fill={headFill(theme)}/>
-        ))}
-        {view.zones.map((z) => (
-          <path key={`b-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-            fill={headFill(theme)} stroke={headFill(theme)} strokeWidth={1.5}
-            pointerEvents="none"/>
+          <path key={`g-${i}`} d={d} fill={rgb(HEAD_RGB[theme])}/>
         ))}
 
         {/* Heat fills */}
         {view.zones.map((z) => {
+          if (!byArea[z.name]) return null;
           const tv = t(z.name);
-          if (tv === 0) return null;
           return (
             <path key={`f-${z.name}`} d={z.path} clipPath={`url(#${clip})`}
-              fill={`rgb(${HEAT_RGB[theme].join(',')})`} fillOpacity={tileOpacity(tv)} pointerEvents="none"/>
+              fill={rgb(HEAT_RGB[theme])} fillOpacity={tileOpacity(tv)} pointerEvents="none"/>
           );
         })}
 
@@ -201,16 +192,6 @@ function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
             neighbour's, and an unfilled zone has nothing to report, so
             there's nothing a boundary line would need to distinguish. */}
 
-        {/* Inert edges, then the selectable body's silhouette */}
-        {view.inert.map((d, i) => (
-          <path key={`i-${i}`} d={d} fill="none" stroke={disabledLine(theme)}
-            strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
-        ))}
-        {view.outline.map((d, i) => (
-          <path key={`o-${i}`} d={d} fill="none" stroke={lineColor(theme)}
-            strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
-        ))}
-
         {/* Counts — show labels only on the sparse (back) view; otherwise just counts */}
         {view.zones.map((z) => {
           const count = byArea[z.name] ?? 0;
@@ -218,7 +199,7 @@ function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
           const tv = t(z.name);
           if (!view.showLabels) {
             if (count === 0) return null;
-            return <CountLabel key={`c-${z.name}`} cx={cx} cy={cy + 7} t={tv} count={count} fontSize={20} theme={theme}/>;
+            return <CountLabel key={`c-${z.name}`} cx={cx} cy={cy + 9} t={tv} count={count} fontSize={28} theme={theme}/>;
           }
           return (
             <g key={`c-${z.name}`} pointerEvents="none">
@@ -227,7 +208,7 @@ function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
                 fill={countTextFill(tv, theme)}>
                 {z.label}
               </text>
-              {count > 0 && <CountLabel cx={cx} cy={cy + 22} t={tv} count={count} fontSize={22} theme={theme}/>}
+              {count > 0 && <CountLabel cx={cx} cy={cy + 26} t={tv} count={count} fontSize={28} theme={theme}/>}
             </g>
           );
         })}

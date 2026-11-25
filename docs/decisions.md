@@ -2448,3 +2448,7 @@ Sunny asked for the board's version: icon tile (rising line, `chart-2` tint), **
 ## Medication cards: "x days" removed from the summary line (2026-11-25)
 
 Sunny: the days figure under each drug's monthly bars was only the bars' sum (6 + 1 + 1 + 0 = 8), so it repeated the bars and cluttered the card. Removed. Doses, "checked at 2h", "helped" and the unmeasured-dose line stay. Cards are still ordered by days in the months drawn (`shownDays`), just no longer printed.
+
+## Where it hurt: purple heat, no outline, bigger counts (2026-11-25)
+
+Sunny: the section gets the v4 board's head-profile icon tile (`chart-2` tint), and the heatmap moves from the neutral text tint to **one purple** (`chart-2`), the most-logged area at 100% and fading evenly by count down to an area logged once (30% floor; all full when every area has the same count). Still one hue, never the severity ramp — the 2026-09-23 "how often is not how bad" reasoning stands, only the hue changed. **The head, ears and neck lose their outline strokes** and are set off the card by fill alone: `bg-elevated` per theme, since the picker's `headFill` is within a shade of the card here. The picker (`AreaSeverityPicker`) keeps its outline and `headFill` — it's a control, and its silhouette and dividers carry WCAG 1.4.11. Counts go from 20/22 to 28 (viewBox units). Light mode not checked on screen.

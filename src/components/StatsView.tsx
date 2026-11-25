@@ -154,6 +154,14 @@ const TrendGlyph = (
  *  The v4 board joins 5 days and breaks 17; a week sits between. */
 const TREND_BREAK_MS = 7 * 24 * 60 * 60 * 1000;
 
+// The board's head-profile glyph for "Where it hurt".
+const HeadGlyph = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 3c4.4 0 7 3.2 7 7 0 2-.8 3.4-2 4.5V21H9v-3H7a2 2 0 0 1-2-2v-3l-1.5-1.5L5 9c.6-3.5 3.3-6 7-6z" />
+  </svg>
+);
+
 // Ranked horizontal frequency bars (most-frequent first).
 function FreqBars({ data, color }: { data: Freq[]; color: string }) {
   const max = data[0]?.count ?? 1;
@@ -516,6 +524,8 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
           {/* Area frequency heatmap */}
           {stats.areas.length > 0 && (
             <InsightSection title="Where it hurt"
+              icon={HeadGlyph}
+              iconTone="bg-chart-2/16 text-chart-2"
               info="Attacks that touched each area, not readings — an area counts once per attack no matter how many times it was logged."
             >
               <HeadHeatmap data={stats.areas.map((a) => ({ area: a.area, value: a.count }))} />
