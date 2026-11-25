@@ -556,8 +556,9 @@ export interface MedMonth {
  * medication exists in this app. Taking something without logging an attack
  * under-reports here, and the UI says so rather than implying the count is
  * complete. Returns every drug ever logged, even one with an all-zero row
- * across the shown months (last taken outside that range) — the caller's
- * own window decides which drugs are worth showing at all.
+ * across the shown months (last taken outside that range); the caller
+ * decides which to show. `MedicationInsights` drops those all-zero rows
+ * (2026-11-25, Sunny) — an empty card answers nothing.
  */
 export function medicationDaysByMonth(attacks: Attack[], months: number, now: number = Date.now()): MedMonth[] {
   const days = new Map<string, Map<string, Set<string>>>();
@@ -592,10 +593,9 @@ export function medicationDaysByMonth(attacks: Attack[], months: number, now: nu
     });
   }
 
-  // Not filtered to drugs with a day inside the shown months: a caller
-  // already decides which drugs are relevant (its own window, usually wider
-  // than `months`), and a drug last taken outside that range still belongs
-  // on screen with an honestly all-zero set of bars, not missing entirely.
+  // Not filtered to drugs with a day inside the shown months — that is the
+  // caller's call. Insights filters them out (`shownDoses > 0`); don't
+  // restore all-zero cards there without asking (docs/decisions.md).
   return [...days.entries()]
     .map(([name, dm]) => ({
       name,

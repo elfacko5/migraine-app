@@ -118,9 +118,9 @@ export function MedicationInsights({
           Days you logged taking each medication, by month, against the guideline for its type —
           around {MOH_DAYS_TRIPTAN} days a month for triptans and combinations, {MOH_DAYS_SIMPLE} for simple
           painkillers, sustained over three months — worth raising with your doctor rather than acting on
-          alone. The line under each drug's bars counts across the same months the bars show
-          {since === null && <> — on All, that is the last 12 months at most</>}. Doses taken without
-          logging an attack aren't counted.
+          alone. The line under each drug's bars counts across the same months the bars show.
+          {since === null && <> On All, this covers the last 12 months — medicines taken only before then
+          aren't shown.</>} Doses taken without logging an attack aren't counted.
         </>
       }
     >
