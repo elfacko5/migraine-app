@@ -93,7 +93,13 @@ export function MedicationInsights({
   // first month drawn, not from the period's rolling start (2026-11-25). The
   // two used to differ (3m: bars from 1 Aug, line from ~27 Aug), so a line
   // sitting under the bars read as their total and didn't add up.
-  const response = medicationResponse(attacks, shownMonthsStart(months));
+  const shownFrom = shownMonthsStart(months);
+  const response = medicationResponse(attacks, shownFrom);
+  // Named, not counted: the months drawn are calendar months with this one
+  // included, so "the last 12 months" was wrong by up to a month, and with a
+  // shorter diary All draws fewer than 12. The first month's name is exact
+  // in both cases.
+  const shownFromLabel = new Date(shownFrom).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
   const byResponseName = new Map(response.map((r) => [r.name, r]));
 
   return (
@@ -119,8 +125,8 @@ export function MedicationInsights({
           around {MOH_DAYS_TRIPTAN} days a month for triptans and combinations, {MOH_DAYS_SIMPLE} for simple
           painkillers, sustained over three months — worth raising with your doctor rather than acting on
           alone. The line under each drug's bars counts across the same months the bars show.
-          {since === null && <> On All, this covers the last 12 months — medicines taken only before then
-          aren't shown.</>} Doses taken without logging an attack aren't counted.
+          {since === null && <> On All, this goes back to {shownFromLabel} — medicines taken only before
+          then aren't shown.</>} Doses taken without logging an attack aren't counted.
         </>
       }
     >
