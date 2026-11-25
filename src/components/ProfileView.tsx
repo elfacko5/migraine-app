@@ -8,8 +8,8 @@ import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../u
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
 import { SegmentedControl } from './SegmentedControl';
-import { Button, Switch, TextField } from 'code-ds';
-import { SectionLabel, SettingsList, SettingsRow } from './settingsUi';
+import { Button, TextField } from 'code-ds';
+import { SectionLabel, SettingsList, SettingsRow, Switch } from './settingsUi';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
@@ -290,8 +290,8 @@ export function DisplayPanel({
                 />
               </div>
             </SettingsRow>
-            <SettingsRow onClick={() => setView('font')} trailing={font === 'lexend' ? 'Lexend' : 'Atkinson'}>Font</SettingsRow>
-            <SettingsRow onClick={() => setView('textsize')} trailing={systemText ? 'iPhone' : SCALE_NAME[textScale]}>Text size</SettingsRow>
+            <SettingsRow onClick={() => setView('font')} trailing={font === 'lexend' ? 'Lexend' : 'Atkinson'} trailingTone="primary">Font</SettingsRow>
+            <SettingsRow onClick={() => setView('textsize')} trailing={systemText ? 'iPhone' : SCALE_NAME[textScale]} trailingTone="primary">Text size</SettingsRow>
           </SettingsList>
         </section>
       </div>

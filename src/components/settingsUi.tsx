@@ -1,3 +1,5 @@
+import { Switch as BaseSwitch } from '@base-ui/react/switch';
+
 // The v3 settings primitives (2026-10-26), shared by the Settings menu, the
 // Display page, My medications and the medication editor — so a group, a
 // switch row or a radio tile is one definition rather than a copy per screen.
@@ -63,6 +65,12 @@ export interface SettingsRowProps {
    * what's inside. Keep it to a word or two; it never wraps, the label does.
    */
   trailing?: string;
+  /**
+   * `muted` (default) for a state like the menu's "On"/"Off"; `primary` for a
+   * chosen value such as Display's "Lexend" or "iPhone" — the v4 Display
+   * board draws those at full text colour.
+   */
+  trailingTone?: 'muted' | 'primary';
   /** A decorative icon in currentColor. Hidden from screen readers. */
   leading?: React.ReactNode;
   /** Makes the row pressable: a button with a chevron. Without it the row is static. */
@@ -72,7 +80,7 @@ export interface SettingsRowProps {
   bare?: boolean;
 }
 
-export function SettingsRow({ children, value, trailing, leading, onClick, disabled = false, bare = false }: SettingsRowProps) {
+export function SettingsRow({ children, value, trailing, trailingTone = 'muted', leading, onClick, disabled = false, bare = false }: SettingsRowProps) {
   // The divider lives on every row but the first, drawn as a pseudo-element
   // (not a border) so the first row is as tall as the others; the first and
   // last row's own content follows the card's rounded corners. An explicit
@@ -100,7 +108,7 @@ export function SettingsRow({ children, value, trailing, leading, onClick, disab
         <span className="block text-text-primary">{children}</span>
         {value && <span className="block text-xs text-text-secondary">{value}</span>}
       </span>
-      {trailing && <span className="shrink-0 whitespace-nowrap text-text-secondary">{trailing}</span>}
+      {trailing && <span className={`shrink-0 whitespace-nowrap ${trailingTone === 'primary' ? 'text-text-primary' : 'text-text-secondary'}`}>{trailing}</span>}
     </>
   );
   const layout = 'flex min-h-row w-full items-center gap-3 px-card py-control-y text-left text-sm leading-tight';
@@ -174,3 +182,35 @@ export function OptionTile({ selected, onSelect, className = '', style, compact 
   );
 }
 
+
+// Lidd's switch, 2026-11-25. code-ds's Switch with the v4 board's off state:
+// a filled `line` track (#7D7669) with a `content-muted` knob (#A39D92),
+// where the package draws a page-coloured track with a ring — on a card that
+// read as a hole rather than a control. On is unchanged: accent track,
+// on-accent knob. The package is vendored and not edited (the medication
+// flows set that precedent), so the markup is repeated here, same contract:
+// label inside the button, track drops below the label when a word won't fit.
+// Sizes are the switch roles in index.css (46x27).
+export function Switch({ checked, onCheckedChange, disabled, children }: {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+  /** The visible label; it is the accessible name. */
+  children: React.ReactNode;
+}) {
+  return (
+    <BaseSwitch.Root
+      checked={checked}
+      disabled={disabled}
+      nativeButton
+      render={<button type="button" />}
+      onCheckedChange={(c) => onCheckedChange(c)}
+      className="group tap-44-y relative flex w-full cursor-pointer select-none flex-wrap items-center gap-x-3 gap-y-2 rounded-control py-2 text-left text-base text-content focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
+    >
+      <span className="min-w-0 grow basis-[min-content] [overflow-wrap:break-word]">{children}</span>
+      <span className="relative ml-auto h-switch-h w-switch-w shrink-0 rounded-full bg-line transition-colors motion-reduce:transition-none group-data-[checked]:bg-accent">
+        <BaseSwitch.Thumb className="absolute left-switch-inset top-1/2 size-switch-thumb -translate-y-1/2 rounded-full bg-content-muted transition-[translate,background-color] motion-reduce:transition-none data-[checked]:translate-x-(--spacing-switch-travel) data-[checked]:bg-on-accent" />
+      </span>
+    </BaseSwitch.Root>
+  );
+}

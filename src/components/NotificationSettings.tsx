@@ -1,8 +1,7 @@
-import { Switch } from 'code-ds';
 import type { NotificationConfig } from '../types';
 import { BellIcon } from './drawnIcons';
 import { RadioDot } from './RadioDot';
-import { SectionLabel, SettingsList, SettingsRow } from './settingsUi';
+import { SectionLabel, SettingsList, SettingsRow, Switch } from './settingsUi';
 import { chipClass } from '../utils/chipStyles';
 
 interface Props {
