@@ -21,22 +21,15 @@ import { InsightSection } from './InsightSection';
 // `medicationDaysByMonth` already existed, built for the Today class bars
 // (removed 2026-11-17) and never deleted — it is exactly this data.
 //
-// Class → chart colour: triptan/combination are confirmed against
-// `docs/redesign-v4/screens/09-insights` (blue, tan — the only two classes
-// drawn in any board). Painkiller and gepant have no board to check against;
-// this extends the same 5-colour set for them rather than leaving them
-// uncoloured. Worth a second look if a board ever draws one.
-//
-// Full class strings, not built from a colour name at runtime — Tailwind's
-// scanner reads source text, not interpolated template literals, so
-// `` `bg-${color}` `` would never generate a utility at all.
-const CLASS_STYLE: Record<string, { tile: string; bar: string }> = {
-  triptan: { tile: 'bg-chart-1/15 text-chart-1', bar: 'bg-chart-1' },
-  combination: { tile: 'bg-chart-5/15 text-chart-5', bar: 'bg-chart-5' },
-  simple: { tile: 'bg-chart-2/15 text-chart-2', bar: 'bg-chart-2' },
-  gepant: { tile: 'bg-chart-4/15 text-chart-4', bar: 'bg-chart-4' },
-};
-const DEFAULT_STYLE = { tile: 'bg-bg-raised text-text-secondary', bar: 'bg-text-secondary' };
+// **Every drug card is blue (`chart-1`)** — Insights' colour for "what you
+// took or did" (2026-11-25; the scheme is set out in StatsView's
+// `SECTION_COLOURS` note). It used to colour by class (triptan blue,
+// combination tan, painkiller purple, gepant gold), which spent four of the
+// five chart colours on one section and collided with the sections that use
+// those colours to mean something else — painkillers in the same purple as
+// pain. The class is already written under the name, so the colour said
+// nothing the text didn't.
+const MED_STYLE = { tile: 'bg-chart-1/15 text-chart-1', bar: 'bg-chart-1' };
 
 const BAR_MAX_FALLBACK = 20;
 
@@ -142,7 +135,7 @@ export function MedicationInsights({
           const r = byResponseName.get(name);
           const cls = typeOfName(name, medications);
           const classLabel = cls ? TYPE_OPTIONS.find((t) => t.value === cls)?.label : null;
-          const style = (cls && CLASS_STYLE[cls]) || DEFAULT_STYLE;
+          const style = MED_STYLE;
           // Marked against the guide for *this* drug's type (a stored number,
           // else the ICHD guideline — "not sure"/untyped is measured under
           // "Any attack medicine" via `guideKeyOf`; only a gepant, or old

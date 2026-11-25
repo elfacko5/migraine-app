@@ -231,6 +231,7 @@ Period control in top bar (`SegmentedControl`, labels `7d / 30d / 3m / All`). Ev
 
 - Header collapses: `h1` + control at top → control alone when scrolled (via `useScrolledFromTop`). Period control inside header, not sticky on its own.
 - `InsightSection`: heading + content + note (note below content). Inner surface only when note exists (outline, not fill).
+- **Colour = subject, same on every section** (2026-11-25): green how often (Attack days) · blue what you did (Medication, every drug card; What you tried) · purple pain (Typical attack, Pain over time, Where it hurt) · rose what it was like (Symptoms) · gold what came before (Two days before). No per-class drug colours. A new section takes its subject's colour. Table above `CHART_COLORS` in `StatsView.tsx`.
 - Blocks 32px apart. Section card padding `p-card`. Stat tile labels 12px (sole exception to 14px floor).
 - Order: period control → stat tiles → monthly sections → rest.
 - `MigraineDaysChart`: counts days not attacks (`attackDayKeys`). 15-day ICHD line. Period narrows months shown, never the counting. Under 7d draws week strip (dots, not cells). Month in progress named in caption.

@@ -36,16 +36,27 @@ const LOW_DATA_THRESHOLD = 5;
 // between dark and attack) but shares dark's severity/accent colours, the
 // same reuse the diagram palette in headDiagram.ts makes, since those three
 // are literally the same values for both themes in index.css.
+// **Insights colours mean a subject, the same on every section** (Sunny,
+// 2026-11-25). Each section's icon tile and its data take the colour of what
+// it's about, so a colour seen twice on the page means the same thing twice:
+//
+//   green  (accent)   how often      Attack days
+//   blue   (chart-1)  what you did   Medication, What you tried
+//   purple (chart-2)  pain           Typical attack, Pain over time, Where it hurt
+//   rose   (chart-3)  what it was like  Symptoms
+//   gold   (chart-4)  what came before  In the two days before
+//
+// `chart-5` (tan) is unused. Attack days' month over the chronic line keeps
+// `severity-high`: that's a threshold crossed, not a subject. A new section
+// takes the colour of its subject, never a free one.
 const CHART_COLORS: Record<UiTheme, {
   tick: string; tooltipBg: string; tooltipBorder: string; label: string; item: string; line: string;
-  accent: string;
   grid: string;
-  chart2: string; chart3: string; chart4: string;
+  chart1: string; chart2: string; chart3: string; chart4: string;
 }> = {
   dark: {
     tick: '#a39d92', tooltipBg: '#302d29', tooltipBorder: '#3a3733',
     label: '#a39d92', item: '#cdc7bb', line: '#9bb9a1',
-    accent: '#7fa187',
     // Insights categorical palette (v4 decision A7/12) — mirrored here for
     // the same reason the rest of this object is: Recharts and an inline
     // `style` prop both take literal values, never a CSS custom property.
@@ -53,24 +64,22 @@ const CHART_COLORS: Record<UiTheme, {
     // against every attack-mode surface (measured), so there's nothing
     // attack-specific to derive.
     grid: '#3a3733',
-    chart2: '#ab9fcb', chart3: '#d0948c', chart4: '#c9b58c',
+    chart1: '#8fb3c9', chart2: '#ab9fcb', chart3: '#d0948c', chart4: '#c9b58c',
   },
   attack: {
     tick: '#9a9689', tooltipBg: '#262218', tooltipBorder: '#34322a',
     label: '#9a9689', item: '#c9c4b8', line: '#93ae99',
-    accent: '#7fa187',
     grid: '#34322a',
-    chart2: '#ab9fcb', chart3: '#d0948c', chart4: '#c9b58c',
+    chart1: '#8fb3c9', chart2: '#ab9fcb', chart3: '#d0948c', chart4: '#c9b58c',
   },
   light: {
     tick: '#5a554c', tooltipBg: '#e2dcd0', tooltipBorder: '#d5cec0',
     label: '#5a554c', item: '#3a3733', line: '#3c5544',
-    accent: '#4f6b57',
     // Derived and measured, same method as --color-chart-3/4 in index.css:
     // same hue/saturation as dark, lightness brought down to clear 3:1 on a
     // light page (4.58:1 / 4.63:1 against bg-raised).
     grid: '#d5cec0',
-    chart2: '#69559d', chart3: '#98493e', chart4: '#715d35',
+    chart1: '#3d667f', chart2: '#69559d', chart3: '#98493e', chart4: '#715d35',
   },
 };
 
@@ -483,7 +492,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
           <InsightSection
             title="Typical attack"
             icon={ClockGlyph}
-            iconTone="bg-chart-4/16 text-chart-4"
+            iconTone="bg-chart-2/16 text-chart-2"
             // No section card: the grid is the card (`.facts` on the board),
             // its cells divided by 1px gaps rather than padded inside a fill.
             bare
@@ -613,8 +622,8 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
             icon={PulseGlyph} iconTone="bg-chart-3/16 text-chart-3"
             info="Attacks that included each symptom, not readings — one count per attack no matter how many times it was logged."
           />
-          <FreqSection title="What you tried"  data={stats.reliefs}  color={chartColors.accent}
-            icon={LeafGlyph}
+          <FreqSection title="What you tried"  data={stats.reliefs}  color={chartColors.chart1}
+            icon={LeafGlyph} iconTone="bg-chart-1/16 text-chart-1"
             info="Attacks in which each relief was tried at least once. This counts use, not whether it helped."
           />
         </>

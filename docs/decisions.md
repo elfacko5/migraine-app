@@ -2452,3 +2452,17 @@ Sunny: the days figure under each drug's monthly bars was only the bars' sum (6 
 ## Where it hurt: purple heat, no outline, bigger counts (2026-11-25)
 
 Sunny: the section gets the v4 board's head-profile icon tile (`chart-2` tint), and the heatmap moves from the neutral text tint to **one purple** (`chart-2`), the most-logged area at 100% and fading evenly by count down to an area logged once (30% floor; all full when every area has the same count). Still one hue, never the severity ramp — the 2026-09-23 "how often is not how bad" reasoning stands, only the hue changed. **The head, ears and neck lose their outline strokes** and are set off the card by fill alone: `bg-elevated` per theme, since the picker's `headFill` is within a shade of the card here. The picker (`AreaSeverityPicker`) keeps its outline and `headFill` — it's a control, and its silhouette and dividers carry WCAG 1.4.11. Counts go from 20/22 to 28 (viewBox units). Light mode not checked on screen. **Front neck dropped from the heatmap** the same day: it was never a zone, only inert ground (the path in both `base` and `inert`), so it could never show anything. The back's neck stays — there it is two real zones. The front's viewBox is then trimmed to the chin plus 10 units (`-1.93 163.45 332 457`, heatmap only — the picker keeps the shared box).
+
+## Insights colours mean a subject (2026-11-25)
+
+Sunny: the section colours had no logic — pain areas purple, attack days green, painkillers also purple, Typical attack gold beside a gold "two days before". The v4 board's own assignment is per-section with no stated rule. Now **each colour is a subject, the same on every section** (icon tile and data both):
+
+| Colour | Subject | Sections |
+|---|---|---|
+| green (accent) | how often | Attack days |
+| blue (`chart-1`) | what you took or did | Medication (every drug card), What you tried |
+| purple (`chart-2`) | pain | Typical attack, Pain over time, Where it hurt |
+| rose (`chart-3`) | what it was like | Symptoms |
+| gold (`chart-4`) | what came before | In the two days before |
+
+`chart-5` (tan) is now unused. **Medication cards no longer colour by class** (triptan blue, combination tan, painkiller purple, gepant gold): that spent four colours on one section and put painkillers in pain's purple; the class is written under the drug name already. What you tried moves from green to blue (it's something you did, like a dose); Typical attack from gold to purple (peak, length, time to the peak). Attack days' chronic-band bar keeps `severity-high` — a threshold, not a subject. A new section takes its subject's colour, never a free one. The table lives as a comment above `CHART_COLORS` in `StatsView.tsx`. Departs from the board's tile colours for Typical attack (tan) and What you tried (green).
