@@ -21,7 +21,16 @@ interface Props {
  * state keeps its own labelled button — a bare plus is a weak first
  * affordance, and someone with no history needs the words once.
  *
- * **The headline is a statement, not the figure** (v4, 2026-11-23, on June's
+ * **The headline is the time since the last attack** (2026-11-25, Sunny's
+ * call, reversing the two calls below): "6 days attack-free", in the largest
+ * whole unit `formatSinceLong` gives (days, else hours, else minutes). The
+ * point of this card is how long it has been, not whether today has an
+ * attack — "No attack today" answered the second. The detail line went with
+ * it, since "since your last attack" restated the headline. This knowingly
+ * puts the figure back in the headline that §9.2 of the dossier and the two
+ * earlier calls kept out of it; they're kept below as the case against.
+ *
+ * Earlier: **the headline is a statement, not the figure** (v4, 2026-11-23, on June's
  * call). It used to be "Good evening / 4 days / since your last attack" —
  * the three lines read as one sentence, and that's recorded rather than
  * refuted: "4 days" as the big, bold figure is what the greeting-is-kicker
@@ -40,12 +49,16 @@ export function AttackFreeCard({ lastEnd, topAction }: Props) {
   // Every minute, and on every return to the foreground — an interval alone
   // leaves "14 days" reading whatever it said before the app was backgrounded.
   useNowTick();
+  // `formatSinceLong` says "Just now" inside the first minute, which can't
+  // carry "attack-free" after it.
+  const since = formatSinceLong(lastEnd);
+  const headline = since === 'Just now' ? 'Under a minute attack-free' : `${since} attack-free`;
 
   return (
     <HomeCard
       art={<AttackFreeArt />}
       label={greeting()}
-      headline="No attack today"
+      headline={headline}
       // 32px/1.2 (v4 board) — the design gives this state a smaller headline
       // than the ongoing one, since a statement needs less weight than the
       // active-attack figure someone would want to read first mid-migraine.
@@ -53,13 +66,8 @@ export function AttackFreeCard({ lastEnd, topAction }: Props) {
       // "No attack today" is long enough that nowrap ran it off the screen
       // edge at the larger text-size settings — found at XL, where the
       // phrase is wider than the 64% text column has room for on one line.
+      // "6 days attack-free" wraps the same way.
       headlineSize="text-[2rem] leading-[1.2]"
-      // The caption floor (14px, never lower) overrides the board's literal
-      // 13px for this line — `text-xs` here, not an arbitrary smaller value.
-      // Nested span, not a HomeCard prop: its own classes win over the
-      // wrapping `<p>`'s default text-base/text-primary the same way the
-      // ongoing label's own classes do.
-      detail={<span className="text-xs text-text-secondary">{formatSinceLong(lastEnd)} since your last attack</span>}
       topAction={topAction}
     />
   );

@@ -300,7 +300,7 @@ Invariants: `--app-height` tracks real viewport (trusts `window.screen` on cold 
 
 Every block is borderless 20px `TODAY_CARD`, 14px apart, **last 30 days** (never "this month"). Order: week card (2+ attacks in 7d) → 2h check-in → dose card → overuse banners (at 70%) → days and attacks tiles. Attack mode keeps reduced branch + check-in.
 
-Attack-free: `AttackFreeCard` with greeting + "X days / since your last attack". No "attack-free for" (reads as score). `greeting()` reads clock inside util. `useNowTick` for all live durations — never bare `setInterval` (iOS suspends background timers).
+Attack-free: `AttackFreeCard` with greeting + headline "X days attack-free" (largest whole unit: days, else hours, else minutes), no detail line. Sunny's call 2026-11-25, knowingly against the earlier §9.2 "reads as a score" ruling — don't revert without asking. `greeting()` reads clock inside util. `useNowTick` for all live durations — never bare `setInterval` (iOS suspends background timers).
 
 ### Today hero cards
 
