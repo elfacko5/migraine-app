@@ -731,10 +731,15 @@ export function doseOutcomeWord(before: number, after: number): DoseOutcomeWord 
   return after < before ? 'A bit' : 'No';
 }
 
-/** `since` scopes it to the same window as `medicationDaysInWindow`, and on
- *  the same key — the dose's own time. Two figures in one block measured over
- *  different windows is exactly the drift this page keeps correcting. */
-export function medicationResponse(attacks: Attack[], since: number | null = null): MedResponse[] {
+/** `since` scopes it on the dose's own time — Insights passes
+ *  `shownMonthsStart`, the same months `medicationDaysByMonth` draws, so it
+ *  agrees with the days/doses beside it. Future-dated doses are skipped for
+ *  the same reason (`medicationDaysByMonth` skips them too). Two figures in
+ *  one block measured over different windows is exactly the drift this page
+ *  keeps correcting. */
+export function medicationResponse(
+  attacks: Attack[], since: number | null = null, now: number = Date.now(),
+): MedResponse[] {
   const acc = new Map<string, { changes: number[]; unmeasured: number; helped: number }>();
 
   for (const a of attacks) {
@@ -742,7 +747,8 @@ export function medicationResponse(attacks: Attack[], since: number | null = nul
     for (let i = 0; i < snaps.length; i++) {
       const name = snaps[i].medication?.name?.trim();
       if (!name || isRetired(name)) continue;
-      if (since !== null && new Date(snaps[i].time).getTime() < since) continue;
+      const t = new Date(snaps[i].time).getTime();
+      if (t > now || (since !== null && t < since)) continue;
       if (!acc.has(name)) acc.set(name, { changes: [], unmeasured: 0, helped: 0 });
       const entry = acc.get(name)!;
 

@@ -192,7 +192,7 @@ export function MedicationInsights({
                   never "times"; a reading being absent is passive, never
                   "didn't log it" — both carried over unchanged. */}
               <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-bg-border pt-3 text-xs text-text-primary">
-                {/* Muted glyphs before the first two, as the board's `.mstats`. */}
+                {/* Muted glyphs before doses and "checked at 2h", as the board's `.mstats`. */}
                 <span>{shownDays} {shownDays === 1 ? 'day' : 'days'}</span>
                 <span className="inline-flex items-center gap-1.5">
                   <MedIcon name={med.name} className="h-4 w-4 text-text-secondary" />
