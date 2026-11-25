@@ -63,13 +63,19 @@ export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Pr
     // the card runs short of room (large text): below 20rem — about 112% text
     // on a 375pt phone — the number and chevron give up their second row and
     // the marks run under them, instead of stacking one per line in a column
-    // too narrow to hold "2h 13m".
+    // too narrow to hold "2h 13m". In that layout the number shares the
+    // first row with the length, so the length centres on it rather than
+    // sitting at the row's foot — the taller number box set the row's
+    // height and left the length sunk below it (large text, 2026-11-25).
+    // The chevron goes in that layout: at XL its column left the length too
+    // little room and it ran under the number. The whole card is the button,
+    // so the chevron was a hint, not the target.
     <div className="@container">
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 rounded-card py-3 pl-4 pr-5 text-left transition-colors ${
+      className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] @max-[20rem]:grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 rounded-card py-3 pl-4 pr-5 text-left transition-colors ${
         isOngoing ? 'bg-bg-raised hover:bg-bg-elevated' : 'bg-bg-surface hover:bg-bg-raised'
       }`}
     >
@@ -86,12 +92,12 @@ export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Pr
         )}
       </span>
 
-      <span aria-hidden="true" className={`col-start-2 text-base font-semibold leading-snug tabular-nums text-text-strong ${marks ? 'self-end' : 'row-span-2'}`}>
+      <span aria-hidden="true" className={`col-start-2 text-base font-semibold leading-snug tabular-nums text-text-strong ${marks ? 'self-end @max-[20rem]:self-center' : 'row-span-2'}`}>
         {isOngoing ? <>Ongoing · <span className="whitespace-nowrap"><OngoingLength start={attack.snapshots[0].time} /></span></> : length ?? <span className="whitespace-nowrap">{formatDuration(attack.snapshots[0].time, attack.end)}</span>}
       </span>
 
       {marks && (
-          <span aria-hidden="true" className="col-start-2 row-start-2 flex flex-wrap gap-1.5 self-start @max-[20rem]:col-end-5">
+          <span aria-hidden="true" className="col-start-2 row-start-2 flex flex-wrap gap-1.5 self-start @max-[20rem]:col-end-4">
             {doses > 0 && (
               <span className={`${chip} tabular-nums`}>
                 <TabletIcon className="h-[0.875rem] w-[0.875rem]" />
@@ -118,7 +124,7 @@ export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Pr
         {isOngoing && <span className="text-xs text-text-secondary">now</span>}
       </span>
 
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="col-start-4 row-start-1 row-span-2 h-4 w-4 text-text-secondary @max-[20rem]:row-span-1">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="col-start-4 row-start-1 row-span-2 h-4 w-4 text-text-secondary @max-[20rem]:hidden">
         <path d="m9 18 6-6-6-6" />
       </svg>
     </button>

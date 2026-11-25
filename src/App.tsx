@@ -667,6 +667,7 @@ export default function App() {
               onSort={setLogsSort}
               onOpenFilters={() => setLogsFilterOpen(true)}
               onAttackClick={(a) => setDetailAttackId(a.id)}
+              onAdd={() => { setLogPast(false); setLogSheetOpen(true); }}
             />
           </section>
         )}

@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import type { Attack } from '../types';
 import { AttackCard } from './AttackCard';
-import { LightIcon, NauseaIcon, SoundIcon } from './drawnIcons';
 import { looksTooShort } from '../utils/stats';
 import { formatDate, formatDuration } from '../utils/format';
 import {
@@ -26,10 +25,13 @@ interface Props {
   onSort: (s: SortOrder) => void;
   onOpenFilters: () => void;
   onAttackClick: (attack: Attack) => void;
+  /** The empty state's "Log an attack": straight into the wizard, as on
+   *  Insights and Today's first run — nothing is ongoing to choose against. */
+  onAdd: () => void;
 }
 
 export function HistoryView({
-  attacks, filters, onFilters, sort, onSort, onOpenFilters, onAttackClick,
+  attacks, filters, onFilters, sort, onSort, onOpenFilters, onAttackClick, onAdd,
 }: Props) {
   // One stage now that the period is a filter like the rest. The empty state
   // below still distinguishes "nothing matched" from "nothing logged", which
@@ -55,9 +57,24 @@ export function HistoryView({
   );
 
   if (total === 0) {
+    // v4 "LogsEmptyDark": the Logs tab's own list mark in a drawn tile,
+    // heading, one line on what the page will do, and the CTA — the same
+    // build as Insights' empty state (StatsView), so the two tabs match.
     return (
-      <div className="py-20 text-center text-text-secondary text-sm">
-        Nothing logged yet. Your attacks will appear here.
+      <div className="flex flex-col items-center justify-center gap-4 px-7 py-16 text-center">
+        <span className="flex h-18 w-18 items-center justify-center rounded-full bg-bg-surface text-border-control">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
+            strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8" aria-hidden="true">
+            <path d="M9 7h11M9 12h11M9 17h11M4.5 7h.01M4.5 12h.01M4.5 17h.01" />
+          </svg>
+        </span>
+        <p className="text-lg font-semibold text-text-strong">No attacks logged yet</p>
+        <p className="max-w-[17.5rem] text-[0.9375rem] leading-normal text-text-secondary">
+          Once you log one, it'll show up here — grouped by month, with filters to find anything fast.
+        </p>
+        <button type="button" onClick={onAdd} className="btn-primary btn-compact mt-1.5">
+          Log an attack
+        </button>
       </div>
     );
   }
@@ -217,13 +234,6 @@ export function HistoryView({
               </div>
             );
           })}
-          {/* The key for the three symptom marks, said once so no row has to
-              (rules in utils/cardSymptoms.ts). */}
-          <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-1 text-xs text-text-secondary">
-            <span className="inline-flex items-center gap-1.5"><NauseaIcon className="h-4 w-4" />nausea</span>
-            <span className="inline-flex items-center gap-1.5"><LightIcon className="h-4 w-4" />light</span>
-            <span className="inline-flex items-center gap-1.5"><SoundIcon className="h-4 w-4" />sound</span>
-          </p>
         </div>
       )}
     </div>
