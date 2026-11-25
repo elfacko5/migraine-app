@@ -129,6 +129,13 @@ interface HeatViewProps {
 
 function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
   const clip = `hm-clip-${view.id}`;
+  // **No front neck** (Sunny, 2026-11-25): it's in the front view's `base`
+  // only as inert ground — never a zone, so nothing here could ever fill it.
+  // A path in both `base` and `inert` is exactly that; the back's neck is
+  // two real zones and only in `base`, so it stays. Ears (inert, outside
+  // `base`) stay too.
+  const ground = view.base.filter((d) => !view.inert.includes(d));
+  const ears = view.inert.filter((d) => !view.base.includes(d));
   // Strength 0..1 by count: 1 at the most-logged area, 0 at a single log.
   // With every area at the same count there's nothing to rank — all full.
   const t = (area: string) => {
@@ -152,14 +159,14 @@ function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
         aria-label={`${view.label} pain area heatmap`}>
         <defs>
           <clipPath id={clip}>
-            {view.base.map((d, i) => <path key={i} d={d}/>)}
+            {ground.map((d, i) => <path key={i} d={d}/>)}
           </clipPath>
         </defs>
 
-        {/* Head, ears and neck as one flat ground — no hatch (nothing here
+        {/* Head and ears as one flat ground — no hatch (nothing here
             is tapped, 2026-09-23) and no outline (2026-11-25): the fill
             alone sets the head off the card. */}
-        {view.base.concat(view.inert).map((d, i) => (
+        {ground.concat(ears).map((d, i) => (
           <path key={`g-${i}`} d={d} fill={rgb(HEAD_RGB[theme])}/>
         ))}
 
