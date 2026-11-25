@@ -75,8 +75,11 @@ export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Pr
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] @max-[20rem]:grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 rounded-card py-3 pl-4 pr-5 text-left transition-colors ${
-        isOngoing ? 'bg-bg-raised hover:bg-bg-elevated' : 'bg-bg-surface hover:bg-bg-raised'
+      className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] @max-[20rem]:grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-1.5 rounded-card min-h-[4.75rem] py-3.5 pl-4 pr-3.5 text-left transition-colors ${
+        // The v4 board's row: 76px, 14/14/14/16 padding, 14px gaps. The
+        // ongoing row is outlined as well as lifted (its `.live`), so it
+        // reads as a different kind of row, not just a lighter one.
+        isOngoing ? 'bg-bg-raised ring-1 ring-inset ring-border-subtle hover:bg-bg-elevated' : 'bg-bg-surface hover:bg-bg-raised'
       }`}
     >
       <span aria-hidden="true" className="row-span-2 flex w-10 flex-col items-center">
@@ -85,7 +88,7 @@ export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Pr
         ) : (
           <>
             <span className="text-lg font-semibold leading-none tabular-nums text-text-strong">{start.getDate()}</span>
-            <span className="mt-1 text-xs uppercase text-text-secondary">
+            <span className="mt-0.5 text-xs font-medium uppercase tracking-[0.04em] text-text-secondary">
               {start.toLocaleDateString(undefined, showMonth ? { month: 'short' } : { weekday: 'short' })}
             </span>
           </>

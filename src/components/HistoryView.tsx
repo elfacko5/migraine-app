@@ -80,7 +80,8 @@ export function HistoryView({
   }
 
   return (
-    <div className="space-y-4">
+    // 12px between blocks, as the v4 board (06-logs) spaces them.
+    <div className="space-y-3">
       {/* Count + **one** route into the sheet.
           There were two buttons here, "Filter" and the current sort, and both
           opened the same sheet — two affordances with one outcome, which is a
@@ -93,8 +94,9 @@ export function HistoryView({
           sort has to stay readable *without* opening the sheet, which is what
           the chip row does. */}
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-text-secondary">
-          <span className="text-text-primary font-medium">{shown}</span>
+        {/* The board's count is one plain 16px line in body colour. */}
+        <p className="text-sm text-text-primary">
+          <span>{shown}</span>
           {shown !== total && <span> of {total}</span>}
           {/* "1 of 2 attacks": the noun follows the total when there is one. */}
           <span> {(shown !== total ? total : shown) === 1 ? 'attack' : 'attacks'}</span>
@@ -223,8 +225,10 @@ export function HistoryView({
             const prev = before[before.length - 1];
             const header = byDate && !ongoing && (!prev || monthLabel(prev.snapshots[0].time) !== month);
             return (
-              <div key={a.id} className="space-y-2.5">
-                {header && <h2 className={`text-xs font-semibold text-text-secondary ${i > 0 ? 'pt-2' : ''}`}>{month}</h2>}
+              // The ongoing row stands 6px further off the banner above it, as drawn.
+              <div key={a.id} className={`space-y-2.5 ${ongoing ? 'pt-1.5' : ''}`}>
+                {/* The board's month header: 15px semibold, muted, 10px clear of what's above. */}
+                {header && <h2 className="pt-2.5 text-[0.9375rem] font-semibold text-text-secondary">{month}</h2>}
                 <AttackCard
                   attack={a}
                   isOngoing={ongoing}
