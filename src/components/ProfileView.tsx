@@ -4,6 +4,7 @@ import type { useAuth } from '../hooks/useAuth';
 import type { SyncStatus } from '../types';
 import { formatSince, formatDatetime, formatTime } from '../utils/format';
 import { useNowTick } from '../hooks/useNowTick';
+import { sevBadgeClass } from '../utils/severity';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
@@ -399,58 +400,96 @@ function TextSizePage({ textScale, onTextScale, systemText, onSystemText, onBack
   );
 }
 
-// What attack mode changes — the explanation that used to sit under the toggle,
-// now its own screen with the sample log it describes.
+// What attack mode changes — v4 board DisplayAttackChangesDark: the sample
+// log drawn in attack mode's palette, then four checked lines and a
+// closing reassurance in place of a fifth row.
 function AttackChangesPage({ onBack }: { onBack: () => void }) {
   return (
     <ProfileSubPage title="What it changes" onClose={onBack}>
-      <div className="space-y-6">
+      <div className="space-y-5">
         <section className="space-y-2">
-          {/* "A sample log", not "A log in attack mode": the preview card is
-              built from theme tokens and only the <html> element carries
-              data-theme="attack" (:root-scoped in theme.css), so the card can't
-              render in attack styling while attack mode is off — which is the
-              common case for someone opening this page. The heading would then
-              contradict the card. The list below names the changes in words. */}
-          <SectionLabel>A sample log</SectionLabel>
-          <DisplayPreviewCard />
+          <SectionLabel>A log in attack mode</SectionLabel>
+          <DisplayPreviewCard attack />
         </section>
-        <SettingsList>
-          <SettingsRow value="At least 35% darker">Dims the screen</SettingsRow>
-          <SettingsRow>Warmer colours, softer contrast</SettingsRow>
-          <SettingsRow>Bigger text, if yours is set small</SettingsRow>
-          <SettingsRow>Nothing moves — animation stops</SettingsRow>
-          <SettingsRow>Your logs stay exactly as they are</SettingsRow>
-        </SettingsList>
+        <ul className="space-y-3.5">
+          <ChangeLine sub="At least 35% darker">Dims the screen</ChangeLine>
+          <ChangeLine>Warmer colours, softer contrast</ChangeLine>
+          <ChangeLine>Bigger text, if yours is set small</ChangeLine>
+          <ChangeLine>Nothing moves</ChangeLine>
+        </ul>
+        <p className="text-xs font-semibold text-text-primary">Your logs stay exactly as they are.</p>
       </div>
     </ProfileSubPage>
   );
 }
 
-// The sample attack card shown on the Text size and What-it-changes screens.
-// Mirrors AttackCard by hand (the chips are symptoms, the line says
-// "readings"), so a preview never shows a card the app no longer renders.
-function DisplayPreviewCard() {
+function ChangeLine({ children, sub }: { children: React.ReactNode; sub?: string }) {
   return (
-    <div className="rounded-control border border-bg-border/60 bg-bg-raised/40 p-card">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-text-primary">Mon, Jun 24</span>
-            <span className="text-xs text-text-secondary">9:15 AM</span>
-          </div>
-          <p className="text-xs text-text-secondary">2h 30m · 3 readings</p>
-          <p className="text-xs text-text-secondary">Right temple, Forehead</p>
-          <p className="text-xs text-text-secondary">Impact: <span className="text-text-primary">a lot</span></p>
-          <div className="flex flex-wrap gap-1 pt-0.5">
-            <span className="rounded-full bg-bg-border/60 px-2 py-0.5 text-xs text-text-secondary">Nausea</span>
-            <span className="rounded-full bg-bg-border/60 px-2 py-0.5 text-xs text-text-secondary">Light sensitivity</span>
-          </div>
-        </div>
-        <div className="shrink-0">
-          <span className="rounded-lg border border-severity-mid/30 bg-severity-mid/20 px-2 py-1 text-lg font-bold tabular-nums text-severity-mid">7</span>
-        </div>
+    <li className="flex items-start gap-2.5 text-sm text-text-primary">
+      {/* Lucide `check`, 18px in accent — the board's mark. */}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 size-[1.125rem] shrink-0 text-accent" aria-hidden="true">
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+      <span>
+        {children}
+        {sub && <span className="mt-0.5 block text-xs text-text-secondary">{sub}</span>}
+      </span>
+    </li>
+  );
+}
+
+// Attack mode's own surface and text values (src/theme.css and index.css,
+// `[data-theme='attack']`), mirrored by hand like THEME_SWATCH was: the
+// attack tokens are scoped to <html>, so a card can't borrow them while the
+// page around it is in the everyday theme. Change them with the palette.
+const ATTACK_CARD = {
+  card: '#1e1e17',     // surface-raised
+  line: '#34322a',     // divider
+  chip: '#262218',     // bg-raised
+  text: '#c9c4b8',     // content
+  muted: '#9a9689',    // content-muted
+  dim: 'rgba(20, 20, 15, 0.35)', // the BrightnessOverlay floor, over surface #14140f
+};
+
+// The sample log on the Text size and What-it-changes screens — the v4
+// boards' preview card, one layout in two palettes. `attack` draws it as
+// attack mode would: its colours, its 20px body floor (px on purpose, a
+// picture of that mode, not text that follows this screen's scale), and the
+// dim laid over the top. Everyday sizes are rem so the Text size preview
+// grows with the setting it previews.
+function DisplayPreviewCard({ attack = false }: { attack?: boolean }) {
+  const c = attack ? ATTACK_CARD : null;
+  return (
+    <div
+      aria-hidden="true"
+      className={`relative overflow-hidden rounded-control border px-3.5 py-3 ${c ? '' : 'border-bg-border'}`}
+      style={c ? { background: c.card, borderColor: c.line } : undefined}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span
+          className={`font-semibold ${c ? '' : 'text-sm text-text-primary'}`}
+          style={c ? { fontSize: 20, color: c.text } : undefined}
+        >Mon, Jun 24 · 9:15 AM</span>
+        <span
+          className={`shrink-0 rounded-badge px-2.5 py-0.5 font-bold tabular-nums ${sevBadgeClass(7)} ${c ? '' : 'text-sm'}`}
+          style={c ? { fontSize: 20 } : undefined}
+        >7</span>
       </div>
+      <div className={`mt-1 ${c ? '' : 'text-xs text-text-secondary'}`} style={c ? { fontSize: 16, color: c.muted } : undefined}>
+        <p>2h 30m · 3 readings</p>
+        <p>Right temple, Forehead</p>
+        <p>Impact: <b className={`font-semibold ${c ? '' : 'text-text-primary'}`} style={c ? { color: c.text } : undefined}>a lot</b></p>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {['Nausea', 'Light sensitivity'].map((t) => (
+          <span
+            key={t}
+            className={`rounded-chip px-3 py-1 ${c ? '' : 'bg-bg-raised text-xs text-text-primary'}`}
+            style={c ? { background: c.chip, color: c.text, fontSize: 17 } : undefined}
+          >{t}</span>
+        ))}
+      </div>
+      {c && <div className="pointer-events-none absolute inset-0" style={{ background: c.dim }} />}
     </div>
   );
 }
