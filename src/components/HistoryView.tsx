@@ -69,22 +69,24 @@ export function HistoryView({
         <p className="text-sm text-text-secondary">
           <span className="text-text-primary font-medium">{shown}</span>
           {shown !== total && <span> of {total}</span>}
-          <span> {shown === 1 ? 'attack' : 'attacks'}</span>
+          {/* "1 of 2 attacks": the noun follows the total when there is one. */}
+          <span> {(shown !== total ? total : shown) === 1 ? 'attack' : 'attacks'}</span>
         </p>
+        {/* The v4 board's outline pill (06-logs, `.pill`/`.cnt`): 44px, 15px
+            medium, the control outline as a ring, the same in both states —
+            only the accent count says filters are on. */}
         <button
           type="button"
           onClick={onOpenFilters}
-          className={`tap-44-y flex items-center gap-1.5 rounded-chip px-3 py-1.5 text-xs font-medium transition-colors ${
-            count > 0
-              ? 'bg-accent/15 text-accent-light ring-1 ring-accent/40'
-              : 'bg-bg-raised text-text-secondary ring-1 ring-border-control hover:text-text-primary'
-          }`}
+          className="inline-flex min-h-target items-center gap-2 rounded-full px-4 text-[0.9375rem] font-medium text-text-primary ring-1 ring-inset ring-border-control transition-colors hover:bg-bg-raised"
         >
           Filter &amp; sort
           {/* The count is the only thing that says filters are on once the
               chip row has scrolled off the top of a long list. */}
           {count > 0 && (
-            <span className="rounded-full bg-accent/25 px-1.5 tabular-nums">{count}</span>
+            <span className="inline-flex h-[1.375rem] min-w-[1.375rem] items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold tabular-nums text-bg-base">
+              {count}
+            </span>
           )}
         </button>
       </div>
