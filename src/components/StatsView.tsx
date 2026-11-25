@@ -162,6 +162,22 @@ const HeadGlyph = (
   </svg>
 );
 
+// The board's glyphs for "Symptoms" (a pulse trace) and "What you tried"
+// (a leaf), each tinted to its own bar colour, as the board does.
+const PulseGlyph = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 12h4l2-5 4 10 2-5h6" />
+  </svg>
+);
+const LeafGlyph = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z" />
+    <path d="M5 19l8-8" />
+  </svg>
+);
+
 // Ranked horizontal frequency bars (most-frequent first).
 function FreqBars({ data, color }: { data: Freq[]; color: string }) {
   const max = data[0]?.count ?? 1;
@@ -190,10 +206,13 @@ function FreqBars({ data, color }: { data: Freq[]; color: string }) {
 // now carries its explanation behind the "More info" icon rather than some
 // behind it and some not, which read as an inconsistency once a few sections
 // had it and the rest didn't).
-function FreqSection({ title, data, color, info }: { title: string; data: Freq[]; color: string; info?: React.ReactNode }) {
+function FreqSection({ title, data, color, info, icon, iconTone }: {
+  title: string; data: Freq[]; color: string; info?: React.ReactNode;
+  icon?: React.ReactNode; iconTone?: string;
+}) {
   if (data.length === 0) return null;
   return (
-    <InsightSection title={title} info={info}>
+    <InsightSection title={title} info={info} icon={icon} iconTone={iconTone}>
       <FreqBars data={data} color={color} />
     </InsightSection>
   );
@@ -572,9 +591,11 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
               different variables behind the same hue. Now chart-3/chart-4,
               the Insights-only categorical palette (A7/decision 12). */}
           <FreqSection title="Symptoms" data={stats.symptoms} color={chartColors.chart3}
+            icon={PulseGlyph} iconTone="bg-chart-3/16 text-chart-3"
             info="Attacks that included each symptom, not readings — one count per attack no matter how many times it was logged."
           />
           <FreqSection title="What you tried"  data={stats.reliefs}  color={chartColors.accent}
+            icon={LeafGlyph}
             info="Attacks in which each relief was tried at least once. This counts use, not whether it helped."
           />
         </>
