@@ -548,8 +548,11 @@ export default function App() {
             titleHidden={insightsScrolled}
           />
         )}
+        {/* No top padding on Insights: its date line belongs to the period
+            control above it, so it sits on the top bar's own 12px under the
+            control (the v4 board's `.top` gap is 10) rather than 32px away. */}
         <div
-          className="mx-auto max-w-2xl px-gutter pt-5 sm:px-gutter-wide"
+          className={`mx-auto max-w-2xl px-gutter sm:px-gutter-wide ${tab === 'stats' ? '' : 'pt-5'}`}
           // The reserve clears the nav and the FAB in it. It was 10rem while
           // AttackModePill floated over every tab; that pill is gone (v3,
           // 2026-10-26 — attack mode lives in Today's hero and on the Display
