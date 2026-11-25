@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import type { Attack, DeletedMedName, MedGuides, Medication } from '../types';
 import { formatDateShort } from '../utils/format';
+import { isRetired } from '../utils/retired';
 import {
   attackMaxSeverity,
   areaFrequency, avgTimeToPeak, avgAttackLength,
@@ -242,7 +243,12 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
     // Attacks with any dose logged — how many went untreated, which the
     // per-drug Medication cards (days and doses) never say. Ongoing attacks
     // count, over the same denominator as `wokeWith`.
-    const tookSomething = filtered.filter((a) => a.snapshots.some((s) => s.medication)).length;
+    // Same name guard as `medicationFrequency`: a blank or retired name
+    // (voice-parser junk like "dry") is not a dose.
+    const tookSomething = filtered.filter((a) => a.snapshots.some((s) => {
+      const name = s.medication?.name.trim();
+      return !!name && !isRetired(name);
+    })).length;
 
     return {
       count: filtered.length,
@@ -420,8 +426,8 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
                   Usually time to the peak is the one hidden: it waits for
                   three ended, not-woken-with attacks that got worse after
                   their first reading (`avgTimeToPeak`). Length goes missing
-                  only while every attack is still going, which hides time to
-                  the peak too. */}
+                  while no ended attack has a known end (all still going, or
+                  ended at an unknown time). */}
               {(3 + (stats.avgLength === null ? 0 : 1) + (stats.timeToPeak === null ? 0 : 1)) % 2 === 1 && (
                 <div aria-hidden="true" className="bg-bg-surface" />
               )}
