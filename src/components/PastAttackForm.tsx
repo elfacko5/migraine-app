@@ -12,6 +12,7 @@ import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
 import { SunriseIcon } from './icons';
+import { PastAttackSaved } from './PastAttackSaved';
 
 interface Props {
   symptoms: string[];
@@ -25,6 +26,10 @@ interface Props {
   onAddRelief: (r: string) => void;
   onAddTrigger: (t: string) => void;
   onClose: () => void;
+  /** Starts a fresh form from the summary screen — the parent remounts this
+   *  component, so every field and the step go back to blank. */
+  onAddAnother: () => void;
+  /** Resolves to the attack as stored, which the summary screen reads back. */
   onSave: (
     snapshot: Omit<Snapshot, 'source'>,
     triggers: string[],
@@ -34,7 +39,7 @@ interface Props {
     doseReadings: Array<Omit<Snapshot, 'source'>>,
     endUnknown?: boolean,
     painQuality?: string[],
-  ) => void;
+  ) => Promise<Attack>;
 }
 
 interface FormState {
@@ -103,10 +108,15 @@ function peakArea(areas: Record<string, number>): string | null {
  * `EndAttackForm` (the 2026-11-25 removal of the Today fallback dropped the
  * one other path); a backfilled past attack stays unanswered.
  */
-export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medications = [], attacks = [], defaultNotifConfig, onAddSymptom, onAddRelief, onAddTrigger, onClose, onSave }: Props) {
+export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medications = [], attacks = [], defaultNotifConfig, onAddSymptom, onAddRelief, onAddTrigger, onClose, onAddAnother, onSave }: Props) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(blank);
   const [discardOpen, setDiscardOpen] = useState(false);
+  // The stored attack once saved — swaps the steps for the summary screen.
+  const [saved, setSaved] = useState<Attack | null>(null);
+  // One save per form: a second tap while the first is still in flight would
+  // log the attack twice.
+  const savingRef = useRef(false);
   const startInputRef = useRef<DateTimeFieldHandle>(null);
   const endInputRef = useRef<DateTimeFieldHandle>(null);
 
@@ -147,7 +157,11 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
     else onClose();
   }
 
-  function submit() {
+  /** `thenClose`: from the discard dialog's Save, where the user was already
+   *  leaving — no summary, the sheet just closes. */
+  function submit(thenClose = false) {
+    if (savingRef.current) return;
+    savingRef.current = true;
     const nowMs = Date.now();
     const resolvedStartMs = new Date(localInputToIso(form.startTime)).getTime();
     const endKnown = form.endTime.trim() !== '';
@@ -223,7 +237,7 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
     const resolvedEndMs = endKnown ? boundEndMs! : resolvedStartMs;
     const clampedEndMs = Math.max(resolvedEndMs, resolvedStartMs);
 
-    onSave(
+    void onSave(
       {
         time: new Date(resolvedStartMs).toISOString(),
         areas: form.areas,
@@ -239,10 +253,17 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
       extraSnapshots,
       endUnknown,
       form.painQuality,
-    );
+    ).then((attack) => {
+      if (thenClose) onClose();
+      else setSaved(attack);
+    });
   }
 
   const peakSeverity = Math.max(0, ...Object.values(form.areas));
+
+  if (saved) {
+    return <PastAttackSaved attack={saved} medications={medications} onAddAnother={onAddAnother} onDone={onClose} />;
+  }
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col">
@@ -428,7 +449,7 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
         open={discardOpen}
         discardLabel="Discard this attack"
         onKeepGoing={() => setDiscardOpen(false)}
-        onSave={submit}
+        onSave={() => submit(true)}
         onDiscard={onClose}
       />
     </div>

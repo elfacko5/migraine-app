@@ -1439,6 +1439,36 @@ device end to end.
     `main`. The design system's Sheet is extracted from this one, so it
     inherits the fix.
 
+18. **Summary screens after Past and End** (decided 2026-11-25, Sunny; not
+    built). v4 draws a closing screen for all four flows (`MrgPastSavedDark`,
+    `End24SummaryDark`, `Live23SavedDark`, `UpdSavedDark`). They were never
+    adopted or rejected — `redesign-v4-diff.md` §C listed only each flow's
+    input steps, so the flow commits built to the steps and every form still
+    just calls `onClose()` after saving. **Build Past and End; not Live or
+    Update.** **Past built 2026-11-25** (`PastAttackSaved.tsx`): reads the
+    stored attack `startAttack` returns (App's `saveLog`, which
+    `handleLogSave` wraps with the close); "Add another" remounts the form via
+    `pastFormKey`; the discard dialog's Save still closes without a summary.
+    It sits on `bg-base`, not the sheet's `bg-surface`, or the card vanishes.
+    **End still open.**
+    - **Past**: nothing on Today changes when an older attack is backfilled,
+      so the sheet closing is the only signal; it's a read-back of recalled
+      data while it's fresh; "Add another past attack" makes batch entry
+      (e.g. from a paper diary) one tap instead of a FAB reopen.
+    - **End**: the closing record of the whole attack, with "Open the entry"
+      leading straight into the edit windows.
+    - **Live and Update skipped**: an extra tap at the worst moment (§9.5),
+      and the Today hero already confirms both (it flips to ongoing / shows
+      the new pain). Live's board is two rows repeating what was just typed.
+    - **Where the boards break settled rules — follow the rule, not the
+      board:** End shows "About 11 h" for "gone when you woke up" (unknown end
+      is never a length); Past has a "Stopped you" row, but impact is asked
+      only in the End flow; "7 · left temple" names a zone where location is
+      shown as a side; "Helped a bit" must be the derived word (A1), with
+      unchecked doses said, not dropped.
+    - Built as a terminal state inside each sheet: focus moves in, Done
+      returns focus to the opener, attack-mode and large-text checked.
+
 **P3 — open by choice, needs Sunny's eye**
 
 9. ~~**Redraw the head diagram's disabled areas.**~~ **Done 2026-09-02/03.**

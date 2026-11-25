@@ -71,6 +71,8 @@ export default function App() {
   // number of attacks.
   const [statsPeriod, setStatsPeriod] = useState<Period>('30d');
   const [logSheetOpen, setLogSheetOpen] = useState(false);
+  // Bumped by "Add another past attack" to remount PastAttackForm blank.
+  const [pastFormKey, setPastFormKey] = useState(0);
   // Opened from the + menu's "Add a past attack": the same wizard, starting
   // with an end time to pick rather than "Still going".
   const [logPast, setLogPast] = useState(false);
@@ -414,7 +416,10 @@ export default function App() {
     voiceHandledRef.current = false;
   }
 
-  async function handleLogSave(
+  // Saves and returns the stored attack without closing the sheet —
+  // PastAttackForm stays open on its summary screen. `handleLogSave` below is
+  // this plus the close, for the flows that end on Today.
+  async function saveLog(
     snapshot: Omit<Snapshot, 'source'>, triggersSel: string[], notifConfig: typeof defaultNotifConfig, end: string | null, wokeWithMigraine: boolean, doseReadings: Array<Omit<Snapshot, 'source'>> = [],
     // Past-attack-only metadata, passed straight into `startAttack` rather
     // than set with a follow-up `updateAttackDetails` call — that call would
@@ -429,7 +434,7 @@ export default function App() {
     // past-logged attack stays unanswered.
     endUnknown?: boolean,
     painQuality?: string[],
-  ) {
+  ): Promise<Attack> {
     const wantsReminders = notifConfig.enabled && !end;
     // Ask before scheduling, not after. startAttack schedules as a side effect,
     // and a reminder scheduled while permission is still undecided is accepted
@@ -443,7 +448,7 @@ export default function App() {
     // New doses carry the library entry's id, so a dose can later be told from
     // another entry of the same name. Only written when exactly one entry owns
     // the name (and dose text); typed-in names stay as they were.
-    startAttack(
+    const attack = startAttack(
       stampSnapshot(snapshot, medications), triggersSel, notifConfig, end, wokeWithMigraine,
       doseReadings.map((r) => stampSnapshot(r, medications)),
       endUnknown, painQuality,
@@ -452,6 +457,11 @@ export default function App() {
     // an attack that's still going — a retrospective log is someone looking
     // back, not someone in the middle of one.
     if (attackModeAuto && !end && !attackMode) setAttackMode(true);
+    return attack;
+  }
+
+  async function handleLogSave(...args: Parameters<typeof saveLog>) {
+    await saveLog(...args);
     closeLogSheet();
   }
 
@@ -771,6 +781,7 @@ export default function App() {
           />
         ) : logPast ? (
           <PastAttackForm
+            key={pastFormKey}
             triggers={sortedTriggers}
             symptoms={sortedSymptoms}
             reliefs={sortedReliefs}
@@ -782,7 +793,8 @@ export default function App() {
             onAddRelief={addRelief}
             onAddTrigger={addTrigger}
             onClose={closeLogSheet}
-            onSave={handleLogSave}
+            onAddAnother={() => setPastFormKey((k) => k + 1)}
+            onSave={saveLog}
           />
         ) : (
           <LiveAttackForm
