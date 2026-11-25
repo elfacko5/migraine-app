@@ -69,7 +69,10 @@ function Row({ label, value, extra, onOpen, note }: { label: string; value: stri
       <span className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-3">
         <span className="text-base text-text-primary">{label}</span>
         <span className="text-right">
-          <span className="block text-base font-medium text-text-primary">{value}</span>
+          {/* Link colour (`docs/redesign-v4/reference/Patterns.html`'s `.vv`,
+              "Containers and rows") — a bare value read as plain text; this
+              says the row opens a picker before the chevron ever registers. */}
+          <span className="block text-base font-medium text-accent-light">{value}</span>
           {extra && <span className="block text-xs text-text-secondary">{extra}</span>}
         </span>
         {note && <span className="basis-full text-xs text-severity-mid">{note}</span>}
