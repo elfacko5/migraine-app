@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { SideLabel } from './SideLabel';
 import { useUiTheme } from '../hooks/useUiTheme';
-import { chipClass } from '../utils/chipStyles';
+import { CHIP_ON } from '../utils/chipStyles';
+
+// See the comment on the severity grid below for why this isn't `CHIP_OFF`.
+const SEV_CELL_OFF =
+  'bg-bg-elevated text-text-primary ring-1 ring-inset ring-bg-elevated';
 import {
   VIEWS, type DiagramView,
   headFill, lineColor, dividerColor, detailColor, disabledFill, disabledHatch,
@@ -166,7 +170,14 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
               every other piece of this card, which now matches the board.
               Previous value marked with a dashed outline (outline, not a
               ring — it's already carrying the selection ring) rather than
-              redrawn as selected. */}
+              redrawn as selected.
+              Unselected cells are one surface step above the card
+              (`bg-elevated`), not `CHIP_OFF`'s `bg-raised`: the board draws
+              each cell as a visible tile on its card (`.pn` #302D29 on a
+              #262421 `.grp`), and this card already *is* `bg-raised` because
+              the sheet behind it is `bg-surface` — so `CHIP_OFF` made every
+              unselected cell vanish into the card. Label is `text-primary`,
+              as the board's `.pn` colour. */}
           <div className="grid grid-cols-5 gap-1.5" role="group"
             aria-label={`${active} severity, 1 to 10`}>
             {SEVERITIES.map((s) => {
@@ -176,7 +187,7 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
                 <button key={s} type="button" aria-pressed={isOn}
                   aria-label={wasThis ? `${s}, last time` : `${s}`}
                   onClick={() => setSev(s)}
-                  className={`min-h-[2.875rem] rounded-control text-base font-medium tabular-nums transition-colors ${chipClass(isOn)} ${
+                  className={`min-h-[2.875rem] rounded-control text-base font-medium tabular-nums transition-colors ${isOn ? CHIP_ON : SEV_CELL_OFF} ${
                     wasThis && !isOn ? 'outline outline-1 outline-dashed outline-border-control -outline-offset-1' : ''
                   }`}>
                   {s}
