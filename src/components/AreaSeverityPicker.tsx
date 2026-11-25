@@ -69,10 +69,18 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
           `bg-bg-surface` track, 44px segments, accent-bordered tinted
           selected state — matched by hand rather than shared because this
           one carries a count badge the generic component doesn't need (v4
-          sweep, 2026-11-24, see `SegmentedControl`'s own note). */}
-      <div className="flex justify-center">
-        <div className="inline-flex items-center gap-1 rounded-control-lg bg-bg-surface p-1">
-          {VIEWS.map((v) => {
+          sweep, 2026-11-24, see `SegmentedControl`'s own note).
+          **Full width, not hugging the labels** (v4 fix, 2026-11-25): the
+          `23-live`/`09-insights` boards both draw `.segs` as a block with no
+          `max-width`, so it stretches to the row and its two `.seg` children
+          split it evenly — this is `SegmentedControl`'s own `fill` mode, just
+          not wired up here since the hand-copy predates that prop. Font size
+          was also `text-xs` (12px), under both the board's own 16px `.seg`
+          and CLAUDE.md's body floor — not a deliberate exception like
+          `SegmentedControl`'s four-option row, which has that comment and
+          this didn't. */}
+      <div className="flex w-full items-center gap-1 rounded-control-lg bg-bg-surface p-1">
+        {VIEWS.map((v) => {
             const isActive = v.id === activeViewId;
             const n = selectedCount(v);
             return (
@@ -86,7 +94,7 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
                 // this is a switch between two views of one step. Text stays
                 // primary, not accent-light (pattern library, 2026-11-23 —
                 // see chipStyles.ts).
-                className={`tap-44-y flex min-h-target items-center gap-1.5 rounded-segment border px-4 text-xs font-medium transition-colors ${
+                className={`tap-44-y flex flex-1 min-h-target items-center justify-center gap-1.5 rounded-segment border px-4 text-base font-medium transition-colors ${
                   isActive ? 'border-accent bg-selected-fill text-text-primary font-semibold' : 'border-transparent text-text-secondary hover:text-text-primary'
                 }`}
               >
@@ -107,7 +115,6 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
               </button>
             );
           })}
-        </div>
       </div>
 
       <div className="flex justify-center">

@@ -86,7 +86,16 @@
      a sheet's corners were tighter than the cards sitting inside it. One
      radius for every large container now. */
   --radius-sheet:   1.25rem;   /* dialogs and the + menu */
-  --radius-chip:    0.5rem;    /* presets and pick chips */
+  /* 8px -> full stadium (v4 fix, 2026-11-25): the phase-3 refactor carried
+     over the v3 value unchanged ("a no-visual-change refactor", above) and
+     the later v4 sweeps that moved --radius-segment and --radius-control-lg
+     never touched this one. Patterns.html's `.rdc`/`.chip` is
+     `border-radius:24px` at `min-height:48px` — radius = half the height, a
+     true pill — on every preset/pick chip board, not a per-screen choice.
+     A keyword rather than a px value so it stays a pill regardless of a
+     call site's own height (ChipSelector's literal `rounded-full` already
+     did this; chips using the role now match it instead of drifting). */
+  --radius-chip:    9999px;    /* presets and pick chips */
   --radius-field:   0.5rem;    /* text inputs and DateTimeField */
   /* 6px -> 10px (v4 token decision, "clean batch", 2026-11-24): the canvas's
      segmented controls and severity cells measured 10-14px, nowhere near the
