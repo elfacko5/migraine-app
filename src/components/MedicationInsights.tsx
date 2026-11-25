@@ -75,7 +75,8 @@ export function MedicationInsights({
   // "0 days · 0 doses" (Sunny, 2026-11-25: All shows the last 12 months of
   // medication, said in the info text). Ordered by days in those months, the
   // figure the line leads with.
-  const days = medicationDaysInWindow(attacks, since)
+  const inPeriod = medicationDaysInWindow(attacks, since);
+  const withMonths = inPeriod
     .map((med) => {
       const monthData = byMonthName.get(med.name);
       return {
@@ -84,10 +85,15 @@ export function MedicationInsights({
         shownDays: (monthData?.months ?? []).reduce((sum, m) => sum + m.days, 0),
         shownDoses: monthData?.doses ?? 0,
       };
-    })
+    });
+  const days = withMonths
     .filter((med) => med.shownDoses > 0)
     .sort((a, b) => b.shownDays - a.shownDays || a.name.localeCompare(b.name));
   if (days.length === 0) return null;
+  // Whether the filter above actually dropped a drug — only then does the
+  // info text say medicines are left out. A diary shorter than the months
+  // drawn has nothing before them, and saying otherwise implies a gap.
+  const someHidden = days.length < withMonths.length;
 
   // The line under the bars answers the bars — measured from the 1st of the
   // first month drawn, not from the period's rolling start (2026-11-25). The
@@ -125,8 +131,9 @@ export function MedicationInsights({
           around {MOH_DAYS_TRIPTAN} days a month for triptans and combinations, {MOH_DAYS_SIMPLE} for simple
           painkillers, sustained over three months — worth raising with your doctor rather than acting on
           alone. The line under each drug's bars counts across the same months the bars show.
-          {since === null && <> On All, this goes back to {shownFromLabel} — medicines taken only before
-          then aren't shown.</>} Doses taken without logging an attack aren't counted.
+          {since === null && <> On All, this goes back to {shownFromLabel}
+            {someHidden && <> — medicines taken only before then aren't shown</>}.</>} Doses taken without
+          logging an attack aren't counted.
         </>
       }
     >
