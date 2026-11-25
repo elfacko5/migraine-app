@@ -76,7 +76,7 @@ Structures take a role from `@theme` in `src/index.css`, **never a raw step**.
 | Size | `size-target` / `min-h-target` (44px) · `size-compact` (36px) | `h-11 w-11`, `h-9 w-9` |
 | Padding | `p-card` · `px-control-x` + `py-control-y` · `px-control-compact-x` + `py-control-compact-y` · `px-gutter` + `sm:px-gutter-wide` | `p-4`, `px-4 py-3`, etc. |
 
-`group`, `inset`, `control-sm` are temporary drift tokens — never use in new code. (`field-lg` and `badge-sm` collapsed away in the v4 sweep, 2026-11-24 — nothing left using them.)
+`group`, `inset`, `control-sm` are temporary drift tokens — never use in new code.
 
 ## Buttons
 
@@ -102,7 +102,7 @@ Dark is default. `color-scheme: dark` globally. **Never use `dark:` prefixes.** 
 
 **Palette rules (see [`docs/palette.md`](docs/palette.md) for measured values):**
 - No saturated blue. Accent is low-saturation sage. No `#fff`, `#000`, or max-contrast pairing.
-- Four surfaces: `bg-base` (page) · `bg-surface` (card) · `bg-raised` (card on card) · `bg-elevated` (hover state one step up from `bg-raised` — the flow-header circle buttons, 2026-11-24).
+- Four surfaces: `bg-base` (page) · `bg-surface` (card) · `bg-raised` (card on card) · `bg-elevated` (hover state one step up from `bg-raised` — the flow-header circle buttons).
 - Key tokens: `--color-bg-base` `#1b1a18` · `--color-text-primary` `#cdc7bb` (deliberately not dossier's `#e4dfd6`) · `--color-accent` `#7fa187` · severity `#8fb096` / `#c39257` / `#c68880`.
 - **Check new severity colours against `bg-raised`**, not just the page.
 - Three token values deliberately differ from the dossier's — don't "restore" them.
@@ -112,7 +112,7 @@ Dark is default. `color-scheme: dark` globally. **Never use `dark:` prefixes.** 
 
 **SVG/Recharts mirror tokens by hand** — theme-aware functions via `useUiTheme()`. Change a token → change these too: `headDiagram.ts`, `SeverityChart.tsx`, `SeverityBreakdown.tsx`, `HeadHeatmap.tsx`, `StatsView.tsx`, `AreaSeverityPicker.tsx`. Plus `Color.liddSeverity` in the widget extension.
 
-**Type:** Lexend variable (400–700), self-hosted. Emphasis is `font-medium` (500); `font-bold` for headline numbers only. No light/thin weight. Body floor 16px, caption floor 14px, no exceptions (the one that existed, `StatCard`'s 12px label, was removed with the component, 2026-11-24). Text scale 87.5%–150%. `BottomNav` and `AttackModePill` cap their font sizes. Atkinson Hyperlegible Next is opt-in (`data-font="atkinson"`).
+**Type:** Lexend variable (400–700), self-hosted. Emphasis is `font-medium` (500); `font-bold` for headline numbers only. No light/thin weight. Body floor 16px, caption floor 14px, no exceptions. Text scale 87.5%–150%. `BottomNav` and `AttackModePill` cap their font sizes. Atkinson Hyperlegible Next is opt-in (`data-font="atkinson"`).
 
 ### Attack mode
 
@@ -165,7 +165,7 @@ interface Attack {
 | `hd_text_scale` / `hd_theme` / `hd_attack_mode` / `hd_brightness` / `hd_font` | settings | UI preferences |
 | `hd_attack_mode_auto` / `hd_system_text` | `boolean` | Auto attack mode / follow iPhone text size |
 
-All reads/writes through hooks (`useAttacks`, `useUserPrefs`, `useMedications`, `useSettings`). **`RETIRED_ENTRIES`** (`src/utils/retired.ts`) is the only way to remove a junk entry — applied on every list path including post-union sync, and in stats aggregates. Stored snapshots are never rewritten. Export/import via `src/utils/backup.ts`.
+All reads/writes through hooks (`useAttacks`, `useUserPrefs`, `useMedications`, `useSettings`). **`RETIRED_ENTRIES`** (`src/utils/retired.ts`) is the only way to remove a junk entry — applied on every list path including post-union sync, and in stats aggregates. Export/import via `src/utils/backup.ts`.
 
 ## Cross-device sync (Supabase, optional)
 
@@ -234,7 +234,7 @@ Period control in top bar (`SegmentedControl`, labels `7d / 30d / 3m / All`). Ev
 - Blocks 32px apart. Section card padding `p-card`. Stat tile labels 12px (sole exception to 14px floor).
 - Order: period control → stat tiles → monthly sections → rest.
 - `MigraineDaysChart`: counts days not attacks (`attackDayKeys`). 15-day ICHD line. Period narrows months shown, never the counting. Under 7d draws week strip (dots, not cells). Month in progress named in caption.
-- `MedicationInsights` (v4 rebuild, 2026-11-24): per-drug card, monthly bars (`medicationDaysByMonth`) against that drug's own guideline — `guideForName` is the only threshold source, checked per month directly (every bar is already a true calendar month, no window-length gate needed). "Doses" / "checked at 2h" / "helped" stay window-scoped (`medicationDaysInWindow` / `medicationResponse`, filtered on snapshot time), independent of how many months the bars show — same split `MigraineDaysChart` and the rest of Insights already use. "Helped" is a bare count beside "checked at 2h", not the old three-clause sentence (`docs/decisions.md`'s "Open — the medication response line", resolved 2026-11-24). Unmeasured doses shown not hidden. Wording never concludes — supportive, not diagnostic.
+- `MedicationInsights`: per-drug card, monthly bars (`medicationDaysByMonth`) against that drug's own guideline — `guideForName` is the only threshold source, checked per true calendar month. "Doses" / "checked at 2h" / "helped" stay window-scoped (`medicationDaysInWindow` / `medicationResponse`), independent of how many months the bars show — same split `MigraineDaysChart` and the rest of Insights already use. "Helped" is a bare count beside "checked at 2h". Unmeasured doses shown not hidden. Wording never concludes — supportive, not diagnostic.
 - Logs filter: `LogsFilterPanel.tsx` + `logFilters.ts`. Pain-area filter is now a Side filter. Logs open on all time.
 
 ## Settings tab (internally `profile`)
@@ -308,7 +308,7 @@ Attack-free: `AttackFreeCard` with greeting + "X days / since your last attack".
 
 - Gradients from `bg-bg-base` to `bg-bg-base/0` (never `transparent`). Horizontal stop past image's left edge (40% for 36% image start).
 - Art box 40px + inset below top. Text centred against artwork, `max-w-[64%]`.
-- Ongoing: Add update (`btn-primary btn-compact`) + End attack (`btn-secondary btn-compact`) — confirmed against the v4 board (2026-11-24), which reverses the earlier "neither promoted" call.
+- Ongoing: Add update (`btn-primary btn-compact`) + End attack (`btn-secondary btn-compact`).
 - Attack mode button top-left z-45. Hero not `isolate`.
 - Headline 44px semibold. Ongoing = elapsed time + trajectory + severity text (never colour-coded on illustration).
 
@@ -334,7 +334,7 @@ One row per area: name, sparkline, peak, now. Rows sorted by peak descending. Mi
 Drill-down (enter from right, back chevron). Tiles for duration/peak/side, span, pain-over-time chart, drug cards with timing + outcome, where-it-hurt areas, symptom tiles, last 3 updates, impact/triggers/woke-with.
 
 - Footer: ongoing = End + Update; ended = Edit + Update. "Add update" offered on past attacks too.
-- **Edit is metadata-only** (`updateAttackDetails`): `wokeWithMigraine`, `end`, `triggers`. **`impact` excluded** — asked once, live, as `EndAttackForm`'s own step; `endAttack` is the only writer, and an attack ended outside that flow (slept-through, skipped, or backfilled via `PastAttackForm`) stays permanently unanswered. No Today fallback (`ImpactPrompt` removed 2026-11-25).
+- **Edit is metadata-only** (`updateAttackDetails`): `wokeWithMigraine`, `end`, `triggers`. **`impact` excluded** — asked once, live, as `EndAttackForm`'s own step; `endAttack` is the only writer, and an attack ended outside that flow (slept-through, skipped, or backfilled via `PastAttackForm`) stays permanently unanswered. No Today fallback (`ImpactPrompt` removed).
 - `ConfirmDialog` for delete. `EndAttackDialog` reused (Just now / Earlier presets, minute-precision clamping).
 
 ## Pain areas
@@ -373,7 +373,3 @@ Drill-down (enter from right, back chevron). Tiles for duration/peak/side, span,
 - **`SnapshotRow`**: card on continuous rail. Timestamp knocks gap in line (bg matches parent surface). Pain areas first, sections named and separated by hairlines. `no_change` renders as "No change" (severities carried forward but not repeated; symptoms/reliefs not carried forward).
 - **Icons** (`drawnIcons.tsx`): `svg()` helper 24×24, `currentColor` stroke 1.5. Med forms at 1.75. **No emoji ever.** Lucide for UI affordances; hand-drawn for domain marks. Triggers have icons too. `MedIcon` shared by all readers. `MedIcon` call sites at `h-4`.
 - **`InlineNote`/`Toast`/`ValueSheet`**: medication flows' shared parts. Toast z-60, 5s minimum.
-
-## Decision log → `docs/decisions.md`
-
-The canonical record of why each rule exists and what was tried. Read before undoing anything.
