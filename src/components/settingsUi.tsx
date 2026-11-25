@@ -68,7 +68,7 @@ export interface SettingsRowProps {
   /** Makes the row pressable: a button with a chevron. Without it the row is static. */
   onClick?: () => void;
   disabled?: boolean;
-  /** The row's content is its own control, such as a Switch. Only the padding, height and divider apply. */
+  /** The row's content is its own control, such as a Switch. Only the side padding, height and divider apply. */
   bare?: boolean;
 }
 
@@ -85,7 +85,9 @@ export function SettingsRow({ children, value, trailing, leading, onClick, disab
     'first:[&>*]:rounded-t-card last:[&>*]:rounded-b-card',
   ].join(' ');
   if (bare) {
-    return <li className={`${item} flex min-h-row items-stretch`}>{children}</li>;
+    // px-card: the row's own inset, so a Switch's label lines up with every
+    // pressable row's (a bare row had none, and its label sat on the card edge).
+    return <li className={`${item} flex min-h-row items-stretch px-card`}>{children}</li>;
   }
   const content = (
     <>

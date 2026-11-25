@@ -35,16 +35,19 @@ interface Props<T extends string> {
   /** Names the choice for a screen reader — the segments are only the values. */
   label: string;
   fill?: boolean;
+  /** The track takes the page's `bg-base` — for a control sitting on a
+   *  `bg-surface` card, where a surface track would vanish (Display's Theme row). */
+  recessed?: boolean;
 }
 
 export function SegmentedControl<T extends string>({
-  options, value, onChange, label, fill = false,
+  options, value, onChange, label, fill = false, recessed = false,
 }: Props<T>) {
   return (
     <div
       role="group"
       aria-label={label}
-      className={`${fill ? 'flex w-full' : 'inline-flex'} items-center gap-1 rounded-control-lg bg-bg-surface p-1`}
+      className={`${fill ? 'flex w-full' : 'inline-flex'} items-center gap-1 rounded-control-lg ${recessed ? 'bg-bg-base' : 'bg-bg-surface'} p-1`}
     >
       {options.map((o) => {
         const isActive = o.value === value;

@@ -7,8 +7,9 @@ import { useNowTick } from '../hooks/useNowTick';
 import { exportData, readBackupFile, applyBackup, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
+import { SegmentedControl } from './SegmentedControl';
 import { Button, Switch, TextField } from 'code-ds';
-import { OptionTile, SectionLabel, SettingsList, SettingsRow } from './settingsUi';
+import { SectionLabel, SettingsList, SettingsRow } from './settingsUi';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
@@ -203,15 +204,6 @@ function FeedbackPage({ email, onBack }: { email: string | null; onBack: () => v
   );
 }
 
-// Each tile previews the theme it selects, so it can't take its colours from
-// the tokens — those resolve to whichever theme is showing *now*. These are
-// the two palettes' own page and text values (docs/palette.md) and have to
-// change with them.
-const THEME_SWATCH: Record<Theme, React.CSSProperties> = {
-  light: { background: '#f5f2ec', color: '#3a3733' },
-  dark: { background: '#1b1a18', color: '#cdc7bb' },
-};
-
 interface DisplayProps {
   textScale: TextScale;
   onTextScale: (s: TextScale) => void;
@@ -250,47 +242,58 @@ export function DisplayPanel({
 
   return (
     <ProfileSubPage title="Display & attack mode" onClose={onClose}>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Attack mode — also one tap from the Today hero; it lives here too so
             it's discoverable when nothing hurts yet. "What it changes" is its
-            own screen now, so the long explanation leaves the list. */}
-        <section className="space-y-3">
+            own screen, so the long explanation stays off the list. */}
+        <section className="space-y-2">
           <SectionLabel>Attack mode</SectionLabel>
           <SettingsList>
             <SettingsRow bare>
-              <Switch checked={attackMode} onCheckedChange={onAttackMode}>Attack mode</Switch>
+              <Switch checked={attackMode} onCheckedChange={onAttackMode}>
+                <span className="font-semibold">Attack mode</span>
+              </Switch>
             </SettingsRow>
+            {/* The board's caption is "Turns off again once the attack ends";
+                the code only ever turns it on (A10, June 2026-11-22, that
+                half is backlogged), so the caption says what it really does. */}
             <SettingsRow bare>
               <Switch checked={attackModeAuto} onCheckedChange={onAttackModeAuto}>
                 When I log an attack
                 <span className="block text-xs text-content-muted">Turns it on as soon as you log an attack that's still going.</span>
               </Switch>
             </SettingsRow>
-            <SettingsRow
-              onClick={() => setView('changes')}
-              value={attackMode ? "Attack mode is on. You'll see these when you turn it off." : 'Everyday'}
-            >
-              What it changes
-            </SettingsRow>
+            <SettingsRow onClick={() => setView('changes')}>What it changes</SettingsRow>
           </SettingsList>
         </section>
 
-        {/* Manual theme choice, no prefers-color-scheme (2026-09-25). Each tile
-            previews the theme it selects; attack mode overrides both while on. */}
-        <section className="space-y-3">
-          <SectionLabel>Theme</SectionLabel>
-          <div role="radiogroup" aria-label="Theme" className="grid grid-cols-2 gap-3">
-            <OptionTile selected={theme === 'light'} onSelect={() => onTheme('light')} style={THEME_SWATCH.light}>Light</OptionTile>
-            <OptionTile selected={theme === 'dark'} onSelect={() => onTheme('dark')} style={THEME_SWATCH.dark}>Dark</OptionTile>
-          </div>
+        {/* The everyday look: theme, font and text size in one group, each
+            stating its value on the row (v4 board 18a). While attack mode is
+            on it overrides all three, and the caption says so rather than
+            leaving the choices looking broken. Manual theme only, no
+            prefers-color-scheme (2026-09-25). */}
+        <section className="space-y-2">
+          <SectionLabel>Everyday</SectionLabel>
+          {attackMode && (
+            <p className="mx-1 text-sm text-text-secondary">Attack mode is on. You'll see these when you turn it off.</p>
+          )}
+          <SettingsList>
+            <SettingsRow bare>
+              <div className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2 py-1 text-sm">
+                <span className="text-text-primary">Theme</span>
+                <SegmentedControl
+                  label="Theme"
+                  recessed
+                  value={theme}
+                  onChange={onTheme}
+                  options={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]}
+                />
+              </div>
+            </SettingsRow>
+            <SettingsRow onClick={() => setView('font')} trailing={font === 'lexend' ? 'Lexend' : 'Atkinson'}>Font</SettingsRow>
+            <SettingsRow onClick={() => setView('textsize')} trailing={systemText ? 'iPhone' : SCALE_NAME[textScale]}>Text size</SettingsRow>
+          </SettingsList>
         </section>
-
-        {/* Font and Text size each open their own screen, where the full
-            previews have room — the list just states the current value. */}
-        <SettingsList>
-          <SettingsRow onClick={() => setView('font')} value={font === 'lexend' ? 'Lexend' : 'Atkinson'}>Font</SettingsRow>
-          <SettingsRow onClick={() => setView('textsize')} value={systemText ? 'iPhone' : SCALE_NAME[textScale]}>Text size</SettingsRow>
-        </SettingsList>
       </div>
     </ProfileSubPage>
   );
