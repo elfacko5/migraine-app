@@ -387,7 +387,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
             // No section card: the grid is the card (`.facts` on the board),
             // its cells divided by 1px gaps rather than padded inside a fill.
             bare
-            info="Across the attacks in this period. Peak is each attack's own worst reading, averaged. Length and time to the peak leave out any attack still going, since a peak can still rise. Woke up with it counts the attacks that were already there when you woke."
+            info="Across the attacks in this period. Peak is each attack's own worst reading, averaged. Length leaves out any attack still going. Time to the peak counts only the attacks that got worse after the first reading — not one still going, or one already there when you woke — and shows once three have. Woke up with it counts the attacks that were already there when you woke."
           >
             <div className="grid grid-cols-[repeat(auto-fit,minmax(9.375rem,1fr))] gap-px overflow-hidden rounded-card bg-bg-raised">
               <TypicalStat value={stats.avgSeverity} label="average peak pain" />
@@ -395,7 +395,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
                 <TypicalStat value={formatTypicalDuration(stats.avgLength)} label="long" />
               )}
               {stats.timeToPeak !== null && (
-                <TypicalStat value={formatTypicalDuration(stats.timeToPeak * 60)} label="to the peak" />
+                <TypicalStat value={formatTypicalDuration(stats.timeToPeak)} label="to the peak" />
               )}
               {/* Was "attack days" (from the v4 board) until 2026-11-25 —
                   replaced because it counts how often, not what an attack is

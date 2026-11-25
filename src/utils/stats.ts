@@ -253,19 +253,37 @@ export function sortByFrequency(options: string[], freq: Freq[]): string[] {
   return [...options].sort((a, b) => (count[b] ?? 0) - (count[a] ?? 0));
 }
 
-// Average hours from first snapshot to max-severity snapshot.
+/** Fewest attacks that built to a peak before `avgTimeToPeak` gives a figure. */
+export const TIME_TO_PEAK_MIN_ATTACKS = 3;
+
+/**
+ * Average minutes from the first reading to the first reading at the peak,
+ * **over the attacks that built** — or `null` when fewer than
+ * `TIME_TO_PEAK_MIN_ATTACKS` did.
+ *
+ * Left out, each because it would put a number on something not recorded:
+ * - **Attacks still going** — the peak can still rise.
+ * - **Attacks already there on waking** — the first reading is when it was
+ *   logged, not when it began.
+ * - **Attacks whose first reading was already the worst** (including a flat
+ *   one, 5 then 5). Counted as 0 they swamped the average — "0 min to the
+ *   peak" (2026-11-25) — and what they measure is that the attack was logged
+ *   once it was bad, not how fast it got there.
+ *
+ * So the figure reads "when it built, it took this long", which the section's
+ * info text says. Minutes, unrounded: the caller formats.
+ */
 export function avgTimeToPeak(attacks: Attack[]): number | null {
-  const times = attacks
-    .filter((a) => a.snapshots.length >= 2)
-    .map((a) => {
-      const peak = attackMaxSeverity(a);
-      const peakSnap = a.snapshots.find((s) => maxSeverity(s) === peak);
-      if (!peakSnap) return null;
-      return msBetween(a.snapshots[0].time, peakSnap.time) / 3600000;
-    })
-    .filter((v): v is number => v !== null);
-  if (times.length === 0) return null;
-  return parseFloat((times.reduce((s, t) => s + t, 0) / times.length).toFixed(1));
+  const times: number[] = [];
+  for (const a of attacks) {
+    if (a.end === null || a.wokeWithMigraine || a.snapshots.length < 2) continue;
+    const peak = attackMaxSeverity(a);
+    if (maxSeverity(a.snapshots[0]) >= peak) continue;
+    const peakSnap = a.snapshots.find((s) => maxSeverity(s) === peak)!;
+    times.push(msBetween(a.snapshots[0].time, peakSnap.time) / 60000);
+  }
+  if (times.length < TIME_TO_PEAK_MIN_ATTACKS) return null;
+  return times.reduce((s, t) => s + t, 0) / times.length;
 }
 
 function msBetween(a: string, b: string): number {
