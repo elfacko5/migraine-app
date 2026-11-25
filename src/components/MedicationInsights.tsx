@@ -138,7 +138,7 @@ export function MedicationInsights({
       }
     >
       <div className="space-y-3">
-        {days.map(({ name, monthData, shownDays, shownDoses }) => {
+        {days.map(({ name, monthData, shownDoses }) => {
           const r = byResponseName.get(name);
           const cls = typeOfName(name, medications);
           const classLabel = cls ? TYPE_OPTIONS.find((t) => t.value === cls)?.label : null;
@@ -206,10 +206,11 @@ export function MedicationInsights({
                 })}
               </div>
 
-              {/* Days, doses, "checked at 2h" and "helped" over the months
-                  drawn above — days is the bars' own sum, so the line reads
-                  as their total because it is. Doses beside it shows two in
-                  one day, which a day count hides.
+              {/* Doses, "checked at 2h" and "helped" over the months drawn
+                  above. **No days figure (Sunny, 2026-11-25):** it was the
+                  bars' own sum, so it repeated what the bars already say and
+                  cluttered the line. Doses stays — two in one day is
+                  something the bars (days) can't show.
 
                   **"Helped" restored (June's call, 2026-11-24)** — the v4
                   board only shows "checked at 2h", but dropping whether a
@@ -220,7 +221,6 @@ export function MedicationInsights({
                   "didn't log it" — both carried over unchanged. */}
               <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-bg-border pt-3 text-xs text-text-primary">
                 {/* Muted glyphs before doses and "checked at 2h", as the board's `.mstats`. */}
-                <span>{shownDays} {shownDays === 1 ? 'day' : 'days'}</span>
                 <span className="inline-flex items-center gap-1.5">
                   <MedIcon name={name} className="h-4 w-4 text-text-secondary" />
                   {shownDoses} {shownDoses === 1 ? 'dose' : 'doses'}
