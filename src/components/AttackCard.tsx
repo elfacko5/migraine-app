@@ -78,7 +78,10 @@ export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Pr
       className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] @max-[20rem]:grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-1.5 rounded-card min-h-[4.75rem] py-3.5 pl-4 pr-3.5 text-left transition-colors ${
         // The v4 board's row: 76px, 14/14/14/16 padding, 14px gaps. The
         // ongoing row is outlined as well as lifted (its `.live`), so it
-        // reads as a different kind of row, not just a lighter one.
+        // reads as a different kind of row, not just a lighter one. The
+        // outline is decoration, not a control edge — "Ongoing ·" and the dot
+        // say what the row is — so it takes the board's faint border-subtle
+        // (about 1.4:1), not the 3:1 border-control (Sunny, 2026-11-25).
         isOngoing ? 'bg-bg-raised ring-1 ring-inset ring-border-subtle hover:bg-bg-elevated' : 'bg-bg-surface hover:bg-bg-raised'
       }`}
     >

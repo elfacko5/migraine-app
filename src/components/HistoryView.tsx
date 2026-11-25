@@ -225,8 +225,10 @@ export function HistoryView({
             const prev = before[before.length - 1];
             const header = byDate && !ongoing && (!prev || monthLabel(prev.snapshots[0].time) !== month);
             return (
-              // The ongoing row stands 6px further off the banner above it, as drawn.
-              <div key={a.id} className={`space-y-2.5 ${ongoing ? 'pt-1.5' : ''}`}>
+              // The ongoing row stands 6px further off what's above it, as drawn —
+              // only at the top: under other sorts it can land mid-list, where
+              // the extra gap would read as a break.
+              <div key={a.id} className={`space-y-2.5 ${ongoing && i === 0 ? 'pt-1.5' : ''}`}>
                 {/* The board's month header: 15px semibold, muted, 10px clear of what's above. */}
                 {header && <h2 className="pt-2.5 text-[0.9375rem] font-semibold text-text-secondary">{month}</h2>}
                 <AttackCard
