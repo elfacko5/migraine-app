@@ -2469,7 +2469,7 @@ Sunny: the section colours had no logic — pain areas purple, attack days green
 
 ## Logs row rebuilt as "D2" (2026-11-25)
 
-Sunny's calls, from a run of throwaway mockups (deleted once this shipped), compared against the v4 board and the v3.10 row):
+Sunny's calls, from a run of throwaway mockups (deleted once this shipped), compared against the v4 board and the v3.10 row:
 
 - **Whether a medicine helped left the row.** It's a question about a pattern (Insights answers it per drug) or about one dose (Detail answers it). A ✓/–/? per drug answered neither and was the busiest thing on the row. The row now says only *whether* something was taken: a tablet mark and the dose count (doses, not drugs — dose count is what overuse is about).
 - **No start/end times and no "peak" label.** The length is what matters; the times were noise beside it, and a label repeated on every row says nothing. The ongoing row keeps "now" because there the number is current pain, not the worst.
