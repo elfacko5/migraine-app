@@ -63,22 +63,38 @@ interface Props {
 export function MedicationInsights({
   attacks, medications = [], guides = {}, deleted = [], since, months, onOpenGuides,
 }: Props) {
-  const days = medicationDaysInWindow(attacks, since);
-  if (days.length === 0) return null;
-
   // Clock read inside the util, not here: `medicationDaysByMonth` defaults
   // `now` itself, the same rule `medGuardrails.ts` and every other
   // clock-reading util in this app follows.
   const byMonth = medicationDaysByMonth(attacks, months);
+  const byMonthName = new Map(byMonth.map((m) => [m.name, m]));
+  // A drug gets a card when it was taken in the period *and* in the months
+  // drawn. For 7d/30d/3m the months drawn always cover the period, so the
+  // second test changes nothing; on All the bars stop at 12 months, and a
+  // drug last taken before that would be a card of empty bars over
+  // "0 days · 0 doses" (Sunny, 2026-11-25: All shows the last 12 months of
+  // medication, said in the info text). Ordered by days in those months, the
+  // figure the line leads with.
+  const days = medicationDaysInWindow(attacks, since)
+    .map((med) => {
+      const monthData = byMonthName.get(med.name);
+      return {
+        name: med.name,
+        monthData,
+        shownDays: (monthData?.months ?? []).reduce((sum, m) => sum + m.days, 0),
+        shownDoses: monthData?.doses ?? 0,
+      };
+    })
+    .filter((med) => med.shownDoses > 0)
+    .sort((a, b) => b.shownDays - a.shownDays || a.name.localeCompare(b.name));
+  if (days.length === 0) return null;
+
   // The line under the bars answers the bars — measured from the 1st of the
   // first month drawn, not from the period's rolling start (2026-11-25). The
   // two used to differ (3m: bars from 1 Aug, line from ~27 Aug), so a line
-  // sitting under the bars read as their total and didn't add up. The period
-  // still decides which drugs get a card (`days`, above) and how many months
-  // are drawn; it no longer decides what the line counts.
+  // sitting under the bars read as their total and didn't add up.
   const response = medicationResponse(attacks, shownMonthsStart(months));
   const byResponseName = new Map(response.map((r) => [r.name, r]));
-  const byMonthName = new Map(byMonth.map((m) => [m.name, m]));
 
   return (
     <InsightSection
@@ -102,16 +118,16 @@ export function MedicationInsights({
           Days you logged taking each medication, by month, against the guideline for its type —
           around {MOH_DAYS_TRIPTAN} days a month for triptans and combinations, {MOH_DAYS_SIMPLE} for simple
           painkillers, sustained over three months — worth raising with your doctor rather than acting on
-          alone. The line under each drug's bars counts across the same months the bars show. Doses
-          taken without logging an attack aren't counted.
+          alone. The line under each drug's bars counts across the same months the bars show
+          {since === null && <> — on All, that is the last 12 months at most</>}. Doses taken without
+          logging an attack aren't counted.
         </>
       }
     >
       <div className="space-y-3">
-        {days.map((med) => {
-          const r = byResponseName.get(med.name);
-          const monthData = byMonthName.get(med.name);
-          const cls = typeOfName(med.name, medications);
+        {days.map(({ name, monthData, shownDays, shownDoses }) => {
+          const r = byResponseName.get(name);
+          const cls = typeOfName(name, medications);
           const classLabel = cls ? TYPE_OPTIONS.find((t) => t.value === cls)?.label : null;
           const style = (cls && CLASS_STYLE[cls]) || DEFAULT_STYLE;
           // Marked against the guide for *this* drug's type (a stored number,
@@ -120,23 +136,21 @@ export function MedicationInsights({
           // same-name entries that disagree on type, get no guide at all). It
           // used to be 10 for everything, because nothing knew a drug's
           // class — so a simple analgesic was flagged five days early.
-          const limit = guideForName(med.name, medications, guides);
+          const limit = guideForName(name, medications, guides);
           const barMax = limit ?? BAR_MAX_FALLBACK;
-          const deletedName = isDeletedName(med.name, medications, deleted);
-          const shownDays = (monthData?.months ?? []).reduce((sum, m) => sum + m.days, 0);
-          const shownDoses = monthData?.doses ?? 0;
+          const deletedName = isDeletedName(name, medications, deleted);
 
           return (
-            <div key={med.name} className="space-y-3.5 rounded-card bg-bg-surface p-card">
+            <div key={name} className="space-y-3.5 rounded-card bg-bg-surface p-card">
               <div className="flex flex-wrap items-center gap-3">
                 <span
                   aria-hidden="true"
                   className={`flex size-compact shrink-0 items-center justify-center rounded-segment ${style.tile}`}
                 >
-                  <MedIcon name={med.name} className="h-[1.125rem] w-[1.125rem]" />
+                  <MedIcon name={name} className="h-[1.125rem] w-[1.125rem]" />
                 </span>
                 <span className="min-w-[7.5rem] flex-1">
-                  <span className="block truncate text-base font-semibold text-text-strong">{med.name}</span>
+                  <span className="block truncate text-base font-semibold text-text-strong">{name}</span>
                   {classLabel && <span className="block text-xs text-text-secondary">{classLabel}</span>}
                 </span>
               </div>
@@ -195,7 +209,7 @@ export function MedicationInsights({
                 {/* Muted glyphs before doses and "checked at 2h", as the board's `.mstats`. */}
                 <span>{shownDays} {shownDays === 1 ? 'day' : 'days'}</span>
                 <span className="inline-flex items-center gap-1.5">
-                  <MedIcon name={med.name} className="h-4 w-4 text-text-secondary" />
+                  <MedIcon name={name} className="h-4 w-4 text-text-secondary" />
                   {shownDoses} {shownDoses === 1 ? 'dose' : 'doses'}
                 </span>
                 <span className="inline-flex items-center gap-1.5">

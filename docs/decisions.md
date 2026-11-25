@@ -2050,7 +2050,15 @@ rejected — honest, but it leaves two different counts stacked in one card for
 the reader to reconcile. The line is now "`N` days · `N` doses · `N` checked at
 2h · `N` helped" from the 1st of the first month drawn; days is exactly the
 bars' sum, doses kept beside it because two in one day is a different exposure.
-Cost accepted: this card no longer matches the period control to the day.
+Cost accepted: this card no longer matches the period control to the day —
+and on All, where the bars stop at 12 months, by much more than a day. Review
+caught that the cards were still chosen over all time, so a drug last taken
+over a year ago drew twelve empty bars over "0 days · 0 doses". Sunny's call:
+**on All, medication shows the last 12 months only** — a drug needs a dose in
+the months drawn to get a card, cards are ordered by days in those months, and
+the info text says so. Kept over showing all-time drugs because an empty card
+answers nothing, and a lifetime figure beside 12 bars is the same mismatch
+this entry exists to remove.
 
 ## Today, v3 (2026-10-26)
 
