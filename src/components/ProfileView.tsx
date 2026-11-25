@@ -5,13 +5,13 @@ import type { Attack, SyncStatus } from '../types';
 import { formatSince, formatDatetime, formatTime, everyLabel } from '../utils/format';
 import { useNowTick } from '../hooks/useNowTick';
 import { AttackCard } from './AttackCard';
-import { exportData, readBackupFile, applyBackup, deleteAllLocalData, DELETED_FLAG, type ParsedBackup } from '../utils/backup';
+import { exportData, readBackupFile, applyBackup, requestDeleteAndReload, type ParsedBackup } from '../utils/backup';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
 import { SegmentedControl } from './SegmentedControl';
 import { Button, TextField } from 'code-ds';
 import { SectionLabel, SettingsList, SettingsRow, Switch } from './settingsUi';
-import { pendingReminders, notificationPermission, cancelNotification, clearDeliveredReminders, type PendingReminder } from '../utils/notifications';
+import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
 import { DeleteAllDialog } from './DeleteAllDialog';
@@ -720,12 +720,13 @@ function remindersSummary(c: NotificationConfig): string {
 }
 
 // Matches docs/redesign-v4/screens/16-data/DataRedesign.html. "Delete all
-// data" deletes from this phone only (see `deleteAllLocalData`); the board's
+// data" deletes from this phone only (see `requestDeleteAndReload`); the board's
 // "and from your account" is the diff doc's D3, not built.
 export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount, medCount, reminders, onReminders }: {
   auth: ReturnType<typeof useAuth>;
-  /** 'error' means some changes may exist only on this phone — the delete
-   *  dialog then says they'd be lost rather than promising the account has them. */
+  /** 'error' or 'syncing' means some changes may exist only on this phone —
+   *  the delete dialog then says they'd be lost rather than promising the
+   *  account has them. */
   syncStatus: SyncStatus;
   onClose: () => void;
   /** The reminder default, for the board's "Manage → Reminders" row. */
@@ -749,26 +750,22 @@ export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount
   // no Escape) — before, "Keep my data" closed it and the delete still ran.
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState(false);
-  // Data itself can still close under the dialog (the Sheet hears Escape too):
-  // checked after the await, so leaving means nothing is deleted.
-  const alive = useRef(true);
-  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   async function deleteAll() {
     if (deleting) return;
     setDeleting(true);
     setDeleteErr(false);
     // Sign out first, this phone only: otherwise the reload's sync pulls
-    // everything back. If a session is still stored, delete nothing.
+    // everything back. If a session is still stored, delete nothing. Once
+    // signed out the delete goes ahead even if Data closed meanwhile (Escape
+    // on the web) — it was confirmed, and signed out with the data kept was
+    // a silent half-state.
     if (auth.session && !(await auth.signOutThisDevice())) {
-      if (alive.current) { setDeleting(false); setDeleteErr(true); }
+      setDeleting(false);
+      setDeleteErr(true);
       return;
     }
-    if (!alive.current) return;
-    deleteAllLocalData(cancelNotification);
-    await clearDeliveredReminders();
-    try { sessionStorage.setItem(DELETED_FLAG, '1'); } catch { /* message is a nicety */ }
-    window.location.reload();
+    requestDeleteAndReload();
   }
 
   // The write itself (share sheet on native, download on web). Returns whether
@@ -923,7 +920,7 @@ export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount
         onDelete={deleteAll}
         busy={deleting}
         failed={deleteErr}
-        unsynced={syncStatus === 'error'}
+        unsynced={syncStatus === 'error' || syncStatus === 'syncing'}
       />
 
       <ConfirmDialog

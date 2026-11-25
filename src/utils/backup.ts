@@ -120,33 +120,68 @@ export function applyBackup(data: Record<string, string>): void {
   }
 }
 
-/** Set just before the reload that follows a delete, read once by `App` to
- *  show the "deleted" message on the fresh page. sessionStorage, not `hd_`:
- *  it must survive the reload but never the delete itself or an export. */
+/** Set by `runPendingDelete` for `App` to show the "deleted" message on the
+ *  fresh page. sessionStorage, not `hd_`: it must survive the reload but
+ *  never the delete itself or an export. */
 export const DELETED_FLAG = 'lidd_deleted_all';
+
+/** Set by Data → Delete all data just before it reloads; acted on at boot. */
+const PENDING_DELETE_FLAG = 'lidd_delete_pending';
 
 /**
  * **Delete all data, this phone only** (2026-11-25, Sunny: "phone only for
  * now" — the diff doc's D3, deleting the account's rows too, is not built).
- * Removes every `hd_` key: attacks, lists, medicines, HIT-6, reminder default
- * and display settings — the same set Export writes. Cancels each attack's
- * reminder first so none fires for an attack that no longer exists.
  *
- * The caller signs out *before* this and reloads *after*: signed in, the next
- * sync would pull everything straight back; and every hook holds its list in
- * React state, so without a reload the first write would put it back too.
+ * Asks for the delete; it happens on the next page load. The caller signs out
+ * (this device) *before* calling this — signed in, the next sync would pull
+ * everything straight back.
+ *
+ * **Why on the next load, not now** (review of d5f4b07): every hook holds its
+ * list in React state, and a sync pull already in flight resolves into
+ * `commit(remote)`, writing `hd_attacks` back after any in-page delete.
+ * Reloading first ends every such request with the old page; the delete runs
+ * at boot, before React renders, with nothing else alive to race it.
  */
-export function deleteAllLocalData(cancelReminder: (attackId: number) => void): void {
+export function requestDeleteAndReload(): void {
+  try {
+    sessionStorage.setItem(PENDING_DELETE_FLAG, '1');
+  } catch {
+    // No sessionStorage: delete in place instead — the race above is rare,
+    // and doing nothing would be worse.
+    deleteHdKeys();
+    try { sessionStorage.setItem(DELETED_FLAG, '1'); } catch { /* no message */ }
+  }
+  window.location.reload();
+}
+
+/**
+ * Runs at boot (`main.tsx`) before the app renders. If a delete was asked
+ * for: clears any `sb-` session that slipped back in, cancels each attack's
+ * reminder, removes every `hd_` key (the set Export writes), clears delivered
+ * reminders, and leaves the flag for the message.
+ */
+export function runPendingDelete(
+  cancelReminder: (attackId: number) => void,
+  clearDelivered: () => Promise<void>,
+): void {
+  try {
+    if (!sessionStorage.getItem(PENDING_DELETE_FLAG)) return;
+    sessionStorage.removeItem(PENDING_DELETE_FLAG);
+  } catch {
+    return;
+  }
+  for (const k of Object.keys(localStorage)) if (k.startsWith('sb-')) localStorage.removeItem(k);
   try {
     const attacks = JSON.parse(localStorage.getItem('hd_attacks') ?? '[]') as { id?: unknown }[];
     for (const a of attacks) if (typeof a?.id === 'number') cancelReminder(a.id);
   } catch {
     /* unreadable list: nothing to cancel */
   }
-  const keys: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key?.startsWith(PREFIX)) keys.push(key);
-  }
-  for (const k of keys) localStorage.removeItem(k);
+  deleteHdKeys();
+  void clearDelivered();
+  try { sessionStorage.setItem(DELETED_FLAG, '1'); } catch { /* no message */ }
+}
+
+function deleteHdKeys(): void {
+  for (const k of Object.keys(localStorage)) if (k.startsWith(PREFIX)) localStorage.removeItem(k);
 }

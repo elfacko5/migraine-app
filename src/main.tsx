@@ -3,6 +3,12 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { showKeyboardBar } from './utils/keyboardBar';
+import { runPendingDelete } from './utils/backup';
+import { cancelNotification, clearDeliveredReminders } from './utils/notifications';
+
+// Data → Delete all data asked for it and reloaded; runs before any hook
+// reads storage, so nothing on this page ever sees the old data.
+runPendingDelete(cancelNotification, clearDeliveredReminders);
 
 showKeyboardBar();
 

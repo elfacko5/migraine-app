@@ -13,8 +13,9 @@ import { useEffect, useRef } from 'react';
  * says what actually happens. Signed in, the delete signs out first — the
  * account keeps its copy, and signing in again brings it back. Saying so is
  * the honest version, not a reassurance — but only for what has synced:
- * with sync amber (`unsynced`), recent changes exist only here and the copy
- * says they'd be lost (review of 2cf7e47).
+ * with sync in error or mid-push (`unsynced`), recent changes may exist only
+ * here and the copy
+ * says they'd be lost (reviews of 2cf7e47 and d5f4b07).
  *
  * **Locked while `busy`.** The sign-out is a network call; before, every
  * button stayed live through it, so "Keep my data" closed the sheet and the
@@ -39,11 +40,17 @@ export function DeleteAllDialog({ open, signedIn, unsynced, busy, failed, onExpo
 }) {
   const keepRef = useRef<HTMLButtonElement>(null);
 
+  // Focus moves in once, on open — not in the Escape effect, which re-runs
+  // on every parent render (`onKeep` is inline) and pulled focus back to
+  // Keep each time, e.g. while VoiceOver rested on Delete.
+  useEffect(() => {
+    if (open) keepRef.current?.focus();
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !busy) onKeep(); };
     window.addEventListener('keydown', onKey);
-    keepRef.current?.focus();
     return () => window.removeEventListener('keydown', onKey);
   }, [open, busy, onKeep]);
 

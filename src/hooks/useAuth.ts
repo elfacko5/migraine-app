@@ -54,20 +54,32 @@ export function useAuth() {
    *   an error instead of throwing and keeps the stored session — so a reload
    *   would still be signed in and sync the deleted diary straight back. The
    *   stored `sb-` keys are therefore cleared here whatever the server said,
-   *   with auto-refresh stopped first so it can't write them back.
+   *   with auto-refresh stopped first so it can't write them back. A late
+   *   refresh inside a timed-out signOut could still save one: the reload
+   *   that follows ends that page, and boot clears `sb-` keys again
+   *   (`runPendingDelete`).
    *
    * Resolves `true` only when no session is left in storage.
    */
   const signOutThisDevice = useCallback(async (): Promise<boolean> => {
     if (!supabase) return true;
     try {
-      const { error } = await supabase.auth.signOut({ scope: 'local' });
-      if (error) console.error('Sign-out reached no server; clearing locally:', error);
+      // Stopped first: nothing may refresh and re-save a session from here on.
+      await supabase.auth.stopAutoRefresh();
+    } catch { /* clearing below is what counts */ }
+    // **Time-boxed.** With an expired token offline, supabase-js retries the
+    // refresh with backoff for ~30 s before signOut returns — the dialog sat
+    // locked on "Deleting…" all that time. The server call is a courtesy;
+    // clearing the stored keys below is what makes it certain.
+    const timeout = new Promise<'timeout'>((r) => setTimeout(() => r('timeout'), 3000));
+    try {
+      const res = await Promise.race([supabase.auth.signOut({ scope: 'local' }), timeout]);
+      if (res === 'timeout') console.error('Sign-out timed out; clearing locally');
+      else if (res.error) console.error('Sign-out reached no server; clearing locally:', res.error);
     } catch (e) {
       console.error('Sign-out failed; clearing locally:', e);
     }
     try {
-      await supabase.auth.stopAutoRefresh();
       for (const k of Object.keys(localStorage)) if (k.startsWith('sb-')) localStorage.removeItem(k);
       return !Object.keys(localStorage).some((k) => k.startsWith('sb-'));
     } catch {
