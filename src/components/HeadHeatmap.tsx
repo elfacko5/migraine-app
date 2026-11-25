@@ -136,6 +136,12 @@ function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
   // `base`) stay too.
   const ground = view.base.filter((d) => !view.inert.includes(d));
   const ears = view.inert.filter((d) => !view.base.includes(d));
+  // Without its neck the front view's lowest point is the chin, at y≈610 —
+  // the shared 513-tall viewBox left ~66 units of empty card under it.
+  // Trimmed to the chin plus the same 10 units the crown gets at the top.
+  // Only here: the picker keeps the shared box, and these two views are
+  // stacked, not side by side, so they never needed equal heights.
+  const viewBox = view.id === 'front' ? '-1.93 163.45 332 457' : view.viewBox;
   // Strength 0..1 by count: 1 at the most-logged area, 0 at a single log.
   // With every area at the same count there's nothing to rank — all full.
   const t = (area: string) => {
@@ -155,7 +161,7 @@ function HeatView({ view, byArea, maxVal, theme }: HeatViewProps) {
       <SideLabel labels={view.sideLabels} side="left"
         className="text-[0.6rem] font-medium uppercase tracking-wider text-text-secondary"/>
 
-      <svg viewBox={view.viewBox} className="block w-full max-w-[190px]"
+      <svg viewBox={viewBox} className="block w-full max-w-[190px]"
         aria-label={`${view.label} pain area heatmap`}>
         <defs>
           <clipPath id={clip}>
