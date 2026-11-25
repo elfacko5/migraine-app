@@ -108,8 +108,13 @@ export function everyLabel(min: number): string {
 /** The ceiling on an attack that ended in sleep, from its start to the wake
  *  time: "45m" under an hour, else whole hours rounded **up** ("3h") — it's
  *  the most it can have been, not a measurement. Shared by Detail's length
- *  tile and the past-attack summary so the two never disagree. */
-export function upToText(startIso: string, wokeAtIso: string): string {
-  const mins = Math.max(0, Math.ceil((new Date(wokeAtIso).getTime() - new Date(startIso).getTime()) / 60_000));
+ *  tile and the past-attack summary so the two never disagree.
+ *
+ *  `null` when the wake time isn't after the start (a time picked at or
+ *  before it is clamped to the start on save): "up to 0m" says nothing, so
+ *  callers fall back to "ended in sleep". */
+export function upToText(startIso: string, wokeAtIso: string): string | null {
+  const mins = Math.ceil((new Date(wokeAtIso).getTime() - new Date(startIso).getTime()) / 60_000);
+  if (mins <= 0) return null;
   return mins < 60 ? `${mins}m` : `${Math.ceil(mins / 60)}h`;
 }

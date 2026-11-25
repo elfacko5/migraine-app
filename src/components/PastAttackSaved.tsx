@@ -32,11 +32,10 @@ export function PastAttackSaved({ attack, medications, onAddAnother, onDone }: {
   // Same three cases as Detail's LengthTile: a known length; an unknown end
   // with a wake-up time is a ceiling ("up to 3h", rounded up); without one,
   // "ended in sleep". Past attacks can now carry `wokeAt` from the form.
+  const upTo = attack.wokeAt ? upToText(start, attack.wokeAt) : null;
   const length = hasKnownDuration(attack)
     ? formatDuration(start, attack.end)
-    : attack.wokeAt
-      ? `up to ${upToText(start, attack.wokeAt)}`
-      : 'ended in sleep';
+    : upTo ? `up to ${upTo}` : 'ended in sleep';
   const quality = attack.painQuality ?? [];
   const symptoms = marksOf(attack, 'symptoms');
   const reliefs = marksOf(attack, 'reliefs');

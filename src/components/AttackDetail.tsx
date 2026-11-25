@@ -294,10 +294,11 @@ const figureText = 'text-lg font-semibold tabular-nums leading-tight text-text-s
 function LengthTile({ attack }: { attack: Attack }) {
   const start = attack.snapshots[0].time;
   if (attack.end !== null && !hasKnownDuration(attack)) {
-    if (!attack.wokeAt) {
+    const upTo = attack.wokeAt ? upToText(start, attack.wokeAt) : null;
+    if (!upTo) {
       return <Tile label="ended in sleep" figure={<MoonIcon className="h-8 w-8 text-accent-light" />} />;
     }
-    return <Tile label="length" figure={<span className={figureText}>up to {upToText(start, attack.wokeAt)}</span>} />;
+    return <Tile label="length" figure={<span className={figureText}>up to {upTo}</span>} />;
   }
   return (
     <Tile
