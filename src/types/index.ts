@@ -18,6 +18,10 @@ export interface Snapshot {
   medication: { name: string; dose: string; amount?: number; medId?: string } | null;
   note: string | null;
   source: 'manual' | 'notification_yes' | 'notification_no_change';
+  // Set on a symptoms/reliefs-only reading added from Attack detail after the
+  // attack ended (never on a reading that carries pain). Lets the timeline say
+  // it was added afterwards. Lives inside the `snapshots` jsonb, so no column.
+  addedLater?: boolean;
 }
 
 export interface NotificationConfig {
@@ -56,6 +60,11 @@ export interface Attack {
   // (under 5 min) and the user confirmed it did happen. Metadata-only, like
   // impact/triggers — never touches snapshots.
   confirmedReal?: boolean;
+  // When the person says they woke, for an attack whose end is unknown ("gone
+  // when you woke up"). An upper bound on the end, **not** the end: the attack
+  // may have stopped long before. So `end`/`endUnknown` are left alone and
+  // every length figure still excludes it; Detail shows "up to Xh".
+  wokeAt?: string;
 }
 
 /** Pick-any pain-quality chips (ICHD-3 criterion B gap). Stored verbatim in

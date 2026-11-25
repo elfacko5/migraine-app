@@ -114,7 +114,7 @@ export default function App() {
   const auth = useAuth();
   const userId = auth.user?.id ?? null;
   const {
-    attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, updateAttackDetails, deleteAttack,
+    attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, updateAttackDetails, addLaterDetails, deleteAttack,
     syncStatus: attacksSyncStatus, lastSyncedAt: attacksLastSyncedAt,
   } = useAttacks(userId);
   const {
@@ -1023,7 +1023,12 @@ export default function App() {
             // Attack-level metadata only — the mutation itself refuses to
             // touch snapshots. See docs/editing-assessment.md.
             onSaveDetails={(patch) => updateAttackDetails(detailAttack.id, patch)}
+            onAddLater={(details) => addLaterDetails(detailAttack.id, details)}
+            symptomOptions={sortedSymptoms}
+            reliefOptions={sortedReliefs}
             triggerOptions={sortedTriggers}
+            onAddSymptom={addSymptom}
+            onAddRelief={addRelief}
             onAddTrigger={addTrigger}
           />
         )}

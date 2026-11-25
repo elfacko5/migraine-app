@@ -30,6 +30,15 @@ export const IMPACT_OPTIONS: { value: Impact; label: string }[] = [
   { value: 3, label: "Couldn't function" },
 ];
 
+// The v4 flows' own wording for the same four degrees (A3/A8): the End flow's
+// buttons, and Detail's "Stopped you" row, which reads back what was tapped.
+export const END_IMPACT_LABELS: Record<Impact, string> = {
+  0: 'Carried on',
+  1: 'Slowed down',
+  2: 'Had to stop',
+  3: 'In bed',
+};
+
 // The list row has no space for a sentence, so it takes the degree and pairs
 // it with a label of its own ("Impact: a lot") — the same information, made
 // self-describing by the caller instead of by the string.

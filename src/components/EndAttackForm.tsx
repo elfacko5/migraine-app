@@ -11,6 +11,7 @@ import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
 import { ConfirmDialog } from './ConfirmDialog';
+import { END_IMPACT_LABELS } from '../utils/impact';
 
 interface Props {
   attack: Attack;
@@ -39,20 +40,6 @@ const END_OPTIONS: { value: EndMode; label: string }[] = [
   { value: 'hour2', label: '2h ago' },
   { value: 'manual', label: 'Pick a time…' },
 ];
-
-// The v4 flows' own wording for the four impact degrees (A3/A8) — the same
-// `Attack['impact']` 0-3 value `IMPACT_OPTIONS` (impact.ts) already uses for
-// AttackDetail and the Logs filter, just read out in the newer register.
-// Not unified with `IMPACT_OPTIONS` itself: that's a
-// decision of its own (docs/redesign-v4-diff.md notes the two vocabularies
-// as a known, accepted gap), not something to settle quietly inside one
-// flow's own step.
-const END_IMPACT_LABELS: Record<NonNullable<Attack['impact']>, string> = {
-  0: 'Carried on',
-  1: 'Slowed down',
-  2: 'Had to stop',
-  3: 'In bed',
-};
 
 // Triggers and pain quality start from whatever the attack already has —
 // both are stable metadata editable at any time (A5), and this step is

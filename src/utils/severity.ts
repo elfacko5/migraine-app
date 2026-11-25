@@ -30,26 +30,11 @@ export function sevBadgeClass(s: number): string {
 }
 
 /**
- * The v3.10 shaded number (2026-10-26): a box whose fill is the accent mixed
- * into the card colour by severity — 14% at 1, 50% at 10 — so a higher peak
- * reads as a deeper tint while the number itself carries the value. One hue,
- * not the three-band ramp: on the Logs row and the detail's "Where it hurt"
- * table every box sits beside its printed number, so magnitude needs no
- * second colour system. Capped at 40% so `text-primary` on the box stays
- * readable in both themes (measured in docs/decisions.md).
- */
-export function peakShade(n: number): string {
-  if (n <= 0) return 'var(--color-bg-surface)';
-  const pct = Math.min(40, Math.round(10 + n * 3));
-  return `color-mix(in srgb, var(--color-accent) ${pct}%, var(--color-bg-surface))`;
-}
-
-/**
  * Severity as a solid fill — the Logs row's number box (v4 board, 2026-11-25).
  * Pair with `text-bg-base`: the page colour on the band measures 6.0–7.3:1 in
  * dark (all three bands), and in light the bands are the dark values, so the
- * pairing inverts and still holds. This replaced `peakShade` on that row on
- * Sunny's call — the coloured box makes attacks easier to tell apart when
+ * pairing inverts and still holds. This replaced a single-hue tint on that
+ * row on Sunny's call — the coloured box makes attacks easier to tell apart when
  * scanning, which the single-hue tint did not.
  */
 export function sevFillClass(s: number): string {

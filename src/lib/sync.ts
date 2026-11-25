@@ -14,13 +14,17 @@ interface AttackRow {
   pain_quality: string[] | null;
   end_unknown: boolean | null;
   confirmed_real: boolean | null;
+  /** Absent on a table that predates it. */
+  woke_at?: string | null;
 }
 
 function rowToAttack(row: AttackRow): Attack {
   return {
     id: row.id,
     snapshots: row.snapshots,
-    end: row.end_time,
+    // Postgres writes `+00:00` where the app writes `Z`. Normalised, so an end
+    // compares equal to the reading stamped with it.
+    end: row.end_time && new Date(row.end_time).toISOString(),
     triggers: row.triggers,
     notificationConfig: row.notification_config,
     updatedAt: row.updated_at,
@@ -30,6 +34,7 @@ function rowToAttack(row: AttackRow): Attack {
     ...(row.pain_quality && row.pain_quality.length > 0 ? { painQuality: row.pain_quality } : {}),
     endUnknown: row.end_unknown ?? false,
     confirmedReal: row.confirmed_real ?? false,
+    ...(row.woke_at ? { wokeAt: new Date(row.woke_at).toISOString() } : {}),
   };
 }
 
@@ -47,6 +52,10 @@ function attackToRow(attack: Attack, userId: string) {
     pain_quality: attack.painQuality ?? [],
     end_unknown: attack.endUnknown ?? false,
     confirmed_real: attack.confirmedReal ?? false,
+    // **Only when set**: naming a column the table doesn't have fails the whole
+    // push, so a diary with no wake time keeps syncing before the `alter table`
+    // in supabase/schema.sql has been run.
+    ...(attack.wokeAt ? { woke_at: attack.wokeAt } : {}),
   };
 }
 
@@ -61,8 +70,14 @@ export async function pullAttacks(): Promise<Attack[]> {
 // (fire-and-forget from the caller) and during the initial post-sign-in merge.
 export async function pushAttacks(attacks: Attack[], userId: string): Promise<void> {
   if (!supabase || attacks.length === 0) return;
-  const { error } = await supabase.from('attacks').upsert(attacks.map((a) => attackToRow(a, userId)));
-  if (error) throw error;
+  // Rows with a wake time go separately: a bulk upsert names the union of every
+  // row's columns, so one of them would fail the whole batch on a table without
+  // `woke_at`. This way only those rows wait for the `alter table`.
+  for (const batch of [attacks.filter((a) => !a.wokeAt), attacks.filter((a) => a.wokeAt)]) {
+    if (batch.length === 0) continue;
+    const { error } = await supabase.from('attacks').upsert(batch.map((a) => attackToRow(a, userId)));
+    if (error) throw error;
+  }
 }
 
 export async function deleteAttackRemote(id: number): Promise<void> {

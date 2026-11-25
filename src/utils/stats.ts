@@ -1,6 +1,7 @@
 import type { Attack, Snapshot } from '../types';
 import { NOTHING_UNUSUAL } from '../types';
 import { isRetired } from './retired';
+import { isDetailOnly } from './readings';
 
 /** False for an ongoing attack (`end === null`) and for one whose end time
  *  is known to be a guess (`endUnknown`) — "gone when you woke up" with no
@@ -55,7 +56,9 @@ export function attackLatestSeverity(attack: Attack): number {
  * reading, or several sharing a timestamp.
  */
 export function attackAvgSeverity(attack: Attack, now: number = Date.now()): number {
-  const snaps = attack.snapshots;
+  // A details-only reading holds no severity; left in, one stranded mid-attack
+  // by an edited end would weigh the rest of the attack as zero.
+  const snaps = attack.snapshots.filter((s) => !isDetailOnly(s));
   if (snaps.length === 0) return 0;
 
   const endMs = attack.end ? new Date(attack.end).getTime() : now;
@@ -78,7 +81,7 @@ export function attackAvgSeverity(attack: Attack, now: number = Date.now()): num
 
 // Duration in minutes of the longest consecutive run of notification_no_change snapshots.
 export function longestPlateauMinutes(attack: Attack): number {
-  const snaps = attack.snapshots;
+  const snaps = attack.snapshots.filter((s) => !isDetailOnly(s));
   let longest = 0;
   let runStart: number | null = null;
 
@@ -839,8 +842,8 @@ export function doseCheckIn(attack: Attack, now: number = Date.now()): CheckIn |
  * - `no-reading`: the window closed without one. Stated as absent, never as
  *   "didn't help": a missing reading says nothing about the drug.
  *
- * The first dose of each drug, because that is the one the trial endpoint is
- * about; a later dose is usually the answer to the first not working.
+ * Every dose gets its own entry (2026-11-25): Detail lists each intake, and a
+ * second dose of a drug used to have no row at all.
  * Retired names are skipped, like every other medication tally.
  */
 export type DoseVerdict = 'helped' | 'not-helped' | 'pending' | 'no-reading';
@@ -853,9 +856,8 @@ export interface DoseOutcome {
   verdict: DoseVerdict;
   before: number;
   after: number | null;
-  /** With no two-hour reading: the next reading after the dose, if any, so
-   *  the detail can say what *was* recorded ("next was 9 after 3h 28m"). */
-  next: { severity: number; afterMs: number } | null;
+  /** How long after the dose the `after` reading landed. */
+  afterMs: number | null;
 }
 
 export function attackDoseOutcomes(attack: Attack, now: number = Date.now()): DoseOutcome[] {
@@ -864,7 +866,7 @@ export function attackDoseOutcomes(attack: Attack, now: number = Date.now()): Do
   for (let i = 0; i < snaps.length; i++) {
     const med = snaps[i].medication;
     const name = med?.name?.trim();
-    if (!med || !name || isRetired(name) || out.some((o) => o.name === name)) continue;
+    if (!med || !name || isRetired(name)) continue;
     const before = maxSeverity(snaps[i]);
     const follow = followUpReading(snaps, i);
     const after = follow ? maxSeverity(follow) : null;
@@ -872,15 +874,8 @@ export function attackDoseOutcomes(attack: Attack, now: number = Date.now()): Do
     const verdict: DoseVerdict = after !== null
       ? (doseHelped(before, after) ? 'helped' : 'not-helped')
       : attack.end === null && age < FOLLOW_UP_MAX_MS ? 'pending' : 'no-reading';
-    const doseMs = new Date(snaps[i].time).getTime();
-    // Same "no areas, no score" rule as `followUpReading` just above — a
-    // reading with none (End's own closing snapshot) isn't a pain value to
-    // show as "next was 0", it just didn't report one.
-    const nextSnap = after === null
-      ? snaps.slice(i + 1).find((x) => new Date(x.time).getTime() > doseMs && Object.keys(x.areas).length > 0)
-      : undefined;
-    const next = nextSnap ? { severity: maxSeverity(nextSnap), afterMs: new Date(nextSnap.time).getTime() - doseMs } : null;
-    out.push({ name, dose: med.dose, amount: med.amount, time: snaps[i].time, verdict, before, after, next });
+    const afterMs = follow ? new Date(follow.time).getTime() - new Date(snaps[i].time).getTime() : null;
+    out.push({ name, dose: med.dose, amount: med.amount, time: snaps[i].time, verdict, before, after, afterMs });
   }
   return out;
 }

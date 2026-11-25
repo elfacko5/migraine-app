@@ -291,7 +291,7 @@ export function useAttacks(userId: string | null) {
    */
   const updateAttackDetails = useCallback((
     attackId: number,
-    patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'endUnknown' | 'painQuality' | 'confirmedReal'>>,
+    patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'endUnknown' | 'painQuality' | 'confirmedReal' | 'wokeAt'>>,
   ) => {
     const fullPatch = patch.end !== undefined && !('endUnknown' in patch)
       ? { ...patch, endUnknown: false }
@@ -305,6 +305,35 @@ export function useAttacks(userId: string | null) {
     if (updated && userId) trackPush(pushAttacks([updated], userId));
   }, [attacks, commit, userId, trackPush]);
 
+  /**
+   * Symptoms or reliefs remembered after an attack ended. **Appended, never
+   * written into an existing reading** — snapshots stay the record of what was
+   * reported when — as a reading with no pain areas, stamped at the attack's
+   * end and marked `addedLater`. Not `addSnapshot`: there is nothing to
+   * remind about, and no reading of pain to carry.
+   */
+  const addLaterDetails = useCallback((
+    attackId: number,
+    details: { symptoms: string[]; reliefs: string[] },
+  ) => {
+    if (details.symptoms.length === 0 && details.reliefs.length === 0) return;
+    let updated: Attack | undefined;
+    commit(attacks.map((a) => {
+      if (a.id !== attackId || !a.end) return a;
+      const added: Snapshot = {
+        time: new Date(a.end).toISOString(), areas: {}, symptoms: details.symptoms, reliefs: details.reliefs,
+        medication: null, note: null, source: 'manual', addedLater: true,
+      };
+      updated = {
+        ...a,
+        snapshots: [...a.snapshots, added].sort((x, y) => x.time.localeCompare(y.time)),
+        updatedAt: new Date().toISOString(),
+      };
+      return updated;
+    }));
+    if (updated && userId) trackPush(pushAttacks([updated], userId));
+  }, [attacks, commit, userId, trackPush]);
+
   const deleteAttack = useCallback((attackId: number) => {
     cancelNotification(attackId);
     commit(attacks.filter((a) => a.id !== attackId));
@@ -313,5 +342,5 @@ export function useAttacks(userId: string | null) {
 
   const ongoingAttack = findOngoing(attacks);
 
-  return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, updateAttackDetails, deleteAttack, syncStatus, lastSyncedAt };
+  return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, updateAttackDetails, addLaterDetails, deleteAttack, syncStatus, lastSyncedAt };
 }

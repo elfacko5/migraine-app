@@ -10,6 +10,7 @@ import { ChipSelector } from './ChipSelector';
 import { SymptomIcon, ReliefIcon } from './drawnIcons';
 import { MedicationInput } from './MedicationInput';
 import { ConfirmDialog } from './ConfirmDialog';
+import { lastReading } from '../utils/readings';
 
 interface Props {
   attack: Attack;
@@ -122,7 +123,7 @@ function lastEntryCaption(step: number, prev: Snapshot, medications: Medication[
 }
 
 export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], onAddSymptom, onAddRelief, onSave, onClose, voiceDraft }: Props) {
-  const prev = attack.snapshots[attack.snapshots.length - 1];
+  const prev = lastReading(attack);
   // A new update must land after the last reading, and — for a past attack —
   // no later than when it ended (an ongoing attack has no such ceiling
   // besides "now", which the input's max already enforces per render).

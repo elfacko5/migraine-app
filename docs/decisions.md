@@ -2490,3 +2490,19 @@ Built from the v4 boards (Logs banner, `DetailFlagged`), on the A4 (iii) decisio
 - **The banner counts the whole diary, not the filtered view**, so a filter can't hide that something may need a look. Review opens the newest; once that's confirmed or deleted, the banner moves to the next.
 - **The Logs banner is outlined and quiet, the Detail card is amber.** The list only points; the attack's own page is where the question is asked. Amber is the `warning-surface` token from the B clean batch, added here with its light value (`#efe4d3`); measured: text 8.7 / 5.4:1 dark, 9.4 / 5.9:1 light, 8.4 / 4.9:1 attack mode.
 - **Reworded from the board the same day** (Sunny). "Looks too short to be real / Attacks under 5 minutes are often started by mistake" doubted the record and leaned on "mistake". Now the fact and a choice: Logs says "1 attack under 5 minutes"; Detail says "Under 5 minutes / If it was started by accident, you can delete it." with **Keep it** in place of Confirm (§9.3: user in control, no implied fault).
+
+## Attack detail rebuilt (2026-11-25)
+
+The v4 board (07) reviewed against the shipped screen, then mocked up and reworked with Sunny comment by comment before building.
+
+- **The board drew things the data didn't say**, all changed: a dashed line down to 0 at the end; "At the end" for a reading hours earlier (now "Last logged", with the time); "no reading in the 2 hours after" beside a reading that was; "gone when you woke up" with a measured length.
+- **"Edit this attack" is gone** (reverses the metadata edit screen). The button and the tappable rows were two ways in to the same fields. Rows only; woke-with-it got a row of its own.
+- **Editing now has limits: 48 h for what it was like, 7 days for the end or wake time**, from the later of the end and when it was logged. Reverses the open-ended editing in `editing-assessment.md`. "Only fill what was skipped" was rejected: it blocks fixing a mis-tap (reliable) and allows filling a blank weeks later (memory). The numbers are judgement, not a clinical figure. Delete is never limited; Add update isn't either, because a missing dose makes the overuse count wrong. For an unknown end the clock can start a few hours early — the app doesn't store when the End flow was finished.
+- **Symptoms and reliefs only gain entries**, as a new `addedLater` reading. Correcting one would rewrite a snapshot. Because the end can then move, such a reading's time is ignored everywhere (`isDetailOnly`) rather than moved with it; the review found it otherwise blocked an earlier end, dragged down the average and showed as an empty update. Sync also normalises server times to `Z`, and rows with a wake time are pushed separately so a missing `woke_at` column can't fail the rest.
+- **Ended in sleep, not a guessed duration.** An estimate would look measured and feed the average and the 4–72 h figure. `wokeAt` is a new field: an upper bound, shown as "up to Xh", left out of length figures. It replaces setting an exact end time on such an attack.
+- **Every dose has a row** (a second dose of a drug used to have none), and says how long after it the second score was read, instead of "at 2 hours" for anything 1–4 h later.
+- **What it was like sits above Where it hurt**, symptoms and reliefs as chips: the old "Also had" text line wasn't recognised as a symptom summary. A block at the top was rejected.
+- **Where it hurt uses solid severity boxes**, like the Logs row; `peakShade` is gone. The side glyph is two sages here (grey looked dead), still labelled.
+- **Footer buttons side by side**, wrapping at large text. The v4 pattern library says never two side by side; kept because both labels are short and the screen is long.
+- *Not done:* per-area trend lines in Where it hurt; clamping long voice notes; the Logs filter still uses "A little / A lot" for impact.
+

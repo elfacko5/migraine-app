@@ -1,24 +1,24 @@
 import { useState } from 'react';
 import type { Attack, Medication } from '../types';
-import { NOTHING_UNUSUAL, PAIN_QUALITY_OPTIONS } from '../types';
-import { formatDate, formatTime, formatDuration, isoToLocalInput, localInputToIso } from '../utils/format';
-import { attackDoseOutcomes, attackMaxSeverity, hasKnownDuration, looksTooShort, maxSeverity, type DoseOutcome } from '../utils/stats';
+import { NOTHING_UNUSUAL } from '../types';
+import { formatDate, formatTime, formatDatetime, formatDuration } from '../utils/format';
+import { attackDoseOutcomes, attackMaxSeverity, hasKnownDuration, looksTooShort, type DoseOutcome } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
-import { findMedication, unitsLabel } from '../utils/medGuardrails';
+import { unitsLabel } from '../utils/medGuardrails';
+import { resolveDose } from '../utils/medResolve';
 import { classLetter } from '../utils/medClasses';
-import { peakShade } from '../utils/severity';
-import { ClassBadge } from './ClassBadge';
-import { VerdictMark } from './VerdictMark';
-import { ConfirmDialog } from './ConfirmDialog';
-import { BinIcon, SunriseIcon } from './icons';
-import { IMPACT_OPTIONS } from '../utils/impact';
-import { attackFirstDoses } from '../utils/medDisplay';
-import { MedIcon, SideGlyph, SymptomIcon, TriggerIcon } from './drawnIcons';
+import { editWindows, type EditWindows } from '../utils/editWindow';
+import { END_IMPACT_LABELS } from '../utils/impact';
 import { isRetired } from '../utils/retired';
-import { ChipSelector } from './ChipSelector';
-import { chipClass} from '../utils/chipStyles';
-import { ChipCheck } from './ChipCheck';
-import { DateTimeField } from './DateTimeField';
+import { useNowTick } from '../hooks/useNowTick';
+import { ClassBadge } from './ClassBadge';
+import { ConfirmDialog } from './ConfirmDialog';
+import { BinIcon } from './icons';
+import { MedIcon, MoonIcon, SideGlyph } from './drawnIcons';
+import { MarkChips, SevBox } from './AttackDetailParts';
+import { AttackPainChart } from './AttackPainChart';
+import { AttackTimeline } from './AttackTimeline';
+import { AttackDetailEditor, type DetailPatch, type EditField } from './AttackDetailEditor';
 
 interface Props {
   attack: Attack;
@@ -27,159 +27,110 @@ interface Props {
   onAddUpdate?: () => void;
   /** Only passed for an attack still in progress. */
   onEndAttack?: () => void;
-  /** Attack-level metadata only — never snapshots. Omit to hide the Edit
-   *  details action entirely. */
-  onSaveDetails?: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality' | 'confirmedReal'>>) => void;
+  /** Attack-level metadata only — never snapshots. */
+  onSaveDetails: (patch: DetailPatch) => void;
+  /** Appends symptoms or reliefs as a new reading; never edits one. */
+  onAddLater: (details: { symptoms: string[]; reliefs: string[] }) => void;
+  symptomOptions?: string[];
+  reliefOptions?: string[];
   triggerOptions?: string[];
+  onAddSymptom?: (label: string) => void;
+  onAddRelief?: (label: string) => void;
   onAddTrigger?: (label: string) => void;
-  /** The library — for each drug's type letter. */
+  /** The library — for each drug's type letter and strength. */
   medications?: Medication[];
 }
 
+const weekday = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short' });
+const sameDay = (a: string, b: string) => new Date(a).toDateString() === new Date(b).toDateString();
+/** "Mon 10:26" */
+const dayTime = (iso: string) => `${weekday(iso)} ${formatTime(iso)}`;
+
 /**
- * Attack detail — the v3.10 design (docs/redesign-v3, "Logs list and attack
- * detail"), rebuilt 2026-10-26. Opened from a Logs row or the Today hero, as
- * a drill-down: it enters from the right behind a back chevron, with Delete
- * as a bin in the header (away from the footer, still confirmed).
+ * Attack detail (rebuilt 2026-11-25 from the v4 board 07, as reworked in
+ * review — see docs/decisions.md). A drill-down from a Logs row or the Today
+ * hero, with Delete as a bin in the header, still confirmed.
  *
- * Top to bottom: how long / peak / side; the span; pain over time with each
- * dose as a lettered line; a card per drug with its two-hour outcome; where
- * it hurt at peak and at the last update; symptoms; the last three updates;
- * impact and what was noted as different. Footer: Edit and Add update (End
- * attack and Add update while it is still going).
+ * Top to bottom: how long / worst / side; start and end; pain over time; every
+ * dose with the pain before and about two hours after; what it was like; where
+ * it hurt; the full timeline. Footer: Add update (and End attack while it runs).
+ *
+ * **There is no edit screen.** Each editable thing is its own row, open for a
+ * limited time (`editWindows`); after that it reads as text, and an unanswered
+ * one disappears rather than asking.
  *
  * Rendered in `Sheet`'s `flush bareHeader` mode: it owns its top bar and pins
- * its own footer, which is more reliable above the home indicator than
- * `sticky` inside an iOS PWA scroll container. The body sits on `bg-base`
- * with `bg-surface` cards, the same layering as the tabs.
+ * its own footer.
  */
-export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAttack, onSaveDetails, triggerOptions = [], onAddTrigger, medications = [] }: Props) {
+export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAttack, onSaveDetails, onAddLater, symptomOptions = [], reliefOptions = [], triggerOptions = [], onAddSymptom, onAddRelief, onAddTrigger, medications = [] }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [allUpdates, setAllUpdates] = useState(false);
-
-  if (editing && onSaveDetails) {
-    return (
-      <EditDetailsView
-        attack={attack}
-        triggerOptions={triggerOptions}
-        onAddTrigger={onAddTrigger}
-        onCancel={() => setEditing(false)}
-        onSave={(patch) => { onSaveDetails(patch); setEditing(false); }}
-      />
-    );
-  }
+  const [editing, setEditing] = useState<EditField | null>(null);
+  // The running length, and an edit window closing while the screen is open.
+  useNowTick();
 
   const ongoing = attack.end === null;
   const start = attack.snapshots[0].time;
   const peak = attackMaxSeverity(attack);
   const side = attackSide(attack);
   const outcomes = attackDoseOutcomes(attack);
-  const firstDoses = attackFirstDoses(attack, isRetired, formatDuration);
-  const symptoms = [...new Set(attack.snapshots.flatMap((s) => s.symptoms ?? []))].filter((x) => !isRetired(x));
-  const letterFor = (name: string) => classLetter(findMedication(medications, name)?.class);
+  const windows = editWindows(attack);
+  const all = (key: 'symptoms' | 'reliefs') =>
+    [...new Set(attack.snapshots.flatMap((s) => s[key] ?? []))].filter((x) => !isRetired(x));
+  const symptoms = all('symptoms');
+  const reliefs = all('reliefs');
+  const letterFor = (name: string) => classLetter(resolveDose({ name }, medications).med?.class);
 
-  // "Wed 08:17 – Thu 08:26", or just the end time when it's the same day.
-  // An unknown end ("gone when you woke up," no time added) never states the
-  // placeholder as a fact — same rule as the duration tile.
-  const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short' });
-  const sameDay = (a: string, b: string) => new Date(a).toDateString() === new Date(b).toDateString();
-  const span = `${day(start)} ${formatTime(start)} – ${
-    !attack.end ? 'now'
-    : !hasKnownDuration(attack) ? 'end time not recorded'
-    : `${sameDay(start, attack.end) ? '' : `${day(attack.end)} `}${formatTime(attack.end)}`
-  }`;
+  const title = !hasKnownDuration(attack) || sameDay(start, attack.end!)
+    ? formatDate(start)
+    // "Mon 17 – Tue, Aug 18": the month once, so it fits between the buttons.
+    : `${weekday(start)} ${new Date(start).getDate()} – ${formatDate(attack.end!)}`;
 
   // Where it hurt: each area's worst, and its value at the last reading. An
   // area absent from the last reading is **not recorded**, never "gone" — the
   // update wizard starts blank, so the app cannot tell "it stopped" from "I
-  // only logged the worst one" (the rule SeverityBreakdown was built on).
-  //
-  // The last reading *with any area at all* — not simply the attack's last
-  // snapshot, which can itself carry none (EndAttackForm's own closing
-  // "what was it like" reading, symptoms/reliefs only). That reading isn't
-  // a pain score to read "every area, not recorded" against; it just hasn't
-  // said anything about pain, the same way a reading before it might not.
-  const last = [...attack.snapshots].reverse().find((s) => Object.keys(s.areas).length > 0) ?? attack.snapshots[attack.snapshots.length - 1];
-  const areaNames = [...new Set(attack.snapshots.flatMap((s) => Object.keys(s.areas)))];
-  const areas = areaNames
+  // only logged the worst one". "Last" is the last reading with any area, and
+  // its time is printed: it can be hours before the end.
+  const scored = attack.snapshots.filter((s) => Object.keys(s.areas).length > 0);
+  const last = scored[scored.length - 1];
+  const areas = [...new Set(scored.flatMap((s) => Object.keys(s.areas)))]
     .map((name) => ({
       name,
-      peak: Math.max(...attack.snapshots.map((s) => s.areas[name] ?? 0)),
-      end: last.areas[name] ?? null,
+      worst: Math.max(...scored.map((s) => s.areas[name] ?? 0)),
+      last: last?.areas[name] ?? null,
     }))
-    .sort((a, b) => b.peak - a.peak || a.name.localeCompare(b.name));
-
-  // Updates, newest first, with the end as its own row. A placeholder end
-  // ("gone when you woke up," no time added) shows no time at all rather
-  // than the guess — `timeUnknown` blanks the clock column below.
-  type Update = { key: string; time: string; title: string; more: string; timeUnknown?: boolean };
-  const updates: Update[] = [
-    ...(attack.end
-      ? [{
-          key: 'end',
-          time: attack.end,
-          title: 'Attack ended',
-          more: hasKnownDuration(attack) ? '' : 'Time not recorded',
-          timeUnknown: !hasKnownDuration(attack),
-        }]
-      : []),
-    ...[...attack.snapshots].reverse().map((s, i) => ({
-      key: `${s.time}-${i}`,
-      time: s.time,
-      // A reading with no areas at all (EndAttackForm's own closing "what
-      // was it like" snapshot, or — per lessons learned — a no-change reply
-      // carried forward from one) hasn't reported a pain score —
-      // `maxSeverity` reads it as 0, which isn't one. Checked before the
-      // `notification_no_change` case, not after: a no-change reading can
-      // itself be area-less when it carried one forward from such a
-      // reading, and "No change · pain 0" is exactly as wrong as "Pain 0".
-      title: Object.keys(s.areas).length === 0
-        ? (s.source === 'notification_no_change' ? 'No change' : 'Update')
-        : (s.source === 'notification_no_change' ? `No change · pain ${maxSeverity(s)}` : `Pain ${maxSeverity(s)}`),
-      more: [
-        Object.entries(s.areas).sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n} ${v}`).join(' · '),
-        s.medication?.name ? `Took ${s.medication.name}` : null,
-        s.reliefs.length ? `Tried ${s.reliefs.join(', ')}` : null,
-        s.note ? `“${s.note}”` : null,
-      ].filter(Boolean).join(' · '),
-    })),
-  ];
-  const shownUpdates = allUpdates ? updates : updates.slice(0, 3);
-  const spansDays = !sameDay(start, attack.end ?? new Date().toISOString());
-
-  const impact = attack.impact !== undefined ? IMPACT_OPTIONS.find((o) => o.value === attack.impact)?.label : undefined;
+    .sort((a, b) => b.worst - a.worst || a.name.localeCompare(b.name));
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col bg-bg-base">
+    <div className="relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col bg-bg-base">
       <div
-        className="relative flex items-center px-2 py-2"
-        style={{ paddingTop: 'calc(0.5rem + env(safe-area-inset-top))' }}
+        className="flex items-center gap-2 px-3.5 pb-2 pt-3.5"
+        style={{ paddingTop: 'calc(0.875rem + env(safe-area-inset-top))' }}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Back"
-          className="flex size-target items-center justify-center rounded-full text-text-primary transition-colors hover:bg-bg-raised"
+          className="flex size-target shrink-0 items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
-        <h2 className="pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-base font-semibold text-text-primary">
-          {formatDate(start)}
-        </h2>
+        <h2 className="min-w-0 flex-1 text-center text-base font-semibold text-text-primary">{title}</h2>
         <button
           type="button"
           onClick={() => setConfirmDelete(true)}
           aria-label="Delete attack"
-          className="ml-auto flex size-target items-center justify-center rounded-full text-text-primary transition-colors hover:bg-severity-high/15 hover:text-severity-high"
+          className="flex size-target shrink-0 items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:text-severity-high"
         >
-          <BinIcon className="h-6 w-6" />
+          <BinIcon className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
+      {/* `relative` so the screen-reader-only text in here is positioned inside
+          the scroller. Against the root it stuck out below the screen, and
+          moving focus scrolled the whole app shell up to reach it. */}
+      <div className="relative min-h-0 flex-1 space-y-3.5 overflow-y-auto px-gutter pb-6 pt-2 sm:px-gutter-wide">
         {/* The v4 board's flag (07-detail, `DetailFlagged`). Two ways out:
             Confirm here, or the bin in the header. Confirming writes
             `confirmedReal` only — the readings stay as logged — and the
@@ -199,173 +150,118 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
               <span className="block text-[0.9375rem] font-semibold text-text-primary">Under 5 minutes</span>
               <span className="block text-xs text-text-secondary">If it was started by accident, you can delete it.</span>
             </span>
-            {onSaveDetails && (
-              <button
-                type="button"
-                onClick={() => onSaveDetails({ confirmedReal: true })}
-                aria-label="Keep this attack"
-                className="inline-flex min-h-target flex-none items-center gap-1.5 px-1 text-sm font-medium text-text-primary"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
-                  <path d="M5 12l5 5 9-10" />
-                </svg>
-                Keep it
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => onSaveDetails({ confirmedReal: true })}
+              aria-label="Keep this attack"
+              className="inline-flex min-h-target flex-none items-center gap-1.5 px-1 text-sm font-medium text-text-primary"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                <path d="M5 12l5 5 9-10" />
+              </svg>
+              Keep it
+            </button>
           </div>
         )}
 
         <div className="grid grid-cols-3 gap-2.5">
+          <LengthTile attack={attack} />
+          <Tile label="worst" figure={<SevBox value={peak} className="h-9 w-11 text-lg" />} />
           <Tile
-            value={!ongoing && !hasKnownDuration(attack) ? '—' : formatDuration(start, attack.end)}
-            label={!ongoing && !hasKnownDuration(attack) ? 'not recorded' : ongoing ? 'so far' : 'long'}
+            label={side ? SIDE_LABELS[side].toLowerCase() : 'side not recorded'}
+            figure={side
+              ? <SideGlyph side={side} tinted className="h-9 w-auto" />
+              : <span aria-hidden="true" className="text-lg text-text-secondary">–</span>}
           />
-          <Tile value={String(peak)} label="peak pain" />
-          <div className="flex flex-col items-center justify-center gap-1 rounded-card bg-bg-surface p-3 text-center">
-            {side
-              ? <SideGlyph side={side} className="h-[2.125rem] w-auto text-text-secondary" />
-              : <span aria-hidden="true" className="h-[2.125rem]" />}
-            <span className="text-xs text-text-secondary">{side ? SIDE_LABELS[side].toLowerCase() : 'side not recorded'}</span>
-          </div>
         </div>
-        <p className="-mt-1 text-center text-xs text-text-secondary">{span}</p>
 
-        <PainChart attack={attack} letterFor={letterFor} />
+        <Times attack={attack} windows={windows} onEdit={setEditing} />
+
+        <AttackPainChart attack={attack} letterFor={letterFor} />
 
         <h3 className="pt-2 text-lg font-semibold text-text-primary">Medication</h3>
         {outcomes.length === 0 ? (
-          <div className="rounded-card bg-bg-surface p-card text-xs text-text-secondary">Nothing taken for this attack.</div>
-        ) : outcomes.map((o) => {
-          const timing = firstDoses.find((d) => d.name === o.name)?.timing;
-          const lib = findMedication(medications, o.name);
-          const amount = o.amount ? unitsLabel(o.amount, lib) : o.dose;
-          return (
-            <div key={o.name} className="space-y-2 rounded-card bg-bg-surface p-card">
-              <div className="flex items-center gap-3">
-                <ClassBadge large>{letterFor(o.name) ?? <MedIcon name={o.name} dose={o.dose} className="h-4 w-4" />}</ClassBadge>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-text-primary">{[o.name, amount].filter(Boolean).join(' · ')}</p>
-                  {/* "at onset" for a dose on the first reading — the most
-                      useful answer about acute treatment, not missing data. */}
-                  <p className="text-xs text-text-secondary">
-                    {timing === 'at onset' ? 'when the attack started' : `${timing} the attack started`}
-                  </p>
-                </div>
-              </div>
-              <p className={`flex items-start gap-2.5 rounded-control bg-bg-base px-3.5 py-2.5 text-sm text-text-primary ${
-                o.verdict === 'helped' ? 'ring-2 ring-inset ring-accent' : ''
-              }`}>
-                <VerdictMark verdict={o.verdict} className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>{outcomeText(o)}</span>
-              </p>
-            </div>
-          );
-        })}
+          <p className="rounded-card bg-bg-surface p-card text-xs text-text-secondary">Nothing taken for this attack.</p>
+        ) : (
+          <ul className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
+            {outcomes.map((o, i) => (
+              <DoseRow key={`${o.time}-${i}`} outcome={o} attack={attack} medications={medications} letter={letterFor(o.name)} />
+            ))}
+          </ul>
+        )}
+
+        <WhatItWasLike attack={attack} windows={windows} symptoms={symptoms} reliefs={reliefs} onEdit={setEditing} />
 
         {areas.length > 0 && (
           <>
             <h3 className="pt-2 text-lg font-semibold text-text-primary">Where it hurt</h3>
             <div className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
               <div className="flex items-center gap-3 px-4 py-2 text-xs text-text-secondary">
-                <span className="flex-1" />
-                <span className="w-11 text-center">peak</span>
-                <span className="w-11 text-center">{ongoing ? 'now' : 'end'}</span>
+                <span className="flex-1">Area</span>
+                <span className="w-14 text-center">Worst</span>
+                {scored.length > 1 && <span className="w-16 text-center">Last logged</span>}
               </div>
               {areas.map((z) => (
                 <div key={z.name} className="flex min-h-14 items-center gap-3 px-4 py-2">
                   <span className="min-w-0 flex-1 text-sm text-text-primary">{z.name}</span>
-                  <ShadedValue value={z.peak} />
-                  {z.end !== null ? <ShadedValue value={z.end} /> : (
-                    <span className="flex h-9 w-11 items-center justify-center rounded-badge text-sm text-text-secondary ring-1 ring-inset ring-bg-border">
-                      <span aria-hidden="true">–</span>
-                      <span className="sr-only">Not recorded at the last update</span>
+                  <span className="flex w-14 justify-center"><SevBox value={z.worst} /></span>
+                  {scored.length > 1 && (
+                    <span className="flex w-16 justify-center">
+                      {z.last !== null ? <SevBox value={z.last} /> : (
+                        <span className="flex h-9 w-11 items-center justify-center rounded-badge text-sm text-text-secondary ring-1 ring-inset ring-bg-border">
+                          <span aria-hidden="true">–</span>
+                          <span className="sr-only">Not recorded at the last reading</span>
+                        </span>
+                      )}
                     </span>
                   )}
                 </div>
               ))}
             </div>
+            {scored.length > 1 && (
+              <p className="-mt-1.5 text-xs text-text-secondary">
+                Last logged {sameDay(start, last.time) ? formatTime(last.time) : dayTime(last.time)}.
+                {areas.some((z) => z.last === null) && ' A dash means not recorded then.'}
+              </p>
+            )}
           </>
         )}
 
-        {symptoms.length > 0 && (
-          <>
-            <h3 className="pt-2 text-lg font-semibold text-text-primary">Symptoms</h3>
-            <ul className="grid grid-cols-4 gap-2">
-              {symptoms.map((sym) => (
-                <li key={sym} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-1.5 rounded-card bg-bg-surface px-1 py-2 text-center text-xs text-text-primary ring-1 ring-inset ring-bg-border">
-                  <SymptomIcon name={sym} className="h-6 w-6 text-text-secondary" />
-                  <span className="leading-tight [overflow-wrap:anywhere]">{sym}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-
-        <h3 className="pt-2 text-lg font-semibold text-text-primary">Updates</h3>
-        <ol className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
-          {shownUpdates.map((u) => (
-            <li key={u.key} className="flex items-start gap-3 px-4 py-3">
-              <span className="w-12 shrink-0 text-xs tabular-nums text-text-secondary">
-                {!u.timeUnknown && spansDays && <span className="block">{day(u.time)}</span>}
-                {u.timeUnknown ? '—' : formatTime(u.time)}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-text-primary">{u.title}</span>
-                {u.more && <span className="block text-xs text-text-secondary">{u.more}</span>}
-              </span>
-            </li>
-          ))}
-        </ol>
-        {updates.length > 3 && (
-          <button
-            type="button"
-            onClick={() => setAllUpdates((v) => !v)}
-            className="min-h-target px-1 text-sm font-medium text-accent-light"
-          >
-            {allUpdates ? 'Show fewer' : `Show all ${updates.length} updates`}
-          </button>
-        )}
-
-        {/* Read-only. Impact is asked once, live, as a step of EndAttackForm;
-            offering it here would invite an answer reconstructed days later,
-            so an unanswered one shows nothing rather than an empty control. */}
-        {(impact || attack.triggers.length > 0 || attack.wokeWithMigraine || (attack.painQuality && attack.painQuality.length > 0)) && (
-          <dl className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
-            {impact && <Row term="Impact on your day" value={impact} />}
-            {attack.painQuality && attack.painQuality.length > 0 && (
-              <Row term="What it was like" value={attack.painQuality.join(', ')} />
-            )}
-            {attack.triggers.length > 0 && (
-              <Row
-                term="The two days before"
-                value={
-                  attack.triggers.filter((t) => t !== NOTHING_UNUSUAL).join(', ')
-                    || 'Nothing unusual'
-                }
-              />
-            )}
-            {attack.wokeWithMigraine && <Row term="Started" value="Woke up with it" />}
-          </dl>
-        )}
+        <h3 className="pt-2 text-lg font-semibold text-text-primary">Timeline</h3>
+        <AttackTimeline attack={attack} medications={medications} letterFor={letterFor} />
       </div>
 
       {/* Footer — pinned above the home indicator. "Add update" is offered on
-          past attacks too, so a retrospective log can be backfilled. Edit is
-          metadata only (docs/editing-assessment.md) and waits until the
-          attack has ended; while it runs, End attack takes its place. */}
+          past attacks too, so a retrospective log can be backfilled. The two
+          sit side by side and stack when large text leaves no room. */}
       <div
-        className="flex gap-2.5 bg-bg-base px-gutter py-3 sm:px-gutter-wide"
+        className="flex flex-wrap gap-2.5 bg-bg-base px-gutter py-3 sm:px-gutter-wide"
         style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
       >
-        {ongoing && onEndAttack ? (
-          <button type="button" onClick={onEndAttack} className="btn-secondary flex-1">End attack</button>
-        ) : onSaveDetails ? (
-          <button type="button" onClick={() => setEditing(true)} className="btn-secondary flex-1">Edit this attack</button>
-        ) : null}
+        {ongoing && onEndAttack && (
+          <button type="button" onClick={onEndAttack} className="btn-secondary flex-1 whitespace-nowrap">End attack</button>
+        )}
         {onAddUpdate && (
-          <button type="button" onClick={onAddUpdate} className="btn-primary flex-[1.1]">Add update</button>
+          <button type="button" onClick={onAddUpdate} className="btn-primary flex-1 whitespace-nowrap">Add update</button>
         )}
       </div>
+
+      {editing && (
+        <AttackDetailEditor
+          field={editing}
+          attack={attack}
+          recorded={{ symptoms, reliefs }}
+          symptomOptions={symptomOptions}
+          reliefOptions={reliefOptions}
+          triggerOptions={triggerOptions}
+          onAddSymptom={onAddSymptom}
+          onAddRelief={onAddRelief}
+          onAddTrigger={onAddTrigger}
+          onSave={onSaveDetails}
+          onAddLater={onAddLater}
+          onClose={() => setEditing(null)}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDelete}
@@ -380,265 +276,208 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
   );
 }
 
-function Tile({ value, label }: { value: string; label: string }) {
+/** Figure over label, the figures sharing one row height so the three tiles
+ *  line up even when a label wraps. */
+function Tile({ figure, label }: { figure: React.ReactNode; label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-0.5 rounded-card bg-bg-surface p-3 text-center">
-      <span className="whitespace-nowrap text-[1.625rem] font-semibold leading-tight tabular-nums text-text-primary">{value}</span>
+    <div className="flex min-h-28 flex-col items-center gap-1.5 rounded-card bg-bg-surface px-2.5 pb-4 pt-5 text-center">
+      <span className="flex h-9 items-center justify-center">{figure}</span>
       <span className="text-xs text-text-secondary">{label}</span>
     </div>
   );
 }
 
-function ShadedValue({ value }: { value: number }) {
-  return (
-    <span
-      className="flex h-9 w-11 items-center justify-center rounded-badge text-sm font-semibold tabular-nums text-text-primary ring-1 ring-inset ring-bg-border"
-      style={{ background: peakShade(value) }}
-    >
-      {value}
-    </span>
-  );
-}
+const figureText = 'text-lg font-semibold tabular-nums leading-tight text-text-strong';
 
-function Row({ term, value }: { term: string; value: string }) {
-  return (
-    <div className="flex min-h-14 items-center gap-3 px-4 py-2">
-      <dt className="min-w-0 flex-1 text-sm text-text-primary">{term}</dt>
-      <dd className="max-w-[55%] text-right text-xs text-text-secondary">{value}</dd>
-    </div>
-  );
-}
-
-/** A dose's two-hour outcome, in a sentence. A missing reading is said as
- *  missing — never "didn't help", which would be a claim about the drug. */
-function outcomeText(o: DoseOutcome): string {
-  const dur = (ms: number) => formatDuration(new Date(0).toISOString(), new Date(ms).toISOString());
-  switch (o.verdict) {
-    case 'helped': return `Pain ${o.before} → ${o.after} at 2 hours · helped`;
-    case 'not-helped': return `Pain ${o.before} → ${o.after} at 2 hours · ${o.after === o.before ? 'no change' : "didn't help"}`;
-    case 'pending': return '2-hour reading to come';
-    case 'no-reading': return o.next
-      ? `No reading near 2 hours · next was ${o.next.severity} after ${dur(o.next.afterMs)}`
-      : 'No reading near 2 hours';
-  }
-}
-
-/**
- * Pain over time: the highest place at each update, evenly spaced (reminders
- * are answered when they are answered, so the gaps say more about the diary
- * than the attack), y pinned to 0…10 like every severity line in the app. Each
- * dose is a dashed line carrying its type letter. In accent rather than the
- * severity ramp — the numbers are printed in the cards below.
- */
-function PainChart({ attack, letterFor }: { attack: Attack; letterFor: (name: string) => string | null }) {
-  // A reading with no areas at all (EndAttackForm's own closing "what was
-  // it like" snapshot) hasn't reported a pain score — plotting it as 0
-  // would draw a drop to zero that was never logged. Every dose-carrying
-  // snapshot already has at least one area (the medication step always sits
-  // on a reading with areas), so filtering here never drops a dose's own
-  // marker, and `doses` below indexes into this same filtered array.
-  const scored = attack.snapshots.filter((s) => Object.keys(s.areas).length > 0);
-  const values = scored.map(maxSeverity);
-  const n = values.length;
-  const x = (i: number) => 26 + (n === 1 ? 150 : (i * 296) / (n - 1));
-  const y = (v: number) => 100 - v * 9;
-  const d = values.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)} ${y(v)}`).join(' ');
-  const doses = scored
-    .map((s, i) => ({ i, name: s.medication?.name?.trim() }))
-    .filter((m): m is { i: number; name: string } => !!m.name && !isRetired(m.name));
-  const label = `Pain over time: ${values.join(', ')}${doses.length ? `. Doses: ${doses.map((m) => m.name).join(', ')}` : ''}`;
-
-  return (
-    <div className="space-y-1.5 rounded-card bg-bg-surface p-card">
-      <h3 className="text-base font-semibold text-text-primary">Pain over time</h3>
-      <svg viewBox="0 0 326 132" role="img" aria-label={label} className="block h-auto w-full">
-        <text x="0" y="16" className="fill-text-secondary" fontSize="14" fontFamily="Lexend, sans-serif">10</text>
-        <text x="8" y="104" className="fill-text-secondary" fontSize="14" fontFamily="Lexend, sans-serif">0</text>
-        <line x1="26" y1="100" x2="326" y2="100" className="stroke-bg-border" strokeWidth="1.5" />
-        {doses.map((m) => (
-          <g key={`${m.i}-${m.name}`}>
-            <line x1={x(m.i)} y1="8" x2={x(m.i)} y2="100" className="stroke-text-secondary" strokeWidth="1.2" strokeDasharray="3 3" />
-            <rect x={x(m.i) - 11} y="106" width="22" height="22" rx="6" className="fill-bg-base stroke-accent" strokeWidth="1.5" />
-            <text x={x(m.i)} y="122" textAnchor="middle" fontSize="13" fontWeight="700" className="fill-text-primary" fontFamily="Lexend, sans-serif">
-              {letterFor(m.name) ?? '–'}
-            </text>
-          </g>
-        ))}
-        {n > 1
-          ? <path d={d} fill="none" className="stroke-accent-light" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          : <circle cx={x(0)} cy={y(values[0])} r="4" className="fill-accent-light" />}
-      </svg>
-      <p className="text-xs text-text-secondary">Highest place at each update · lettered lines are doses</p>
-    </div>
-  );
-}
-
-/**
- * "Edit details" — attack-level metadata only.
- *
- * The scope is the whole design (docs/editing-assessment.md): the fields here
- * describe the episode rather than any one reading, and all are already
- * rewritten elsewhere in the app today (`endAttack` writes `end`;
- * `wokeWithMigraine`, `triggers` and `painQuality` are set at creation and
- * otherwise never revisited — this is the only other place that can change
- * them, per A5/A4(i) of docs/redesign-v4-diff.md). Nothing here can reach
- * `snapshots`.
- *
- * `impact` is absent on purpose and must stay absent. It is asked once, live,
- * as a step of `EndAttackForm`, and left unanswered for good otherwise — a
- * level reconstructed later is the recall bias a prospective diary exists to
- * avoid, and it counts in the disability figures where an absent answer does
- * not.
- */
-function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSave }: {
-  attack: Attack;
-  triggerOptions: string[];
-  onAddTrigger?: (label: string) => void;
-  onCancel: () => void;
-  onSave: (patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality'>>) => void;
-}) {
-  const [triggers, setTriggers] = useState<string[]>(attack.triggers.filter((t) => t !== NOTHING_UNUSUAL));
-  // Same reasoning as `endTouched` below: this picker has no "Nothing
-  // unusual" chip of its own, so an untouched, still-empty `triggers` must
-  // not overwrite a stored `[NOTHING_UNUSUAL]` with `[]` — that would quietly
-  // turn an explicit "nothing unusual" answer back into "unanswered" the
-  // first time anyone opens this screen for an unrelated reason (reviewer
-  // finding, 2026-11-24). Only a real interaction with the picker counts.
-  const [triggersTouched, setTriggersTouched] = useState(false);
-  const [painQuality, setPainQuality] = useState<string[]>(attack.painQuality ?? []);
-  const [woke, setWoke] = useState<boolean>(attack.wokeWithMigraine ?? false);
-  const [end, setEnd] = useState<string>(() => isoToLocalInput(attack.end ?? undefined));
-  // Whether the user has actually touched the end-time field this visit —
-  // distinct from `end` differing from the stored value, because the field
-  // starts pre-filled with the placeholder guess on an endUnknown attack.
-  // Without this, opening the screen to change something else entirely and
-  // saving would silently "confirm" a guess nobody looked at.
-  const [endTouched, setEndTouched] = useState(false);
-
-  // An end time can never precede the last reading. Same clamp EndAttackDialog
-  // applies, and for the same reason: the picker is minute-precision while
-  // snapshots are second-precision, so choosing the exact minimum can land a
-  // few seconds early.
-  const minTime = attack.snapshots[attack.snapshots.length - 1].time;
-
-  function save() {
-    const patch: Partial<Pick<Attack, 'triggers' | 'wokeWithMigraine' | 'end' | 'painQuality'>> = {
-      painQuality,
-      wokeWithMigraine: woke,
-    };
-    // The sentinel never round-trips back in from this generic triggers
-    // picker — it has no chip for it and no way to re-add it — so `triggers`
-    // is only sent when the picker was actually touched. Sending it
-    // unconditionally would overwrite a stored `[NOTHING_UNUSUAL]` with `[]`
-    // on every save, including one made for an unrelated reason (painQuality,
-    // the end time), silently turning an explicit answer into "unanswered".
-    if (triggersTouched) {
-      patch.triggers = triggers;
+/** An unknown end never prints the placeholder as a length: it says the attack
+ *  ended in sleep, or — once a wake time is given — the most it can have been. */
+function LengthTile({ attack }: { attack: Attack }) {
+  const start = attack.snapshots[0].time;
+  if (attack.end !== null && !hasKnownDuration(attack)) {
+    if (!attack.wokeAt) {
+      return <Tile label="ended in sleep" figure={<MoonIcon className="h-8 w-8 text-accent-light" />} />;
     }
-    // Sent when the value actually changed, or — for an attack whose end is
-    // only a placeholder guess — whenever the user touched the field at all,
-    // even to re-pick the same minute. Either way is what clears endUnknown;
-    // a value that merely *displays* unchanged because it was never looked
-    // at must not.
-    if (attack.end !== null && end) {
-      const valueChanged = end !== isoToLocalInput(attack.end);
-      if (valueChanged || (attack.endUnknown && endTouched)) {
-        const iso = localInputToIso(end);
-        patch.end = iso < minTime ? minTime : iso;
-      }
-    }
-    onSave(patch);
+    // Whole hours, rounded up: it's a ceiling, not a measurement.
+    const mins = Math.ceil((new Date(attack.wokeAt).getTime() - new Date(start).getTime()) / 60_000);
+    const text = mins < 60 ? `${mins}m` : `${Math.ceil(mins / 60)}h`;
+    return <Tile label="length" figure={<span className={figureText}>up to {text}</span>} />;
   }
-
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div
-        className="flex items-center gap-3 border-b border-bg-border bg-bg-surface px-gutter sm:px-gutter-wide py-3"
-        style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
-      >
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-full p-2 text-text-secondary transition-colors hover:text-text-primary"
-          aria-label="Back"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
-        <h2 className="min-w-0 flex-1 truncate text-base font-medium text-text-primary">Edit details</h2>
-      </div>
+    <Tile
+      label={attack.end === null ? 'so far' : 'long'}
+      figure={<span className={`whitespace-nowrap ${figureText}`}>{formatDuration(start, attack.end)}</span>}
+    />
+  );
+}
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-gutter sm:px-gutter-wide py-4 space-y-6">
-        <p className="text-xs text-text-secondary">
-          This changes what's recorded about the attack as a whole. The readings themselves stay as they
-          were logged.
-        </p>
+/** Start and end. While the end (or wake time) can still be set, it is a row;
+ *  afterwards, one line of text. */
+function Times({ attack, windows, onEdit }: { attack: Attack; windows: EditWindows | null; onEdit: (f: EditField) => void }) {
+  const start = attack.snapshots[0].time;
+  const unknown = attack.end !== null && !hasKnownDuration(attack);
+  const open = !!windows?.endOpen;
+  const until = windows ? formatDate(windows.endUntil) : '';
 
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-text-primary">Onset</h3>
-          {/* Ring on both states, never a border: a border would make the
-              unpressed control 2px shorter, which is visible on a toggle
-              sitting alone — exactly how this one was caught before. */}
-          <button
-            type="button"
-            aria-pressed={woke}
-            onClick={() => setWoke((w) => !w)}
-            className={`flex w-full items-center gap-2 rounded-control px-4 py-3 text-left text-sm font-medium transition-colors ${chipClass(woke)}`}
-          >
-            <SunriseIcon className="h-4 w-4 shrink-0" />
-            <span className="flex-1">Woke up with this attack</span>
-            <ChipCheck selected={woke} />
-          </button>
-        </div>
-
-        {attack.end !== null && (
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-text-primary">Ended</h3>
-            <DateTimeField
-              label="End time"
-              value={end}
-              min={isoToLocalInput(minTime)}
-              max={isoToLocalInput()}
-              onChange={(v) => { setEnd(v); setEndTouched(true); }}
-            />
-            <p className="text-xs text-text-secondary">
-              {attack.endUnknown && 'Not recorded — this is a placeholder. '}
-              It can't be set before the last reading at {formatTime(minTime)}.
-            </p>
+  if (unknown) {
+    return (
+      <>
+        <p className="text-center text-xs text-text-secondary">Started {dayTime(start)}. Gone when you woke up.</p>
+        {(open || attack.wokeAt) && (
+          <div className="overflow-hidden rounded-card bg-bg-surface">
+            <Row label="When did you wake?" value={attack.wokeAt ? dayTime(attack.wokeAt) : 'Add'} onClick={open ? () => onEdit('wake') : undefined} />
           </div>
         )}
+        {(open || attack.wokeAt) && (
+          <p className="-mt-1.5 text-xs text-text-secondary">
+            {attack.wokeAt && 'Left out of average length. '}
+            {open && `Can be ${attack.wokeAt ? 'changed' : 'added'} until ${until}.`}
+          </p>
+        )}
+      </>
+    );
+  }
 
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-text-primary">
-            Felt like <span className="font-normal text-text-secondary">— pick any</span>
-          </h3>
-          <ChipSelector options={PAIN_QUALITY_OPTIONS} selected={painQuality} onChange={setPainQuality} />
+  if (!open) {
+    const end = attack.end === null ? 'now' : sameDay(start, attack.end) ? formatTime(attack.end) : dayTime(attack.end);
+    return <p className="text-center text-xs text-text-secondary">{dayTime(start)} – {end}</p>;
+  }
+
+  return (
+    <>
+      <div className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
+        <Row label="Started" value={dayTime(start)} />
+        <Row label="Ended" value={dayTime(attack.end!)} onClick={() => onEdit('end')} />
+      </div>
+      <p className="-mt-1.5 text-xs text-text-secondary">The end time can be changed until {until}.</p>
+    </>
+  );
+}
+
+/** What describes the attack as a whole. Editable rows while the window is
+ *  open; afterwards (and while ongoing) only what was answered, as text. */
+function WhatItWasLike({ attack, windows, symptoms, reliefs, onEdit }: {
+  attack: Attack;
+  windows: EditWindows | null;
+  symptoms: string[];
+  reliefs: string[];
+  onEdit: (f: EditField) => void;
+}) {
+  const open = !!windows?.answersOpen;
+  const quality = attack.painQuality ?? [];
+  const before = attack.triggers.filter((t) => t !== NOTHING_UNUSUAL && !isRetired(t)).join(', ')
+    || (attack.triggers.includes(NOTHING_UNUSUAL) ? 'Nothing unusual' : '');
+  const edit = (f: EditField) => (open ? () => onEdit(f) : undefined);
+
+  const rows = [
+    (open || attack.wokeWithMigraine) && (
+      <Row key="woke" label="Woke up with it" value={attack.wokeWithMigraine ? 'Yes' : 'No'} onClick={edit('woke')} />
+    ),
+    (open || quality.length > 0) && (
+      <Row key="quality" label="Felt like" value={quality.join(', ') || 'Add'} onClick={edit('quality')} />
+    ),
+    (open || symptoms.length > 0) && (
+      <Row key="symptoms" label="Symptoms" value={symptoms.length ? <MarkChips kind="symptom" names={symptoms} /> : 'Add'} stacked={symptoms.length > 0} onClick={edit('symptoms')} />
+    ),
+    (open || reliefs.length > 0) && (
+      <Row key="reliefs" label="Tried" value={reliefs.length ? <MarkChips kind="relief" names={reliefs} /> : 'Add'} stacked={reliefs.length > 0} onClick={edit('reliefs')} />
+    ),
+    // Read-only, always. Impact is asked once, live, as a step of
+    // EndAttackForm; offering it here would invite an answer reconstructed
+    // later, so an unanswered one shows nothing.
+    attack.impact !== undefined && <Row key="impact" label="Stopped you" value={END_IMPACT_LABELS[attack.impact]} />,
+    (open || before) && (
+      <Row key="before" label="The two days before" value={before || 'Add'} onClick={edit('before')} />
+    ),
+  ].filter(Boolean);
+
+  if (rows.length === 0) return null;
+  return (
+    <>
+      <h3 className="pt-2 text-lg font-semibold text-text-primary">What it was like</h3>
+      <div className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">{rows}</div>
+      {windows && (
+        <p className="-mt-1.5 text-xs text-text-secondary">
+          {open
+            ? `Can be changed until ${formatDatetime(windows.answersUntil)}.`
+            : `These answers closed on ${formatDate(windows.answersUntil)}.`}
+        </p>
+      )}
+    </>
+  );
+}
+
+/** A label and its value. With `onClick` it is a button with a chevron — the
+ *  only sign a row can be changed, so a read-only row must have neither.
+ *  `stacked` puts the value under the label (chips). */
+function Row({ label, value, stacked = false, onClick }: {
+  label: string;
+  value: React.ReactNode;
+  stacked?: boolean;
+  onClick?: () => void;
+}) {
+  const body = stacked ? (
+    <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <span className="text-sm text-text-secondary">{label}</span>
+      {value}
+    </span>
+  ) : (
+    <>
+      <span className="min-w-0 flex-1 text-sm text-text-secondary">{label}</span>
+      <span className={`max-w-[62%] text-right text-sm ${onClick ? 'font-medium text-accent-light' : 'text-text-primary'}`}>{value}</span>
+    </>
+  );
+  const cls = 'flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left';
+  if (!onClick) return <div className={cls}>{body}</div>;
+  return (
+    <button type="button" onClick={onClick} className={`${cls} transition-colors hover:bg-bg-raised`}>
+      {body}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0 text-text-secondary" aria-hidden="true">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </button>
+  );
+}
+
+/** One intake: what and when on the left; the worst pain at the time and at
+ *  the reading nearest two hours on the right, with how long after that was.
+ *  A missing reading is said as missing — never "didn't help", which would be
+ *  a claim about the drug. */
+function DoseRow({ outcome: o, attack, medications, letter }: {
+  outcome: DoseOutcome;
+  attack: Attack;
+  medications: Medication[];
+  letter: string | null;
+}) {
+  const snap = attack.snapshots.find((s) => s.time === o.time && s.medication?.name?.trim() === o.name);
+  const lib = resolveDose(snap?.medication, medications).med;
+  const at = sameDay(attack.snapshots[0].time, o.time) ? formatTime(o.time) : dayTime(o.time);
+  const amount = o.amount ? unitsLabel(o.amount, lib) : o.dose;
+  const hours = o.afterMs === null ? 0 : Math.round(o.afterMs / 3_600_000);
+  const before = o.before > 0 ? o.before : '–';
+  const pain = o.after !== null ? `Pain ${before} → ${o.after}` : o.verdict === 'pending' ? `Pain ${before} → …` : `Pain ${before}`;
+  const under = o.after !== null
+    ? `${hours} h later`
+    : o.verdict === 'pending' ? '2 h to come' : 'no 2 h reading';
+  return (
+    <li className="flex items-center gap-3 px-4 py-3">
+      <ClassBadge>{letter ?? <MedIcon name={o.name} dose={o.dose} className="h-4 w-4" />}</ClassBadge>
+      {/* Wraps: with large text the pain scores move under the name instead of
+          squeezing it to a letter per line. */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <div className="min-w-[9rem] flex-1">
+          {/* An amount means `dose` is the strength-bearing text; without one,
+              `dose` is all that was recorded and goes on the second line. */}
+          <p className="text-sm font-medium text-text-primary [overflow-wrap:anywhere]">
+            {[o.name, o.amount ? lib?.strength : null].filter(Boolean).join(' ')}
+          </p>
+          <p className="text-xs text-text-secondary">{amount ? `${amount} at ${at}` : `At ${at}`}</p>
         </div>
-
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-text-primary">The two days before</h3>
-          <ChipSelector
-            options={triggerOptions}
-            selected={triggers}
-            onChange={(v) => { setTriggers(v); setTriggersTouched(true); }}
-            onAddCustom={onAddTrigger}
-            renderIcon={(t) => <TriggerIcon name={t} className="h-4 w-4" />}
-          />
+        <div className="ml-auto text-right">
+          <p className="whitespace-nowrap text-sm font-medium tabular-nums text-text-primary">{pain}</p>
+          <p className="whitespace-nowrap text-xs text-text-secondary">{under}</p>
+          {o.verdict === 'helped' && <p className="text-xs font-medium text-accent-light">helped</p>}
         </div>
       </div>
-
-      <div
-        className="flex flex-col gap-2 border-t border-bg-border bg-bg-surface px-gutter sm:px-gutter-wide py-4"
-        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
-      >
-        <button type="button" onClick={save} className="btn-primary w-full rounded-control py-control-y text-sm font-medium transition-colors">
-          Save changes
-        </button>
-        <button type="button" onClick={onCancel} className="btn-secondary w-full rounded-control py-control-y text-sm font-medium transition-colors">
-          Cancel
-        </button>
-      </div>
-    </div>
+    </li>
   );
 }

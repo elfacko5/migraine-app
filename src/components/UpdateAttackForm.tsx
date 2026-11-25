@@ -13,6 +13,7 @@ import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SymptomIcon, ReliefIcon } from './drawnIcons';
 import { ConfirmDialog } from './ConfirmDialog';
+import { lastReading } from '../utils/readings';
 
 interface Props {
   attack: Attack;
@@ -118,7 +119,9 @@ function blank(defaultTime: string): FormState {
  * the app, not only from a reminder's own quick reply.
  */
 export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], onAddSymptom, onAddRelief, onClose, onSave, onNoChange }: Props) {
-  const prev = attack.snapshots[attack.snapshots.length - 1];
+  // Not simply the last snapshot: one that only says what the attack was like
+  // is stamped at the end, and would force every new update onto it.
+  const prev = lastReading(attack);
   const minTime = prev.time;
   const maxTime = attack.end ?? new Date().toISOString();
   // The last reading that actually rated an area — not simply `prev`, which

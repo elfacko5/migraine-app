@@ -16,7 +16,8 @@ create table if not exists attacks (
   impact smallint,                               -- 0-3, null = never answered
   pain_quality text[] not null default '{}',
   end_unknown boolean not null default false,
-  confirmed_real boolean not null default false
+  confirmed_real boolean not null default false,
+  woke_at timestamptz                            -- "gone when you woke up": when you woke
 );
 
 create index if not exists attacks_user_id_idx on attacks (user_id);
@@ -33,6 +34,10 @@ create index if not exists attacks_user_id_idx on attacks (user_id);
 -- alter table attacks add column if not exists pain_quality text[] not null default '{}';
 -- alter table attacks add column if not exists end_unknown boolean not null default false;
 -- alter table attacks add column if not exists confirmed_real boolean not null default false;
+
+-- Attack detail's "When did you wake?" (2026-11-25). Run once before using it:
+-- an attack with a wake time fails to sync until this column exists.
+-- alter table attacks add column if not exists woke_at timestamptz;
 
 alter table attacks enable row level security;
 

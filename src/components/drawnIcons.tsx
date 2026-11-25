@@ -531,17 +531,25 @@ const FACE_SCREEN_RIGHT =
 const FACE_SCREEN_LEFT =
   'M3.269 185.043C-1.261 152.665 -21.571 -0.358 139.899 0C141.629 0.004 143.339 0.021 145.029 0.052C144.999 131.127 144.999 349.554 145.119 436.818C94.709 438.563 37.139 363.736 27.949 338.379C7.319 281.493 8.179 220.115 3.269 185.043Z';
 
-export function SideGlyph({ side, className = 'h-9 w-auto' }: {
+export function SideGlyph({ side, className = 'h-9 w-auto', tinted = false }: {
   side: 'left' | 'right' | 'both';
   className?: string;
+  /** Both halves in sage — Attack detail's tile, where the grey read as dead
+   *  against the rest of the screen (2026-11-25). Otherwise `currentColor`. */
+  tinted?: boolean;
 }) {
   const subjectLeft = side === 'left' || side === 'both';
   const subjectRight = side === 'right' || side === 'both';
   return (
     <svg viewBox="0 0 291.3 436.84" className={className} aria-hidden="true">
       {/* Screen-left is the subject's right, and vice versa — see above. */}
-      <path d={FACE_SCREEN_LEFT} fill="currentColor" fillOpacity={subjectRight ? 0.85 : 0.16} />
-      <path d={FACE_SCREEN_RIGHT} fill="currentColor" fillOpacity={subjectLeft ? 0.85 : 0.16} />
+      {([[FACE_SCREEN_LEFT, subjectRight], [FACE_SCREEN_RIGHT, subjectLeft]] as const).map(([d, lit]) => (
+        tinted ? (
+          <path key={d} d={d} style={{ fill: lit ? 'var(--color-accent-light)' : 'color-mix(in srgb, var(--color-accent) 40%, var(--color-bg-surface))' }} />
+        ) : (
+          <path key={d} d={d} fill="currentColor" fillOpacity={lit ? 0.85 : 0.16} />
+        )
+      ))}
     </svg>
   );
 }

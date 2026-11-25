@@ -334,11 +334,20 @@ One row per area: name, sparkline, peak, now. Rows sorted by peak descending. Mi
 
 ## Attack detail (`AttackDetail.tsx`)
 
-Drill-down (enter from right, back chevron). Tiles for duration/peak/side, span, pain-over-time chart, drug cards with timing + outcome, where-it-hurt areas, symptom tiles, last 3 updates, impact/triggers/woke-with.
+Drill-down (enter from right, filled-circle back and bin buttons). Rebuilt 2026-11-25 — reasoning in `docs/decisions.md`, "Attack detail rebuilt". Order: tiles (length / worst as a solid `SevBox` / sage side glyph) → start and end → pain chart → medication → **what it was like** → where it hurt → timeline. Parts: `AttackPainChart`, `AttackTimeline`, `AttackDetailEditor`, `AttackDetailParts`.
 
-- Footer: ongoing = End + Update; ended = Edit + Update. "Add update" offered on past attacks too.
-- **Edit is metadata-only** (`updateAttackDetails`): `wokeWithMigraine`, `end`, `triggers`. **`impact` excluded** — asked once, live, as `EndAttackForm`'s own step; `endAttack` is the only writer, and an attack ended outside that flow (slept-through, skipped, or backfilled via `PastAttackForm`) stays permanently unanswered. No Today fallback (`ImpactPrompt` removed).
-- `ConfirmDialog` for delete. `EndAttackDialog` reused (Just now / Earlier presets, minute-precision clamping).
+- **No edit screen.** Each editable thing is its own row (button + chevron); a read-only row has neither. Never add a combined "Edit this attack" back.
+- **Edit windows** (`utils/editWindow.ts`): woke-with-it, pain quality, symptoms, reliefs, two-days-before for **48 h**; end or wake time for **7 days**; both from the later of the end and `attack.id`. After that, text only, and unanswered rows disappear. Nothing is edited while ongoing.
+- **`impact` stays read-only** ("Stopped you", `END_IMPACT_LABELS`) — asked only as `EndAttackForm`'s step; `endAttack` is its only writer.
+- **Symptoms and reliefs are add-only** (`addLaterDetails`): a new area-less reading at the end time, `addedLater: true`, shown under "Added later" on the end row. Existing snapshots are never rewritten.
+- **A details-only reading's time means nothing** (`isDetailOnly`, `utils/readings.ts`): it's stamped at an end that can later change. Bound end/update times with `lastReading`, leave these out of severity averages, and draw them on the end row.
+- **Unknown end** ("gone when you woke up"): never a length. Moon + "ended in sleep"; optional `wokeAt` shows "up to Xh" and is still excluded from duration figures. `woke_at` is pushed **only when set**.
+- Chart: 1–10, readings evenly spaced, nothing drawn after the last reading, max four time labels.
+- Medication: **one row per intake**, "Pain 5 → 3 / N h later / helped" from `attackDoseOutcomes`.
+- "Where it hurt": Worst / **Last logged** (never "end" — it can be hours earlier); dash = not recorded.
+- Timeline: every reading oldest first. `no_change` lists no areas.
+- Footer: Add update; End attack beside it while ongoing. Wraps at large text.
+- `ConfirmDialog` for delete. The under-5-minutes card sits on top.
 
 ## Pain areas
 
