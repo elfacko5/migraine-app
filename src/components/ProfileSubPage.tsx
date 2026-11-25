@@ -87,9 +87,12 @@ export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'ba
         {children}
       </div>
 
+      {/* Page colour with a hairline, as every v4 board draws it (decision 17).
+          It was still bg-surface after the page itself moved to bg-base, so a
+          disabled button sat on a lighter strip and read as a grey slab. */}
       {footer && (
         <div
-          className="border-t border-border-subtle bg-bg-surface px-gutter py-4"
+          className="border-t border-bg-border bg-bg-base px-gutter py-4"
           style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         >
           {footer}

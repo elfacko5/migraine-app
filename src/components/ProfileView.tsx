@@ -14,6 +14,7 @@ import { SectionLabel, SettingsList, SettingsRow, Switch } from './settingsUi';
 import { pendingReminders, notificationPermission, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
+import appIcon from '../assets/app-icon.png';
 import type { NotificationConfig } from '../types';
 
 const SCALES: TextScale[] = ['xs', 'sm', 'md', 'lg', 'xl'];
@@ -41,9 +42,10 @@ interface MenuProps {
 
 type MenuItem = { id: ProfileSection; Icon: (p: { className?: string }) => React.ReactElement; label: string };
 
-// Lidd's version, bumped by hand — there is no real build-pipeline number to
-// show, so no fake "build N".
+// Lidd's version, bumped by hand to match MARKETING_VERSION in Xcode. The
+// build is `__APP_BUILD__` (vite.config.ts) — a real count, never a made-up N.
 const APP_VERSION = '1.0';
+const VERSION_LINE = __APP_BUILD__ ? `Version ${APP_VERSION} · build ${__APP_BUILD__}` : `Version ${APP_VERSION}`;
 
 // About's mark is a Lucide info glyph — a generic UI affordance, inlined to the
 // same contract as the drawn icons (24×24, currentColor). A function
@@ -136,11 +138,16 @@ export function AboutPanel({ onClose, email }: { onClose: () => void; email: str
   const [view, setView] = useState<'about' | 'feedback'>('about');
   if (view === 'feedback') return <FeedbackPage email={email} onBack={() => setView('about')} />;
   return (
-    <ProfileSubPage title="About" onClose={onClose}>
+    <ProfileSubPage title="About Lidd" onClose={onClose}>
       <div className="space-y-6">
-        <div className="space-y-1">
-          <p className="text-[2rem] font-semibold leading-tight text-text-primary">Lidd</p>
-          <p className="text-sm text-text-secondary">Version {APP_VERSION}</p>
+        {/* v4 AboutDark: icon, name and version centred as one block. The
+            board's icon is an empty placeholder square; this is the shipped
+            app icon (AppIcon-512@2x.png, scaled to 3x of 56px). 22.5% is the
+            iOS icon mask's corner ratio, so it reads as the home-screen icon. */}
+        <div className="flex flex-col items-center gap-2.5 pt-2 pb-1 text-center">
+          <img src={appIcon} alt="" width={56} height={56} className="size-14 rounded-[22.5%]" />
+          <p className="text-lg font-semibold text-text-primary">Lidd</p>
+          <p className="text-sm text-text-secondary">{VERSION_LINE}</p>
         </div>
         <p className="text-sm leading-relaxed text-text-primary">
           Lidd is a diary for you and your doctor. It records attacks, medication and how they affect you — it doesn't diagnose, score severity or give medical advice. If you're in doubt about a symptom, talk to a doctor or pharmacist.
@@ -148,7 +155,7 @@ export function AboutPanel({ onClose, email }: { onClose: () => void; email: str
         <SettingsList>
           <SettingsRow onClick={() => setView('feedback')}>Send feedback</SettingsRow>
         </SettingsList>
-        <p className="text-xs text-text-secondary">Made in Denmark.</p>
+        <p className="text-center text-sm text-text-secondary">Made in Copenhagen.</p>
       </div>
     </ProfileSubPage>
   );
@@ -161,11 +168,13 @@ function FeedbackPage({ email, onBack }: { email: string | null; onBack: () => v
   const [msg, setMsg] = useState('');
   const [includeEmail, setIncludeEmail] = useState(false);
   const [contact, setContact] = useState(email ?? '');
+  const [handedOff, setHandedOff] = useState(false);
   const send = () => {
     const body = includeEmail && contact.trim() ? `${msg}\n\n— Reply to: ${contact.trim()}` : msg;
     window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Lidd feedback')}&body=${encodeURIComponent(body)}`;
-    onBack();
+    setHandedOff(true);
   };
+  if (handedOff) return <FeedbackHandedOff onDone={onBack} />;
   return (
     <ProfileSubPage
       title="Send feedback"
@@ -177,22 +186,29 @@ function FeedbackPage({ email, onBack }: { email: string | null; onBack: () => v
       }
     >
       <div className="space-y-5">
-        <p className="text-sm text-text-primary">What's not working, or what would make Lidd better? We read every message.</p>
-        <p className="text-xs text-text-secondary">This isn't for urgent medical questions — talk to a doctor or pharmacist for those.</p>
+        <div>
+          <h2 className="text-xl font-semibold leading-snug text-text-primary">What's not working, or what would make Lidd better?</h2>
+          <p className="mt-1.5 text-sm text-text-secondary">We read every message. This isn't for urgent medical questions — talk to a doctor or pharmacist for those.</p>
+        </div>
         <textarea
           value={msg}
           onChange={(e) => setMsg(e.target.value)}
           rows={6}
-          placeholder="Your message"
+          placeholder="Tell us what happened, or what you'd like to see…"
           aria-label="Your feedback"
-          className="w-full resize-none rounded-field border border-border-control bg-bg-raised p-card text-text-primary placeholder:text-text-secondary"
+          className="min-h-[11.25rem] w-full resize-none rounded-field border border-bg-border bg-bg-surface p-card text-text-primary placeholder:text-text-secondary"
         />
         <SettingsList>
           <SettingsRow bare>
-            <Switch checked={includeEmail} onCheckedChange={setIncludeEmail}>Include my email so we can follow up</Switch>
+            <Switch checked={includeEmail} onCheckedChange={setIncludeEmail}>
+              <span className="block">Include my email so we can follow up</span>
+              {/* The board names the address under the label. Signed in, it's
+                  known; otherwise the field below asks for one. */}
+              {includeEmail && email && <span className="block text-sm text-text-secondary">{email}</span>}
+            </Switch>
           </SettingsRow>
         </SettingsList>
-        {includeEmail && (
+        {includeEmail && !email && (
           <input
             type="email"
             value={contact}
@@ -204,6 +220,34 @@ function FeedbackPage({ email, onBack }: { email: string | null; onBack: () => v
         )}
       </div>
     </ProfileSubPage>
+  );
+}
+
+// v4 FeedbackSentDark's layout — check, headline, one line, Done — with the
+// words changed. The board says "Thanks, sent.", but Send only hands a draft
+// to the mail app (mailto); Lidd never learns whether it went, so claiming it
+// did would be untrue. The headline thanks, the line says where it is now.
+function FeedbackHandedOff({ onDone }: { onDone: () => void }) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-bg-base">
+      <div
+        className="flex flex-1 flex-col items-center gap-3.5 px-gutter text-center"
+        style={{ paddingTop: 'calc(4.25rem + env(safe-area-inset-top))' }}
+      >
+        <span aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-selected-fill ring-1 ring-inset ring-accent">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-[1.875rem] text-accent">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </span>
+        <h2 ref={headingRef} tabIndex={-1} className="text-[1.625rem] font-semibold leading-tight text-text-strong outline-none">Thanks.</h2>
+        <p className="max-w-[17.5rem] text-sm text-text-secondary">Your message is ready in your mail app. Send it from there.</p>
+      </div>
+      <div className="px-gutter pt-3" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        <button type="button" onClick={onDone} className="btn-primary btn-inline w-full">Done</button>
+      </div>
+    </div>
   );
 }
 
