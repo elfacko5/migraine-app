@@ -45,6 +45,36 @@ export function useAuth() {
     await supabase.auth.signOut();
   }, []);
 
+  /**
+   * Signs out **this device only**, and is sure of it — for Delete all data.
+   *
+   * - `scope: 'local'`: the default `'global'` revokes every refresh token,
+   *   signing the account out on every other phone and laptop too.
+   * - Offline (or an expired token that can't refresh), supabase-js *returns*
+   *   an error instead of throwing and keeps the stored session — so a reload
+   *   would still be signed in and sync the deleted diary straight back. The
+   *   stored `sb-` keys are therefore cleared here whatever the server said,
+   *   with auto-refresh stopped first so it can't write them back.
+   *
+   * Resolves `true` only when no session is left in storage.
+   */
+  const signOutThisDevice = useCallback(async (): Promise<boolean> => {
+    if (!supabase) return true;
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) console.error('Sign-out reached no server; clearing locally:', error);
+    } catch (e) {
+      console.error('Sign-out failed; clearing locally:', e);
+    }
+    try {
+      await supabase.auth.stopAutoRefresh();
+      for (const k of Object.keys(localStorage)) if (k.startsWith('sb-')) localStorage.removeItem(k);
+      return !Object.keys(localStorage).some((k) => k.startsWith('sb-'));
+    } catch {
+      return false;
+    }
+  }, []);
+
   return {
     enabled: !!supabase,
     session,
@@ -53,5 +83,6 @@ export function useAuth() {
     signInWithEmail,
     verifyEmailCode,
     signOut,
+    signOutThisDevice,
   };
 }

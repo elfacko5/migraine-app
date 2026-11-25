@@ -926,6 +926,7 @@ export default function App() {
         {profileSheet === 'data' && (
           <DataPanel
             auth={auth}
+            syncStatus={syncStatus}
             onClose={() => setProfileSheet(null)}
             attackCount={attacks.length}
             checkInCount={attacks.reduce((n, a) => n + a.snapshots.length, 0)}

@@ -193,6 +193,27 @@ export function cancelNotification(attackId: number) {
   getSW()?.postMessage({ type: 'CANCEL_NOTIFICATION', attackId });
 }
 
+/**
+ * Removes reminders already **delivered** and sitting in Notification Center
+ * (`cancelNotification` only reaches pending ones). Used by Delete all data:
+ * answering an old reminder for a deleted attack would otherwise schedule a
+ * follow-up for nothing until the next launch's drain cancels it. Never
+ * throws — a leftover banner is untidy, not wrong data.
+ */
+export async function clearDeliveredReminders(): Promise<void> {
+  try {
+    if (isNative()) {
+      await LocalNotifications.removeAllDeliveredNotifications();
+      return;
+    }
+    const reg = await navigator.serviceWorker?.getRegistration();
+    const shown = await reg?.getNotifications();
+    shown?.forEach((n) => n.close());
+  } catch (err) {
+    console.error('Failed to clear delivered reminders:', err);
+  }
+}
+
 // Subscribes to reminder button taps and returns an unsubscribe. The callback
 // takes no arguments: it means *"an answer is waiting — drain the queue"*, and
 // nothing more, on both platforms.

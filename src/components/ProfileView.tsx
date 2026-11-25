@@ -11,7 +11,7 @@ import { ProfileSubPage } from './ProfileSubPage';
 import { SegmentedControl } from './SegmentedControl';
 import { Button, TextField } from 'code-ds';
 import { SectionLabel, SettingsList, SettingsRow, Switch } from './settingsUi';
-import { pendingReminders, notificationPermission, cancelNotification, type PendingReminder } from '../utils/notifications';
+import { pendingReminders, notificationPermission, cancelNotification, clearDeliveredReminders, type PendingReminder } from '../utils/notifications';
 import { TabletIcon, EyeIcon, CloudIcon, DataIcon, ChecklistIcon, BellIcon } from './drawnIcons';
 import { NotificationSettings } from './NotificationSettings';
 import { DeleteAllDialog } from './DeleteAllDialog';
@@ -722,8 +722,11 @@ function remindersSummary(c: NotificationConfig): string {
 // Matches docs/redesign-v4/screens/16-data/DataRedesign.html. "Delete all
 // data" deletes from this phone only (see `deleteAllLocalData`); the board's
 // "and from your account" is the diff doc's D3, not built.
-export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount, reminders, onReminders }: {
+export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount, medCount, reminders, onReminders }: {
   auth: ReturnType<typeof useAuth>;
+  /** 'error' means some changes may exist only on this phone — the delete
+   *  dialog then says they'd be lost rather than promising the account has them. */
+  syncStatus: SyncStatus;
   onClose: () => void;
   /** The reminder default, for the board's "Manage → Reminders" row. */
   reminders: NotificationConfig;
@@ -742,16 +745,28 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount, 
   const [view, setView] = useState<'data' | 'export' | 'reminders'>('data');
   const exporting = useRef(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const deleting = useRef(false);
+  // While the sign-out is in flight the dialog is locked (no Keep, no scrim,
+  // no Escape) — before, "Keep my data" closed it and the delete still ran.
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState(false);
+  // Data itself can still close under the dialog (the Sheet hears Escape too):
+  // checked after the await, so leaving means nothing is deleted.
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   async function deleteAll() {
-    if (deleting.current) return;
-    deleting.current = true;
-    // Sign out first: otherwise the reload's sync pulls everything back.
-    if (auth.session) {
-      try { await auth.signOut(); } catch (e) { console.error('Sign-out before delete failed:', e); }
+    if (deleting) return;
+    setDeleting(true);
+    setDeleteErr(false);
+    // Sign out first, this phone only: otherwise the reload's sync pulls
+    // everything back. If a session is still stored, delete nothing.
+    if (auth.session && !(await auth.signOutThisDevice())) {
+      if (alive.current) { setDeleting(false); setDeleteErr(true); }
+      return;
     }
+    if (!alive.current) return;
     deleteAllLocalData(cancelNotification);
+    await clearDeliveredReminders();
     try { sessionStorage.setItem(DELETED_FLAG, '1'); } catch { /* message is a nicety */ }
     window.location.reload();
   }
@@ -841,7 +856,7 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount, 
             <button
               type="button"
               onClick={() => setView('export')}
-              className="btn-secondary btn-inline flex w-full items-center justify-center gap-2 text-base"
+              className="btn-secondary btn-inline flex w-full items-center justify-center gap-2"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0" aria-hidden="true">
                 <path d="M12 15V4M8 8l4-4 4 4M5 20h14" />
@@ -851,7 +866,7 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount, 
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="btn-secondary btn-inline flex w-full items-center justify-center gap-2 text-base"
+              className="btn-secondary btn-inline flex w-full items-center justify-center gap-2"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0" aria-hidden="true">
                 <path d="M12 4v11M8 11l4 4 4-4M5 20h14" />
@@ -903,9 +918,12 @@ export function DataPanel({ auth, onClose, attackCount, checkInCount, medCount, 
       <DeleteAllDialog
         open={deleteOpen}
         signedIn={!!auth.session}
-        onExportFirst={() => { setDeleteOpen(false); setView('export'); }}
-        onKeep={() => setDeleteOpen(false)}
+        onExportFirst={() => { setDeleteOpen(false); setDeleteErr(false); setView('export'); }}
+        onKeep={() => { setDeleteOpen(false); setDeleteErr(false); }}
         onDelete={deleteAll}
+        busy={deleting}
+        failed={deleteErr}
+        unsynced={syncStatus === 'error'}
       />
 
       <ConfirmDialog

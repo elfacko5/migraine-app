@@ -2520,3 +2520,14 @@ The v4 board (07) reviewed against the shipped screen, then mocked up and rework
 `MrgPastStopDark` stacks three full-width buttons — filled green "Keep going", outlined "Save and close", solid red "Discard". On the phone that read as three equal choices with the destructive one the loudest thing on screen, and the title asked "Discard?" while the first answer was "Keep going". Now one `DiscardDraftDialog` (Update and Past flows): title "Save what you have?", **Save and close** is the only filled button (X was tapped, so leaving is the likely intent, and this way loses nothing), **Keep going** is outlined (same as tapping the scrim), **Discard** is a danger-coloured text button set apart by space. *Rejected:* a second confirm on Discard (friction mid-attack, and the distance already guards the mis-tap); dropping Keep going to the scrim alone (an invisible affordance).
 
 Reminders' Fixed picker, which has no board, became rows in the Adaptive card's own shape rather than a chip row, and the "every 1 hours" sentence went with it.
+
+## Delete all data: this phone only, for now (2026-11-25)
+
+Sunny, asked whether the v4 board's "removed from this phone and from your account" should be built as drawn: **"Phone only for now."** The diff doc's D3 (deleting the account's Supabase rows too) stays unbuilt.
+
+- **What it removes:** every `hd_` key, the same set Export writes. It cancels each attack's pending reminder and clears delivered ones, then reloads. The reload is needed because every hook holds its list in React state, and the first write after a delete without a reload would put the data back.
+- **Signed in, it signs out first, on this device only (`scope: 'local'`).** Otherwise the reload's sync pulls everything straight back. The default `'global'` would also have signed out every other device, which a phone-only delete must not do.
+- **Offline, supabase-js returns an error instead of throwing, and keeps the stored session.** So `signOutThisDevice` clears the `sb-` keys itself whatever the server says. If one is somehow still there, nothing is deleted and the dialog says so in amber. Found in review of 2cf7e47: the first version would say "deleted" and then sync the whole diary back.
+- **The copy promises only what is true.** "What has synced stays in your account". When sync is in error it says instead that recent changes haven't synced and would be lost.
+- **The dialog is locked while deleting.** The first version left "Keep my data" live during the sign-out, so it could close the sheet while the delete still ran.
+- *Revisit:* the App Store would require an in-app account deletion (see Platform). That is D3, and it needs a remote delete in `sync.ts`.

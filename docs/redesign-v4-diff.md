@@ -92,7 +92,7 @@ Design colour values match the existing palette closely (page `#1B1A18`, card `#
 
 1. **Feedback** (`FeedbackDark`, `FeedbackSentDark`): "We read every message", optional email. Needs somewhere to send it (Supabase table, email service) and a privacy statement.
 2. **About** with version/build, Privacy policy, Terms of use, "Made in Denmark". The policy and terms have to exist; this is the point where HIT-6 licensing (P4) also matters.
-3. **Delete all data** including the account's server rows: a new remote delete in `sync.ts`, irreversible.
+3. **Delete all data** including the account's server rows: a new remote delete in `sync.ts`, irreversible. **Built phone-only 2026-11-25 (Sunny: "phone only for now")** — this device's data, signing out locally first; the account's rows are untouched. The remote half is still open. See `decisions.md`, "Delete all data: this phone only".
 4. **Merge import** (additive by entry) replaces "Import backup → confirm → reload". Needs a per-key merge rule for attacks, lists, medications, HIT-6 and settings.
 5. **Doctor report** is referenced (type changes are "flagged on your doctor report"; "Private. Left out of the doctor report by default") but no screen exists, and it was explicitly not built in v3 (`ProfileView.tsx:42`, `docs/decisions.md:2057`). Treat as out of scope unless you say otherwise.
 6. **Lock-screen widgets** (proposal only): accessory families need iOS 16 and the app targets 15, and it shows monthly figures that the widget rule (§9.2) rules out.
