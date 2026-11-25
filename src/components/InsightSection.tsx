@@ -50,12 +50,17 @@ interface Props {
    *  border. Never combine with `note`: there would be nothing for its inner
    *  outline to separate. */
   bare?: boolean;
+  /** A 24×24 stroke glyph. Given, the heading takes the v4 board's `.sh`
+   *  form — tinted icon tile, 17px semibold title, circled "i" — instead of
+   *  the older small-caps label. Sections move to it one at a time as each is
+   *  rebuilt against `09-insights/InsightsRedesign`. */
+  icon?: React.ReactNode;
 }
 
-export function InsightSection({ title, children, note, info, bare }: Props) {
+export function InsightSection({ title, children, note, info, bare, icon }: Props) {
   const [showInfo, setShowInfo] = useState(false);
   return (
-    <section className="space-y-2">
+    <section className={icon ? 'space-y-3' : 'space-y-2'}>
       {/* Title sits above the card, on the page. Inside, it read as part of
           the content it labels; out here it labels the whole card. The stat
           tiles at the top keep their labels inside, because there the label
@@ -85,6 +90,32 @@ export function InsightSection({ title, children, note, info, bare }: Props) {
           the right edge. 8px each side, not matched to the card's 16px: the
           title still has to line up closely with "ATTACK DAYS PER MONTH"
           reading as the section's own label, not as indented content. */}
+      {icon ? (
+        <div className="flex items-center gap-2.5">
+          <span
+            aria-hidden="true"
+            className="flex size-8 shrink-0 items-center justify-center rounded-segment bg-accent/16 text-accent [&>svg]:size-[1.125rem]"
+          >
+            {icon}
+          </span>
+          <h2 className="flex-1 text-base font-semibold text-text-strong">{title}</h2>
+          {info && (
+            <button
+              type="button"
+              onClick={() => setShowInfo(true)}
+              aria-label={`More info about ${title}`}
+              className="flex size-target -my-1.5 -mr-2.5 shrink-0 items-center justify-center text-text-secondary transition-colors hover:text-text-primary"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}
+                strokeLinecap="round" strokeLinejoin="round" className="size-[1.375rem]" aria-hidden="true">
+                <circle cx="12" cy="12" r="10.5" />
+                <path d="M12 16.5v-5" />
+                <path d="M12 7.75h.01" />
+              </svg>
+            </button>
+          )}
+        </div>
+      ) : (
       <div className="flex items-center justify-between gap-2 px-2">
         <h2 className="text-xs uppercase tracking-wider font-semibold text-text-secondary">{title}</h2>
         {info && (
@@ -103,6 +134,7 @@ export function InsightSection({ title, children, note, info, bare }: Props) {
           </button>
         )}
       </div>
+      )}
 
       {/* `p-4`, matching the stat tiles at the top of the page (Sunny,
           2026-09-02). It was `p-3`, so the two kinds of card on one screen

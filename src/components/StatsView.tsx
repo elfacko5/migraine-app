@@ -276,7 +276,9 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
       {/* The window the page answers, in dates, with the attack count folded
           in (it used to be the "Attacks" tile). The averages that were the
           other tiles moved into "Typical attack" below. */}
-      <p className="text-sm text-text-secondary">
+      {/* Centred at caption size under the period control, as the v4 board's
+          `.range` (14px, centred). */}
+      <p className="text-center text-xs text-text-secondary">
         {formatDateShort(new Date(rangeFrom).toISOString())} – {formatDateShort(new Date(rangeTo).toISOString())}
         {' · '}{stats.count} attack{stats.count === 1 ? '' : 's'}
       </p>

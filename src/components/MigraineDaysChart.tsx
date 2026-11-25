@@ -28,6 +28,23 @@ interface Props {
 
 const BAR_MAX = 20;
 
+// The board's calendar glyph (`09-insights/InsightsRedesign`, the "Attack
+// days" tile) — Lucide-style stroke, inheriting the tile's accent.
+const CalendarGlyph = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="4" y="5" width="16" height="15" rx="2" />
+    <path d="M4 10h16M9 3v4M15 3v4" />
+  </svg>
+);
+
+// The month still counting is hatched rather than solid, as the board draws
+// it: a bar that will grow, said with the bar itself as well as "so far".
+// The dark stripe is the fill colour sunk into the card, so it follows
+// whichever colour (accent or the chronic band) the bar is.
+const hatch = (color: string) =>
+  `repeating-linear-gradient(135deg, ${color} 0 6px, color-mix(in srgb, ${color} 62%, var(--color-bg-surface)) 6px 10px)`;
+
 export function MigraineDaysChart({ attacks, months: monthCount, mode }: Props) {
   if (mode === 'week') return <MigraineWeek attacks={attacks} />;
   return <MigraineMonths attacks={attacks} monthCount={monthCount} />;
@@ -43,7 +60,10 @@ function MigraineMonths({ attacks, monthCount }: { attacks: Attack[]; monthCount
 
   return (
     <InsightSection
-      title="Attack days per month"
+      // "Attack days", never "migraine days" (A8, 2026-11-22): the board's
+      // section, with the episode word the app uses everywhere else.
+      title="Attack days"
+      icon={CalendarGlyph}
       // Behind a "More info" icon rather than the always-visible caption this
       // used to be (2026-09-23, Sunny's call) — on a phone screen the
       // paragraph itself was the crowded thing, not the chart it explains.
@@ -60,31 +80,39 @@ function MigraineMonths({ attacks, monthCount }: { attacks: Attack[]; monthCount
         </>
       }
     >
-      <div className="space-y-1.5">
+      {/* The board's `.bars`: month, a 12px track on `bg-raised`, the count
+          in strong text. The label column has a minimum, not a fixed width,
+          so "Nov so far" pushes its own track along rather than wrapping. */}
+      <div className="flex flex-col gap-3.5">
         {months.map((m) => {
           const pct = Math.min(100, (m.days / BAR_MAX) * 100);
           const chronic = m.days >= CHRONIC_DAYS_THRESHOLD;
+          const color = chronic ? 'var(--color-severity-high)' : 'var(--color-accent)';
           return (
-            <div key={m.month} className="grid grid-cols-[2.25rem_1fr_1.75rem] items-center gap-2">
-              <span className="text-xs text-text-secondary">{m.label}</span>
-              <span className="relative block h-2.5 rounded-full bg-bg-border/60">
+            <div key={m.month} className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <span className="min-w-[3.25rem] text-sm text-text-primary">
+                {m.label}
+                {!m.complete && <span className="ml-1 text-xs text-text-secondary">so far</span>}
+              </span>
+              <span className="relative block h-3 min-w-0 flex-[1_1_10rem] overflow-hidden rounded-full bg-bg-raised">
                 <span
-                  className={`absolute inset-y-0 left-0 rounded-full ${chronic ? 'bg-severity-high' : 'bg-accent'}`}
-                  style={{ width: `${pct}%` }}
+                  className="absolute inset-y-0 left-0 rounded-full"
+                  style={{ width: `${pct}%`, background: m.complete ? color : hatch(color) }}
                 />
                 {/* The 15-day line, drawn on every bar so a month can be read
-                    against it without doing the arithmetic. */}
+                    against it without doing the arithmetic. Not on the board;
+                    kept because it is the one clinical threshold this chart
+                    exists to be read against. */}
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-[-2px] w-px bg-text-secondary/50"
+                  className="absolute inset-y-0 w-px bg-text-secondary/50"
                   style={{ left: `${(CHRONIC_DAYS_THRESHOLD / BAR_MAX) * 100}%` }}
                 />
               </span>
               {/* No `+` on the month in progress. It meant "still counting"
-                  and was read as "1 or more" — which is true, and still the
-                  wrong thing to make someone work out from a glyph (Sunny,
-                  2026-09-02). The caption names the month instead. */}
-              <span className="text-right text-xs tabular-nums text-text-primary">{m.days}</span>
+                  and was read as "1 or more" (Sunny, 2026-09-02); "so far" on
+                  the label says it in words. */}
+              <span className="min-w-5 text-right text-sm font-semibold tabular-nums text-text-strong">{m.days}</span>
             </div>
           );
         })}
@@ -110,6 +138,7 @@ function MigraineWeek({ attacks }: { attacks: Attack[] }) {
   return (
     <InsightSection
       title="Attack days this week"
+      icon={CalendarGlyph}
       // Behind a "More info" icon, like every other section on the page
       // (2026-09-24, Sunny's call).
       info={
