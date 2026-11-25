@@ -56,6 +56,13 @@ export interface SettingsRowProps {
    * simply taking its own line underneath. Found on device, 2026-11-23.
    */
   value?: string;
+  /**
+   * A one-word state on the label's line, right-aligned before the chevron —
+   * "On", "Off", "Due". The Settings menu uses this instead of `value`
+   * (2026-11-25): a state you'd want at a glance, never a description of
+   * what's inside. Keep it to a word or two; it never wraps, the label does.
+   */
+  trailing?: string;
   /** A decorative icon in currentColor. Hidden from screen readers. */
   leading?: React.ReactNode;
   /** Makes the row pressable: a button with a chevron. Without it the row is static. */
@@ -65,7 +72,7 @@ export interface SettingsRowProps {
   bare?: boolean;
 }
 
-export function SettingsRow({ children, value, leading, onClick, disabled = false, bare = false }: SettingsRowProps) {
+export function SettingsRow({ children, value, trailing, leading, onClick, disabled = false, bare = false }: SettingsRowProps) {
   // The divider lives on every row but the first, drawn as a pseudo-element
   // (not a border) so the first row is as tall as the others; the first and
   // last row's own content follows the card's rounded corners. An explicit
@@ -91,6 +98,7 @@ export function SettingsRow({ children, value, leading, onClick, disabled = fals
         <span className="block text-text-primary">{children}</span>
         {value && <span className="block text-xs text-text-secondary">{value}</span>}
       </span>
+      {trailing && <span className="shrink-0 whitespace-nowrap text-text-secondary">{trailing}</span>}
     </>
   );
   const layout = 'flex min-h-row w-full items-center gap-3 px-card py-control-y text-left text-sm leading-tight';

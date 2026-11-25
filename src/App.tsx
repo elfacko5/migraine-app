@@ -694,10 +694,8 @@ export default function App() {
               onOpen={setProfileSheet}
               accountEnabled={auth.enabled}
               hit6Due={hit6IsDue}
-              medCount={medications.length}
               remindersOn={defaultNotifConfig.enabled}
-              attackMode={attackMode}
-              accountEmail={auth.user?.email ?? null}
+              signedIn={!!auth.user}
             />
           </section>
         )}

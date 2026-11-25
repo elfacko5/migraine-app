@@ -2506,3 +2506,9 @@ The v4 board (07) reviewed against the shipped screen, then mocked up and rework
 - **Footer buttons side by side**, wrapping at large text. The v4 pattern library says never two side by side; kept because both labels are short and the screen is long.
 - *Not done:* per-area trend lines in Where it hurt; clamping long voice notes; the Logs filter still uses "A little / A lot" for impact.
 
+
+## Settings rows lose their sub-text (2026-11-25)
+
+- **One line per row, a trailing state only where there is one.** Reverses the v4 board's stacked sub-text (and the 2026-11-23 "value under the label" call in `SettingsRow`, which still holds for every other `value` row). Sunny: the list read busy, and most of the lines described the page behind the row rather than saying anything — "2 medicines", "Export, import, delete", "Attack mode off" (the pill already shows and switches that).
+- **Kept as a trailing word:** Reminders **On/Off** and Account & sync **On/Off** — the two things that change what happens in the background, and the only place either shows at a glance. Headache impact keeps its **Due**. The 2026-11-23 wrapping problem doesn't return: the long label (Display & attack mode) has no trailing value, and trailing values never wrap.
+- **No email on the menu.** It moved to the Account sub-page only; the menu gets screenshotted.

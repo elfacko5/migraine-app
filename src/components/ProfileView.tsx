@@ -29,12 +29,10 @@ interface MenuProps {
    *  answering again. This is the *only* place HIT-6 asks for attention —
    *  deliberately not a card on Today and not a notification. */
   hit6Due?: boolean;
-  /** Row sub-text (the v4 look): the medicine count, the reminder state, the
-   *  attack-mode state, and the signed-in email (null when signed out). */
-  medCount: number;
+  /** The two background states worth seeing without tapping in: whether
+   *  reminders will fire, and whether the diary is syncing. */
   remindersOn: boolean;
-  attackMode: boolean;
-  accountEmail: string | null;
+  signedIn: boolean;
 }
 
 type MenuItem = { id: ProfileSection; Icon: (p: { className?: string }) => React.ReactElement; label: string };
@@ -63,8 +61,10 @@ function AboutIcon({ className }: { className?: string }) {
 //
 // **Two labelled groups, v4 (docs/redesign-v4/screens/14-settings).** "Your
 // diary" is what you record and when you're reminded; "The app" is how it
-// behaves and the account. Each row carries a value sub-text (count, state,
-// email). Headache impact and Account & sync are kept though the v4 board omits
+// behaves and the account. Rows are one line: a label, and a trailing state
+// only where there is one to see (2026-11-25, Sunny — the v4 sub-text was
+// mostly a description of the page behind the row; see docs/decisions.md,
+// "Settings rows lose their sub-text"). Headache impact and Account & sync are kept though the v4 board omits
 // them — the board is incomplete there, and dropping either would lose a
 // shipped feature. About is new. The prototype's doctor-report / states-preview
 // rows stay out (a report is its own feature; the others are prototype tools).
@@ -88,18 +88,16 @@ const MENU_GROUPS: { label: string; items: MenuItem[] }[] = [
   },
 ];
 
-// Every row opens its own sub-page. The group labels and value sub-text are the
-// v4 look; the "Due" marker on Headache impact stays text, not a dot — a dot
-// reads as an alert, and this is a suggestion about a questionnaire.
-export function ProfileView({ onOpen, accountEnabled, hit6Due = false, medCount, remindersOn, attackMode, accountEmail }: MenuProps) {
-  const valueFor = (id: ProfileSection): string | undefined => {
+// Every row opens its own sub-page. The "Due" marker on Headache impact stays
+// text, not a dot — a dot reads as an alert, and this is a suggestion about a
+// questionnaire. No email on the Account row: it's the sub-page's to show, and
+// this screen gets screenshotted.
+export function ProfileView({ onOpen, accountEnabled, hit6Due = false, remindersOn, signedIn }: MenuProps) {
+  const trailingFor = (id: ProfileSection): string | undefined => {
     switch (id) {
-      case 'medications': return `${medCount} ${medCount === 1 ? 'medicine' : 'medicines'}`;
-      case 'reminders': return remindersOn ? 'On during attacks' : 'Off';
+      case 'reminders': return remindersOn ? 'On' : 'Off';
       case 'hit6': return hit6Due ? 'Due' : undefined;
-      case 'display': return `Attack mode ${attackMode ? 'on' : 'off'}`;
-      case 'data': return 'Export, import, delete';
-      case 'account': return accountEmail ?? 'Not signed in';
+      case 'account': return signedIn ? 'On' : 'Off';
       default: return undefined;
     }
   };
@@ -112,7 +110,7 @@ export function ProfileView({ onOpen, accountEnabled, hit6Due = false, medCount,
             {group.items
               .filter((m) => m.id !== 'account' || accountEnabled)
               .map((item) => (
-                <SettingsRow key={item.id} leading={<item.Icon />} value={valueFor(item.id)} onClick={() => onOpen(item.id)}>
+                <SettingsRow key={item.id} leading={<item.Icon />} trailing={trailingFor(item.id)} onClick={() => onOpen(item.id)}>
                   {item.label}
                 </SettingsRow>
               ))}
