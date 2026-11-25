@@ -442,6 +442,7 @@ export default function App() {
     // past-logged attack stays unanswered.
     endUnknown?: boolean,
     painQuality?: string[],
+    wokeAt?: string,
   ): Promise<Attack> {
     const wantsReminders = notifConfig.enabled && !end;
     // Ask before scheduling, not after. startAttack schedules as a side effect,
@@ -459,7 +460,7 @@ export default function App() {
     const attack = startAttack(
       stampSnapshot(snapshot, medications), triggersSel, notifConfig, end, wokeWithMigraine,
       doseReadings.map((r) => stampSnapshot(r, medications)),
-      endUnknown, painQuality,
+      endUnknown, painQuality, wokeAt,
     );
     // "Attack mode when I start an attack" (Display page, opt-in). Only for
     // an attack that's still going — a retrospective log is someone looking
@@ -907,6 +908,7 @@ export default function App() {
         {profileSheet === 'hit6' && (
           <Hit6View
             entries={hit6Entries}
+            signedIn={!!auth.session}
             onSubmit={addHit6}
             onDelete={removeHit6}
             onClose={() => setProfileSheet(null)}

@@ -39,6 +39,7 @@ interface Props {
     doseReadings: Array<Omit<Snapshot, 'source'>>,
     endUnknown?: boolean,
     painQuality?: string[],
+    wokeAt?: string,
   ) => Promise<Attack>;
 }
 
@@ -46,11 +47,14 @@ interface FormState {
   startTime: string;
   wokeWithMigraine: boolean;
   endTime: string;
-  /** "Woke up without it" — end time left unknown. Only takes effect while
-   *  `endTime` itself is blank; filling in a time always means it's known,
-   *  the same rule `updateAttackDetails` applies when this attack is edited
-   *  later. */
+  /** "Woke up without it" — the end is unknown. With a time in `endTime`,
+   *  that time is when they woke (`wokeAt`, an upper bound), never an end:
+   *  turning the chip on used to blank a time already picked (June,
+   *  2026-11-25 — "it shouldn't"). */
   endUnknownFlag: boolean;
+  /** Whether the end time was picked by hand. Untouched, it's only the
+   *  form's default ("now"), which must never become a wake-up time. */
+  endTouched: boolean;
   areas: Record<string, number>;
   meds: SelectedMedication[];
   painQuality: string[];
@@ -66,6 +70,7 @@ function blank(): FormState {
     wokeWithMigraine: false,
     endTime: isoToLocalInput(),
     endUnknownFlag: false,
+    endTouched: false,
     areas: {},
     meds: [],
     painQuality: [],
@@ -164,8 +169,11 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
     savingRef.current = true;
     const nowMs = Date.now();
     const resolvedStartMs = new Date(localInputToIso(form.startTime)).getTime();
-    const endKnown = form.endTime.trim() !== '';
-    const endUnknown = form.endUnknownFlag && !endKnown;
+    const hasTime = form.endTime.trim() !== '';
+    // With the chip on, a time is when they woke — not an end.
+    const endKnown = hasTime && !form.endUnknownFlag;
+    const endUnknown = form.endUnknownFlag;
+    const wokeAtIso = endUnknown && hasTime ? localInputToIso(form.endTime) : undefined;
     // While resolving dose/follow-up times, an unknown end is bounded like
     // "ongoing" (null) rather than asserted as a real end. The *stored* end
     // is derived below from whatever times this attack actually ends up
@@ -173,7 +181,8 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
     // after it really ended, which would wildly overcount ICHD attack-days
     // (attackDayKeys counts every day from start to end). Caught in review
     // before this ever reached a phone.
-    const boundEndMs = endKnown ? new Date(localInputToIso(form.endTime)).getTime() : null;
+    // A wake-up time bounds doses too: nothing was taken after it ended.
+    const boundEndMs = hasTime ? new Date(localInputToIso(form.endTime)).getTime() : null;
 
     // Every dose and follow-up, resolved to a real timestamp and sorted into
     // time order — not grouped by medicine — because a later dose's own
@@ -253,6 +262,7 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
       extraSnapshots,
       endUnknown,
       form.painQuality,
+      wokeAtIso,
     ).then((attack) => {
       if (thenClose) onClose();
       else setSaved(attack);
@@ -334,7 +344,7 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
                 value={form.endTime}
                 min={form.startTime}
                 max={isoToLocalInput()}
-                onChange={(v) => set('endTime', v)}
+                onChange={(v) => { set('endTime', v); set('endTouched', true); }}
                 openRef={endInputRef}
               />
               <button
@@ -342,15 +352,21 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
                 onClick={() => {
                   const next = !form.endUnknownFlag;
                   set('endUnknownFlag', next);
-                  if (next) set('endTime', '');
+                  // Only the untouched default is cleared; a time picked by
+                  // hand stays, and becomes the wake-up time.
+                  if (next && !form.endTouched) set('endTime', '');
                 }}
                 aria-pressed={form.endUnknownFlag}
                 className={`tap-44-y inline-flex items-center gap-1.5 rounded-chip px-3.5 py-2 text-sm font-medium transition-colors ${chipClass(form.endUnknownFlag)}`}
               >
                 Woke up without it
               </button>
-              {form.endUnknownFlag && !hasEndTime && (
-                <p className="text-xs text-text-secondary">Saved as "gone when you woke up." Add a time if you know it.</p>
+              {form.endUnknownFlag && (
+                <p className="text-xs text-text-secondary">
+                  {hasEndTime
+                    ? 'Saved as gone when you woke up, at this time.'
+                    : 'Saved as "gone when you woke up." Add the time you woke if you know it.'}
+                </p>
               )}
             </div>
           </div>

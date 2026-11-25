@@ -57,6 +57,33 @@ export function hit6Band(score: number): { label: string; detail: string } {
   return { label: 'Little or no impact', detail: 'The questions describe headaches having little effect on daily life.' };
 }
 
+/** Where a score sits on the scale, for the result's bar: the published band
+ *  edges, and each band's place in the four-step severity ramp. */
+export const HIT6_BANDS = [
+  { from: 36, to: 49, short: 'little', tone: 'low' },
+  { from: 50, to: 55, short: 'some', tone: 'neutral' },
+  { from: 56, to: 59, short: '', tone: 'mid' },
+  { from: 60, to: 78, short: 'a lot', tone: 'high' },
+] as const;
+
+export type Hit6Tone = (typeof HIT6_BANDS)[number]['tone'];
+
+export function hit6Tone(score: number): Hit6Tone {
+  return (HIT6_BANDS.find((b) => score <= b.to) ?? HIT6_BANDS[HIT6_BANDS.length - 1]).tone;
+}
+
+/**
+ * The result's sentence (v4 board 05-7): names the instrument's own band and
+ * its own description, for these four weeks, and stops — a report of where
+ * the score falls, never a conclusion about the person.
+ */
+export function hit6BandSentence(score: number): string {
+  if (score >= 60) return 'On the HIT-6’s own bands, a score of 60 or more falls in its highest group — headaches touching most areas of daily life over these four weeks.';
+  if (score >= 56) return 'On the HIT-6’s own bands, 56 to 59 falls in its second-highest group — headaches touching several areas of daily life over these four weeks.';
+  if (score >= 50) return 'On the HIT-6’s own bands, 50 to 55 falls in its second group — headaches touching daily life some of the time over these four weeks.';
+  return 'On the HIT-6’s own bands, 49 or less falls in its lowest group — headaches having little effect on daily life over these four weeks.';
+}
+
 export function latestHit6(entries: Hit6Entry[]): Hit6Entry | null {
   if (entries.length === 0) return null;
   return entries.reduce((a, b) => (b.takenAt > a.takenAt ? b : a));

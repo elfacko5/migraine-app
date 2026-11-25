@@ -13,6 +13,11 @@ interface Props {
    *  bottom (Insights → Monthly guides) — close X on the right, since a
    *  bottom sheet with a back chevron says two things at once. */
   dismiss?: 'back' | 'close';
+  /** The title as the page's own large heading (28/600, top of the scroll)
+   *  instead of in the bar — the v4 HIT-6 boards. The bar keeps its controls
+   *  and an empty middle. `barTitle` puts something else there ("Step 1 of 6"). */
+  titleInPage?: boolean;
+  barTitle?: string;
 }
 
 // Shared shell for every Profile sub-page (My medications, Accessibility,
@@ -28,7 +33,7 @@ interface Props {
 // AttackDetail's header button: 44px, filled bg-raised, primary chevron.
 const CIRCLE_BUTTON = 'flex size-target shrink-0 items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated';
 
-export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'back' }: Props) {
+export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'back', titleInPage = false, barTitle }: Props) {
   // A sub-page can replace another inside the same sheet (My medications →
   // Monthly guides), which removes the control that had focus. The title takes
   // it, so VoiceOver starts at the page it has just entered.
@@ -60,7 +65,11 @@ export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'ba
         ) : (
           <span className="size-target" aria-hidden="true" />
         )}
-        <h2 ref={titleRef} tabIndex={-1} className="flex-1 text-center text-sm font-semibold text-text-primary outline-none">{title}</h2>
+        {titleInPage ? (
+          <p className="flex-1 text-center text-sm font-semibold text-text-primary">{barTitle}</p>
+        ) : (
+          <h2 ref={titleRef} tabIndex={-1} className="flex-1 text-center text-sm font-semibold text-text-primary outline-none">{barTitle ?? title}</h2>
+        )}
         {dismiss === 'close' ? (
           <button
             type="button"
@@ -84,6 +93,9 @@ export function ProfileSubPage({ title, onClose, children, footer, dismiss = 'ba
         // here too would reserve the home indicator's height twice.
         style={{ paddingBottom: footer ? '1.25rem' : 'calc(1.25rem + env(safe-area-inset-bottom))' }}
       >
+        {titleInPage && (
+          <h2 ref={titleRef} tabIndex={-1} className="mb-5 text-[1.75rem] font-semibold leading-tight text-text-strong outline-none">{title}</h2>
+        )}
         {children}
       </div>
 

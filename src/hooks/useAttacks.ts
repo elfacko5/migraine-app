@@ -125,6 +125,10 @@ export function useAttacks(userId: string | null) {
     // painQuality or endUnknown was set, with nothing in the console.
     endUnknown?: boolean,
     painQuality?: string[],
+    // "Woke up without it" with a time: when they woke, an upper bound only
+    // — `end` stays a placeholder and `endUnknown` stays set. Only with
+    // `endUnknown`; a known end needs no bound.
+    wokeAt?: string,
   ): Attack => {
     const attack: Attack = {
       id: Date.now(),
@@ -139,6 +143,7 @@ export function useAttacks(userId: string | null) {
       wokeWithMigraine,
       ...(endUnknown ? { endUnknown: true } : {}),
       ...(painQuality && painQuality.length > 0 ? { painQuality } : {}),
+      ...(endUnknown && wokeAt ? { wokeAt } : {}),
     };
     commit([attack, ...attacks]);
     if (notificationConfig.enabled && !end) {

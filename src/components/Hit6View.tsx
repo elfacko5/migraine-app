@@ -1,236 +1,232 @@
 import { useState } from 'react';
 import type { Hit6Entry } from '../types';
 import {
-  HIT6_QUESTIONS, HIT6_OPTIONS, HIT6_MIN, HIT6_MAX, HIT6_INTERVAL_DAYS,
-  hit6Score, hit6Band, latestHit6,
+  HIT6_QUESTIONS, HIT6_OPTIONS, HIT6_MIN, HIT6_MAX, HIT6_BANDS,
+  hit6Score, hit6Band, hit6BandSentence, hit6Tone, type Hit6Tone,
 } from '../utils/hit6';
 import { ProfileSubPage } from './ProfileSubPage';
 import { ConfirmDialog } from './ConfirmDialog';
-import { chipClass} from '../utils/chipStyles';
-import { ChipCheck } from './ChipCheck';
+import { RadioDot } from './RadioDot';
+import { WarningIcon } from './icons';
 import { formatDateShort } from '../utils/format';
 
 interface Props {
   entries: Hit6Entry[];
+  /** Signed in: the entry also syncs to their own account, so "sent nowhere"
+   *  would be untrue — the privacy row says so instead. */
+  signedIn: boolean;
   onSubmit: (answers: number[]) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 }
 
-const CHIP = 'flex w-full items-center gap-2 rounded-control px-4 py-3 text-left text-sm font-medium transition-colors';
+// The severity ramp the app already uses for pain, mapped onto the HIT-6's
+// own four bands: a scale you read along, the same colours as everywhere
+// else, so nothing new to learn. `neutral` for 50–55 is the board's grey.
+const TONE_BG: Record<Hit6Tone, string> = {
+  low: 'bg-severity-low',
+  neutral: 'bg-text-secondary',
+  mid: 'bg-severity-mid',
+  high: 'bg-severity-high',
+};
+
+const SPAN = HIT6_MAX - HIT6_MIN;
+const pct = (score: number) => ((score - HIT6_MIN) / SPAN) * 100;
 
 /**
- * The Headache Impact Test, as its own Profile sub-page.
+ * The Headache Impact Test, as its own Settings sub-page — rebuilt to the v4
+ * boards 05-0 (intro), 05-1 (a question) and 05-7 (result), 2026-11-25.
  *
- * Three things it has to do beyond collecting six answers, all asked for on
- * 2026-08-19 and all about the questionnaire explaining itself:
+ * Kept from before, and why:
+ * - **One question per screen, no auto-advance.** The recall window is four
+ *   weeks; thinking about it is the point, and a mis-tap must be visible
+ *   before it's committed.
+ * - **Answers can't be edited; deleting is offered.** Each entry measures a
+ *   particular four weeks — revising one later would make the history a
+ *   record of opinions rather than of measurements.
  *
- * - **Say what it is for before asking anything.** A six-question form that
- *   opens straight onto question one is asking for compliance, not an answer.
- *   The intro says who reads it (nobody — it is the same private record as the
- *   diary), what it is for, and what happens to a submitted answer.
- * - **One question per screen.** Six at once is a form to get through; one is
- *   a question to think about, and the recall window is four weeks, so
- *   thinking about it is the point.
- * - **Be honest that answers are not editable.** Each entry is a dated
- *   measurement of a four-week window, so revising one later would make the
- *   history a record of opinions rather than of measurements. Deleting is
- *   offered instead, which is the honest operation: it removes a wrong entry
- *   without pretending a later answer was given at the earlier time.
+ * Where it departs from the boards:
+ * - **A back chevron, not an X.** This page is a drill-down from Settings
+ *   (enters from the right); an X there says two things at once. On the
+ *   questions the chevron steps back a question, as the board's own back
+ *   circle does; the way out is back past the intro.
+ * - **"Sent nowhere" only when it's true.** Signed in, the entry syncs to
+ *   their own account; the row says so.
+ * - **The doctor line is unconditional.** The board's "worth showing your
+ *   doctor if it's high or climbing" has the app judging when a score
+ *   warrants care — the interpretive step `decisions.md`'s MDR note warns
+ *   about. "You can show it to your doctor" points to a professional without
+ *   reading the number for them.
+ * - **Earlier answers stay listed on the intro**, with Delete — the board has
+ *   no history, but the footnote promises deleting is possible.
  */
-export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
+export function Hit6View({ entries, signedIn, onSubmit, onDelete, onClose }: Props) {
   // 'intro' → 0..5 → 'done'
   const [stage, setStage] = useState<'intro' | number | 'done'>('intro');
   const [answers, setAnswers] = useState<(number | null)[]>(() => HIT6_QUESTIONS.map(() => null));
-  const [result, setResult] = useState<{ score: number; prev: Hit6Entry | null } | null>(null);
+  const [result, setResult] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Hit6Entry | null>(null);
 
-  const last = latestHit6(entries);
   const history = [...entries].sort((a, b) => b.takenAt.localeCompare(a.takenAt));
-
-  // Selecting an answer does **not** advance. It costs a tap, and that is the
-  // point: auto-advance means a mis-tap is committed and gone before you have
-  // read what you picked, and there is no reason to hurry someone through a
-  // question about the last four weeks. Back/Next also matches the logging
-  // wizard, which is the only other multi-step flow in the app.
-  function answer(value: number, index: number) {
-    setAnswers((prev) => prev.map((a, j) => (j === index ? value : a)));
-  }
 
   function submit() {
     const values = answers as number[];
     onSubmit(values);
-    // Captured together at submit time. Re-deriving "the previous entry"
-    // afterwards finds the one just written, which reported every first-ever
-    // HIT-6 as "the same as last time".
-    setResult({ score: hit6Score(values), prev: last });
+    setResult(hit6Score(values));
     setAnswers(HIT6_QUESTIONS.map(() => null));
     setStage('done');
   }
 
-  // ── Result ────────────────────────────────────────────────────────────
-  if (stage === 'done' && result) {
-    const band = hit6Band(result.score);
-    const change = result.prev ? result.score - result.prev.score : null;
+  // ── Result (05-7) ─────────────────────────────────────────────────────
+  if (stage === 'done' && result !== null) {
+    const band = hit6Band(result);
+    const tone = hit6Tone(result);
     return (
       <ProfileSubPage
         title="Headache impact"
+        titleInPage
         onClose={onClose}
-        footer={<button type="button" onClick={onClose} className="btn-primary btn-inline w-full">Done</button>}
+        // key: a fresh element, not the question's Next re-used — that one was
+        // just disabled, and its colour transition carried over as a grey flash.
+        footer={<button key="done" type="button" onClick={onClose} className="btn-primary btn-inline w-full">Done</button>}
       >
-        <div className="space-y-4">
-          <div className="rounded-inset bg-bg-raised p-card">
-            <div className="text-3xl font-bold text-text-primary">{result.score}</div>
-            <div className="text-sm text-text-primary">{band.label}</div>
-            <p className="mt-1 text-xs text-text-secondary">{band.detail}</p>
-            {change !== null && (
-              <p className="mt-2 text-xs text-text-secondary">
-                {change === 0
-                  ? 'The same as last time.'
-                  : `${Math.abs(change)} ${change < 0 ? 'lower' : 'higher'} than last time (${result.prev!.score}).`}
-              </p>
-            )}
+        <div className="space-y-5">
+          <div className="rounded-card bg-bg-surface p-card">
+            <p className="flex items-baseline gap-3">
+              <span className="text-[4rem] font-bold leading-none text-text-strong">{result}</span>
+              <span className="text-sm text-text-secondary">of {HIT6_MAX}</span>
+            </p>
+            <span className={`mt-3 inline-block rounded-badge px-3 py-1 text-sm font-medium text-bg-base ${TONE_BG[tone]}`}>
+              {band.label}
+            </span>
+            <ScoreBar score={result} />
           </div>
-          <p className="text-xs text-text-secondary">
-            Saved to your diary. It sits alongside your attack history, so you can see the two together —
-            and it's worth answering again in about four weeks, since the questions ask about that window.
+
+          <p className="text-text-primary">{hit6BandSentence(result)}</p>
+
+          <div className="flex items-start gap-3 rounded-card bg-warning-surface px-card py-3">
+            <WarningIcon className="mt-0.5 size-4 shrink-0 text-severity-mid" />
+            <p className="text-sm text-text-primary">A tracking score, not a diagnosis. You can show it to your doctor alongside your diary.</p>
+          </div>
+
+          <p className="text-text-secondary">
+            Saved to your diary with today’s date, next to your attack history. Answer again in about four weeks to see it move.
           </p>
         </div>
       </ProfileSubPage>
     );
   }
 
-  // ── Questions, one per screen ─────────────────────────────────────────
+  // ── A question (05-1) ─────────────────────────────────────────────────
   if (typeof stage === 'number') {
     const i = stage;
     const isLast = i === HIT6_QUESTIONS.length - 1;
-    const unanswered = answers[i] === null;
     return (
-      // The step count *is* the title. "Headache impact" is already on the row
-      // you tapped to get here, and repeating it costs the line that says
-      // where you are — which is the thing worth having in a top bar mid-flow.
       <ProfileSubPage
-        title={`${i + 1} of ${HIT6_QUESTIONS.length}`}
-        onClose={onClose}
-        // Pinned above the home indicator, like the logging wizard's own
-        // Back/Next. On the longer questions the pair otherwise sat below the
-        // fold, so the way forward was something you had to scroll to find.
+        title={HIT6_QUESTIONS[i]}
+        titleInPage
+        barTitle={`Step ${i + 1} of ${HIT6_QUESTIONS.length}`}
+        // Back steps back a question (to the intro from the first), as the
+        // board's own back circle does.
+        onClose={() => setStage(i === 0 ? 'intro' : i - 1)}
         footer={
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setStage(i === 0 ? 'intro' : i - 1)}
-              className="btn-secondary flex-1"
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              onClick={() => (isLast ? submit() : setStage(i + 1))}
-              disabled={unanswered}
-              className="btn-primary flex-1 active:scale-[.99]"
-            >
-              {isLast ? 'See my score' : 'Next'}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => (isLast ? submit() : setStage(i + 1))}
+            disabled={answers[i] === null}
+            className="btn-primary btn-inline w-full"
+          >
+            {isLast ? 'See my score' : 'Next'}
+          </button>
         }
       >
-        <div className="space-y-6">
-          {/* A plain rule, not a percentage: it says where you are without
-              turning six questions into something being scored. The logging
-              wizard has no room for one — its header already carries a step
-              count and the text-size stepper — so this is deliberately not a
-              pattern to push back into that flow. */}
-          <div className="h-1 w-full overflow-hidden rounded-full bg-bg-raised">
-            <div
-              className="h-full rounded-full bg-accent/60 transition-all"
-              style={{ width: `${((i + 1) / HIT6_QUESTIONS.length) * 100}%` }}
-            />
-          </div>
-
-          <p className="text-base text-text-primary">{HIT6_QUESTIONS[i]}</p>
-
-          <div className="space-y-2">
-            {HIT6_OPTIONS.map((opt) => (
+        {/* key: a new radiogroup per question, so focus and the checked state
+            never carry over from the previous one. */}
+        <div key={i} role="radiogroup" aria-label={HIT6_QUESTIONS[i]} className="space-y-3">
+          {HIT6_OPTIONS.map((opt) => {
+            const selected = answers[i] === opt.value;
+            return (
               <button
                 key={opt.value}
                 type="button"
-                aria-pressed={answers[i] === opt.value}
-                onClick={() => answer(opt.value, i)}
-                className={`${CHIP} ${chipClass(answers[i] === opt.value)}`}
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setAnswers((prev) => prev.map((a, j) => (j === i ? opt.value : a)))}
+                className={`flex min-h-row w-full items-center gap-3 rounded-card px-card py-control-y text-left transition-colors ring-1 ring-inset ${
+                  selected
+                    ? 'bg-selected-fill font-semibold text-text-primary ring-accent'
+                    : 'bg-bg-surface text-text-primary ring-bg-border hover:bg-bg-raised'
+                }`}
               >
-                <span className="flex-1">{opt.label}</span>
-                <ChipCheck selected={answers[i] === opt.value} />
+                <span className={`text-[1.375rem] ${selected ? 'text-accent-light' : 'text-text-secondary'}`}>
+                  <RadioDot selected={selected} />
+                </span>
+                {opt.label}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </ProfileSubPage>
     );
   }
 
-  // ── Intro ─────────────────────────────────────────────────────────────
+  // ── Intro (05-0) ──────────────────────────────────────────────────────
   return (
-    <ProfileSubPage title="Headache impact" onClose={onClose}>
-      <div className="space-y-6">
-        <div className="space-y-3 text-sm text-text-secondary">
-          <p>
-            Six questions about the last four weeks, which add up to a score between {HIT6_MIN} and {HIT6_MAX}.
-            It's a standard questionnaire — the HIT-6 — and many headache clinics use it.
-          </p>
-          <p>
-            <span className="text-text-primary">Why answer it.</span> Your diary counts how many days you
-            had. This asks something the diary can't: how much those days actually cost you. The two often
-            disagree — a month with fewer attacks can still be a month that took more out of you — so
-            answering it every so often gives you a second line to read alongside the first.
-          </p>
-          <p>
-            <span className="text-text-primary">Who sees it.</span> Nobody. It's stored with the rest of
-            your diary, on your device and in your own account if you've signed in. Nothing is sent
-            anywhere else and nothing is reviewed by anyone. It's yours — to watch over time, or to show a
-            doctor if you want to.
-          </p>
-          <p>
-            <span className="text-text-primary">After you answer.</span> You get the score and what it
-            means, and it's saved with today's date. Answers can't be edited afterwards: each one measures
-            a particular four weeks, so changing it later would make it a record of what you think now
-            rather than of how that month was. You can delete an entry if it's wrong.
-          </p>
-        </div>
-
-        {last && (
-          <p className="text-xs text-text-secondary">
-            Last answered {formatDateShort(last.takenAt)} · scored {last.score} ({hit6Band(last.score).label.toLowerCase()}).
-            Worth answering again about {HIT6_INTERVAL_DAYS} days after that.
-          </p>
-        )}
-
-        <button type="button" onClick={() => setStage(0)} className="btn-primary btn-inline w-full active:scale-[.99]">
+    <ProfileSubPage
+      title="Headache impact"
+      titleInPage
+      onClose={onClose}
+      footer={
+        <button type="button" onClick={() => setStage(0)} className="btn-primary btn-inline w-full">
           {entries.length === 0 ? 'Start' : 'Answer again'}
         </button>
+      }
+    >
+      <div className="space-y-6">
+        <p className="text-text-primary">
+          Six quick questions about how headaches have affected your last four weeks — a standard
+          questionnaire (HIT-6) that many headache clinics use.
+        </p>
+
+        <ul role="list" className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
+          <IntroRow icon={<ClockGlyph />} title="About a minute" detail="Six multiple-choice questions" />
+          <IntroRow
+            icon={<LockGlyph />}
+            title="Only you see it"
+            detail={signedIn ? 'Saved in your diary and your own account' : 'Saved in your diary, sent nowhere'}
+          />
+          <IntroRow icon={<CalendarGlyph />} title="Every few weeks" detail="The questions ask about a 4-week window" />
+        </ul>
+
+        <p className="text-sm text-text-secondary">
+          You’ll get a score to track over time, not a diagnosis. It can’t be edited once saved, since each one
+          records a particular four weeks — but you can delete it.
+        </p>
 
         {history.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-xs font-medium uppercase tracking-wide text-text-secondary">Previous</h3>
-            <div className="space-y-1">
+          <section className="space-y-2">
+            <h3 className="mx-1 text-xs font-semibold text-text-secondary">
+              Earlier answers
+            </h3>
+            <ul role="list" className="overflow-hidden rounded-card bg-bg-surface [&>*+*]:border-t [&>*+*]:border-bg-border">
               {history.map((e) => (
-                <div key={e.id} className="flex items-center gap-3 rounded-lg bg-bg-raised/50 px-3 py-2">
-                  <span className="text-sm font-medium text-text-primary">{e.score}</span>
-                  <span className="min-w-0 flex-1 truncate text-xs text-text-secondary">
-                    {hit6Band(e.score).label}
+                <li key={e.id} className="flex min-h-row items-center gap-3 pl-card pr-2">
+                  <span className="w-8 text-lg font-semibold text-text-primary">{e.score}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm text-text-primary">{hit6Band(e.score).label}</span>
+                    <span className="block text-xs text-text-secondary">{formatDateShort(e.takenAt)}</span>
                   </span>
-                  <span className="text-xs text-text-secondary">{formatDateShort(e.takenAt)}</span>
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(e)}
-                    className="shrink-0 rounded-control-sm px-2 py-1 text-xs text-text-secondary transition-colors hover:text-text-primary"
+                    className="btn-tertiary btn-compact text-text-secondary"
                   >
                     Delete
                   </button>
-                </div>
+                </li>
               ))}
-            </div>
-          </div>
+            </ul>
+          </section>
         )}
       </div>
 
@@ -247,4 +243,69 @@ export function Hit6View({ entries, onSubmit, onDelete, onClose }: Props) {
       />
     </ProfileSubPage>
   );
+}
+
+/** The scale, 36 to 78, in the instrument's four bands, with the score
+ *  marked. Decorative — the number and the band label above say it all. */
+function ScoreBar({ score }: { score: number }) {
+  // "some" sits under 50–59 together, as on the board (the 56–59 band has no
+  // word of its own there).
+  const labels = [
+    { text: 'little', at: pct((36 + 49) / 2) },
+    { text: 'some', at: pct((50 + 59) / 2) },
+    { text: 'a lot', at: pct((60 + 78) / 2) },
+  ];
+  return (
+    <div aria-hidden="true" className="mt-5">
+      <div className="relative">
+        <div className="flex h-2 gap-0.5 overflow-hidden rounded-full">
+          {HIT6_BANDS.map((b) => (
+            <span
+              key={b.from}
+              className={`h-full ${TONE_BG[b.tone]}`}
+              // Inclusive bands: 36–49 is 14 points of the 42-point span.
+              style={{ flexGrow: b.to - b.from + (b.from === HIT6_MIN ? 0 : 1) }}
+            />
+          ))}
+        </div>
+        <span
+          className="absolute -top-1 h-4 w-1 -translate-x-1/2 rounded-full bg-text-strong ring-2 ring-bg-surface"
+          style={{ left: `${pct(score)}%` }}
+        />
+      </div>
+      <div className="relative mt-2 h-5 text-xs text-text-secondary">
+        <span className="absolute left-0">{HIT6_MIN}</span>
+        {labels.map((l) => (
+          <span key={l.text} className="absolute -translate-x-1/2" style={{ left: `${l.at}%` }}>{l.text}</span>
+        ))}
+        <span className="absolute right-0">{HIT6_MAX}</span>
+      </div>
+    </div>
+  );
+}
+
+function IntroRow({ icon, title, detail }: { icon: React.ReactNode; title: string; detail: string }) {
+  return (
+    <li className="flex items-center gap-4 p-card">
+      <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-bg-raised text-text-secondary">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-text-primary">{title}</span>
+        <span className="block text-text-primary">{detail}</span>
+      </span>
+    </li>
+  );
+}
+
+// Lucide clock / lock / calendar, at the app's 1.8 stroke.
+const GLYPH = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', className: 'size-5' } as const;
+function ClockGlyph() {
+  return <svg {...GLYPH}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>;
+}
+function LockGlyph() {
+  return <svg {...GLYPH}><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>;
+}
+function CalendarGlyph() {
+  return <svg {...GLYPH}><path d="M8 2v4M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg>;
 }
