@@ -2,7 +2,6 @@ import type { NotificationConfig } from '../types';
 import { BellIcon } from './drawnIcons';
 import { RadioDot } from './RadioDot';
 import { SectionLabel, SettingsList, SettingsRow, Switch } from './settingsUi';
-import { chipClass } from '../utils/chipStyles';
 
 interface Props {
   value: NotificationConfig;
@@ -11,10 +10,15 @@ interface Props {
 
 const FIXED_OPTIONS = [30, 60, 120, 240];
 
-// Matches docs/redesign-v4/screens/reminders/RemindersRedesign.html
-// (2026-11-23), on the same "stop moving lidd" call as Settings' own rows:
-// List/ListRow/Chip/ChipGroup here were still code-ds, so this screen had
-// drifted from the rest of Settings, which had already moved off it.
+/** "Every 2 h" — the board's own value wording ("Every 2 h"), and never
+ *  "every 1 hours", which the old sentence produced for 60. */
+function everyLabel(min: number): string {
+  if (min < 60) return `Every ${min} min`;
+  if (min === 60) return 'Every hour';
+  return `Every ${min / 60} h`;
+}
+
+// Matches docs/redesign-v4/screens/reminders/RemindersRedesign.html.
 //
 // **Quiet hours is deliberately not built** — A9 backlogged it (it would
 // silence reminders during a night attack, which is when a reading matters
@@ -22,10 +26,10 @@ const FIXED_OPTIONS = [30, 60, 120, 240];
 // hours · 23:00–07:00" section would be a control that does nothing.
 //
 // **The Fixed-interval picker has no board** (the designer left this one
-// incomplete), so it stays the pick-one chip row the app already uses
-// everywhere else (RadioDot + radiogroup — EndAttackDialog's exact pattern)
-// rather than code-ds's Chip/ChipGroup, closing the same gap for the one
-// piece the board doesn't settle.
+// incomplete). It takes the Adaptive card's own shape — the same list card,
+// one row per interval, value-side radio — so switching Timing swaps the
+// card's contents rather than swapping a card for a chip row, which read as
+// a different screen (2026-11-25).
 export function NotificationSettings({ value, onChange }: Props) {
   return (
     <div className="space-y-5">
@@ -36,8 +40,8 @@ export function NotificationSettings({ value, onChange }: Props) {
                 brightest thing on screen. Accent, not muted — the board
                 highlights this icon as the screen's one headline control,
                 where every other settings-row icon stays neutral. */}
-            <span className="flex items-center gap-2">
-              <BellIcon className="h-4 w-4 shrink-0 text-accent-light" />
+            <span className="flex items-center gap-3 font-medium">
+              <BellIcon className="h-5 w-5 shrink-0 text-accent-light" />
               Check-in reminders
             </span>
           </Switch>
@@ -45,50 +49,50 @@ export function NotificationSettings({ value, onChange }: Props) {
       </SettingsList>
 
       {value.enabled && (
-        <div className="space-y-3">
+        <div>
           <SectionLabel>Timing</SectionLabel>
           <TimingSwitch
             value={value.mode}
             onChange={(mode) => onChange({ ...value, mode })}
           />
 
-          {value.mode === 'adaptive' ? (
-            <>
+          <div className="mt-3">
+            {value.mode === 'adaptive' ? (
               <SettingsList>
-                <SettingsRow value="1 h after start">First reminder</SettingsRow>
-                <SettingsRow value="Every 2 h">Then</SettingsRow>
+                <SettingsRow trailing="1 h after start" trailingTone="accent">First reminder</SettingsRow>
+                <SettingsRow trailing="Every 2 h" trailingTone="accent">Then</SettingsRow>
               </SettingsList>
-              <p className="text-xs text-text-secondary">
-                Adaptive spaces check-ins out as the attack goes on. Switch to Fixed to set your own times.
-              </p>
-            </>
-          ) : (
-            <>
-              <div role="radiogroup" aria-label="Reminder interval" className="flex flex-wrap gap-2">
-                {FIXED_OPTIONS.map((min) => {
-                  const selected = value.fixedIntervalMinutes === min;
-                  const label = min < 60 ? `${min}m` : `${min / 60}h`;
-                  return (
-                    <button
-                      key={min}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => onChange({ ...value, fixedIntervalMinutes: min })}
-                      // `chipClass` (shared module, not a local duplicate) —
-                      // font-weight comes from it, so it isn't left to fight
-                      // a locally-declared one for the selected state.
-                      className={`tap-44-y inline-flex items-center gap-1.5 rounded-chip px-4 py-2 text-sm transition-colors ${chipClass(selected)}`}
-                    >
-                      <RadioDot selected={selected} />
-                      {label}
-                    </button>
-                  );
-                })}
+            ) : (
+              <div role="radiogroup" aria-label="Reminder interval">
+                <SettingsList>
+                  {FIXED_OPTIONS.map((min) => {
+                    const selected = value.fixedIntervalMinutes === min;
+                    return (
+                      <SettingsRow bare key={min}>
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => onChange({ ...value, fixedIntervalMinutes: min })}
+                          className={`flex w-full items-center gap-3 text-left text-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent ${selected ? 'font-medium text-text-primary' : 'text-text-primary'}`}
+                        >
+                          <span className="flex-1">{everyLabel(min)}</span>
+                          <span className={selected ? 'text-accent-light' : 'text-text-secondary'}>
+                            <RadioDot selected={selected} />
+                          </span>
+                        </button>
+                      </SettingsRow>
+                    );
+                  })}
+                </SettingsList>
               </div>
-              <p className="text-xs text-text-secondary">A reminder every {value.fixedIntervalMinutes < 60 ? `${value.fixedIntervalMinutes} minutes` : `${value.fixedIntervalMinutes / 60} hours`} while an attack is open.</p>
-            </>
-          )}
+            )}
+          </div>
+          <p className="mx-1 mt-2.5 text-xs text-text-secondary">
+            {value.mode === 'adaptive'
+              ? 'Adaptive spaces check-ins out as the attack goes on. Switch to Fixed to set your own times.'
+              : 'Fixed asks at the same interval for as long as the attack is open.'}
+          </p>
         </div>
       )}
     </div>

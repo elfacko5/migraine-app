@@ -653,9 +653,10 @@ export function RemindersPanel({ value, onChange, onClose }: {
 }) {
   return (
     <ProfileSubPage title="Reminders" onClose={onClose}>
-      <div className="space-y-3">
+      {/* space-y-5: the board's 22px between blocks (lead, switch, Timing). */}
+      <div className="space-y-5">
         <p className="text-sm text-text-secondary">
-          While an attack is ongoing, a reminder asks how it is. This applies to each attack you log from now on.
+          While an attack is open, a reminder asks how it's going, so the diary has a reading every so often. Applies to attacks from now on.
         </p>
         <NotificationSettings value={value} onChange={onChange} />
       </div>

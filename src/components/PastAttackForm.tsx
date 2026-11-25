@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { DiscardDraftDialog } from './DiscardDraftDialog';
 import type { Attack, Medication, NotificationConfig, Snapshot } from '../types';
 import { PAIN_QUALITY_OPTIONS, NOTHING_UNUSUAL } from '../types';
 import { isoToLocalInput, localInputToIso } from '../utils/format';
@@ -423,87 +424,13 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
         </button>
       </div>
 
-      <DiscardDialog
+      <DiscardDraftDialog
         open={discardOpen}
+        discardLabel="Discard this attack"
         onKeepGoing={() => setDiscardOpen(false)}
-        onSaveAndClose={submit}
+        onSave={submit}
         onDiscard={onClose}
       />
-    </div>
-  );
-}
-
-/**
- * The three-way "discard this draft?" choice (`MrgPastStopDark` in the v4
- * boards) — `ConfirmDialog`'s own backdrop/focus/inert handling, since that
- * component only supports a confirm/cancel pair and this needs a third,
- * non-destructive middle action ("Save and close"). Same `fixed inset-0`
- * positioning `ConfirmDialog` itself uses for the same reason: a short-lived
- * alert overlay, never visible across the cold-launch resize that the
- * shell's own `position: fixed` ban is about.
- *
- * **Escape here is not reliable, and neither is `ConfirmDialog`'s own.** The
- * Sheet underneath also listens for Escape on `window` and calls its own
- * `onClose` (closing the whole sheet, discarding the draft) — both listeners
- * fire, in registration order, and nothing here can suppress one already
- * added to the same target before this dialog opened. A keyboard Escape
- * while this is open both "keeps going" *and* closes the sheet, which nets
- * out to the draft being lost regardless. Fixing it needs Sheet itself to
- * know a nested dialog is open, not a fix local to this component — left
- * for when a flow's keyboard behaviour actually matters enough to touch
- * Sheet's own Escape handling. The backdrop click and the explicit "Keep
- * going" button are both unaffected and work correctly.
- */
-function DiscardDialog({ open, onKeepGoing, onSaveAndClose, onDiscard }: {
-  open: boolean;
-  onKeepGoing: () => void;
-  onSaveAndClose: () => void;
-  onDiscard: () => void;
-}) {
-  const keepGoingRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onKeepGoing(); };
-    window.addEventListener('keydown', onKey);
-    keepGoingRef.current?.focus();
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onKeepGoing]);
-
-  return (
-    <div
-      className={`fixed inset-0 z-[60] flex items-end justify-center ${open ? '' : 'pointer-events-none'}`}
-      aria-hidden={!open}
-      inert={!open}
-      style={{ visibility: open ? 'visible' : 'hidden', transition: `visibility 0s linear ${open ? '0s' : '200ms'}` }}
-    >
-      <div className="absolute inset-0 bg-bg-base/70" onClick={onKeepGoing} />
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-label="Discard this draft?"
-        className="relative w-full max-w-2xl space-y-3 rounded-t-sheet border border-bg-border bg-bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
-      >
-        <h2 className="text-lg font-medium text-text-primary">Discard this draft?</h2>
-        <p className="text-sm text-text-secondary">
-          Nothing is saved yet. Save what you've entered so far, or discard the whole thing.
-        </p>
-        <div className="space-y-2 pt-1">
-          <button ref={keepGoingRef} type="button" onClick={onKeepGoing} className="btn-primary w-full">
-            Keep going
-          </button>
-          <button type="button" onClick={onSaveAndClose} className="btn-secondary w-full rounded-control py-control-y text-sm font-medium transition-colors">
-            Save and close
-          </button>
-          <button
-            type="button"
-            onClick={onDiscard}
-            className="w-full rounded-control px-control-x py-2.5 text-sm font-medium text-bg-base transition-colors bg-severity-high hover:opacity-90"
-          >
-            Discard this draft
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

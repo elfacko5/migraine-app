@@ -70,7 +70,7 @@ export interface SettingsRowProps {
    * chosen value such as Display's "Lexend" or "iPhone" — the v4 Display
    * board draws those at full text colour.
    */
-  trailingTone?: 'muted' | 'primary';
+  trailingTone?: 'muted' | 'primary' | 'accent';
   /** A decorative icon in currentColor. Hidden from screen readers. */
   leading?: React.ReactNode;
   /** Makes the row pressable: a button with a chevron. Without it the row is static. */
@@ -79,6 +79,14 @@ export interface SettingsRowProps {
   /** The row's content is its own control, such as a Switch. Only the side padding, height and divider apply. */
   bare?: boolean;
 }
+
+// `accent` is the Reminders board's value colour (`.or .v`: #9bb9a1, 500) —
+// a read-only setting's current value, set apart from its label.
+const TRAILING_TONE = {
+  muted: 'text-text-secondary',
+  primary: 'text-text-primary',
+  accent: 'font-medium text-accent-light',
+} as const;
 
 export function SettingsRow({ children, value, trailing, trailingTone = 'muted', leading, onClick, disabled = false, bare = false }: SettingsRowProps) {
   // The divider lives on every row but the first, drawn as a pseudo-element
@@ -108,7 +116,7 @@ export function SettingsRow({ children, value, trailing, trailingTone = 'muted',
         <span className="block text-text-primary">{children}</span>
         {value && <span className="block text-xs text-text-secondary">{value}</span>}
       </span>
-      {trailing && <span className={`shrink-0 whitespace-nowrap ${trailingTone === 'primary' ? 'text-text-primary' : 'text-text-secondary'}`}>{trailing}</span>}
+      {trailing && <span className={`shrink-0 whitespace-nowrap ${TRAILING_TONE[trailingTone]}`}>{trailing}</span>}
     </>
   );
   const layout = 'flex min-h-row w-full items-center gap-3 px-card py-control-y text-left text-sm leading-tight';

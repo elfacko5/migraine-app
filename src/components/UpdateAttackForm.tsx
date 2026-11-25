@@ -13,6 +13,7 @@ import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SymptomIcon, ReliefIcon } from './drawnIcons';
 import { ConfirmDialog } from './ConfirmDialog';
+import { DiscardDraftDialog } from './DiscardDraftDialog';
 import { lastReading } from '../utils/readings';
 
 interface Props {
@@ -474,10 +475,11 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         </button>
       </div>
 
-      <DiscardDialog
+      <DiscardDraftDialog
         open={discardOpen}
+        discardLabel="Discard this update"
         onKeepGoing={() => setDiscardOpen(false)}
-        onSaveAndClose={submit}
+        onSave={submit}
         onDiscard={onClose}
       />
 
@@ -490,65 +492,6 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         onConfirm={() => { setConfirmNoChange(false); submitNoChange(); }}
         onCancel={() => setConfirmNoChange(false)}
       />
-    </div>
-  );
-}
-
-/** Same discard-draft mechanism as `PastAttackForm`'s own `DiscardDialog` —
- *  copied rather than shared, per this app's "copy the mechanism, don't
- *  write a simplified version" rule for a hand-rolled dialog beyond
- *  `ConfirmDialog`'s own confirm/cancel pair. Its own doc comment there
- *  explains the known Escape-key gap, unchanged here. */
-function DiscardDialog({ open, onKeepGoing, onSaveAndClose, onDiscard }: {
-  open: boolean;
-  onKeepGoing: () => void;
-  onSaveAndClose: () => void;
-  onDiscard: () => void;
-}) {
-  const keepGoingRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onKeepGoing(); };
-    window.addEventListener('keydown', onKey);
-    keepGoingRef.current?.focus();
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onKeepGoing]);
-
-  return (
-    <div
-      className={`fixed inset-0 z-[60] flex items-end justify-center ${open ? '' : 'pointer-events-none'}`}
-      aria-hidden={!open}
-      inert={!open}
-      style={{ visibility: open ? 'visible' : 'hidden', transition: `visibility 0s linear ${open ? '0s' : '200ms'}` }}
-    >
-      <div className="absolute inset-0 bg-bg-base/70" onClick={onKeepGoing} />
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-label="Discard this update?"
-        className="relative w-full max-w-2xl space-y-3 rounded-t-sheet border border-bg-border bg-bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
-      >
-        <h2 className="text-lg font-medium text-text-primary">Discard this update?</h2>
-        <p className="text-sm text-text-secondary">
-          Nothing is saved yet. Save what you've entered so far, or discard the whole thing.
-        </p>
-        <div className="space-y-2 pt-1">
-          <button ref={keepGoingRef} type="button" onClick={onKeepGoing} className="btn-primary w-full">
-            Keep going
-          </button>
-          <button type="button" onClick={onSaveAndClose} className="btn-secondary w-full rounded-control py-control-y text-sm font-medium transition-colors">
-            Save and close
-          </button>
-          <button
-            type="button"
-            onClick={onDiscard}
-            className="w-full rounded-control px-control-x py-2.5 text-sm font-medium text-bg-base transition-colors bg-severity-high hover:opacity-90"
-          >
-            Discard this update
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
