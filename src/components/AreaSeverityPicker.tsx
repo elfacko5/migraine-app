@@ -6,7 +6,7 @@ import {
   VIEWS, type DiagramView,
   headFill, lineColor, dividerColor, detailColor, disabledFill, disabledHatch,
   disabledLine, hoverFill, badgeFill, badgeText,
-  sevText, sevFill, sevStroke,
+  sevFill, sevStroke,
 } from './headDiagram';
 
 const SEVERITIES = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -135,37 +135,38 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
         />
       </div>
 
-      {/* Single severity slider — follows the focused area */}
+      {/* Single severity card — follows the focused area. Matched against
+          the board's own severity card (`23-live/Live23WhereDark`,
+          `.grp .rw`): solid `bg-bg-raised` card at `rounded-card`, no border
+          — not the translucent-outlined `rounded-control` box this drew
+          before, which read as an empty outline rather than a card-on-card
+          surface. Header is name (+ "was X") against a plain "Remove" text
+          link, not an icon button — the board never uses an icon here. */}
       {active && (
-        <div className="rounded-control border border-bg-border bg-bg-raised/30 px-4 py-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-text-primary">
+        <div className="rounded-card bg-bg-raised px-4 py-3 space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-base font-semibold text-text-primary">
               {active}
               {previousValue?.[active] !== undefined && (
                 <span className="ml-1.5 font-normal text-text-secondary">· was {previousValue[active]}</span>
               )}
             </span>
-            <div className="flex items-center gap-2">
-              <span className={`text-sm font-bold tabular-nums ${sevText(value[active])}`}>{value[active]}</span>
-              <button type="button" onClick={removeActive}
-                className="text-text-secondary hover:text-text-primary transition-colors"
-                aria-label={`Remove ${active}`}>
-                <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4"
-                  stroke="currentColor" strokeWidth={2} strokeLinecap="round">
-                  <line x1="4" y1="4" x2="12" y2="12"/>
-                  <line x1="12" y1="4" x2="4" y2="12"/>
-                </svg>
-              </button>
-            </div>
+            <button type="button" onClick={removeActive}
+              className="tap-44-y shrink-0 text-base font-medium text-accent-light hover:text-accent transition-colors"
+              aria-label={`Remove ${active}`}>
+              Remove
+            </button>
           </div>
           {/* Button grid, not a slider (pattern library, 2026-11-24) — the
               redesign's `UpdNowDark` board draws each value as its own tap
               target rather than a point on a continuous track. 1-10, not the
-              design's 0-10: every area that's selected already carries a
-              severity (defaulted to 5), so there's no "unset" state for a 0
-              cell to mean. Previous value marked with a dashed outline
-              (outline, not a ring — it's already carrying the selection
-              ring) rather than redrawn as selected. */}
+              design's 0-10 (June's call, 2026-11-25): every area that's
+              selected already carries a severity (defaulted to 5), so there's
+              no "unset" state for a 0 cell to mean — kept deliberately unlike
+              every other piece of this card, which now matches the board.
+              Previous value marked with a dashed outline (outline, not a
+              ring — it's already carrying the selection ring) rather than
+              redrawn as selected. */}
           <div className="grid grid-cols-5 gap-1.5" role="group"
             aria-label={`${active} severity, 1 to 10`}>
             {SEVERITIES.map((s) => {
@@ -175,13 +176,17 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
                 <button key={s} type="button" aria-pressed={isOn}
                   aria-label={wasThis ? `${s}, last time` : `${s}`}
                   onClick={() => setSev(s)}
-                  className={`min-h-[2.75rem] rounded-control text-base font-medium tabular-nums transition-colors ${chipClass(isOn)} ${
+                  className={`min-h-[2.875rem] rounded-control text-base font-medium tabular-nums transition-colors ${chipClass(isOn)} ${
                     wasThis && !isOn ? 'outline outline-1 outline-dashed outline-border-control -outline-offset-1' : ''
                   }`}>
                   {s}
                 </button>
               );
             })}
+          </div>
+          <div className="flex justify-between text-sm text-text-secondary">
+            <span>1 mild</span>
+            <span>10 worst</span>
           </div>
         </div>
       )}

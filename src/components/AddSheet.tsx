@@ -102,7 +102,16 @@ export function AddSheet({ open, ongoing, actions, onClose }: {
         <span aria-hidden="true" className="mx-auto h-[5px] w-9 rounded-full bg-text-secondary" />
         <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
         {/* The action rows sit on their own bg-bg-raised card — a card on the
-            sheet's own bg-bg-surface card, per the surface-stacking rule. */}
+            sheet's own bg-bg-surface card, per the surface-stacking rule.
+            `outline-none` on each row (below): the global `:focus-visible`
+            rule draws a 2px accent outline, and this card clips it with
+            `overflow-hidden` — fine for a row in the middle, but the first
+            row gets auto-focused on open (below), and WebKit sometimes
+            treats that programmatic focus as focus-visible. The outline's
+            top/left/right get clipped by this card's own edge, leaving just
+            its bottom edge showing as a stray green line under "Log an
+            attack". The row already shows `focus-visible:bg-bg-elevated`,
+            so the outline was redundant as well as broken here. */}
         <div className="overflow-hidden rounded-sheet bg-bg-raised">
           {actions.map((a, i) => (
             <button
@@ -110,7 +119,7 @@ export function AddSheet({ open, ongoing, actions, onClose }: {
               ref={i === 0 ? firstRef : undefined}
               type="button"
               onClick={() => { onClose(); a.onSelect(); }}
-              className={`flex min-h-[4.5rem] w-full items-center gap-2.5 px-4 py-3.5 text-left transition-colors hover:bg-bg-elevated focus-visible:bg-bg-elevated ${
+              className={`flex min-h-[4.5rem] w-full items-center gap-2.5 px-4 py-3.5 text-left outline-none transition-colors hover:bg-bg-elevated focus-visible:bg-bg-elevated ${
                 i > 0 ? 'border-t border-bg-border' : ''
               }`}
             >
