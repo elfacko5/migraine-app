@@ -1,6 +1,6 @@
 import type { Attack, DeletedMedName, MedGuides, Medication } from '../types';
 import {
-  medicationDaysInWindow, medicationDaysByMonth, medicationResponse,
+  medicationDaysInWindow, medicationDaysByMonth, medicationResponse, shownMonthsStart,
   MOH_DAYS_TRIPTAN, MOH_DAYS_SIMPLE,
 } from '../utils/stats';
 import { MedIcon, TabletIcon } from './drawnIcons';
@@ -45,14 +45,13 @@ interface Props {
   /** The library, for each drug's class — which is the only thing that decides
    *  which of the two guideline numbers applies to it. */
   medications?: Medication[];
-  /** Start of the selected period, or `null` for all time. The "doses" /
-   *  "checked at 2h" stats below each drug's bars are measured over this. */
+  /** Start of the selected period, or `null` for all time. Decides which
+   *  drugs get a card — not what the line under the bars counts, which
+   *  follows the months drawn. */
   since: number | null;
   /** How many calendar months of bars to draw — same value `MigraineDaysChart`
    *  receives, so the two sections always agree on how far back they look. */
   months: number;
-  /** How that period reads in a sentence — "the last 30 days". */
-  windowLabel: string;
   /** The monthly guides (a stored number per type, else the guideline). */
   guides?: MedGuides;
   /** Names deleted from the library: their days are shown, never marked as overuse. */
@@ -62,16 +61,22 @@ interface Props {
 }
 
 export function MedicationInsights({
-  attacks, medications = [], guides = {}, deleted = [], since, months, windowLabel, onOpenGuides,
+  attacks, medications = [], guides = {}, deleted = [], since, months, onOpenGuides,
 }: Props) {
   const days = medicationDaysInWindow(attacks, since);
   if (days.length === 0) return null;
 
-  const response = medicationResponse(attacks, since);
   // Clock read inside the util, not here: `medicationDaysByMonth` defaults
   // `now` itself, the same rule `medGuardrails.ts` and every other
   // clock-reading util in this app follows.
   const byMonth = medicationDaysByMonth(attacks, months);
+  // The line under the bars answers the bars — measured from the 1st of the
+  // first month drawn, not from the period's rolling start (2026-11-25). The
+  // two used to differ (3m: bars from 1 Aug, line from ~27 Aug), so a line
+  // sitting under the bars read as their total and didn't add up. The period
+  // still decides which drugs get a card (`days`, above) and how many months
+  // are drawn; it no longer decides what the line counts.
+  const response = medicationResponse(attacks, shownMonthsStart(months));
   const byResponseName = new Map(response.map((r) => [r.name, r]));
   const byMonthName = new Map(byMonth.map((m) => [m.name, m]));
 
@@ -97,8 +102,8 @@ export function MedicationInsights({
           Days you logged taking each medication, by month, against the guideline for its type —
           around {MOH_DAYS_TRIPTAN} days a month for triptans and combinations, {MOH_DAYS_SIMPLE} for simple
           painkillers, sustained over three months — worth raising with your doctor rather than acting on
-          alone. "Doses" and "checked at 2h" below answer {windowLabel.toLowerCase()}, same as the rest of
-          this page. Doses taken without logging an attack aren't counted.
+          alone. The line under each drug's bars counts across the same months the bars show. Doses
+          taken without logging an attack aren't counted.
         </>
       }
     >
@@ -118,6 +123,8 @@ export function MedicationInsights({
           const limit = guideForName(med.name, medications, guides);
           const barMax = limit ?? BAR_MAX_FALLBACK;
           const deletedName = isDeletedName(med.name, medications, deleted);
+          const shownDays = (monthData?.months ?? []).reduce((sum, m) => sum + m.days, 0);
+          const shownDoses = monthData?.doses ?? 0;
 
           return (
             <div key={med.name} className="space-y-3.5 rounded-card bg-bg-surface p-card">
@@ -172,10 +179,10 @@ export function MedicationInsights({
                 })}
               </div>
 
-              {/* "doses", "checked at 2h" and "helped" over the page's own
-                  period, not the months above — the bars and this line can
-                  span different ranges, same as `MigraineDaysChart` and the
-                  rest of the page already do.
+              {/* Days, doses, "checked at 2h" and "helped" over the months
+                  drawn above — days is the bars' own sum, so the line reads
+                  as their total because it is. Doses beside it shows two in
+                  one day, which a day count hides.
 
                   **"Helped" restored (June's call, 2026-11-24)** — the v4
                   board only shows "checked at 2h", but dropping whether a
@@ -186,9 +193,10 @@ export function MedicationInsights({
                   "didn't log it" — both carried over unchanged. */}
               <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-bg-border pt-3 text-xs text-text-primary">
                 {/* Muted glyphs before the first two, as the board's `.mstats`. */}
+                <span>{shownDays} {shownDays === 1 ? 'day' : 'days'}</span>
                 <span className="inline-flex items-center gap-1.5">
                   <MedIcon name={med.name} className="h-4 w-4 text-text-secondary" />
-                  {med.doses} {med.doses === 1 ? 'dose' : 'doses'}
+                  {shownDoses} {shownDoses === 1 ? 'dose' : 'doses'}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}

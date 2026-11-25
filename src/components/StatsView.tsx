@@ -76,13 +76,6 @@ function monthsBetween(fromMs: number, toMs: number): number {
   return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()) + 1;
 }
 
-const PERIOD_SUB: Record<Period, string> = {
-  all:  'all time',
-  '7d': 'last 7 days',
-  '30d':'last 30 days',
-  '3m': 'last 3 months',
-};
-
 interface Props {
   attacks: Attack[];
   /** Passed straight through to MedicationInsights, for each drug's own
@@ -336,7 +329,6 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
         deleted={deleted}
         since={since}
         months={monthsShown}
-        windowLabel={PERIOD_SUB[period]}
         onOpenGuides={onOpenGuides}
       />
 

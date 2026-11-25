@@ -2041,6 +2041,17 @@ answering the clinical question the long form could not drop. The two things
 any replacement was to keep — "doses" never "times", and the passive on the
 missing-reading clause — both carried over unchanged.
 
+**The line under the bars now counts the bars' own months (2026-11-25, Sunny).**
+It had counted the period's rolling window while the bars counted whole
+calendar months, so on 3m the bars started 1 Aug and the line ~27 Aug. Sitting
+directly under the bars, the line read as their total and didn't add up (Treo:
+8 days in the bars, "4 doses" below). A "Since 27 Aug" label was considered and
+rejected — honest, but it leaves two different counts stacked in one card for
+the reader to reconcile. The line is now "`N` days · `N` doses · `N` checked at
+2h · `N` helped" from the 1st of the first month drawn; days is exactly the
+bars' sum, doses kept beside it because two in one day is a different exposure.
+Cost accepted: this card no longer matches the period control to the day.
+
 ## Today, v3 (2026-10-26)
 
 Today was rebuilt from the v3 canvas (`docs/today-v3-handoff.md`, rows v3.3 and v3.4, hero B). It is a redesign of what shipped, not a new screen: the same components, restyled, plus four new blocks. One commit per section of the handoff. The how is in `docs/today-cards.md`; this is what changed and why.

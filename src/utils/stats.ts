@@ -605,6 +605,14 @@ export function medicationDaysByMonth(attacks: Attack[], months: number, now: nu
     .sort((a, b) => b.doses - a.doses || a.name.localeCompare(b.name));
 }
 
+/** Local midnight on the 1st of the earliest month `medicationDaysByMonth`
+ *  draws for the same `months` — so a figure printed under those bars can be
+ *  measured over exactly the stretch the bars cover. Clock read here. */
+export function shownMonthsStart(months: number, now: number = Date.now()): number {
+  const cur = new Date(now);
+  return new Date(cur.getFullYear(), cur.getMonth() - (months - 1), 1).getTime();
+}
+
 /**
  * Medication days and doses inside a rolling window, rather than per calendar
  * month.
