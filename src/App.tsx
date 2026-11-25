@@ -40,9 +40,7 @@ import { QuickUpdateForm } from './components/QuickUpdateForm';
 import { UpdateAttackForm } from './components/UpdateAttackForm';
 import { OngoingAttackBanner } from './components/OngoingAttackBanner';
 import { AttackFreeCard } from './components/AttackFreeCard';
-import { ImpactPrompt } from './components/ImpactPrompt';
 import { Hit6Prompt } from './components/Hit6Prompt';
-import { attackAwaitingImpact } from './utils/impact';
 import { hit6Due } from './utils/hit6';
 import { TodaySummary } from './components/TodaySummary';
 import { WeekCard } from './components/WeekCard';
@@ -97,10 +95,6 @@ export default function App() {
   const [logsSort, setLogsSort] = useState<SortOrder>('newest');
   const [logsFilterOpen, setLogsFilterOpen] = useState(false);
 
-  // Which attack the impact prompt has been waved away for. Session-only on
-  // purpose: the 24h window closes by itself, so there's nothing to persist —
-  // no new localStorage key, no Attack field, no Supabase column.
-  const [impactDismissed, setImpactDismissed] = useState<number | null>(null);
   // Which medication the editor sheet is open on: an existing one, or a new
   // one of a given kind. Kept here rather than inside MedicationsView because
   // Sheet anchors to the app root — see the Profile tab notes in CLAUDE.md.
@@ -116,7 +110,7 @@ export default function App() {
   const auth = useAuth();
   const userId = auth.user?.id ?? null;
   const {
-    attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, setImpact, updateAttackDetails, deleteAttack,
+    attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, updateAttackDetails, deleteAttack,
     syncStatus: attacksSyncStatus, lastSyncedAt: attacksLastSyncedAt,
   } = useAttacks(userId);
   const {
@@ -219,24 +213,6 @@ export default function App() {
   const heroOnToday = tab === 'log' && !!(ongoingAttack || lastAttackEnd);
   // The attack mode button's Today placement: the hero's top-right corner.
   const heroAttackMode = <AttackModePill active={attackMode} onToggle={setAttackMode} />;
-
-  // The attack whose impact Today should ask about, if any.
-  //
-  // Read during render rather than on a tick, and deliberately not wrapped in
-  // useNowTick: that hook forces a re-render, and at this level it would
-  // re-render the entire tree every 60 seconds to watch a boundary 24 hours
-  // away. The states that matter already trigger a render of their own —
-  // ending an attack, answering the prompt, and returning to the foreground
-  // (the sync hooks fire on visibilitychange). The worst case is a prompt
-  // lingering a little past 24h on an app left open and untouched, which
-  // costs nothing: answering it is still optional, and the next interaction
-  // clears it.
-  // deliberate: see the note above. The boundary being read is 24 hours
-  // away, so a value that is only as fresh as the last render is exactly
-  // fresh enough, and useNowTick here would re-render the whole tree every
-  // minute to watch it.
-  // eslint-disable-next-line react-hooks/purity
-  const impactPending = attackAwaitingImpact(attacks, Date.now());
 
   // Order the pickers' options by how often they've been selected historically,
   // so the most-used surface at the top.
@@ -431,11 +407,10 @@ export default function App() {
     // out of existence (caught on-device: a past-attack save with
     // painQuality or endUnknown set vanished with nothing in the console).
     // Deliberately no `impact` param here: asking it at past-log time would
-    // be exactly the recall bias `attackAwaitingImpact`'s own reasoning
-    // rejects (a judgement about what the attack cost, reconstructed after
-    // the fact) — the existing Today prompt already covers a past attack
-    // that ended inside its own 24h window, and one older than that is
-    // meant to stay unanswered.
+    // be exactly the recall bias `impact.ts`'s own reasoning rejects (a
+    // judgement about what the attack cost, reconstructed after the fact).
+    // Impact is now only ever asked live, as a step of `EndAttackForm`; a
+    // past-logged attack stays unanswered.
     endUnknown?: boolean,
     painQuality?: string[],
   ) {
@@ -588,12 +563,14 @@ export default function App() {
           style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom))' }}
         >
         {/* ── Today tab ───────────────────────────── */}
-        {/* Order, top to bottom (v3, 2026-10-26): hero → impact question →
-            week card → two-hour check-in → the ongoing dose → overuse
-            warnings → the two tiles → the medication card → HIT-6. Roughly
-            "what bears on the next hour" first and "what can wait" last. In
-            attack mode only the hero, impact, check-in and dose survive.
-            14px between blocks, to the v3 spec — the other tabs keep 16. */}
+        {/* Order, top to bottom: hero → week card → two-hour check-in → the
+            ongoing dose → overuse warnings → the two tiles → the medication
+            card → HIT-6. Roughly "what bears on the next hour" first and
+            "what can wait" last. In attack mode only the hero, check-in and
+            dose survive. 14px between blocks, to the v3 spec — the other
+            tabs keep 16. The impact question (2026-11-22's `ImpactPrompt`)
+            was removed 2026-11-25 — it's now asked live, as a step of
+            `EndAttackForm`, instead of as a 24h Today fallback. */}
         {tab === 'log' && (
           <section className="space-y-3.5">
             {ongoingAttack && (
@@ -608,23 +585,6 @@ export default function App() {
 
             {!ongoingAttack && lastAttackEnd && (
               <AttackFreeCard lastEnd={lastAttackEnd} topAction={heroAttackMode} />
-            )}
-
-            {/* Asked here rather than in the end-attack dialog, so closing an
-                attack down and judging what it cost you aren't the same tap.
-                Shown for 24h after the end, and displaced automatically by a
-                newer attack — see `attackAwaitingImpact`.
-
-                It renders in attack mode too. The rule is that Today keeps only
-                what changes your next hour, which this doesn't — but an attack
-                usually ends while attack mode is still on, so hiding it there
-                would mean the window nearly always elapses unseen, and one
-                question with four large targets is what that mode asks for. */}
-            {impactPending && impactDismissed !== impactPending.id && (
-              <ImpactPrompt
-                onAnswer={(impact) => setImpact(impactPending.id, impact)}
-                onDismiss={() => setImpactDismissed(impactPending.id)}
-              />
             )}
 
             {/* Only when two or more attacks overlap the last seven days —
@@ -661,8 +621,7 @@ export default function App() {
             {/* Offered on Today when it's due, on Sunny's instruction — see
                 Hit6Prompt for why that reverses the original "Profile row
                 only" call, and for the two things that keep it from nagging.
-                Hidden in attack mode: it changes nothing about the next hour,
-                which is the rule ImpactPrompt above is the exception to. */}
+                Hidden in attack mode: it changes nothing about the next hour. */}
             {hit6Prompting && !attackMode && (
               <Hit6Prompt
                 first={hit6Entries.length === 0}

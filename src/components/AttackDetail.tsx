@@ -291,7 +291,7 @@ export function AttackDetail({ attack, onDelete, onClose, onAddUpdate, onEndAtta
           </button>
         )}
 
-        {/* Read-only. Impact is asked once, inside 24h of the end, on Today;
+        {/* Read-only. Impact is asked once, live, as a step of EndAttackForm;
             offering it here would invite an answer reconstructed days later,
             so an unanswered one shows nothing rather than an empty control. */}
         {(impact || attack.triggers.length > 0 || attack.wokeWithMigraine || (attack.painQuality && attack.painQuality.length > 0)) && (
@@ -449,10 +449,11 @@ function PainChart({ attack, letterFor }: { attack: Attack; letterFor: (name: st
  * them, per A5/A4(i) of docs/redesign-v4-diff.md). Nothing here can reach
  * `snapshots`.
  *
- * `impact` is absent on purpose and must stay absent. It is asked once, in a
- * 24-hour window, and left unanswered for good if that passes — a level
- * reconstructed later is the recall bias a prospective diary exists to avoid,
- * and it counts in the disability figures where an absent answer does not.
+ * `impact` is absent on purpose and must stay absent. It is asked once, live,
+ * as a step of `EndAttackForm`, and left unanswered for good otherwise — a
+ * level reconstructed later is the recall bias a prospective diary exists to
+ * avoid, and it counts in the disability figures where an absent answer does
+ * not.
  */
 function EditDetailsView({ attack, triggerOptions, onAddTrigger, onCancel, onSave }: {
   attack: Attack;

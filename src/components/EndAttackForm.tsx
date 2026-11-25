@@ -97,10 +97,11 @@ interface FormState {
  * full-state reading a submission also saves. Here that other reading is
  * the "what was it like" closing snapshot (step 4), when there is one.
  *
- * **Step 3's impact question stays separate from `ImpactPrompt`'s own 24h
- * fallback on Today** (A3 condition 1) — answering here just means the
- * fallback has nothing left to ask; skipping it here leaves the fallback to
- * catch it, same as before this flow existed.
+ * **Step 3's impact question is the only place impact is ever asked** (A3
+ * condition 1's 24h `ImpactPrompt` fallback on Today was removed 2026-11-25)
+ * — skipping it here leaves this attack's impact permanently unanswered,
+ * same as ending it while slept-through or skipped, or backfilling it via
+ * `PastAttackForm`.
  *
  * **"Gone when you woke up" anchors `end` to the attack's last reading**,
  * never to the moment this flow happens to be completed — the same choice

@@ -98,9 +98,9 @@ function peakArea(areas: Record<string, number>): string | null {
  * user) — `docs/redesign-v4-diff.md` A5 holds the line on `impact.ts`'s own
  * recall-bias reasoning, which the board's "How much did it stop you?" step
  * would reopen for an attack that, by construction, is already being logged
- * after the fact. The existing Today prompt already covers a past attack
- * whose end falls inside its own 24h window; one older than that is meant
- * to stay unanswered.
+ * after the fact. Impact is only ever asked live, as a step of
+ * `EndAttackForm` (the 2026-11-25 removal of the Today fallback dropped the
+ * one other path); a backfilled past attack stays unanswered.
  */
 export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medications = [], attacks = [], defaultNotifConfig, onAddSymptom, onAddRelief, onAddTrigger, onClose, onSave }: Props) {
   const [step, setStep] = useState(1);
@@ -154,12 +154,10 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
     // While resolving dose/follow-up times, an unknown end is bounded like
     // "ongoing" (null) rather than asserted as a real end. The *stored* end
     // is derived below from whatever times this attack actually ends up
-    // with — never "now": for a backfilled attack "now" can be days or
-    // weeks after it really ended, which would both wildly overcount
-    // ICHD attack-days (attackDayKeys counts every day from start to end)
-    // and land inside the Today impact prompt's 24h window, asking about
-    // impact for a long-over attack — exactly what this flow exists to not
-    // do. Caught in review before this ever reached a phone.
+    // with — never "now": for a backfilled attack "now" can be days or weeks
+    // after it really ended, which would wildly overcount ICHD attack-days
+    // (attackDayKeys counts every day from start to end). Caught in review
+    // before this ever reached a phone.
     const boundEndMs = endKnown ? new Date(localInputToIso(form.endTime)).getTime() : null;
 
     // Every dose and follow-up, resolved to a real timestamp and sorted into

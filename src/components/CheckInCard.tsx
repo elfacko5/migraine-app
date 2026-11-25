@@ -19,8 +19,7 @@ import { CircleCheckIcon, ClockIcon } from './icons';
 // **A tint, never the solid accent.** Solid accent means *press this* and is
 // the FAB's alone on Today; the selected-state tint plus a 2px accent ring
 // marks this as the card that wants attention without becoming a second FAB.
-// Shown in attack mode too: it bears on the next hour, the same reason
-// `ImpactPrompt` shows there.
+// Shown in attack mode too: it bears on the next hour.
 export function CheckInCard({ attack, onOpen }: { attack: Attack; onOpen: () => void }) {
   // The window opens and closes on the clock, not on any state change.
   useNowTick(60_000);

@@ -259,36 +259,6 @@ export function useAttacks(userId: string | null) {
     if (updated && userId) trackPush(pushAttacks([updated], userId));
   }, [attacks, commit, userId, trackPush]);
 
-  // Sets impact on an attack that has already ended. `endAttack` can only take
-  // it at the moment of ending, which made the answer all-or-nothing: miss it
-  // in the end dialog and it was unanswerable forever.
-  //
-  // **This does not break the immutability rule.** What is never rewritten is
-  // `snapshots` — the record of what was logged at each moment. `impact` is
-  // attack-level metadata *about* the finished episode, and it was already
-  // being written after every snapshot existed. So this is not the parked
-  // "Edit details" feature; it touches nothing a reading holds.
-  //
-  // Serves the Today prompt, a late answer from AttackDetail, and — if an
-  // "It's over" notification action is ever added — an end that necessarily
-  // leaves impact for later.
-  const setImpact = useCallback((attackId: number, impact: Attack['impact']) => {
-    let updated: Attack | undefined;
-    commit(attacks.map((a) => {
-      if (a.id !== attackId) return a;
-      // Clearing back to unanswered has to *remove* the key, not write 0 — the
-      // same rule endAttack follows, and what sync.ts maps null back to. Done
-      // with a delete rather than rest-destructuring because the lint config
-      // doesn't accept an unused `_`-prefixed binding.
-      const next: Attack = { ...a, updatedAt: new Date().toISOString() };
-      if (impact === undefined) delete next.impact;
-      else next.impact = impact;
-      updated = next;
-      return updated;
-    }));
-    if (updated && userId) trackPush(pushAttacks([updated], userId));
-  }, [attacks, commit, userId, trackPush]);
-
   /**
    * Attack-level metadata on an existing record — the "Edit details" path.
    *
@@ -296,15 +266,15 @@ export function useAttacks(userId: string | null) {
    * docs/editing-assessment.md). It cannot reach `snapshots`: those are the
    * record of what was reported at the time, and correcting one is a separate,
    * larger job that has to leave a visible trace. This only touches fields
-   * that describe the episode as a whole, which `endAttack` and `setImpact`
-   * already rewrite today.
+   * that describe the episode as a whole, which `endAttack` already rewrites
+   * today.
    *
-   * `impact` is **not** in the patch type on purpose. It is asked once, in a
-   * 24-hour window, and left permanently unanswered if that window passes —
-   * an answer reconstructed days later is the recall bias a prospective diary
+   * `impact` is **not** in the patch type on purpose. It is asked once, live,
+   * as a step of `EndAttackForm`, and left permanently unanswered otherwise —
+   * an answer reconstructed later is the recall bias a prospective diary
    * exists to avoid, and a badly remembered level counts in the disability
    * figures where an absent one does not. Adding it here would quietly undo
-   * that decision. `setImpact` remains the only writer.
+   * that decision. `endAttack` remains the only writer.
    *
    * `painQuality` and `confirmedReal` (added with the v4 redesign) are stable
    * metadata by the same test impact fails — nothing about them decays with
@@ -343,5 +313,5 @@ export function useAttacks(userId: string | null) {
 
   const ongoingAttack = findOngoing(attacks);
 
-  return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, setImpact, updateAttackDetails, deleteAttack, syncStatus, lastSyncedAt };
+  return { attacks, ongoingAttack, startAttack, addSnapshot, addSnapshots, endAttack, updateAttackDetails, deleteAttack, syncStatus, lastSyncedAt };
 }

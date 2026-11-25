@@ -22,13 +22,12 @@ interface Props {
  * Two things keep it from becoming the nagging the original rule feared, and
  * both matter:
  *
- * - **Clearing it lasts.** Being due is durable, unlike impact's 24-hour
- *   window, so a session-only dismissal would put the card back on the next
- *   launch and every launch after. "Not now" means not this cycle — four more
- *   weeks (`hit6Due`, `hd_hit6_dismissed`).
+ * - **Clearing it lasts.** Being due is durable, so a session-only dismissal
+ *   would put the card back on the next launch and every launch after. "Not
+ *   now" means not this cycle — four more weeks (`hit6Due`,
+ *   `hd_hit6_dismissed`).
  * - **It doesn't show in attack mode.** That mode carries only what changes
- *   the next hour, and this changes nothing. It is the case ImpactPrompt is
- *   an exception to, not another one.
+ *   the next hour, and this changes nothing.
  */
 export function Hit6Prompt({ onStart, onDismiss, first }: Props) {
   return (

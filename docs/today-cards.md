@@ -44,8 +44,8 @@
 
 ## Below the hero
 
-- **Every block is the v3 card** (`TODAY_CARD` in `utils/todayCard.ts`): `bg-surface`, 20px radius, 16px padding, **no border and no ring**. It replaced the bordered `bg-raised/60` tiles and rows, which read as a grid of outlined boxes under a hero with no frame at all. **Today only, for now:** Insights keeps its bordered tiles until it gets the same pass (Sunny's call), so the two pages differ on purpose. `ImpactPrompt` and `Hit6Prompt` are unchanged. Blocks are 14px apart.
-- **Order:** hero → impact question → week card → two-hour check-in → the ongoing dose → overuse warnings → the two tiles → the medication card → HIT-6. Roughly "what bears on the next hour" first. In attack mode only the hero, the impact question, the check-in and the dose rows survive; that branch of `TodaySummary` keeps its old shape and is being redesigned separately.
+- **Every block is the v3 card** (`TODAY_CARD` in `utils/todayCard.ts`): `bg-surface`, 20px radius, 16px padding, **no border and no ring**. It replaced the bordered `bg-raised/60` tiles and rows, which read as a grid of outlined boxes under a hero with no frame at all. **Today only, for now:** Insights keeps its bordered tiles until it gets the same pass (Sunny's call), so the two pages differ on purpose. `Hit6Prompt` is unchanged. Blocks are 14px apart.
+- **Order:** hero → week card → two-hour check-in → the ongoing dose → overuse warnings → the two tiles → the medication card → HIT-6. Roughly "what bears on the next hour" first. In attack mode only the hero, the check-in and the dose rows survive; that branch of `TodaySummary` keeps its old shape and is being redesigned separately. The impact question's own Today card (`ImpactPrompt`) was removed 2026-11-25 — it's asked live, as a step of `EndAttackForm`, instead.
 - **Every figure is "last 30 days"** (v3). "This month" read 1 on the 1st after a bad 31st and reset to zero for no reason the reader could see. A rolling window says the same thing every day. Insights keeps calendar months, because that is the unit the 15-day line is stated in.
 
 ### The week card
@@ -61,7 +61,7 @@
 - **A tint plus a 2px accent ring, never solid accent**, which means *press this* and belongs to the FAB. It opens the ordinary Add update flow.
 - **Answered, it becomes one quiet line** ("At 2 hours: pain 3") for the rest of the attack: a fact, not a card.
 - **It and the reminder ask the same question, and whichever is answered first ends both.** The card reads the snapshots. On the reminder side, `medCheckInDelay` returns the normal cadence once `doseCheckIn` says "answered". Before that it re-timed from the last dose regardless, so a reading logged at 2h05m was followed ten minutes later by a catch-up reminder asking again.
-- **Shown in attack mode too**: it bears on the next hour, the reason `ImpactPrompt` shows there.
+- **Shown in attack mode too**: it bears on the next hour.
 
 ### The dose card, warnings, tiles and medication card
 

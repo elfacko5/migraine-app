@@ -69,10 +69,10 @@ const INTERVAL_MS = HIT6_INTERVAL_DAYS * 24 * 60 * 60 * 1000;
  * answered at all — and not waved away inside that same window.
  *
  * `dismissedAt` is what makes a Today card tolerable. Being due is a *durable*
- * state (unlike impact, which expires by itself in 24 hours), so without it a
- * cleared card would be back on the next launch and every launch after that,
- * which is nagging rather than prompting. Clearing therefore means "not this
- * cycle": it hides the card for another four weeks, or until an answer lands.
+ * state, so without it a cleared card would be back on the next launch and
+ * every launch after that, which is nagging rather than prompting. Clearing
+ * therefore means "not this cycle": it hides the card for another four
+ * weeks, or until an answer lands.
  */
 export function hit6Due(
   entries: Hit6Entry[],
