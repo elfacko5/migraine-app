@@ -43,3 +43,17 @@ export function peakShade(n: number): string {
   const pct = Math.min(40, Math.round(10 + n * 3));
   return `color-mix(in srgb, var(--color-accent) ${pct}%, var(--color-bg-surface))`;
 }
+
+/**
+ * Severity as a solid fill — the Logs row's number box (v4 board, 2026-11-25).
+ * Pair with `text-bg-base`: the page colour on the band measures 6.0–7.3:1 in
+ * dark (all three bands), and in light the bands are the dark values, so the
+ * pairing inverts and still holds. This replaced `peakShade` on that row on
+ * Sunny's call — the coloured box makes attacks easier to tell apart when
+ * scanning, which the single-hue tint did not.
+ */
+export function sevFillClass(s: number): string {
+  if (s <= LOW_MAX) return 'bg-severity-low';
+  if (s <= MID_MAX) return 'bg-severity-mid';
+  return 'bg-severity-high';
+}

@@ -1,112 +1,135 @@
-import type { Attack, Medication } from '../types';
-import { formatDate, formatTime, formatDuration } from '../utils/format';
-import { attackDoseOutcomes, attackMaxSeverity, hasKnownDuration, type DoseOutcome } from '../utils/stats';
+import type { Attack } from '../types';
+import { formatDuration } from '../utils/format';
+import { attackMaxSeverity, hasKnownDuration, maxSeverity } from '../utils/stats';
 import { attackSide, SIDE_LABELS } from '../utils/laterality';
-import { findMedication } from '../utils/medGuardrails';
-import { classLetter } from '../utils/medClasses';
-import { peakShade } from '../utils/severity';
-import { isRetired } from '../utils/retired';
-import { SideGlyph, SymptomIcon } from './drawnIcons';
-import { ClassBadge } from './ClassBadge';
-import { VerdictMark } from './VerdictMark';
+import { sevFillClass } from '../utils/severity';
+import { cardSymptoms, type CardSymptom } from '../utils/cardSymptoms';
+import { useNowTick } from '../hooks/useNowTick';
+import { LightIcon, NauseaIcon, SideGlyph, SoundIcon, TabletIcon } from './drawnIcons';
 
-// A Logs row — the v3.10 design (docs/redesign-v3, "Logs list and attack
-// detail"), 2026-10-26: what matters at a glance, in the order it's asked.
+// A Logs row — option "D2" of the 2026-11-25 exploration (docs/decisions.md),
+// replacing the v3.10 row. What it carries, and what it deliberately doesn't:
 //
-//   1. **How long** — the headline. ICHD-3 1.1 defines migraine as attacks of
-//      4–72 hours untreated, so length is diagnostic, not just context.
-//   2. **How bad at worst** — the peak as a shaded number (`peakShade`), with
-//      "peak" beside it; the side as a head on the right, which is half an
-//      ICHD-3 criterion (unilateral).
-//   3. **When** — day and start time.
-//   4. **What was taken, and whether it helped** — one badge per drug with ✓
-//      helped, – didn't help, or ? no 2-hour reading, by the same rule
-//      Insights scores with. A missing reading is never "didn't help".
-//   5. **The ICHD symptoms** — nausea/vomiting and light/sound sensitivity,
-//      as icons at the right: criterion C, part of what makes an attack
-//      migraine. Other symptoms, triggers and the average are not on the row.
+//   - **Date block, length, and the worst pain as a coloured number.** No start
+//     or end time and no "peak" label: the times were noise beside the length,
+//     and a label repeated on every row says nothing. The ongoing row keeps
+//     "now", because there the number means something different.
+//   - **One row of small marks:** the side as a head, a tablet and the number of
+//     doses, and the ICHD symptoms (rules in `utils/cardSymptoms.ts`).
+//   - **Not whether a medicine helped.** That's a question about a pattern,
+//     which Insights answers per drug, or about one dose, which the attack's
+//     page answers. A ✓/– per row answered neither and made the row busy.
 //
-// The whole row is one button whose label says all of it in words, so the
-// marks are `aria-hidden`.
+// The whole row is one button whose label says it in words; the marks are
+// `aria-hidden`.
 
 interface Props {
   attack: Attack;
   onClick: () => void;
   isOngoing?: boolean;
-  /** The library — for each drug's type letter. */
-  medications?: Medication[];
+  /** Off a date-sorted list there are no month headers, so the date block
+   *  names the month in place of the weekday. */
+  showMonth?: boolean;
 }
 
-const ICHD_SYMPTOM = /nausea|queasy|vomit|sick\b|light|photophobia|glare|bright|sound|noise|phonophobia/i;
+const SYMPTOM_ICON: Record<CardSymptom, typeof NauseaIcon> = { nausea: NauseaIcon, light: LightIcon, sound: SoundIcon };
+const SYMPTOM_WORD: Record<CardSymptom, string> = { nausea: 'nausea', light: 'light sensitivity', sound: 'sound sensitivity' };
 
-const VERDICT_WORDS: Record<DoseOutcome['verdict'], string> = {
-  helped: 'helped',
-  'not-helped': "didn't help",
-  pending: '2-hour reading to come',
-  'no-reading': 'no 2-hour reading',
-};
+const TOKEN = 'inline-flex h-6 items-center gap-1.5 rounded-lg bg-bg-base px-1.5 text-xs text-text-secondary';
 
-export function AttackCard({ attack, onClick, isOngoing, medications = [] }: Props) {
-  const peak = attackMaxSeverity(attack);
+export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Props) {
+  const start = new Date(attack.snapshots[0].time);
+  const severity = isOngoing ? maxSeverity(attack.snapshots[attack.snapshots.length - 1]) : attackMaxSeverity(attack);
   const side = attackSide(attack);
-  const start = attack.snapshots[0].time;
-  const outcomes = attackDoseOutcomes(attack);
-  const symptoms = [...new Set(attack.snapshots.flatMap((s) => s.symptoms ?? []))]
-    .filter((x) => !isRetired(x) && ICHD_SYMPTOM.test(x));
+  const doses = attack.snapshots.filter((s) => s.medication?.name?.trim()).length;
+  const { shown, others } = cardSymptoms(attack.snapshots.flatMap((s) => s.symptoms ?? []));
+  const marks = side || doses > 0 || shown.length > 0 || others > 0;
+  const length = !hasKnownDuration(attack) && !isOngoing ? 'Length not recorded' : null;
+  const day = start.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
-  // No running length while ongoing: it would have to tick to stay honest,
-  // and a tick per row re-renders the whole list for a figure Today shows.
-  // An unknown end ("gone when you woke up," no time added) is excluded the
-  // same way — the stored `end` is a placeholder, not a fact worth stating
-  // as "9h 12m".
-  const headline = isOngoing ? 'Ongoing' : !hasKnownDuration(attack) ? 'Not recorded' : formatDuration(start, attack.end);
-  const when = `${formatDate(start)} · ${formatTime(start)}`;
   const label = [
-    headline,
-    `peak ${peak}`,
+    isOngoing ? `Ongoing, pain ${severity} now` : `${day}, ${length ?? formatDuration(attack.snapshots[0].time, attack.end)}, worst pain ${severity}`,
     side ? SIDE_LABELS[side].toLowerCase() : null,
-    when,
-  ].filter(Boolean).join(', ') + '. ' + (outcomes.length
-    ? outcomes.map((o) => `${o.name} ${VERDICT_WORDS[o.verdict]}`).join(', ')
-    : 'No medication') + (symptoms.length ? `. ${symptoms.join(', ')}` : '');
+    doses ? `${doses} ${doses === 1 ? 'dose' : 'doses'}` : 'no medication',
+    ...shown.map((k) => SYMPTOM_WORD[k]),
+    others ? `${others} other ${others === 1 ? 'symptom' : 'symptoms'}` : null,
+  ].filter(Boolean).join(', ');
 
   return (
+    // A grid rather than a flex row so the marks can take the full width when
+    // the card runs short of room (large text): below 20rem — about 112% text
+    // on a 375pt phone — the number and chevron give up their second row and
+    // the marks run under them, instead of stacking one per line in a column
+    // too narrow to hold "2h 13m".
+    <div className="@container">
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={`flex w-full flex-col gap-1.5 rounded-card bg-bg-surface px-4 py-3.5 text-left transition-colors hover:bg-bg-raised ${
-        isOngoing ? 'ring-1 ring-inset ring-accent/40' : ''
+      className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 rounded-card py-3 pl-4 pr-5 text-left transition-colors ${
+        isOngoing ? 'bg-bg-raised hover:bg-bg-elevated' : 'bg-bg-surface hover:bg-bg-raised'
       }`}
     >
-      <span aria-hidden="true" className="flex items-center gap-2">
-        <span className="text-[1.5rem] font-semibold leading-tight tabular-nums text-text-primary">{headline}</span>
-        <span
-          className="ml-1.5 inline-flex h-[1.875rem] min-w-[1.875rem] items-center justify-center rounded-[0.5625rem] px-1 font-bold tabular-nums text-text-primary ring-1 ring-inset ring-bg-border"
-          style={{ background: peakShade(peak) }}
-        >
-          {peak}
-        </span>
-        <span className="text-xs text-text-secondary">peak</span>
-        <span className="flex-1" />
-        {/* `null` draws nothing — an empty head would read as "neither side". */}
-        {side && <SideGlyph side={side} className="h-[2.125rem] w-auto text-text-secondary" />}
-      </span>
-      <span aria-hidden="true" className="block text-xs text-text-secondary">{when}</span>
-      {(outcomes.length > 0 || symptoms.length > 0) && (
-        <span aria-hidden="true" className="flex min-h-[1.875rem] flex-wrap items-center gap-2">
-          {outcomes.map((o) => (
-            <span key={o.name} className="inline-flex items-center gap-1 rounded-badge bg-bg-base py-0.5 pl-0.5 pr-2 text-text-primary">
-              <ClassBadge>{classLetter(findMedication(medications, o.name)?.class) ?? '–'}</ClassBadge>
-              <VerdictMark verdict={o.verdict} />
+      <span aria-hidden="true" className="row-span-2 flex w-10 flex-col items-center">
+        {isOngoing ? (
+          <span className="h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-accent/25" />
+        ) : (
+          <>
+            <span className="text-lg font-semibold leading-none tabular-nums text-text-strong">{start.getDate()}</span>
+            <span className="mt-1 text-xs uppercase text-text-secondary">
+              {start.toLocaleDateString(undefined, showMonth ? { month: 'short' } : { weekday: 'short' })}
             </span>
-          ))}
-          <span className="flex-1" />
-          {symptoms.map((s) => (
-            <SymptomIcon key={s} name={s} className="h-6 w-6 text-text-secondary" />
-          ))}
-        </span>
+          </>
+        )}
+      </span>
+
+      <span aria-hidden="true" className={`col-start-2 text-base font-semibold leading-snug tabular-nums text-text-strong ${marks ? 'self-end' : 'row-span-2'}`}>
+        {isOngoing ? <>Ongoing · <span className="whitespace-nowrap"><OngoingLength start={attack.snapshots[0].time} /></span></> : length ?? <span className="whitespace-nowrap">{formatDuration(attack.snapshots[0].time, attack.end)}</span>}
+      </span>
+
+      {marks && (
+          <span aria-hidden="true" className="col-start-2 row-start-2 flex flex-wrap gap-1.5 self-start @max-[20rem]:col-end-5">
+            {/* `null` draws nothing — an empty head would read as "neither side". */}
+            {side && (
+              <span className={TOKEN}>
+                <SideGlyph side={side} className="h-[1.125rem] w-auto" />
+              </span>
+            )}
+            {doses > 0 && (
+              <span className={`${TOKEN} tabular-nums`}>
+                <TabletIcon className="h-[0.875rem] w-[0.875rem]" />
+                {doses}
+              </span>
+            )}
+            {(shown.length > 0 || others > 0) && (
+              <span className={TOKEN}>
+                {shown.map((k) => {
+                  const Icon = SYMPTOM_ICON[k];
+                  return <Icon key={k} className="h-4 w-4" />;
+                })}
+                {others > 0 && <span className="tabular-nums">+{others}</span>}
+              </span>
+            )}
+          </span>
       )}
+
+      <span aria-hidden="true" className="col-start-3 row-start-1 row-span-2 flex flex-col items-center gap-0.5 @max-[20rem]:row-span-1">
+        <span className={`flex h-9 min-w-9 items-center justify-center rounded-segment px-1.5 text-sm font-semibold tabular-nums text-bg-base ${sevFillClass(severity)}`}>
+          {severity}
+        </span>
+        {isOngoing && <span className="text-xs text-text-secondary">now</span>}
+      </span>
+
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="col-start-4 row-start-1 row-span-2 h-4 w-4 text-text-secondary @max-[20rem]:row-span-1">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
     </button>
+    </div>
   );
+}
+
+/** The one live figure in the list, ticking on its own so the rest don't. */
+function OngoingLength({ start }: { start: string }) {
+  useNowTick();
+  return <>{formatDuration(start, null)}</>;
 }

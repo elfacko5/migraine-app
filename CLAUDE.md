@@ -319,12 +319,12 @@ Attack-free: `AttackFreeCard` with greeting + headline "X days attack-free" (lar
 
 ## Logs list
 
-Row: **duration** headline + **peak** (shaded via `peakShade`) + **side** head glyph + day/start time + drug type badges with `VerdictMark` (✓/–/?) + ICHD symptom icons. Date headers by date sort. No triggers on card (triggers are speculative, §4).
+Row (2026-11-25, "D2"): **date block** (day + weekday; month instead when not date-sorted) + **duration** headline + **worst pain as a solid-filled number** (`sevFillClass`, `text-bg-base`, no "peak" label; ongoing shows current pain + "now") + one row of marks in `bg-base` chips: **side** head glyph, **tablet + dose count**, **criterion-C symptoms** (max three, fixed order, `+N` for the rest — rules in `utils/cardSymptoms.ts`). **No start/end times, no "helped" marks** — outcome lives on Detail and Insights. Month headers by date sort; ongoing sits above the first header. No triggers on card (triggers are speculative, §4). Grid reflows below 20rem (large text) so the marks span the width.
 
 - Average is **time-weighted** (`attackAvgSeverity`). Location is a **side** (`attackSide` in `laterality.ts`), never a zone list. `null` = no laterality data (sideless zones or pre-rename keys).
 - Impact renders only when answered (`undefined` not 0).
 - Severity colour from shared ramp in `src/utils/severity.ts` (`sevTextClass`/`sevBadgeClass`). **All call sites must agree** — import, never copy.
-- Sparkline: y-domain pinned 0–10, colour from `sevFill` at peak.
+- No sparkline on the row (removed long before the 2026-11-25 rebuild; `SeverityBreakdown` keeps its own).
 
 ## Severity breakdown (`SeverityBreakdown.tsx`)
 

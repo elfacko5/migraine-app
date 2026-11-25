@@ -453,7 +453,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
               <div className="space-y-2">
                 {filtered.map((a) => (
                   <AttackCard key={a.id} attack={a} isOngoing={a.end === null}
-                    medications={medications} onClick={() => onAttackClick(a)} />
+                    showMonth onClick={() => onAttackClick(a)} />
                 ))}
               </div>
             </InsightSection>

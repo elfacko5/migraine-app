@@ -2466,3 +2466,15 @@ Sunny: the section colours had no logic — pain areas purple, attack days green
 | gold (`chart-4`) | what came before | In the two days before |
 
 `chart-5` (tan) is now unused. **Medication cards no longer colour by class** (triptan blue, combination tan, painkiller purple, gepant gold): that spent four colours on one section and put painkillers in pain's purple; the class is written under the drug name already. What you tried moves from green to blue (it's something you did, like a dose); Typical attack from gold to purple (peak, length, time to the peak). Attack days' chronic-band bar keeps `severity-high` — a threshold, not a subject. A new section takes its subject's colour, never a free one. The table lives as a comment above `CHART_COLORS` in `StatsView.tsx`. Departs from the board's tile colours for Typical attack (tan) and What you tried (green).
+
+## Logs row rebuilt as "D2" (2026-11-25)
+
+Sunny's calls, from a run of throwaway mockups (deleted once this shipped), compared against the v4 board and the v3.10 row):
+
+- **Whether a medicine helped left the row.** It's a question about a pattern (Insights answers it per drug) or about one dose (Detail answers it). A ✓/–/? per drug answered neither and was the busiest thing on the row. The row now says only *whether* something was taken: a tablet mark and the dose count (doses, not drugs — dose count is what overuse is about).
+- **No start/end times and no "peak" label.** The length is what matters; the times were noise beside it, and a label repeated on every row says nothing. The ongoing row keeps "now" because there the number is current pain, not the worst.
+- **The worst pain is a solid severity fill**, replacing `peakShade`'s single-hue tint. The coloured box makes attacks easier to tell apart when scanning, which the tint, chosen to echo the logging flow, did not. Page-colour text on each band measures 6.0–7.3:1 in dark. `peakShade` stays for AttackDetail's "Where it hurt".
+- **Side is drawn, not written**, so the whole marks row is icons. *Open:* the glyph is mirrored like the picker (subject's left = screen right); in a list with no picker beside it, that may read backwards — check on device.
+- **Symptoms: criterion C only, at most three marks, fixed order, `+N` for the rest.** Nausea and vomiting are one criterion, so one mark. Fixed order gives each mark a place you learn to look; the key under the list names them once. Seven logged symptoms read as three marks and "+4", not seven icons. *Open:* aura arguably earns a fourth slot (with/without aura is a separate diagnosis) — not added.
+- **Month headers** replace day headers, as the board draws them; the ongoing attack sits above the first one.
+- *Rejected along the way:* medicine names with outcome words (too long), medicine-form icons with a corner mark (smudges at 16px), type letters with outcome as fill, a dose timeline and a pain sparkline per row (both read well but cost width the marks needed), a two-tier card with dividers, and a severity stripe down the card edge.

@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
-import type { Attack, Medication } from '../types';
-import { VerdictMark } from './VerdictMark';
+import type { Attack } from '../types';
 import { AttackCard } from './AttackCard';
-import { formatDate } from '../utils/format';
+import { LightIcon, NauseaIcon, SoundIcon } from './drawnIcons';
 import {
   applyFilters, sortAttacks, activeFilterChips, filterCount, clearFilterKey,
   DEFAULT_FILTERS, SORT_LABELS,
@@ -25,12 +24,10 @@ interface Props {
   onSort: (s: SortOrder) => void;
   onOpenFilters: () => void;
   onAttackClick: (attack: Attack) => void;
-  /** The library — for each drug's type letter on a row. */
-  medications?: Medication[];
 }
 
 export function HistoryView({
-  attacks, filters, onFilters, sort, onSort, onOpenFilters, onAttackClick, medications = [],
+  attacks, filters, onFilters, sort, onSort, onOpenFilters, onAttackClick,
 }: Props) {
   // One stage now that the period is a filter like the rest. The empty state
   // below still distinguishes "nothing matched" from "nothing logged", which
@@ -149,32 +146,37 @@ export function HistoryView({
           )}
         </div>
       ) : (
-        // **Grouped under date headers while the list is in date order** (v3):
-        // the row's title is then just "time · length", and the date is said
-        // once per day instead of on every row. Under any other sort the
-        // headers would scatter, so the rows carry their own date instead.
+        // **Grouped under month headers while the list is in date order** (v4
+        // board, 2026-11-25): each row carries its day and weekday, so the
+        // month is said once. An ongoing attack sits above the first header,
+        // as the board draws it — it belongs to now, not to a month. Under any
+        // other sort the headers would scatter, so each row names its month
+        // instead.
         <div className="space-y-2.5">
           {visible.map((a, i) => {
-            const day = dayLabel(a.snapshots[0].time);
-            const header = byDate && (i === 0 || dayLabel(visible[i - 1].snapshots[0].time) !== day);
+            const ongoing = a.end === null;
+            const month = monthLabel(a.snapshots[0].time);
+            const before = visible.slice(0, i).filter((p) => p.end !== null);
+            const prev = before[before.length - 1];
+            const header = byDate && !ongoing && (!prev || monthLabel(prev.snapshots[0].time) !== month);
             return (
               <div key={a.id} className="space-y-2.5">
-                {header && <h2 className={`text-xs font-medium text-text-secondary ${i > 0 ? 'pt-2' : ''}`}>{day}</h2>}
+                {header && <h2 className={`text-xs font-semibold text-text-secondary ${i > 0 ? 'pt-2' : ''}`}>{month}</h2>}
                 <AttackCard
                   attack={a}
-                  isOngoing={a.end === null}
-                  medications={medications}
+                  isOngoing={ongoing}
+                  showMonth={!byDate}
                   onClick={() => onAttackClick(a)}
                 />
               </div>
             );
           })}
-          {/* The key for the marks on each row — shapes, said in words once,
-              so no row has to spell them out (v3.10). */}
-          <p className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1 pt-1 text-xs text-text-secondary">
-            <span className="inline-flex items-center gap-1"><VerdictMark verdict="helped" />helped</span>
-            <span className="inline-flex items-center gap-1"><VerdictMark verdict="not-helped" />didn't help</span>
-            <span className="inline-flex items-center gap-1"><VerdictMark verdict="no-reading" />no 2-hour reading</span>
+          {/* The key for the three symptom marks, said once so no row has to
+              (rules in utils/cardSymptoms.ts). */}
+          <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-1 text-xs text-text-secondary">
+            <span className="inline-flex items-center gap-1.5"><NauseaIcon className="h-4 w-4" />nausea</span>
+            <span className="inline-flex items-center gap-1.5"><LightIcon className="h-4 w-4" />light</span>
+            <span className="inline-flex items-center gap-1.5"><SoundIcon className="h-4 w-4" />sound</span>
           </p>
         </div>
       )}
@@ -182,13 +184,9 @@ export function HistoryView({
   );
 }
 
-/** "Today", "Yesterday", or the date — the Logs date header. Built from the
- *  attack's own start; the comparison day is read here rather than in render. */
-function dayLabel(iso: string, now: Date = new Date()): string {
+/** "November", or "November 2025" outside the current year — the Logs month
+ *  header. The comparison year is read here rather than in render. */
+function monthLabel(iso: string, now: Date = new Date()): string {
   const d = new Date(iso);
-  const key = (x: Date) => `${x.getFullYear()}-${x.getMonth()}-${x.getDate()}`;
-  if (key(d) === key(now)) return 'Today';
-  const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-  if (key(d) === key(y)) return 'Yesterday';
-  return formatDate(iso);
+  return d.toLocaleDateString(undefined, d.getFullYear() === now.getFullYear() ? { month: 'long' } : { month: 'long', year: 'numeric' });
 }

@@ -667,7 +667,6 @@ export default function App() {
               onSort={setLogsSort}
               onOpenFilters={() => setLogsFilterOpen(true)}
               onAttackClick={(a) => setDetailAttackId(a.id)}
-              medications={medications}
             />
           </section>
         )}
