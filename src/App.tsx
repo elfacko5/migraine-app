@@ -66,8 +66,15 @@ import { BrightnessOverlay } from './components/BrightnessOverlay';
 
 // Not `hd_`: sync bookkeeping for this device, not diary data to export.
 const ALL_SYNCED_KEY = 'lidd_all_synced_at';
-function readAllSynced(): string | null {
-  try { return localStorage.getItem(ALL_SYNCED_KEY); } catch { return null; }
+function readAllSynced(uid: string | null): string | null {
+  if (!uid) return null;
+  try {
+    const v = JSON.parse(localStorage.getItem(ALL_SYNCED_KEY) ?? 'null') as { uid?: string; at?: string } | null;
+    return v?.uid === uid && typeof v.at === 'string' ? v.at : null;
+  } catch { return null; }
+}
+function writeAllSynced(uid: string, at: string) {
+  try { localStorage.setItem(ALL_SYNCED_KEY, JSON.stringify({ uid, at })); } catch { /* best effort */ }
 }
 
 export default function App() {
@@ -194,15 +201,20 @@ export default function App() {
   // hooks' own stamps live in memory and each covers one kind of data, so a
   // paused sync's "Not synced since…" read "Not synced yet" after any offline
   // launch, or a moment ago when only one kind had failed. Written only while
-  // the combined status is 'synced' (nothing failing, nothing in flight);
-  // cleared on sign-out so a different account never inherits it.
+  // the combined status is 'synced' (nothing failing, nothing in flight).
+  //
+  // Stored with the account it belongs to and read back only for that
+  // account — never cleared on a null session, which is also what the first
+  // render and an offline launch with an expired token look like. The first
+  // render after the account changes is skipped: the hooks still hold the
+  // previous account's 'synced' and stamp until their own sync starts.
+  const uid = auth.user?.id ?? null;
+  const allSyncedUidRef = useRef<string | null>(null);
   useEffect(() => {
-    try {
-      if (!auth.session) localStorage.removeItem(ALL_SYNCED_KEY);
-      else if (syncStatus === 'synced' && lastSyncedAt) localStorage.setItem(ALL_SYNCED_KEY, lastSyncedAt);
-    } catch { /* best effort */ }
-  }, [auth.session, syncStatus, lastSyncedAt]);
-  const allSyncedAt = syncStatus === 'synced' ? lastSyncedAt : readAllSynced();
+    if (uid !== allSyncedUidRef.current) { allSyncedUidRef.current = uid; return; }
+    if (uid && syncStatus === 'synced' && lastSyncedAt) writeAllSynced(uid, lastSyncedAt);
+  }, [uid, syncStatus, lastSyncedAt]);
+  const allSyncedAt = syncStatus === 'synced' ? lastSyncedAt : readAllSynced(uid);
 
   // A paused sync retries when the connection comes back, as well as on
   // focus and on the next write — the notice promises it catches up.

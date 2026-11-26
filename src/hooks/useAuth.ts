@@ -34,6 +34,7 @@ const storedSessionAtLaunch = (() => {
 // was asked for, not imposed. A stamp, not a flag: it only counts briefly.
 const OWN_SIGN_OUT_KEY = 'lidd_own_sign_out_at';
 const markOwnSignOut = () => { try { localStorage.setItem(OWN_SIGN_OUT_KEY, String(Date.now())); } catch { /* best effort */ } };
+const clearOwnSignOut = () => { try { localStorage.removeItem(OWN_SIGN_OUT_KEY); } catch { /* best effort */ } };
 const ownSignOutRecently = () => {
   try { return Date.now() - Number(localStorage.getItem(OWN_SIGN_OUT_KEY) ?? 0) < 30_000; } catch { return false; }
 };
@@ -51,8 +52,15 @@ export function useAuth() {
     if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => {
       // getSession waits for the recovery, so a stored session that's gone
-      // by now was ended somewhere else (see storedSessionAtLaunch).
-      if (storedSessionAtLaunch && !data.session && !ownSignOutRecently()) {
+      // by now was ended somewhere else (see storedSessionAtLaunch). Gone
+      // means gone *from storage*. Offline (or on a server fault) with an
+      // expired token, supabase-js returns no session but keeps the stored
+      // one: still signed in, no notice. A revoked token is removed — and
+      // that also comes back with an error, so the error can't be the test.
+      const tokenStillStored = (() => {
+        try { return Object.keys(localStorage).some((k) => k.startsWith('sb-') && k.endsWith('-auth-token')); } catch { return true; }
+      })();
+      if (storedSessionAtLaunch && !data.session && !tokenStillStored && !ownSignOutRecently()) {
         writeNotice(true);
         setSignedOutElsewhere(true);
       }
@@ -108,10 +116,11 @@ export function useAuth() {
     markOwnSignOut();
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) console.error('Sign-out failed:', error);
+      if (error) { console.error('Sign-out failed:', error); clearOwnSignOut(); }
       return !error;
     } catch (e) {
       console.error('Sign-out failed:', e);
+      clearOwnSignOut();
       return false;
     } finally {
       ownSignOut.current = false;
@@ -156,8 +165,12 @@ export function useAuth() {
     }
     try {
       for (const k of Object.keys(localStorage)) if (k.startsWith('sb-')) localStorage.removeItem(k);
-      return !Object.keys(localStorage).some((k) => k.startsWith('sb-'));
+      const cleared = !Object.keys(localStorage).some((k) => k.startsWith('sb-'));
+      // A sign-out that didn't happen mustn't mute a real one for 30 s.
+      if (!cleared) clearOwnSignOut();
+      return cleared;
     } catch {
+      clearOwnSignOut();
       return false;
     } finally {
       // Clearing the keys by hand sends no SIGNED_OUT, and a timed-out
