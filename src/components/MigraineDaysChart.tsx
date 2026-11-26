@@ -30,13 +30,18 @@ const BAR_MAX = 20;
 
 // The board's calendar glyph (`09-insights/InsightsRedesign`, the "Attack
 // days" tile) — Lucide-style stroke, inheriting the tile's accent.
-const CalendarGlyph = (
+// A component (not a JSX constant) so StatsView's low-data list can share it
+// without breaking fast refresh's components-only export rule.
+export function CalendarMark() {
+  return (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
     strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <rect x="4" y="5" width="16" height="15" rx="2" />
     <path d="M4 10h16M9 3v4M15 3v4" />
   </svg>
-);
+  );
+}
+const CalendarGlyph = <CalendarMark />;
 
 // The month still counting is hatched rather than solid, as the board draws
 // it: a bar that will grow, said with the bar itself as well as "so far".

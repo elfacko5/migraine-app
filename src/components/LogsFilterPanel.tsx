@@ -234,7 +234,7 @@ export function LogsFilterReset({ filters, onChange }: { filters: LogFilters; on
       type="button"
       onClick={() => onChange(DEFAULT_FILTERS)}
       disabled={count === 0}
-      className="tap-44-y btn-tertiary min-h-0 rounded-control-sm px-2 py-1 text-sm font-medium"
+      className="tap-44-y btn-tertiary min-h-0 px-2 py-1 text-sm font-medium"
     >
       Clear all
     </button>

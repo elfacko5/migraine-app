@@ -12,7 +12,7 @@ import {
   triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
 } from '../utils/stats';
 import { HeadHeatmap } from './HeadHeatmap';
-import { MigraineDaysChart } from './MigraineDaysChart';
+import { MigraineDaysChart, CalendarMark } from './MigraineDaysChart';
 import { MedicationInsights } from './MedicationInsights';
 import { InsightSection } from './InsightSection';
 import { AttackCard } from './AttackCard';
@@ -242,6 +242,16 @@ function FreqBars({ data, color, total }: { data: Freq[]; color: string; total: 
 // now carries its explanation behind the "More info" icon rather than some
 // behind it and some not, which read as an inconsistency once a few sections
 // had it and the rest didn't).
+// The sections the low-data view names, in page order, with the mark and
+// subject colour each carries on its own heading (table above CHART_COLORS).
+const LOCKED_SECTIONS = [
+  { label: 'Attack days', icon: <CalendarMark />, tone: 'bg-accent/16 text-accent' },
+  { label: 'Pain over time', icon: TrendGlyph, tone: 'bg-chart-2/16 text-chart-2' },
+  { label: 'Where it hurt', icon: HeadGlyph, tone: 'bg-chart-2/16 text-chart-2' },
+  { label: 'Symptoms', icon: PulseGlyph, tone: 'bg-chart-3/16 text-chart-3' },
+  { label: 'What you tried', icon: LeafGlyph, tone: 'bg-chart-1/16 text-chart-1' },
+];
+
 function FreqSection({ title, data, color, total, info, icon, iconTone }: {
   title: string; data: Freq[]; color: string; total: number; info?: React.ReactNode;
   icon?: React.ReactNode; iconTone?: string;
@@ -484,13 +494,20 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
                 />
               </div>
               <p className="text-sm text-text-secondary">{attacks.length} of {LOW_DATA_THRESHOLD}</p>
-              <div className="flex flex-wrap gap-2">
-                {['Attack days', 'Pain over time', 'Where it hurt', 'Symptoms', 'What you tried'].map((label) => (
-                  <span key={label} className="rounded-chip bg-bg-border/40 px-3 py-1.5 text-sm text-text-primary">
+              {/* What fills in: a plain list with each section's own mark and
+                  colour, the same tile its heading will carry. It was a row of
+                  pill-shaped tags that looked like chips and did nothing when
+                  pressed (2026-11-26). */}
+              <ul className="space-y-2">
+                {LOCKED_SECTIONS.map(({ label, icon, tone }) => (
+                  <li key={label} className="flex items-center gap-3 text-sm text-text-secondary">
+                    <span aria-hidden="true" className={`flex size-7 shrink-0 items-center justify-center rounded-segment ${tone} [&>svg]:size-4`}>
+                      {icon}
+                    </span>
                     {label}
-                  </span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </InsightSection>
         </>

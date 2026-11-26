@@ -146,10 +146,10 @@ export function InsightSection({ title, children, note, info, bare, icon, iconTo
           The inner box stays at `p-3`: it is nested inside this one, not a
           peer of the tiles. */}
       {bare ? children : (
-        <div className="space-y-2 rounded-group bg-bg-surface p-card">
+        <div className="space-y-2 rounded-card bg-bg-surface p-card">
           {note ? (
             <>
-              <div className="rounded-inset border border-bg-border p-3">{children}</div>
+              <div className="rounded-control border border-bg-border p-3">{children}</div>
               <p className="text-xs text-text-secondary">{note}</p>
             </>
           ) : (

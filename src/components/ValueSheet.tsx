@@ -20,7 +20,7 @@ export function ValueSheet({ title, hint, unit, unitOne, steps: stepsIn, value, 
       ref={dialogRef}
       tabIndex={-1}
       onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
-      className="absolute inset-0 z-10 flex items-end bg-bg-base/70 outline-none"
+      className="absolute inset-0 z-10 flex items-end bg-scrim outline-none"
       role="dialog" aria-modal="true" aria-label={title}
     >
       <div className="w-full space-y-4 rounded-t-sheet bg-bg-surface px-gutter pt-5 sm:px-gutter-wide" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>

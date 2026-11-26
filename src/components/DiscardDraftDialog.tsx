@@ -54,7 +54,7 @@ export function DiscardDraftDialog({ open, discardLabel, onKeepGoing, onSave, on
       inert={!open}
       style={{ visibility: open ? 'visible' : 'hidden', transition: `visibility 0s linear ${open ? '0s' : '200ms'}` }}
     >
-      <div className="absolute inset-0 bg-bg-base/70" onClick={onKeepGoing} />
+      <div className="absolute inset-0 bg-scrim" onClick={onKeepGoing} />
       <div
         role="alertdialog"
         aria-modal="true"

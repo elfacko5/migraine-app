@@ -53,7 +53,7 @@ export function ConfirmDialog({
     >
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-bg-base/70 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-scrim transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
         onClick={onCancel}
       />
       {/* Panel — elevation via lighter surface (bg-surface), not shadow */}

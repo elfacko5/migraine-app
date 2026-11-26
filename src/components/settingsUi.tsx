@@ -82,6 +82,15 @@ export interface SettingsRowProps {
 
 // `accent` is the Reminders board's value colour (`.or .v`: #9bb9a1, 500) —
 // a read-only setting's current value, set apart from its label.
+// One row's box and press treatment, shared by `SettingsRow` and Attack
+// detail's own `Row` (2026-11-26). The two keep their own layouts — Settings
+// stacks a status under the label because the row leads somewhere; Detail
+// puts a recorded answer on the right because the row *is* the record — but
+// the height, insets, hover, focus ring, disabled look and chevron are one
+// definition, so moving between the two screens no longer changes them.
+export const ROW_BOX = 'flex min-h-row w-full items-center gap-3 px-card py-control-y text-left';
+export const ROW_PRESS = 'transition-colors hover:bg-bg-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent row-dims disabled:hover:bg-transparent';
+
 const TRAILING_TONE = {
   muted: 'text-text-secondary',
   primary: 'text-text-primary',
@@ -119,7 +128,7 @@ export function SettingsRow({ children, value, trailing, trailingTone = 'muted',
       {trailing && <span className={`shrink-0 whitespace-nowrap ${TRAILING_TONE[trailingTone]}`}>{trailing}</span>}
     </>
   );
-  const layout = 'flex min-h-row w-full items-center gap-3 px-card py-control-y text-left text-sm leading-tight';
+  const layout = `${ROW_BOX} text-sm leading-tight`;
   if (!onClick) {
     return <li className={`${item} ${layout}`}>{content}</li>;
   }
@@ -129,7 +138,7 @@ export function SettingsRow({ children, value, trailing, trailingTone = 'muted',
         type="button"
         disabled={disabled}
         onClick={onClick}
-        className={`${layout} transition-colors hover:bg-bg-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50`}
+        className={`${layout} ${ROW_PRESS}`}
       >
         {content}
         <Chevron />
@@ -216,10 +225,10 @@ export function Switch({ checked, onCheckedChange, disabled, children }: {
       nativeButton
       render={<button type="button" />}
       onCheckedChange={(c) => onCheckedChange(c)}
-      className="group tap-44-y relative flex w-full cursor-pointer select-none flex-wrap items-center gap-x-3 gap-y-2 rounded-control py-2 text-left text-base text-content focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
+      className="group tap-44-y relative flex w-full cursor-pointer select-none flex-wrap items-center gap-x-3 gap-y-2 rounded-control py-2 text-left text-base text-content focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus row-dims"
     >
       <span className="min-w-0 grow basis-[min-content] [overflow-wrap:break-word]">{children}</span>
-      <span className="relative ml-auto h-switch-h w-switch-w shrink-0 rounded-full bg-line transition-colors motion-reduce:transition-none group-data-[checked]:bg-accent">
+      <span className="switch-track relative ml-auto h-switch-h w-switch-w shrink-0 rounded-full bg-line transition-colors motion-reduce:transition-none group-data-[checked]:bg-accent">
         <BaseSwitch.Thumb className="absolute left-switch-inset top-1/2 size-switch-thumb -translate-y-1/2 rounded-full bg-surface transition-[translate,background-color] motion-reduce:transition-none data-[checked]:translate-x-(--spacing-switch-travel) data-[checked]:bg-on-accent" />
       </span>
     </BaseSwitch.Root>

@@ -93,6 +93,9 @@ export default function App() {
   // starts on an old summary.
   const [endedAttackId, setEndedAttackId] = useState<number | null>(null);
   const openEndFlow = () => { setEndedAttackId(null); setEndConfirmOpen(true); };
+  // Set by handleEndFlowSave when the auto setting should turn attack mode
+  // off; acted on once the End sheet closes (the effect below).
+  const autoOffPendingRef = useRef(false);
   const [profileSheet, setProfileSheet] = useState<ProfileSection | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
 
@@ -266,6 +269,14 @@ export default function App() {
   //
   // The ref guard (rather than relying on the URL param being stripped) keeps
   // this to one fire per delivery even if the dependencies below change first.
+  // Attack mode's automatic "off", once the End sheet (and its summary) has
+  // closed, by whichever path: Done, the X, or opening the entry.
+  useEffect(() => {
+    if (endConfirmOpen || !autoOffPendingRef.current) return;
+    autoOffPendingRef.current = false;
+    setAttackMode(false);
+  }, [endConfirmOpen, setAttackMode]);
+
   const voiceHandledRef = useRef(false);
   const applyVoiceText = useCallback((text: string, startedText = '') => {
     if (voiceHandledRef.current) return;
@@ -514,6 +525,11 @@ export default function App() {
       extraSnapshots.map((s) => stampSnapshot(s, medications)),
       triggersSel, painQuality,
     );
+    // "When I log an attack" (Display page) covers both ends of the attack:
+    // on when it starts, off once it ends. Off waits for the End sheet to
+    // close — flipping the whole palette under the summary someone is still
+    // reading would be the jolt attack mode exists to avoid.
+    if (attackModeAuto && attackMode) autoOffPendingRef.current = true;
     // The sheet stays open on the summary (`AttackEndedSummary`).
     setEndedAttackId(ongoingAttack.id);
     if (updateAttackId === ongoingAttack.id) closeUpdateSheet();

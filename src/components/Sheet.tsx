@@ -101,7 +101,7 @@ export function Sheet({ open, onClose, title, children, flush = false, headerRig
     >
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-bg-base/70 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-scrim transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}
       />
       {/* Panel */}

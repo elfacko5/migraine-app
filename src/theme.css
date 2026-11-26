@@ -66,11 +66,12 @@
   --color-focus: #4f6b57;
   --color-error: #82423b;
   --color-on-error: #f5f2ec;
-  /* surface at 70%, the same veil Lidd draws in light (bg-base/70). Was the text colour at 40%,
-     a dark veil over a light page, which Lidd never drew.
-     color-mix, not hex-with-alpha: the same expression Tailwind writes for bg-base/70, so the
-     alpha is exactly 0.7. A hex alpha of b3 is 0.702 and moved 13k pixels behind a dialog. */
-  --color-scrim: color-mix(in oklab, var(--color-surface) 70%, transparent);
+  /* 2026-11-26: a dark veil in light, the text colour at 35%. A page-coloured veil (surface at
+     70%, what every overlay drew as bg-base/70) dims in dark but *lightens* in light, so a sheet
+     or dialog opening over Today barely changed the page behind it. Warm text colour, never black
+     (palette rules); 35% takes the page to about the tone of bg-raised's darker neighbours, enough
+     to read as "behind" without a grey slab. Dark and attack keep surface at 70%. */
+  --color-scrim: color-mix(in oklab, var(--color-content) 35%, transparent);
 }
 
 /*

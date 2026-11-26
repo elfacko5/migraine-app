@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Chevron, ROW_BOX, ROW_PRESS } from './settingsUi';
 import type { Attack, Medication } from '../types';
 import { NOTHING_UNUSUAL } from '../types';
 import { formatDate, formatTime, formatDatetime, formatDuration, upToText } from '../utils/format';
@@ -429,14 +430,13 @@ function Row({ label, value, stacked = false, onClick }: {
       <span className={`max-w-[62%] text-right text-sm ${onClick && value === 'Add' ? 'font-medium text-accent-light' : 'text-text-primary'}`}>{value}</span>
     </>
   );
-  const cls = 'flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left';
-  if (!onClick) return <div className={cls}>{body}</div>;
+  // Box, press treatment and chevron are Settings' own (`ROW_BOX`,
+  // `ROW_PRESS`, `Chevron`); only the value-on-the-right layout is Detail's.
+  if (!onClick) return <div className={ROW_BOX}>{body}</div>;
   return (
-    <button type="button" onClick={onClick} className={`${cls} transition-colors hover:bg-bg-raised`}>
+    <button type="button" onClick={onClick} className={`${ROW_BOX} ${ROW_PRESS}`}>
       {body}
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0 text-text-secondary" aria-hidden="true">
-        <path d="m9 18 6-6-6-6" />
-      </svg>
+      <Chevron />
     </button>
   );
 }

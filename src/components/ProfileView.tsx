@@ -302,13 +302,13 @@ export function DisplayPanel({
                 <span className="font-semibold">Attack mode</span>
               </Switch>
             </SettingsRow>
-            {/* The board's caption is "Turns off again once the attack ends";
-                the code only ever turns it on (A10, June 2026-11-22, that
-                half is backlogged), so the caption says what it really does. */}
+            {/* Both halves now (A10(ii), 2026-11-26): on when an attack that's
+                still going is logged, off once it ends (App.tsx,
+                handleEndFlowSave). The board's caption, in full. */}
             <SettingsRow bare>
               <Switch checked={attackModeAuto} onCheckedChange={onAttackModeAuto}>
                 When I log an attack
-                <span className="block text-xs text-content-muted">Turns it on as soon as you log an attack that's still going.</span>
+                <span className="block text-xs text-content-muted">Turns it on when you log an attack that's still going, and off again once it ends.</span>
               </Switch>
             </SettingsRow>
             <SettingsRow onClick={() => setView('changes')}>What it changes</SettingsRow>
@@ -653,7 +653,7 @@ function ReminderDiagnostics() {
           type="button"
           onClick={refresh}
           disabled={busy}
-          className="tap-44-y btn-secondary min-h-0 rounded-control-sm px-3 py-1.5 text-xs font-medium transition-colors active:opacity-60"
+          className="btn-secondary btn-compact shrink-0"
         >
           {busy ? 'Checking…' : 'Refresh'}
         </button>

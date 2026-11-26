@@ -63,7 +63,7 @@ export function DeleteAllDialog({ open, signedIn, unsynced, busy, failed, onExpo
       inert={!open}
       style={{ visibility: open ? 'visible' : 'hidden', transition: `visibility 0s linear ${open ? '0s' : '200ms'}` }}
     >
-      <div className="absolute inset-0 bg-bg-base/70" onClick={busy ? undefined : onKeep} />
+      <div className="absolute inset-0 bg-scrim" onClick={busy ? undefined : onKeep} />
       <div
         role="alertdialog"
         aria-modal="true"
