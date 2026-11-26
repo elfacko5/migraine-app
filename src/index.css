@@ -322,6 +322,17 @@
      both low-saturation: the art is the largest coloured area on Today. */
   --color-ill-1:          #8c735e;
   --color-ill-2:          #5e7363;
+  /* One token per shape, so a palette can paint each one solid (light does,
+     2026-11-26) or as `--color-ill-1` let through to the page (dark and
+     attack: these mixes reproduce the old fill-opacity values exactly,
+     because the art sits straight on bg-base). Derived from `--color-ill-1`
+     on the same element, so attack's own ill-1 flows through. */
+  --color-ill-sun:        color-mix(in srgb, var(--color-ill-1) 85%, transparent);
+  --color-ill-halo:       color-mix(in srgb, var(--color-ill-1) 22%, transparent);
+  --color-ill-hill:       color-mix(in srgb, var(--color-ill-1) 45%, transparent);
+  --color-ill-ring-1:     color-mix(in srgb, var(--color-ill-1) 18%, transparent);
+  --color-ill-ring-2:     color-mix(in srgb, var(--color-ill-1) 32%, transparent);
+  --color-ill-ring-3:     color-mix(in srgb, var(--color-ill-1) 50%, transparent);
 }
 
 /* ── Attack mode ────────────────────────────────────────
@@ -408,14 +419,21 @@
      the warning icon 5.6:1. */
   --color-warning-surface: #efe4d3;
   --color-positive:       #4f6b57;
-  /* Re-measured 2026-11-26 (light pass). The first values (#c9a98a /
-     #a9bfad) put the sun at 1.76:1 on the page against dark's 3.19:1, so in
-     light the hero read as a washed-out smudge, the hill nearly vanished
-     (1.33:1) and the leaf went mint. These take the sun to 2.43:1 and the
-     leaf to 2.68:1 — still softer than dark, as a light page should be —
-     while text-strong over the sun disc keeps 5.19:1. */
-  --color-ill-1:          #ad8763;
-  --color-ill-2:          #7f9c88;
+  /* Solid fills, 2026-11-26 ("B · clay and sage", Sunny's pick from four
+     mocked options). The see-through layers dark uses (halo 22%, hill 45%,
+     rings 18–50%) blend into cream on a light page, so even after the
+     earlier re-measure (#ad8763 / #7f9c88) the hero read pale. Here every
+     shape is its own opaque colour: a warmer clay sun, its tints for the
+     halo, hill and rings (the rings are the sun mixed into the page at
+     ~0 / 45 / 72%), and a deeper sage leaf. Contrast in docs/palette.md. */
+  --color-ill-1:          #b56f45;
+  --color-ill-2:          #5d7f67;
+  --color-ill-sun:        #b56f45;
+  --color-ill-halo:       #f0d4bf;
+  --color-ill-hill:       #d3a483;
+  --color-ill-ring-1:     #f0d4bf;
+  --color-ill-ring-2:     #d8b7a1;
+  --color-ill-ring-3:     #c79474;
   /* Insights categorical palette, light (A11: every new token gets its light
      value derived and measured when it's added, even though the screen-by-
      screen light pass itself waits until last). Same hue, same saturation,
