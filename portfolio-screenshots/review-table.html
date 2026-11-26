@@ -1,0 +1,105 @@
+<!doctype html>
+<!--
+  Case study §4: six of the twelve calls made reviewing the v4 redesign.
+  Source: docs/redesign-v4-diff.md (A1, A3, A6, A7, A9, section B) and
+  docs/decisions.md. Contrast figures are the ones measured there against
+  --color-bg-raised #302d29. Rendered by compose.mjs.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: Lexend; src: url('../src/assets/fonts/Lexend-Variable.woff2') format('woff2'); font-weight: 100 900; }
+:root {
+  --page: #1b1a18; --surface: #262421; --raised: #302d29; --rule: #3a3733;
+  --text: #cdc7bb; --muted: #a39d92; --strong: #d8d2c6;
+  --accent: #7fa187; --amber: #c39257; --terra: #c68880;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); font-family: Lexend, sans-serif; color: var(--text); }
+.wrap { width: 1500px; padding: 64px 72px 60px; }
+h1 { margin: 0 0 10px; font-size: 32px; font-weight: 600; color: var(--strong); }
+.lede { margin: 0 0 36px; font-size: 18px; line-height: 1.5; color: var(--muted); max-width: 980px; }
+
+.table { background: var(--surface); border-radius: 22px; overflow: hidden; }
+.row { display: grid; grid-template-columns: 400px 250px 1fr; align-items: start; gap: 32px; padding: 26px 36px; border-top: 1px solid var(--rule); }
+.row.head { border-top: 0; padding-top: 22px; padding-bottom: 16px; font-size: 13px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.what { font-size: 19px; font-weight: 500; color: var(--strong); line-height: 1.35; }
+.why { font-size: 16.5px; line-height: 1.55; }
+.why b { font-weight: 500; color: var(--strong); }
+
+.pill { display: inline-flex; align-items: center; gap: 9px; height: 36px; padding: 0 16px; border-radius: 18px; font-size: 15.5px; font-weight: 500; white-space: nowrap; }
+.pill i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+.refused { color: var(--terra); box-shadow: inset 0 0 0 1.5px var(--terra); }
+.refused i { background: var(--terra); }
+.changed { color: var(--amber); box-shadow: inset 0 0 0 1.5px var(--amber); }
+.changed i { background: var(--amber); }
+.limited { color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.limited i { background: transparent; box-shadow: inset 0 0 0 1.5px var(--accent); }
+.adopted { color: #1b1a18; background: var(--accent); }
+.adopted i { background: #1b1a18; }
+
+/* Row 1's evidence: both colours as text on the raised surface. */
+.swatches { display: flex; gap: 12px; margin-top: 14px; }
+.sw { background: var(--raised); border-radius: 12px; padding: 10px 14px; min-width: 190px; }
+.sw .t { font-size: 22px; font-weight: 600; }
+.sw .c { font-size: 13.5px; color: var(--muted); margin-top: 2px; }
+.sw.fail { box-shadow: inset 0 0 0 1.5px var(--terra); }
+
+.foot { margin-top: 22px; font-size: 14.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Reviewing a 113-board redesign</h1>
+  <p class="lede">Every board was checked against what the stored data can say, the accessibility floor and the clinical rules before anything was built. Twelve calls needed a decision, plus a batch of smaller token changes. Five of the calls, and the batch:</p>
+
+  <div class="table">
+    <div class="row head"><div>The board proposed</div><div>Decision</div><div>Why</div></div>
+
+    <div class="row">
+      <div class="what">A redder high-severity colour</div>
+      <div><span class="pill refused"><i></i>Refused</span></div>
+      <div class="why">As text on a raised card it measured <b>4.20:1</b>, below the 4.5:1 floor the palette holds on every surface. The existing colour stays.
+        <div class="swatches">
+          <div class="sw fail"><div class="t" style="color:#d9705f">Severity 9</div><div class="c">Proposed #D9705F · 4.20:1</div></div>
+          <div class="sw"><div class="t" style="color:#c68880">Severity 9</div><div class="c">Kept #C68880 · 4.72:1</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="what">“Did it help? Yes / A bit / No” for every dose</div>
+      <div><span class="pill changed"><i></i>Changed</span></div>
+      <div class="why">Kept the board’s words, but <b>worked out from the pain reading about 2 hours after the dose</b>, not asked. One source of truth instead of a verdict beside a number.</div>
+    </div>
+
+    <div class="row">
+      <div class="what">Quiet hours, 23:00–07:00</div>
+      <div><span class="pill refused"><i></i>Refused</span></div>
+      <div class="why">It would silence reminders during a <b>night attack</b>, exactly when a reading matters most. If it is ever built, it can’t apply while an attack is open.</div>
+    </div>
+
+    <div class="row">
+      <div class="what">Purple and blue in the Insights charts</div>
+      <div><span class="pill limited"><i></i>Adopted, with a limit</span></div>
+      <div class="why">The app rules out blue and purple for people with light sensitivity. Both colours here are muted, and <b>Insights isn’t a screen anyone opens mid-attack</b>, so the rule bends there and nowhere else.</div>
+    </div>
+
+    <div class="row">
+      <div class="what">A five-step end-of-attack flow</div>
+      <div><span class="pill limited"><i></i>Adopted, with conditions</span></div>
+      <div class="why">Including its “gone when you woke up” answer, on condition that it’s stored as an <b>unknown end, never a made-up time</b>, and left out of every length figure.</div>
+    </div>
+
+    <div class="row">
+      <div class="what">Rounder sheets, a taller footer button, larger toggles</div>
+      <div><span class="pill adopted"><i></i>Adopted</span></div>
+      <div class="why">Taken screen by screen, each <b>checked in place</b> with its neighbours rather than landed in one blind sweep.</div>
+    </div>
+  </div>
+
+  <p class="foot">The other seven calls: keep the update-time step · add pain quality, “the two days before” and an under-5-minutes flag · limited editing after the fact · “attack”, never “migraine”, on every screen · keep the attack-mode control · light mode last · keep the settings cog.</p>
+</div>
+</body>
+</html>

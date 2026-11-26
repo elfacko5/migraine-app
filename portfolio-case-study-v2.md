@@ -159,17 +159,21 @@ survive contact with the data unchanged — which is the point of checking it."
 In November the app went through a full redesign: 113 boards covering every screen and
 flow. A redesign is a proposal, not a specification, so before anything was built I checked
 every board against three things: what the stored data can actually say, the accessibility
-floor, and the clinical rules the app is built on. Twelve calls needed a decision. Six of
-them show the range:
+floor, and the clinical rules the app is built on. Twelve calls needed a decision, plus a batch of smaller token changes.
+Five of the calls and the batch show the range:
 
 | The board proposed | Decision | Why |
 |---|---|---|
 | A redder high-severity colour | **Refused** | It measured 4.20:1 on a raised card, below the 4.5:1 floor the palette holds everywhere. I named the closest value that passes instead. |
 | "Did it help?" per dose | **Changed** | Kept the board's words, but computed from the 2-hour reading, so there's one source of truth. |
 | Quiet hours, 23:00–07:00 | **Refused** | It would silence reminders during a night attack, exactly when a reading matters most. |
-| Purple and blue in Insights charts | **Adopted, with a limit** | Insights is never read mid-attack, so the no-blue rule can bend there. Never for pain intensity. |
+| Purple and blue in Insights charts | **Adopted, with a limit** | Both are muted, and Insights isn't a screen anyone opens mid-attack, so the no-blue, no-purple rule bends there and nowhere else. |
 | A five-step end-of-attack flow | **Adopted, with conditions** | Including "gone when you woke up", stored as an unknown end and never as a time. |
-| Rounder sheets, bigger footer buttons, larger toggles | **Adopted** | Each one checked in place, on the phone, before the next. |
+| Rounder sheets, a taller footer button, larger toggles | **Adopted** | Taken screen by screen, each checked in place with its neighbours rather than in one blind sweep. |
+
+`[Visual]` `redesign-review-table.png`: the same six rows, with the two severity colours
+shown as text on a raised card.
+*Caption: Five of twelve calls, and the token batch. The other seven are listed underneath.*
 
 The Attack detail board shows why the checking matters. Its attack was gone when the person
 woke up, so its end was unknown, yet the board gave it a measured length ("23 h"). It drew a
@@ -282,6 +286,7 @@ finished until the reason for it is somewhere the next person will read it.
     `05-logs-attack-mode-on` (strip, on); `15-log-pain-areas` for the logging flow.
   - §3 record not verdict: `08-detail-plateau-full`, `09-detail-under-5-minutes`,
     `10-detail-ended-in-sleep`.
+  - §4 review table: `redesign-review-table` (from `review-table.html`).
   - §4 board vs shipped: the finished visual is `detail-board-vs-shipped` (from
     `board-vs-shipped.html`); its sources are `boards/v4-detail*` and `10`. The four placements are
     `boards/attack-mode-bottom-placements`; Insights colour key from `12-insights-3m-full`.
