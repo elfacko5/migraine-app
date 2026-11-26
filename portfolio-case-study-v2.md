@@ -171,15 +171,16 @@ them show the range:
 | A five-step end-of-attack flow | **Adopted, with conditions** | Including "gone when you woke up", stored as an unknown end and never as a time. |
 | Rounder sheets, bigger footer buttons, larger toggles | **Adopted** | Each one checked in place, on the phone, before the next. |
 
-The Attack detail board shows why the checking matters. It drew four things the data
-couldn't support: a line dropping to zero at the end of an attack, "At the end" on a
-reading taken hours earlier, "no reading in the 2 hours after" beside a reading that was
-there, and a measured length for an attack whose end was unknown. Each one looked right and
-would have told the user something untrue.
+The Attack detail board shows why the checking matters. Its attack was gone when the person
+woke up, so its end was unknown, yet the board gave it a measured length ("23 h"). It drew a
+line falling to zero after the last reading, as if the pain had been seen going away, and
+labelled a column "At the end" for readings taken hours before it ended. Each one looked
+right and would have told the user something untrue. The shipped screen says "ended in
+sleep", draws nothing after the last reading, and calls the column "Last logged".
 
-`[Visual]` The v4 Attack detail board beside the shipped screen, the four corrections
-annotated.
-*Caption: The board, and what shipped. Each red note is something the data didn't say.*
+`[Visual]` `detail-board-vs-shipped.png`: the board beside the shipped screen, three data
+corrections marked in red and the edit-button change in grey.
+*Caption: The board, and what shipped. Each red mark is something the data didn't say.*
 
 I also gave the redesign a system it lacked. Insights' section colours had no logic: pain
 areas purple, attack days green, painkillers also purple. Now each colour means one subject
@@ -276,17 +277,17 @@ finished until the reason for it is somewhere the next person will read it.
   - §1 plateau: `07-detail-plateau` (chart and both doses: Paracetamol "Pain 7 → 7", Sumatriptan
     "Pain 9 → 4, helped"). The finished visual is `plateau-lidd-vs-paper` (Lidd's chart beside
     the same attack on a paper diary); `paper-diary` is the sheet alone. Both come from
-    `paper-diary.html` via `paper.mjs`, with dates fixed to the 2026-11-26 shots.
+    `paper-diary.html` via `compose.mjs`, with dates fixed to the 2026-11-26 shots.
   - §2 attack mode: `02-today-attack-free` (pill, off) beside `04-today-attack-mode-on` /
     `05-logs-attack-mode-on` (strip, on); `15-log-pain-areas` for the logging flow.
   - §3 record not verdict: `08-detail-plateau-full`, `09-detail-under-5-minutes`,
     `10-detail-ended-in-sleep`.
-  - §4 board vs shipped: `boards/v4-detail` + `boards/v4-detail-lower` against `07`/`08`
-    (the board's dashed line to 0, "At the end", "no reading"); the four placements are
+  - §4 board vs shipped: the finished visual is `detail-board-vs-shipped` (from
+    `board-vs-shipped.html`); its sources are `boards/v4-detail*` and `10`. The four placements are
     `boards/attack-mode-bottom-placements`; Insights colour key from `12-insights-3m-full`.
   - Spare: `03-today-attack-free-light`, `13-add-sheet`, `14-log-*`.
 - Rerun with the `migraine-app-verify` server up: `node portfolio-screenshots/capture.mjs` and
-  `node portfolio-screenshots/boards.mjs`, then `node portfolio-screenshots/paper.mjs` (see the header of `capture.mjs` for `PW`/`CHROME`).
+  `node portfolio-screenshots/boards.mjs`, then `node portfolio-screenshots/compose.mjs` (see the header of `capture.mjs` for `PW`/`CHROME`).
 - **Removed from the old page on purpose:** "I skipped Figma", "the final look mattered
   less", the CODE Design System line (reversed in November), the six-decisions table, and
   the IDE screenshot.

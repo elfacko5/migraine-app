@@ -1,5 +1,6 @@
-// Renders paper-diary.html: the paper sheet alone, and the composite with
-// Lidd's chart beside it. Needs shots/07-detail-plateau.png from capture.mjs.
+// Renders the case study's composed visuals from local HTML:
+// paper-diary.html (the sheet alone, and beside Lidd's chart) and
+// board-vs-shipped.html. Needs capture.mjs and boards.mjs to have run first.
 // PW / CHROME as in capture.mjs.
 import { createRequire } from 'module';
 const require = createRequire((process.env.PW ?? process.cwd() + '/node_modules') + '/');
@@ -18,4 +19,9 @@ await page.goto('file://' + HERE + 'paper-diary.html?composite');
 await page.waitForTimeout(800);
 await page.locator('.composite').screenshot({ path: HERE + 'shots/plateau-lidd-vs-paper.png' });
 console.log('saved plateau-lidd-vs-paper');
+
+await page.goto('file://' + HERE + 'board-vs-shipped.html');
+await page.waitForTimeout(800);
+await page.locator('.wrap').screenshot({ path: HERE + 'shots/detail-board-vs-shipped.png' });
+console.log('saved detail-board-vs-shipped');
 await browser.close();

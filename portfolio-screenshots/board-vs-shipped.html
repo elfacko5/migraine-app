@@ -1,0 +1,119 @@
+<!doctype html>
+<!--
+  Case study §4: the v4 Attack detail board beside the shipped screen, with
+  what changed marked. The board's attack was "gone when you woke up", so the
+  shipped side is the ended-in-sleep attack (shots/10-detail-ended-in-sleep).
+  Marker positions are in CSS px on 390-wide images; re-check them if any of
+  the three source PNGs is retaken. Rendered by compose.mjs.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: Lexend; src: url('../src/assets/fonts/Lexend-Variable.woff2') format('woff2'); font-weight: 100 900; }
+:root { --page: #141311; --text: #cdc7bb; --muted: #a39d92; --strong: #d8d2c6;
+        --mark: #c68880; --rule: #34322e; --accent: #7fa187; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); font-family: Lexend, sans-serif; color: var(--text); }
+.wrap { width: max-content; padding: 64px 64px 56px; }
+
+h1 { margin: 0 0 8px; font-size: 30px; font-weight: 600; color: var(--strong); }
+.lede { margin: 0 0 40px; font-size: 17px; color: var(--muted); max-width: 900px; line-height: 1.5; }
+
+.phones { display: grid; grid-template-columns: 390px 390px 88px 390px; align-items: start; }
+.col-label { font-size: 13px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+.col-label.ship { color: var(--accent); }
+.gap { }
+.frame { position: relative; width: 390px; border-radius: 30px; overflow: hidden; outline: 1px solid var(--rule); }
+.frame + .frame { margin-left: 0; }
+.board-pair { grid-column: 1 / span 2; display: grid; grid-template-columns: 390px 390px; gap: 20px; }
+.phones { grid-template-columns: 800px 72px 390px; }
+.frame img { display: block; width: 390px; }
+.crop { height: 844px; }
+.crop.ship { height: 1064px; }
+
+.m { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: var(--mark); color: #1b1a18;
+     font-weight: 600; font-size: 17px; display: grid; place-items: center; transform: translate(-50%, -50%);
+     box-shadow: 0 0 0 4px rgba(20, 19, 17, .85); }
+.m.n { background: #1b1a18; color: var(--text); outline: 2px solid var(--muted); outline-offset: -2px; }
+.ring { position: absolute; border: 2.5px solid var(--mark); border-radius: 14px; }
+.ring.n { border-color: var(--muted); border-style: dashed; }
+
+.notes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin-top: 44px; width: 1262px; }
+.note { border-top: 1px solid var(--rule); padding-top: 18px; position: relative; }
+.note .m { position: static; transform: none; margin-bottom: 14px; box-shadow: none; }
+.note h2 { margin: 0 0 10px; font-size: 18px; font-weight: 600; color: var(--strong); }
+.note p { margin: 0 0 8px; font-size: 15px; line-height: 1.5; }
+.note .k { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The board, and what shipped</h1>
+  <p class="lede">The v4 Attack detail board, for an attack that was gone when the person woke up, beside the shipped screen for the same kind of attack. Red marks are things the board showed that the stored data couldn’t say; the grey one is a change of design.</p>
+
+  <div class="phones">
+    <div>
+      <p class="col-label">v4 board</p>
+      <div class="board-pair">
+        <div class="frame crop">
+          <img src="shots/boards/v4-detail.png" alt="">
+          <div class="ring" style="left:18px;top:104px;width:116px;height:100px"></div>
+          <div class="ring" style="left:110px;top:212px;width:170px;height:30px"></div>
+          <div class="m" style="left:24px;top:110px">1</div>
+          <div class="ring" style="left:132px;top:356px;width:226px;height:106px"></div>
+          <div class="m" style="left:346px;top:362px">2</div>
+          <div class="ring n" style="left:20px;top:752px;width:350px;height:60px"></div>
+          <div class="m n" style="left:28px;top:758px">4</div>
+        </div>
+        <div class="frame crop">
+          <img src="shots/boards/v4-detail-lower.png" alt="">
+          <div class="ring" style="left:286px;top:146px;width:78px;height:152px"></div>
+          <div class="m" style="left:372px;top:222px">3</div>
+        </div>
+      </div>
+    </div>
+    <div></div>
+    <div>
+      <p class="col-label ship">Shipped</p>
+      <div class="frame crop ship">
+        <img src="shots/10-detail-ended-in-sleep.png" alt="">
+        <div class="ring" style="left:16px;top:64px;width:118px;height:106px"></div>
+        <div class="m" style="left:22px;top:70px">1</div>
+        <div class="ring" style="left:22px;top:428px;width:352px;height:44px"></div>
+        <div class="m" style="left:360px;top:434px">2</div>
+        <div class="ring" style="left:298px;top:862px;width:62px;height:156px"></div>
+        <div class="m" style="left:352px;top:1016px">3</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <div class="m">1</div>
+      <h2>A length nobody measured</h2>
+      <p><span class="k">Board:</span> “23 h long, Mon 10:26 – Tue 09:25” for an attack that was gone when they woke up.</p>
+      <p><span class="k">Shipped:</span> no length. “Ended in sleep”, and it’s left out of every length figure.</p>
+    </div>
+    <div class="note">
+      <div class="m">2</div>
+      <h2>A line to zero</h2>
+      <p><span class="k">Board:</span> a dashed line falling to 0, as if the pain was seen going away.</p>
+      <p><span class="k">Shipped:</span> nothing drawn after the last reading. “No reading after 23:10.”</p>
+    </div>
+    <div class="note">
+      <div class="m">3</div>
+      <h2>“At the end”</h2>
+      <p><span class="k">Board:</span> a column called “At the end” for readings taken hours before it ended.</p>
+      <p><span class="k">Shipped:</span> “Last logged”, with the time underneath.</p>
+    </div>
+    <div class="note">
+      <div class="m n">4</div>
+      <h2>One edit button</h2>
+      <p><span class="k">Board:</span> “Edit this attack” opened everything, with no limit.</p>
+      <p><span class="k">Shipped:</span> a row per editable thing, open for 48 hours (what it was like) or 7 days (the end), then closed.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
