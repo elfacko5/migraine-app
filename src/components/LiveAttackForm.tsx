@@ -8,6 +8,7 @@ import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationEntry, type SelectedMedication } from './MedicationEntry';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SunriseIcon } from './icons';
+import { ChipCheck } from './ChipCheck';
 
 interface Props {
   recentMeds: Array<{ name: string; dose: string }>;
@@ -217,6 +218,7 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
               >
                 <SunriseIcon className="h-4 w-4" />
                 Woke up with it
+                <ChipCheck selected={wokeWithMigraine} />
               </button>
             </div>
           </div>

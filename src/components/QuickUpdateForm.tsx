@@ -298,7 +298,7 @@ export function QuickUpdateForm({ attack, symptoms, reliefs, recentMeds, medicat
 
             {step === 1 && voiceDraft && (
               <div className="mb-4 rounded-control border border-accent/40 bg-accent/10 p-3 text-xs text-text-secondary space-y-1">
-                <p className="font-medium text-accent-light">🎙️ Filled in from your voice note</p>
+                <p className="font-medium text-accent-light">Filled in from your voice note</p>
                 {voiceDraft.matched.length > 0 ? (
                   <ul className="list-disc pl-4 space-y-0.5">
                     {voiceDraft.matched.map((m) => <li key={m}>{m}</li>)}

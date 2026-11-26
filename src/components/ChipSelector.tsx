@@ -71,7 +71,14 @@ export function ChipSelector({ options, selected, onChange, onAddCustom, placeho
               className="w-28 rounded-full bg-bg-raised px-3 py-1.5 text-sm text-text-primary placeholder:text-text-secondary ring-1 ring-inset ring-border-subtle outline-none"
             />
             <button type="button" onClick={commitCustom} className="tap-44-y btn-tertiary min-h-0 px-2 py-1.5 text-sm font-medium">Add</button>
-            <button type="button" onClick={() => setAdding(false)} className="text-sm text-text-secondary hover:text-text-primary">✕</button>
+            {/* Lucide `x`, not a "✕" text glyph: a character renders in whatever
+                face has it and can't be sized or stroked like the other marks
+                (2026-11-26). */}
+            <button type="button" onClick={() => setAdding(false)} aria-label="Cancel" className="tap-44 inline-flex items-center justify-center p-1 text-text-secondary hover:text-text-primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+              </svg>
+            </button>
           </div>
         ) : (
           <button

@@ -107,7 +107,7 @@ function TimingSwitch({ value, onChange }: { value: NotificationConfig['mode']; 
     { value: 'fixed', label: 'Fixed' },
   ];
   return (
-    <div role="radiogroup" aria-label="Reminder timing" className="flex gap-1 rounded-[0.875rem] bg-bg-surface p-1">
+    <div role="radiogroup" aria-label="Reminder timing" className="flex gap-1 rounded-control-lg bg-bg-surface p-1">
       {options.map((o) => {
         const selected = o.value === value;
         return (
@@ -117,7 +117,7 @@ function TimingSwitch({ value, onChange }: { value: NotificationConfig['mode']; 
             role="radio"
             aria-checked={selected}
             onClick={() => onChange(o.value)}
-            className={`flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[0.625rem] border text-sm transition-colors ${
+            className={`flex min-h-[2.75rem] flex-1 items-center justify-center rounded-segment border text-sm transition-colors ${
               selected ? 'border-accent bg-selected-fill font-semibold text-text-primary' : 'border-transparent text-text-primary hover:bg-bg-raised'
             }`}
           >

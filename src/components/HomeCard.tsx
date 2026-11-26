@@ -203,7 +203,7 @@ export function HomeCard({ art, label, headline, headlineSize, figure, detail, t
           <button
             type="button"
             onClick={onOpenDetail}
-            className="-m-1 block max-w-[64%] rounded-lg p-1 text-left transition-colors hover:bg-bg-raised/40 active:bg-bg-raised/60"
+            className="-m-1 block max-w-[64%] rounded-control p-1 text-left transition-colors hover:bg-bg-raised/40 active:bg-bg-raised/60"
           >
             {text}
           </button>

@@ -411,8 +411,14 @@
      the warning icon 5.6:1. */
   --color-warning-surface: #efe4d3;
   --color-positive:       #4f6b57;
-  --color-ill-1:          #c9a98a;
-  --color-ill-2:          #a9bfad;
+  /* Re-measured 2026-11-26 (light pass). The first values (#c9a98a /
+     #a9bfad) put the sun at 1.76:1 on the page against dark's 3.19:1, so in
+     light the hero read as a washed-out smudge, the hill nearly vanished
+     (1.33:1) and the leaf went mint. These take the sun to 2.43:1 and the
+     leaf to 2.68:1 — still softer than dark, as a light page should be —
+     while text-strong over the sun disc keeps 5.19:1. */
+  --color-ill-1:          #ad8763;
+  --color-ill-2:          #7f9c88;
   /* Insights categorical palette, light (A11: every new token gets its light
      value derived and measured when it's added, even though the screen-by-
      screen light pass itself waits until last). Same hue, same saturation,
@@ -429,15 +435,11 @@
      bg-raised already follows. 12.61:1 on the page against text-primary's
      10.59:1, 10.32:1 on bg-raised; both clear of a near-black extreme. */
   --color-text-strong:    #2e2b27;
-  /* Provisional: no light-mode board exists for the selected-fill token
-     (A11 — light mode is built last, each new token's light value derived
-     and measured when the screen using it is built; this change instead
-     touches many already-shipped dark screens at once). Computed from the
-     same alpha-tint mechanism the old convention used, rather than a
-     hand-picked hex nobody has measured, so it's never a worse guess than
-     what shipped before. Replace with a real measured value in the light
-     pass. */
-  --color-selected-fill:  color-mix(in srgb, var(--color-accent) 18%, var(--color-bg-surface));
+  /* Measured in the light pass (2026-11-26): accent at ~22% over bg-surface,
+     solved to match dark's own step — 1.32:1 against bg-surface (dark 1.30),
+     1.20 against bg-raised (dark 1.15). text-primary on it 7.25:1. Was a
+     provisional runtime color-mix at 18%, a step quieter than dark's. */
+  --color-selected-fill:  #c9ccc0;
 }
 
 /* ── Three-tier button hierarchy ───────────────────────
@@ -492,6 +494,14 @@
 
   .btn-tertiary { background-color: transparent; color: var(--color-accent-light); }
   .btn-tertiary:hover:not(:disabled) { color: var(--color-accent); }
+  /* A disabled text button: the label dims the same way a disabled
+     primary's does, never a whole-element opacity (2026-11-26 — the Logs
+     filter's "Clear all" and the custom-medication "Add" each hand-rolled
+     `disabled:opacity-*` instead). */
+  .btn-tertiary:disabled, .btn-tertiary[aria-disabled="true"] {
+    color: color-mix(in srgb, var(--color-text-secondary) 55%, var(--color-bg-base));
+    cursor: not-allowed;
+  }
 
   /* **Two sizes, and the choice is explicit.** The default above is the
      full-width size: a pinned footer action, or the one primary action at the

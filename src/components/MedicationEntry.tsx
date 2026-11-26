@@ -288,7 +288,7 @@ export function MedicationEntry({
               type="button"
               onClick={addCustom}
               disabled={!customName.trim()}
-              className="tap-44-y btn-tertiary min-h-0 rounded-control py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
+              className="tap-44-y btn-tertiary min-h-0 rounded-control py-1.5 text-sm font-medium transition-colors"
             >
               Add
             </button>

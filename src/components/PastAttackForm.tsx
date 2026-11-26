@@ -12,6 +12,7 @@ import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
 import { SunriseIcon } from './icons';
+import { ChipCheck } from './ChipCheck';
 import { PastAttackSaved } from './PastAttackSaved';
 
 interface Props {
@@ -345,6 +346,7 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
               >
                 <SunriseIcon className="h-4 w-4" />
                 Woke up with it
+                <ChipCheck selected={form.wokeWithMigraine} />
               </button>
             </div>
             <div className="border-t border-bg-border pt-5 space-y-2">

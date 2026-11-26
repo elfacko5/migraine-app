@@ -421,7 +421,12 @@ function Row({ label, value, stacked = false, onClick }: {
   ) : (
     <>
       <span className="min-w-0 flex-1 text-sm text-text-secondary">{label}</span>
-      <span className={`max-w-[62%] text-right text-sm ${onClick ? 'font-medium text-accent-light' : 'text-text-primary'}`}>{value}</span>
+      {/* Accent is for the "Add" prompt alone — the action. An answer is a
+          recorded value and reads in text-primary whether or not it can still
+          be changed; the chevron is what says "editable", as on Settings'
+          rows (2026-11-26: answered values were accent, so "Poor sleep" read
+          as a link beside "Add"). */}
+      <span className={`max-w-[62%] text-right text-sm ${onClick && value === 'Add' ? 'font-medium text-accent-light' : 'text-text-primary'}`}>{value}</span>
     </>
   );
   const cls = 'flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left';

@@ -1,5 +1,5 @@
 import type { Attack } from '../types';
-import { IMPACT_OPTIONS } from '../utils/impact';
+import { END_IMPACT_LABELS } from '../utils/impact';
 import {
   DEFAULT_FILTERS, SORT_LABELS,
   sideOptions, filterCount, PERIOD_OPTIONS,
@@ -139,11 +139,15 @@ export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onCl
         ))}
       </Group>
 
-      {/* Multi-select, because "a lot or couldn't function" is one question a
+      {/* Multi-select, because "had to stop or in bed" is one question a
           person actually has. Unanswered attacks are excluded whenever any
-          level is picked — "not answered" is not a level. */}
-      <Group label="Impact">
-        {IMPACT_OPTIONS.map(({ value, label }) => (
+          level is picked — "not answered" is not a level. Labelled with the
+          End flow's own words (END_IMPACT_LABELS) and its "Stopped you"
+          heading, so the filter reads back what was tapped: it used the older
+          Not at all / A little / A lot / Couldn't function set, the same four
+          levels in a second vocabulary (v4 diff C, Logs; fixed 2026-11-26). */}
+      <Group label="Stopped you">
+        {([0, 1, 2, 3] as const).map((value) => (
           <Pill
             key={value}
             active={filters.impact.includes(value)}
@@ -156,7 +160,7 @@ export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onCl
               )
             }
           >
-            {label}
+            {END_IMPACT_LABELS[value]}
           </Pill>
         ))}
       </Group>
@@ -230,7 +234,7 @@ export function LogsFilterReset({ filters, onChange }: { filters: LogFilters; on
       type="button"
       onClick={() => onChange(DEFAULT_FILTERS)}
       disabled={count === 0}
-      className="tap-44-y rounded-control-sm px-2 py-1 text-sm font-medium text-accent-light transition-colors hover:text-accent disabled:opacity-40 disabled:hover:text-accent-light"
+      className="tap-44-y btn-tertiary min-h-0 rounded-control-sm px-2 py-1 text-sm font-medium"
     >
       Clear all
     </button>

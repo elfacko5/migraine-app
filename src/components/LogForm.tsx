@@ -11,6 +11,7 @@ import { MedicationInput } from './MedicationInput';
 import { ChipSelector } from './ChipSelector';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
 import { SunriseIcon } from './icons';
+import { ChipCheck } from './ChipCheck';
 import { RadioDot } from './RadioDot';
 
 interface Props {
@@ -633,7 +634,8 @@ export function LogForm({ triggers, symptoms, reliefs, defaultNotifConfig, recen
                       text colour and an emoji would have stayed the same
                       colour in both states. */}
                   <SunriseIcon className="h-4 w-4" />
-                  Woke up with this attack
+                  Woke up with it
+                  <ChipCheck selected={form.wokeWithMigraine} />
                 </button>
               </div>
 

@@ -135,7 +135,12 @@ const LIGHT_PALETTE: DiagramPalette = {
   lineColor: 'rgba(58,55,51,0.55)',
   dividerColor: 'rgba(58,55,51,0.61)',
   detailColor: 'rgba(58,55,51,0.38)',
-  disabledFill: '#efeae0',
+  // The page colour, as dark's is (2026-11-26 light pass): dark dropped its
+  // disabled fill to the page on 2026-09-03 because tone alone no longer
+  // separated it from the head; light kept #efeae0 at 1.07:1. The page,
+  // #f5f2ec, is 1.17:1 — the most this end of the range has — and the hatch
+  // and outline carry the rest, as in dark.
+  disabledFill: '#f5f2ec',
   disabledHatch: 'rgba(58,55,51,0.15)',
   disabledLine: 'rgba(58,55,51,0.40)',
   hoverFill: 'rgba(58,55,51,0.21)',

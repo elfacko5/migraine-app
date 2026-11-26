@@ -5,30 +5,17 @@ import type { Attack } from '../types';
 // what a headache history is actually judged on; severity is the other axis
 // and the two are not interchangeable.
 //
-// Two label sets, because the value is read in two different situations and
-// one wording can't serve both:
+// Two label sets, one vocabulary (2026-11-26: the older Not at all / A little
+// / A lot / Couldn't function set, `IMPACT_OPTIONS`, was the Logs filter's
+// last caller and went with it):
 //
-//   - `IMPACT_OPTIONS` — bare degrees, for buttons sitting under a question
-//     that supplies the context. Used by `EndAttackForm`, AttackDetail and
-//     the Logs filter, all of which print the question above them. **The
-//     labels only mean something with that question present**: "A little" on
-//     its own says nothing, so a caller must never shorten the heading to a
-//     bare label like "Impact".
-//   - `IMPACT_SHORT` — a lowercase degree the caller labels itself, for the
-//     list row and the filter chips ("Impact: a lot").
-//
-// There was a third, `IMPACT_SUMMARY`, holding sentence forms ("Stopped you
-// doing a lot") for AttackDetail when it displayed impact as read-only text.
-// AttackDetail now shows the same tappable pills as everywhere else, so
-// nothing needed sentences and it was removed rather than left as dead code.
+//   - `END_IMPACT_LABELS` — the v4 flows' words, for buttons under the
+//     "Stopped you" question: `EndAttackForm`, Detail's row and the Logs
+//     filter. **They only mean something with that question present**, so a
+//     caller must never shorten the heading to a bare label like "Impact".
+//   - `IMPACT_SHORT` — the same words lowercased, for the active-filter chip
+//     that labels itself ("Stopped you: had to stop").
 type Impact = NonNullable<Attack['impact']>;
-
-export const IMPACT_OPTIONS: { value: Impact; label: string }[] = [
-  { value: 0, label: 'Not at all' },
-  { value: 1, label: 'A little' },
-  { value: 2, label: 'A lot' },
-  { value: 3, label: "Couldn't function" },
-];
 
 // The v4 flows' own wording for the same four degrees (A3/A8): the End flow's
 // buttons, and Detail's "Stopped you" row, which reads back what was tapped.
@@ -39,12 +26,13 @@ export const END_IMPACT_LABELS: Record<Impact, string> = {
   3: 'In bed',
 };
 
-// The list row has no space for a sentence, so it takes the degree and pairs
-// it with a label of its own ("Impact: a lot") — the same information, made
-// self-describing by the caller instead of by the string.
+// The active-filter chip has no space for a sentence, so it takes the degree
+// and pairs it with a label of its own ("Stopped you: had to stop"). The End
+// flow's words, lowercased, so the chip, the filter and Detail agree
+// (2026-11-26; it was none / a little / a lot / couldn't function).
 export const IMPACT_SHORT: Record<Impact, string> = {
-  0: 'none',
-  1: 'a little',
-  2: 'a lot',
-  3: "couldn't function",
+  0: 'carried on',
+  1: 'slowed down',
+  2: 'had to stop',
+  3: 'in bed',
 };

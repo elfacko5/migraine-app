@@ -39,7 +39,7 @@ const SYMPTOM_ICON: Record<CardSymptom, typeof NauseaIcon> = { nausea: NauseaIco
 
 // The chips sit one surface *up* from the card, not recessed into it: on the
 // phone the `bg-base` recess read as dark holes in the card (2026-11-25).
-const TOKEN = 'inline-flex h-6 items-center gap-1.5 rounded-lg px-1.5 text-xs text-text-secondary';
+const TOKEN = 'inline-flex h-6 items-center gap-1.5 rounded-badge px-1.5 text-xs text-text-secondary';
 
 export function AttackCard({ attack, onClick, isOngoing, showMonth = false }: Props) {
   const start = new Date(attack.snapshots[0].time);

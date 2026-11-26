@@ -207,7 +207,7 @@ was removed before light mode existed.
 | Constant | Light | Dark (shipping) |
 |---|---|---|
 | `headFill` | `#e7e1d5` | `#2b2823` |
-| `disabledFill` | `#efeae0` | `#1b1a18` |
+| `disabledFill` | `#f5f2ec` | `#1b1a18` |
 | `disabledHatch` / `disabledLine` | `rgba(58,55,51,0.15)` / `0.40` | `rgba(208,216,230,0.11)` / `0.28` |
 | `lineColor` / `dividerColor` / `detailColor` | `rgba(58,55,51,0.55)` / `0.61` / `0.38` | `rgba(208,216,230,0.4)` / `0.45` / `0.26` |
 | `hoverFill` | `rgba(58,55,51,0.21)` | `rgba(208,216,230,0.14)` |
@@ -231,7 +231,7 @@ reminder that a rendered screenshot isn't the same check as a contrast number. E
 instead solved to reproduce dark's own ratio against its own background, using the same
 relative-luminance formula as the audits below.
 
-**Tone alone no longer carries it in dark** (2026-09-03): at `#26241f` the disabled regions measured 1.06:1 against the head and Sunny couldn't tell which parts were disabled. The fill dropped to `#1b1a18` (1.18:1) and a 45° hatch plus a dimmed outline do the real work — texture, because this end of the range has no tonal step left to give. The light column has not been redone for this and would need the same treatment. The edge strokes were tuned to ~2.0:1 against their own fill,
+**Tone alone no longer carries it in dark** (2026-09-03): at `#26241f` the disabled regions measured 1.06:1 against the head and Sunny couldn't tell which parts were disabled. The fill dropped to `#1b1a18` (1.18:1) and a 45° hatch plus a dimmed outline do the real work — texture, because this end of the range has no tonal step left to give. The light column got the same treatment on 2026-11-26: its fill is now the light page, `#f5f2ec` (1.17:1 against the head, up from 1.07), with the hatch and outline it already had. The edge strokes were tuned to ~2.0:1 against their own fill,
 matching dark's 2.00 / 2.19 / 2.20, so the focus ring reads at the same strength in both.
 
 ## Accessibility audit
@@ -284,7 +284,7 @@ a control sits on, and applied only to controls.
 | `MigraineDaysChart` bar vs its track | 4.21 | 4.68 | 3.79 |
 | 15-day threshold line vs track | *2.23* | *2.01* | *2.00* |
 | Diagram zone fill vs head fill | 6.16 | 6.16 | 5.28 |
-| Diagram disabled region vs head fill (+ hatch) | *1.18* | *1.18* | *1.09* |
+| Diagram disabled region vs head fill (+ hatch) | *1.18* | *1.18* | *1.17* |
 | Diagram head vs page | *1.18* | *1.26* | *1.17* |
 
 The italicised rows are **exempt, not outstanding** — see "Deliberately left"
@@ -420,9 +420,9 @@ commit, never a deliberate call), and is restored here with the boxes actually c
    it isn't enough on device the next step is new or hand-treated artwork, not a stronger filter.
    Same photographs both themes; only the rendering changes, and only under `[data-theme="light"]`.
    **Superseded 2026-10-26 (Today v3):** the photographs were replaced by drawn SVGs filled from two
-   new tokens, `--color-ill-1` (`#8c735e` dark and attack / `#c9a98a` light) and `--color-ill-2`
+   new tokens, `--color-ill-1` (`#8c735e` dark and attack / `#c9a98a` light, **re-measured 2026-11-26 to `#ad8763`**) and `--color-ill-2`
    (`#5e7363` / `#a9bfad`), so the hero follows the theme by construction and the filter is gone.
-   Headline contrast over the art is recorded in `docs/today-cards.md`.
+   Headline contrast over the art is recorded in `docs/today-cards.md`. **2026-11-26 light pass:** the first light values put the sun at 1.76:1 on the page against dark's 3.19:1, so on device the art read as a washed-out smudge (the hill at 1.33:1 nearly vanished). Now `--color-ill-1` `#ad8763` (sun 2.43:1) and `--color-ill-2` `#7f9c88` (leaf 2.68:1), still softer than dark; `text-strong` over the sun disc 5.19:1.
 5. **A third state on the theme control.** Simpler than planned, because of a decision taken before
    any code was written (2026-09-25, Sunny's call): attack mode always wins. Turning it on sets
    `data-theme="attack"` regardless of the light/dark choice underneath, exactly as it already did —

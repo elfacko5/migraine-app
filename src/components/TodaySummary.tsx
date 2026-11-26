@@ -278,8 +278,12 @@ export function TodaySummary({
       )}
 
       {banners.map((w) => (
-        <div key={w.key} className="flex items-start gap-2.5 rounded-[0.875rem] bg-severity-mid/15 p-3 text-[0.9375rem] text-text-primary">
-          <WarningIcon className="h-6 w-6 shrink-0 text-severity-mid [&>path]:[stroke-width:2]" />
+        // v4 (B, "clean batch"): `warning-surface` with an amber icon and
+        // primary text, at the flows' 12px `.warn` radius — the same surface
+        // Detail's under-5-minutes card and HIT-6's notice already use. It
+        // was a 15% severity-mid tint at a one-off 14px (2026-11-26).
+        <div key={w.key} className="flex items-start gap-2.5 rounded-control bg-warning-surface p-3 text-[0.9375rem] text-text-primary">
+          <WarningIcon className="h-6 w-6 shrink-0 text-warning [&>path]:[stroke-width:2]" />
           <p><span className="font-semibold">{w.count}</span> {w.note}</p>
         </div>
       ))}

@@ -246,7 +246,7 @@ export function activeFilterChips(f: LogFilters): FilterChip[] {
     const sorted = [...f.impact].sort((a, b) => b - a);
     chips.push({
       key: 'impact',
-      label: `Impact: ${sorted.map((i) => IMPACT_SHORT[i as 0 | 1 | 2 | 3]).join(', ')}`,
+      label: `Stopped you: ${sorted.map((i) => IMPACT_SHORT[i as 0 | 1 | 2 | 3]).join(', ')}`,
     });
   }
   if (f.side) chips.push({ key: 'side', label: `${SIDE_SHORT[f.side]} side` });
