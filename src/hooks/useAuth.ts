@@ -34,6 +34,9 @@ const storedSessionAtLaunch = (() => {
 // was asked for, not imposed. A stamp, not a flag: it only counts briefly.
 const OWN_SIGN_OUT_KEY = 'lidd_own_sign_out_at';
 const markOwnSignOut = () => { try { localStorage.setItem(OWN_SIGN_OUT_KEY, String(Date.now())); } catch { /* best effort */ } };
+const tokenStored = () => {
+  try { return Object.keys(localStorage).some((k) => k.startsWith('sb-') && k.endsWith('-auth-token')); } catch { return true; }
+};
 const clearOwnSignOut = () => { try { localStorage.removeItem(OWN_SIGN_OUT_KEY); } catch { /* best effort */ } };
 const ownSignOutRecently = () => {
   try { return Date.now() - Number(localStorage.getItem(OWN_SIGN_OUT_KEY) ?? 0) < 30_000; } catch { return false; }
@@ -57,14 +60,15 @@ export function useAuth() {
       // expired token, supabase-js returns no session but keeps the stored
       // one: still signed in, no notice. A revoked token is removed — and
       // that also comes back with an error, so the error can't be the test.
-      const tokenStillStored = (() => {
-        try { return Object.keys(localStorage).some((k) => k.startsWith('sb-') && k.endsWith('-auth-token')); } catch { return true; }
-      })();
+      const tokenStillStored = tokenStored();
       if (storedSessionAtLaunch && !data.session && !tokenStillStored && !ownSignOutRecently()) {
         writeNotice(true);
         setSignedOutElsewhere(true);
       }
-      hadSession.current = !!data.session;
+      // A login still stored counts as a session even when none came back
+      // (offline with an expired token): when the connection returns and the
+      // server turns it down, that SIGNED_OUT is a real one to announce.
+      hadSession.current = !!data.session || (storedSessionAtLaunch && tokenStillStored);
       setSession(data.session);
       setLoading(false);
     });
@@ -116,8 +120,11 @@ export function useAuth() {
     markOwnSignOut();
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) { console.error('Sign-out failed:', error); clearOwnSignOut(); }
-      return !error;
+      // With an expired, revoked login supabase-js removes the session and
+      // still hands back the refresh error. No stored login means signed out.
+      const done = !error || !tokenStored();
+      if (!done) { console.error('Sign-out failed:', error); clearOwnSignOut(); }
+      return done;
     } catch (e) {
       console.error('Sign-out failed:', e);
       clearOwnSignOut();

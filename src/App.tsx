@@ -205,14 +205,29 @@ export default function App() {
   //
   // Stored with the account it belongs to and read back only for that
   // account — never cleared on a null session, which is also what the first
-  // render and an offline launch with an expired token look like. The first
-  // render after the account changes is skipped: the hooks still hold the
-  // previous account's 'synced' and stamp until their own sync starts.
+  // render and an offline launch with an expired token look like. After the
+  // account changes nothing is written until a sync is seen running: the
+  // hooks still hold the previous account's 'synced' and stamp until then.
+  //
+  // And only once this account's own sync has been seen running: a sync for
+  // the previous account still in flight at the switch makes the new one's
+  // return early, and its 'synced' would otherwise be stored under the new id.
   const uid = auth.user?.id ?? null;
   const allSyncedUidRef = useRef<string | null>(null);
+  const allSyncedArmedRef = useRef(false);
+  const prevSyncStatusRef = useRef(syncStatus);
   useEffect(() => {
-    if (uid !== allSyncedUidRef.current) { allSyncedUidRef.current = uid; return; }
-    if (uid && syncStatus === 'synced' && lastSyncedAt) writeAllSynced(uid, lastSyncedAt);
+    const prev = prevSyncStatusRef.current;
+    prevSyncStatusRef.current = syncStatus;
+    if (uid !== allSyncedUidRef.current) {
+      allSyncedUidRef.current = uid;
+      allSyncedArmedRef.current = false;
+      return;
+    }
+    // A *change* into 'syncing' after the switch — a status already
+    // 'syncing' at the switch is the previous account's sync still running.
+    if (syncStatus === 'syncing' && prev !== 'syncing') allSyncedArmedRef.current = true;
+    if (uid && allSyncedArmedRef.current && syncStatus === 'synced' && lastSyncedAt) writeAllSynced(uid, lastSyncedAt);
   }, [uid, syncStatus, lastSyncedAt]);
   const allSyncedAt = syncStatus === 'synced' ? lastSyncedAt : readAllSynced(uid);
 

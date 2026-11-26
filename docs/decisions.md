@@ -2617,3 +2617,7 @@ Built from the mock-ups. All of them use one component, `StatusNotice`: the warn
   - **Sync retries on `online`**, so the notice's "catches up once it's back online" is now true.
   - **"Send a new code" confirms it sent**, and the rate limit at the verify step has its own wording.
   - **Only Lidd's own wrapper (`app: 'migraine-tracker'`) can be "newer".** Any other versioned JSON is "not a backup".
+  - **Third review.**
+    - A login still stored at launch counts as a session even when `getSession` returns none (offline, expired token). A later rejection by the server is then announced.
+    - The all-synced time is written only after this account's own sync is seen *starting*. That way a previous account's sync still running at the switch can't stamp the new account.
+    - `signOut` counts as done when no stored login is left, even if supabase-js also reports the refresh error.
