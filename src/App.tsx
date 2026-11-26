@@ -558,7 +558,7 @@ export default function App() {
   function handleUpdateSave(snapshot: Omit<Snapshot, 'source'>, source: Snapshot['source'] = 'manual') {
     if (updateAttackId !== null) {
       const updated = addSnapshot(updateAttackId, stampSnapshot(snapshot, medications), source);
-      announceSaved(source === 'notification_no_change' ? 'Saved as no change' : 'Update saved', updated, nextDelay(updated));
+      announceSaved(source === 'notification_no_change' ? 'Saved as no change' : 'Update saved', updated, updated ? nextDelay(updated) : 0);
     }
     closeUpdateSheet();
   }

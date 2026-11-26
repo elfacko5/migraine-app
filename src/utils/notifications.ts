@@ -361,6 +361,10 @@ export function firstDelay(attack: Attack): number {
  */
 export async function reminderAt(attack: Attack, delayMs: number): Promise<Date | null> {
   if (!attack.notificationConfig.enabled || attack.end || delayMs <= 0) return null;
+  // On the web the reminder is a service-worker timer, and `scheduleNotification`
+  // does nothing while no worker controls the page (a first load, before
+  // `clients.claim()` lands) — so no worker, no time.
+  if (!isNative() && !getSW()) return null;
   if ((await notificationPermission()) !== 'granted') return null;
   return new Date(Date.now() + delayMs);
 }
