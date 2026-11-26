@@ -1,117 +1,198 @@
-import { chromium } from 'playwright';
+// Portfolio screenshots of the current app, from a fictional diary
+// (`seed.mjs`). Every shot runs in a fresh, isolated browser context, so it
+// never touches a real diary and never holds a Supabase session — and the
+// script still refuses to seed an origin that has an `sb-` key.
+//
+// Run, with a dev server up (default: the `migraine-app-verify` config, 5175):
+//   PW=<dir containing node_modules/playwright> CHROME=<chromium binary> \
+//     node portfolio-screenshots/capture.mjs
+// PW and CHROME are optional: without them it imports `playwright` normally
+// and uses Playwright's own browser.
 
-const BASE = 'http://localhost:5180';
-const OUT = new URL('.', import.meta.url).pathname;
+import { createRequire } from 'module';
+import { mkdirSync } from 'fs';
+import { attacks, medications } from './seed.mjs';
 
-// Dates are relative to "now" (not hardcoded) so seeded attacks always fall
-// inside the default "7 days" filter regardless of when this script runs.
-const now = Date.now();
-const hoursAgo = (h) => new Date(now - h * 60 * 60 * 1000).toISOString();
+const require = createRequire((process.env.PW ?? process.cwd() + '/node_modules') + '/');
+const { chromium } = require('playwright');
 
-const endedAttack = {
-  id: 2000,
-  snapshots: [
-    { time: hoursAgo(72), areas: { 'Eye left': 10 }, symptoms: [], reliefs: [], medication: null, note: null, source: 'manual' },
-    { time: hoursAgo(70.5), areas: { 'Eye left': 9, 'Forehead left': 9 }, symptoms: ['Throbbing'], reliefs: ['Dark room', 'Hydration'], medication: { name: 'Sumatriptan', dose: '2 tablets' }, note: null, source: 'manual' },
-  ],
-  end: hoursAgo(48),
-  triggers: [],
-  notificationConfig: { enabled: false, mode: 'adaptive', fixedIntervalMinutes: 60 },
-  updatedAt: new Date().toISOString(),
-};
+const BASE = process.env.BASE ?? 'http://localhost:5175';
+const OUT = new URL('./shots/', import.meta.url).pathname;
+mkdirSync(OUT, { recursive: true });
 
-const ongoingAttack = {
-  id: 1000,
-  snapshots: [
-    { time: hoursAgo(5), areas: { 'Temple left': 8 }, symptoms: [], reliefs: [], medication: null, note: null, source: 'manual' },
-  ],
-  end: null,
-  triggers: [],
-  notificationConfig: { enabled: false, mode: 'adaptive', fixedIntervalMinutes: 60 },
-  updatedAt: new Date().toISOString(),
-};
+const PHONE = { width: 430, height: 932 };
+const browser = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : {});
 
-async function seed(page, attacks) {
-  await page.evaluate((data) => {
-    localStorage.setItem('hd_attacks', JSON.stringify(data));
-  }, attacks);
+/**
+ * A fresh context with the fictional diary loaded. `height` > 932 gives a
+ * full-length capture of a screen that scrolls (the app scrolls a nested div,
+ * so Playwright's fullPage can't).
+ */
+async function open({ ongoing = true, theme = 'dark', attackMode = false, height = PHONE.height } = {}) {
+  const ctx = await browser.newContext({
+    viewport: { width: PHONE.width, height },
+    deviceScaleFactor: 3,
+    colorScheme: 'dark',
+    locale: 'en-GB',
+  });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => console.log('page error:', e.message));
+  await page.goto(BASE);
+  const signedIn = await page.evaluate(() => Object.keys(localStorage).some((k) => k.startsWith('sb-')));
+  if (signedIn) throw new Error(`${BASE} holds a Supabase session — refusing to seed it`);
+  const now = Date.now();
+  await page.evaluate(([a, m, t, am]) => {
+    localStorage.clear();
+    localStorage.setItem('hd_attacks', JSON.stringify(a));
+    localStorage.setItem('hd_medications', JSON.stringify(m));
+    localStorage.setItem('hd_hit6_dismissed', new Date().toISOString());
+    localStorage.setItem('hd_theme', t);
+    localStorage.setItem('hd_attack_mode', String(am));
+  }, [attacks(now, { withOngoing: ongoing }), medications(now), theme, attackMode]);
   await page.reload();
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(900);
+  return { page, close: () => ctx.close() };
 }
 
-async function clickByText(page, text) {
-  await page.evaluate((t) => {
-    const buttons = Array.from(document.querySelectorAll('button'));
-    const btn = buttons.find((b) => b.textContent.trim() === t);
-    btn?.click();
-  }, text);
-  await page.waitForTimeout(200);
+async function tab(page, name) {
+  await page.getByRole('button', { name, exact: true }).first().click();
+  await page.waitForTimeout(700);
 }
 
-const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 430, height: 932 }, deviceScaleFactor: 3 });
-await page.emulateMedia({ colorScheme: 'dark' });
+async function shot(page, name) {
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: OUT + name + '.png' });
+  console.log('saved', name);
+}
 
-// --- Screenshot 1 & 2: Attack Detail + Insights (need both attacks) ---
-await page.goto(BASE);
-await seed(page, [ongoingAttack, endedAttack]);
+/** Opens the Logs row whose accessible name contains `text`. */
+async function openRow(page, text) {
+  await tab(page, 'Logs');
+  await page.locator('button', { hasText: text }).first().click();
+  await page.waitForTimeout(900);
+}
 
-await clickByText(page, 'Logs');
-await page.waitForTimeout(200);
-// Click the ended attack's card (identified by its medication chip, not its
-// date — the date's month/day shifts depending on when this script runs).
-await page.evaluate(() => {
-  const cards = Array.from(document.querySelectorAll('button')).filter(
-    (b) => b.getBoundingClientRect().height > 60
-  );
-  const endedCard = cards.find((c) => c.textContent.includes('Sumatriptan'));
-  endedCard?.click();
-});
-await page.waitForTimeout(300);
-await page.screenshot({ path: OUT + '1-attack-detail.png' });
+/** Selects head zones in the pain step and rates each. The zones' click
+ *  targets carry no name, so each is tapped and kept only if the severity
+ *  group that opens names a wanted area. */
+async function pickAreas(page, wanted) {
+  const targets = page.locator('svg path[fill="rgba(0,0,0,0)"]');
+  const n = await targets.count();
+  for (let i = 0; i < n; i++) {
+    await targets.nth(i).dispatchEvent('click');
+    await page.waitForTimeout(150);
+    const label = await page.locator('[role="group"][aria-label$="severity, 1 to 10"]').first().getAttribute('aria-label').catch(() => null);
+    const name = label?.replace(/ severity, 1 to 10$/, '');
+    if (name && name in wanted) {
+      await page.locator('[role="group"][aria-label$="severity, 1 to 10"] button', { hasText: new RegExp(`^${wanted[name]}`) }).first().click();
+      await page.waitForTimeout(150);
+    } else if (name) {
+      await targets.nth(i).dispatchEvent('click');
+      await page.waitForTimeout(150);
+    }
+  }
+  await shot(page, '15-log-pain-areas');
+}
 
-// Close detail sheet, go to Insights
-await page.evaluate(() => {
-  const closeBtn = Array.from(document.querySelectorAll('button')).find(
-    (b) => b.getBoundingClientRect().top < 100 && b.getBoundingClientRect().left < 100
-  );
-  closeBtn?.click();
-});
-await page.waitForTimeout(200);
-await clickByText(page, 'Insights');
-await page.waitForTimeout(300);
-await page.screenshot({ path: OUT + '2-insights.png' });
+const TALL = 3300;
 
-// --- Screenshot 3: LogForm Pain areas step (no ongoing attack) ---
-await seed(page, [endedAttack]);
-await clickByText(page, 'Start logging');
-await page.waitForTimeout(200);
-await clickByText(page, 'Next');
-await page.waitForTimeout(200);
+// --- Today --------------------------------------------------------------
+{
+  const { page, close } = await open();
+  await shot(page, '01-today-ongoing');
+  await close();
+}
+{
+  const { page, close } = await open({ ongoing: false });
+  await shot(page, '02-today-attack-free');
+  await close();
+}
+{
+  const { page, close } = await open({ ongoing: false, theme: 'light' });
+  await shot(page, '03-today-attack-free-light');
+  await close();
+}
+{
+  // Attack mode off (the pill) and on (the strip on the nav), same attack.
+  const { page, close } = await open({ attackMode: true });
+  await shot(page, '04-today-attack-mode-on');
+  await tab(page, 'Logs');
+  await shot(page, '05-logs-attack-mode-on');
+  await close();
+}
 
-const svgBox = await page.evaluate(() => {
-  const svgs = Array.from(document.querySelectorAll('svg'));
-  const target = svgs.find((s) => s.getAttribute('viewBox') === '112 235 336 525');
-  const r = target.getBoundingClientRect();
-  return { left: r.left, top: r.top, width: r.width, height: r.height };
-});
-// "Eye left" zone center is at [350, 460] in the 112 235 336 525 viewBox
-const xRel = (350 - 112) / 336;
-const yRel = (460 - 235) / 525;
-await page.mouse.click(svgBox.left + xRel * svgBox.width, svgBox.top + yRel * svgBox.height);
-await page.waitForTimeout(200);
+// --- Logs ---------------------------------------------------------------
+{
+  const { page, close } = await open();
+  await tab(page, 'Logs');
+  await shot(page, '06-logs');
+  await close();
+}
 
-await page.evaluate(() => {
-  const slider = document.querySelector('input[type="range"]');
-  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-  setter.call(slider, '9');
-  slider.dispatchEvent(new Event('input', { bubbles: true }));
-  slider.dispatchEvent(new Event('change', { bubbles: true }));
-  slider.blur();
-});
-await page.waitForTimeout(200);
-await page.screenshot({ path: OUT + '3-pain-areas.png' });
+// --- Attack detail --------------------------------------------------------
+{
+  // The plateau attack: the first dose held the pain flat, the second broke it.
+  const { page, close } = await open();
+  await openRow(page, '9h 12m');
+  await shot(page, '07-detail-plateau');
+  await close();
+}
+{
+  const { page, close } = await open({ height: TALL });
+  await openRow(page, '9h 12m');
+  await shot(page, '08-detail-plateau-full');
+  await close();
+}
+{
+  const { page, close } = await open();
+  await tab(page, 'Logs');
+  await page.getByRole('button', { name: /under 5 minutes/ }).first().click();
+  await page.waitForTimeout(900);
+  await shot(page, '09-detail-under-5-minutes');
+  await close();
+}
+{
+  const { page, close } = await open({ height: 1800 });
+  await openRow(page, 'Length not recorded');
+  await shot(page, '10-detail-ended-in-sleep');
+  await close();
+}
 
-await page.evaluate(() => localStorage.removeItem('hd_attacks'));
+// --- Insights -------------------------------------------------------------
+{
+  const { page, close } = await open();
+  await tab(page, 'Insights');
+  await shot(page, '11-insights');
+  await close();
+}
+{
+  const { page, close } = await open({ height: 3900 });
+  await tab(page, 'Insights');
+  await page.getByRole('button', { name: '3m', exact: true }).click();
+  await page.waitForTimeout(700);
+  await shot(page, '12-insights-3m-full');
+  await close();
+}
+
+// --- Logging ----------------------------------------------------------------
+{
+  const { page, close } = await open({ ongoing: false });
+  await page.getByRole('button', { name: 'Log or update an attack' }).click();
+  await page.waitForTimeout(700);
+  await shot(page, '13-add-sheet');
+  await page.locator('button', { hasText: 'Log an attack' }).last().click();
+  await page.waitForTimeout(900);
+  await shot(page, '14-log-first-step');
+  for (let i = 2; i <= 3; i++) {
+    const next = page.getByRole('button', { name: /^(Next|Continue)$/ }).last();
+    if (!(await next.isVisible().catch(() => false)) || !(await next.isEnabled())) break;
+    await next.click();
+    await page.waitForTimeout(800);
+    await shot(page, `14-log-step-${i}`);
+    if (i === 2) await pickAreas(page, { 'Temple left': 8, 'Eye left': 7, 'Forehead left': 5 });
+  }
+  await close();
+}
+
 await browser.close();
-console.log('done');
+console.log('done →', OUT);
