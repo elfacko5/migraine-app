@@ -577,10 +577,14 @@ interface AccountProps {
   auth: ReturnType<typeof useAuth>;
   syncStatus: SyncStatus;
   lastSyncedAt: string | null;
+  /** When everything last synced, remembered across launches (App.tsx) —
+   *  the time a paused sync's notice names. Null if it never has. */
+  allSyncedAt: string | null;
   onClose: () => void;
 }
 
-export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: AccountProps) {
+export function AccountPanel({ auth, syncStatus, lastSyncedAt, allSyncedAt, onClose }: AccountProps) {
+  const [signOutFailed, setSignOutFailed] = useState(false);
   // Keeps the relative "synced Xm ago" string fresh — on a timer while this
   // is open, and on return to the foreground, when the timer has been asleep.
   useNowTick(30_000);
@@ -599,7 +603,7 @@ export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: Accoun
               {syncStatus === 'error' ? (
                 <StatusNotice
                   icon={<CloudOffMark />}
-                  title={lastSyncedAt ? `Not synced since ${sinceLabel(lastSyncedAt)}` : 'Not synced yet'}
+                  title={allSyncedAt ? `Not synced since ${sinceLabel(allSyncedAt)}` : 'Not synced yet'}
                   action={{ label: 'Try now', onClick: requestSync }}
                 >
                   Everything is saved on this phone. Lidd keeps trying, and catches up once it's back online.
@@ -607,16 +611,24 @@ export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: Accoun
               ) : (
                 <SyncIndicator status={syncStatus} lastSyncedAt={lastSyncedAt} />
               )}
-              <Button variant="secondary" fullWidth onClick={() => auth.signOut()}>
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={async () => { setSignOutFailed(false); setSignOutFailed(!(await auth.signOut())); }}
+              >
                 Sign out
               </Button>
+              {/* Amber, and says what's still true: still signed in, nothing lost. */}
+              <p role="status" className="text-sm text-severity-mid empty:hidden">
+                {signOutFailed ? "Couldn't sign out just now — you're still signed in. Check you're online, then try again." : ''}
+              </p>
             </>
           ) : (
             <>
               {auth.signedOutElsewhere && (
                 <StatusNotice
                   icon={<UserOffMark />}
-                  title="Signed out on this phone"
+                  title="Signed out on this device"
                   action={{ label: 'Stay signed out', onClick: auth.dismissSignedOutNotice }}
                 >
                   Your diary is still here. Sign in again to keep it in step with your other devices.
@@ -1039,7 +1051,11 @@ function signInErrorText(err: unknown, stage: 'send' | 'verify'): string {
     return "Lidd couldn't reach the server. Check you're online, then try again.";
   }
   if (code.includes('rate_limit') || e?.status === 429 || msg.includes('security purposes')) {
-    return 'A code was sent a moment ago. Wait a minute before asking for another.';
+    // The same limit answers too many guesses at a code and asking for codes
+    // too often; say the one that fits what was just tapped.
+    return stage === 'verify'
+      ? 'That was a few tries in a row. Wait a few minutes, then try the code again.'
+      : 'A code was sent a moment ago. Wait a minute before asking for another.';
   }
   if (stage === 'verify') return "That code didn't work, or it has run out. Send a new one and use the newest email.";
   if (code === 'email_address_invalid' || (msg.includes('invalid') && msg.includes('email'))) {
@@ -1069,12 +1085,17 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
   }
 
   const [resending, setResending] = useState(false);
+  // Shown after "Send a new code" goes through, until the next attempt —
+  // otherwise the button just vanished and nothing said an email went out.
+  const [resent, setResent] = useState(false);
   async function resend() {
     setResending(true);
+    setResent(false);
     try {
       await auth.signInWithEmail(email);
       setCode('');
       setError(null);
+      setResent(true);
     } catch (err) {
       setError(signInErrorText(err, 'send'));
     } finally {
@@ -1086,6 +1107,7 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
     e.preventDefault();
     setVerifying(true);
     setError(null);
+    setResent(false);
     try {
       await auth.verifyEmailCode(email, code);
     } catch (err) {
@@ -1127,6 +1149,9 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
               {resending ? 'Sending…' : 'Send a new code'}
             </button>
           )}
+          <p role="status" className="text-sm text-text-secondary empty:hidden">
+            {resent ? `A new code is on its way to ${email}. Use the newest email.` : ''}
+          </p>
         </form>
       </div>
     );

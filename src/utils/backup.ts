@@ -97,7 +97,10 @@ export async function readBackupFile(file: File): Promise<ReadResult> {
 
   // Accept our wrapper ({ data: {...} }) or a bare { hd_*: value } object.
   const obj = parsed as Record<string, unknown> | null;
-  if (obj && typeof obj === 'object' && typeof obj.version === 'number' && obj.version > BACKUP_VERSION) {
+  // Only Lidd's own wrapper can be "newer": any other JSON with a version
+  // field (a package.json, say) is simply not a backup.
+  if (obj && typeof obj === 'object' && obj.app === 'migraine-tracker'
+      && typeof obj.version === 'number' && obj.version > BACKUP_VERSION) {
     return { ok: false, problem: 'newer' };
   }
   const rawCandidate =

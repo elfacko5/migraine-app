@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 // Auth is entirely optional — sync-related hooks check `session` and no-op
 // against localStorage when it's null (signed out, or Supabase isn't
 // configured at all). No one is forced to create an account to use the app.
-// "Signed out on this phone" (2026-11-26): set when a session ends without
+// "Signed out on this device" (2026-11-26): set when a session ends without
 // this app asking — signed out everywhere from another device, or a refresh
 // token that stopped working. Kept until the next sign-in or until it's
 // dismissed, so it survives the reload that often follows. Not `hd_`: it is
@@ -15,6 +15,27 @@ const SIGNED_OUT_NOTICE_KEY = 'lidd_signed_out_notice';
 const readNotice = () => { try { return localStorage.getItem(SIGNED_OUT_NOTICE_KEY) === '1'; } catch { return false; } };
 const writeNotice = (on: boolean) => {
   try { if (on) localStorage.setItem(SIGNED_OUT_NOTICE_KEY, '1'); else localStorage.removeItem(SIGNED_OUT_NOTICE_KEY); } catch { /* best effort */ }
+};
+
+// Whether this device held a stored session when the app started, read
+// synchronously as the module loads. supabase-js recovers the stored session
+// asynchronously (it needs the network to refresh it), so this read always
+// comes first. If the server has since revoked it (signed out everywhere, or
+// a refresh token that died while the app was closed), the recovery removes
+// the session before our listener is attached, and the only sign of that is
+// a session that was stored and isn't there now. bootDelete clears `sb-` keys
+// earlier still, so Delete all data never reads as a remote sign-out.
+const storedSessionAtLaunch = (() => {
+  try { return Object.keys(localStorage).some((k) => k.startsWith('sb-') && k.endsWith('-auth-token')); } catch { return false; }
+})();
+
+// The app's own sign-outs, marked in shared storage so another open tab that
+// hears the same SIGNED_OUT (supabase-js broadcasts it between tabs) knows it
+// was asked for, not imposed. A stamp, not a flag: it only counts briefly.
+const OWN_SIGN_OUT_KEY = 'lidd_own_sign_out_at';
+const markOwnSignOut = () => { try { localStorage.setItem(OWN_SIGN_OUT_KEY, String(Date.now())); } catch { /* best effort */ } };
+const ownSignOutRecently = () => {
+  try { return Date.now() - Number(localStorage.getItem(OWN_SIGN_OUT_KEY) ?? 0) < 30_000; } catch { return false; }
 };
 
 export function useAuth() {
@@ -29,12 +50,18 @@ export function useAuth() {
   useEffect(() => {
     if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => {
+      // getSession waits for the recovery, so a stored session that's gone
+      // by now was ended somewhere else (see storedSessionAtLaunch).
+      if (storedSessionAtLaunch && !data.session && !ownSignOutRecently()) {
+        writeNotice(true);
+        setSignedOutElsewhere(true);
+      }
       hadSession.current = !!data.session;
       setSession(data.session);
       setLoading(false);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((event, next) => {
-      if (event === 'SIGNED_OUT' && hadSession.current && !ownSignOut.current) {
+      if (event === 'SIGNED_OUT' && hadSession.current && !ownSignOut.current && !ownSignOutRecently()) {
         writeNotice(true);
         setSignedOutElsewhere(true);
       }
@@ -70,10 +97,25 @@ export function useAuth() {
     if (error) throw error;
   }, []);
 
-  const signOut = useCallback(async () => {
-    if (!supabase) return;
+  // Resolves whether the sign-out went through. supabase-js *returns* an
+  // error offline or on a server fault rather than throwing, keeps the
+  // session, and sends no SIGNED_OUT — so the own-sign-out flag is reset in
+  // `finally`, never left set to swallow a later real one, and the caller
+  // says so instead of leaving someone signed in without a word.
+  const signOut = useCallback(async (): Promise<boolean> => {
+    if (!supabase) return true;
     ownSignOut.current = true;
-    await supabase.auth.signOut();
+    markOwnSignOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) console.error('Sign-out failed:', error);
+      return !error;
+    } catch (e) {
+      console.error('Sign-out failed:', e);
+      return false;
+    } finally {
+      ownSignOut.current = false;
+    }
   }, []);
 
   /**
@@ -95,6 +137,7 @@ export function useAuth() {
   const signOutThisDevice = useCallback(async (): Promise<boolean> => {
     if (!supabase) return true;
     ownSignOut.current = true;
+    markOwnSignOut();
     try {
       // Stopped first: nothing may refresh and re-save a session from here on.
       await supabase.auth.stopAutoRefresh();
@@ -116,6 +159,10 @@ export function useAuth() {
       return !Object.keys(localStorage).some((k) => k.startsWith('sb-'));
     } catch {
       return false;
+    } finally {
+      // Clearing the keys by hand sends no SIGNED_OUT, and a timed-out
+      // signOut may never send one: reset here, not in the listener.
+      ownSignOut.current = false;
     }
   }, []);
 

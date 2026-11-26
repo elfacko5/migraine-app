@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { requestSync } from './utils/syncNow';
 import type { Tab, Snapshot, Medication, Attack } from './types';
 import { useAttacks, type SnapshotEntry } from './hooks/useAttacks';
 import { useUserPrefs, PAIN_AREAS } from './hooks/useUserPrefs';
@@ -62,6 +63,12 @@ import { Toast } from './components/Toast';
 import { DELETED_FLAG } from './utils/backup';
 import { AttackModePill } from './components/AttackModePill';
 import { BrightnessOverlay } from './components/BrightnessOverlay';
+
+// Not `hd_`: sync bookkeeping for this device, not diary data to export.
+const ALL_SYNCED_KEY = 'lidd_all_synced_at';
+function readAllSynced(): string | null {
+  try { return localStorage.getItem(ALL_SYNCED_KEY); } catch { return null; }
+}
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('log');
@@ -182,6 +189,27 @@ export default function App() {
     const stamps = [attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt, hit6LastSyncedAt].filter(Boolean) as string[];
     return stamps.length ? stamps.reduce((a, b) => (a > b ? a : b)) : null;
   }, [attacksLastSyncedAt, prefsLastSyncedAt, medsLastSyncedAt, hit6LastSyncedAt]);
+
+  // When *everything* last synced, kept across launches (2026-11-26). The
+  // hooks' own stamps live in memory and each covers one kind of data, so a
+  // paused sync's "Not synced since…" read "Not synced yet" after any offline
+  // launch, or a moment ago when only one kind had failed. Written only while
+  // the combined status is 'synced' (nothing failing, nothing in flight);
+  // cleared on sign-out so a different account never inherits it.
+  useEffect(() => {
+    try {
+      if (!auth.session) localStorage.removeItem(ALL_SYNCED_KEY);
+      else if (syncStatus === 'synced' && lastSyncedAt) localStorage.setItem(ALL_SYNCED_KEY, lastSyncedAt);
+    } catch { /* best effort */ }
+  }, [auth.session, syncStatus, lastSyncedAt]);
+  const allSyncedAt = syncStatus === 'synced' ? lastSyncedAt : readAllSynced();
+
+  // A paused sync retries when the connection comes back, as well as on
+  // focus and on the next write — the notice promises it catches up.
+  useEffect(() => {
+    window.addEventListener('online', requestSync);
+    return () => window.removeEventListener('online', requestSync);
+  }, []);
 
   // Whether the Profile row shows its "Due" marker. Recomputed per render
   // rather than on a tick: the window is four weeks, so it does not need to
@@ -969,6 +997,7 @@ export default function App() {
             auth={auth}
             syncStatus={syncStatus}
             lastSyncedAt={lastSyncedAt}
+            allSyncedAt={allSyncedAt}
             onClose={() => setProfileSheet(null)}
           />
         )}
