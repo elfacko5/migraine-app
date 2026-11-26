@@ -274,7 +274,9 @@ finished until the reason for it is somewhere the next person will read it.
   - Hero trio: `01-today-ongoing`, `06-logs`, `11-insights`; or `04-today-attack-mode-on` as
     the third phone.
   - §1 plateau: `07-detail-plateau` (chart and both doses: Paracetamol "Pain 7 → 7", Sumatriptan
-    "Pain 9 → 4, helped"). The paper-diary half of that visual still has to be drawn.
+    "Pain 9 → 4, helped"). The finished visual is `plateau-lidd-vs-paper` (Lidd's chart beside
+    the same attack on a paper diary); `paper-diary` is the sheet alone. Both come from
+    `paper-diary.html` via `paper.mjs`, with dates fixed to the 2026-11-26 shots.
   - §2 attack mode: `02-today-attack-free` (pill, off) beside `04-today-attack-mode-on` /
     `05-logs-attack-mode-on` (strip, on); `15-log-pain-areas` for the logging flow.
   - §3 record not verdict: `08-detail-plateau-full`, `09-detail-under-5-minutes`,
@@ -284,7 +286,7 @@ finished until the reason for it is somewhere the next person will read it.
     `boards/attack-mode-bottom-placements`; Insights colour key from `12-insights-3m-full`.
   - Spare: `03-today-attack-free-light`, `13-add-sheet`, `14-log-*`.
 - Rerun with the `migraine-app-verify` server up: `node portfolio-screenshots/capture.mjs` and
-  `node portfolio-screenshots/boards.mjs` (see the header of `capture.mjs` for `PW`/`CHROME`).
+  `node portfolio-screenshots/boards.mjs`, then `node portfolio-screenshots/paper.mjs` (see the header of `capture.mjs` for `PW`/`CHROME`).
 - **Removed from the old page on purpose:** "I skipped Figma", "the final look mattered
   less", the CODE Design System line (reversed in November), the six-decisions table, and
   the IDE screenshot.

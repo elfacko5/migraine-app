@@ -1,0 +1,114 @@
+<!doctype html>
+<!--
+  The paper half of the case study's plateau visual: the same fictional
+  attacks as seed.mjs, written the way a paper headache diary records them —
+  one row per attack, filled in once it's over. The 22 Nov row is the plateau
+  attack shown in shots/07-detail-plateau.png. Dates are fixed to the
+  2026-11-26 capture; re-write them if the shots are retaken on another day.
+
+  Rendered by paper.mjs. `?composite` adds the Lidd chart beside it.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: Lexend; src: url('../src/assets/fonts/Lexend-Variable.woff2') format('woff2'); font-weight: 100 900; }
+:root {
+  --paper: #f3eee3; --ink: #2b2f3a; --rule: #c9c0ad; --rule-faint: #ddd5c4;
+  --print: #6d6656; --hi: rgba(233, 196, 106, .42);
+  --page: #1b1a18; --text: #cdc7bb; --muted: #a39d92; --accent: #7fa187;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: transparent; font-family: Lexend, sans-serif; }
+
+/* ---- The sheet ---------------------------------------------------------- */
+.sheet {
+  width: 860px; padding: 44px 48px 40px; background: var(--paper); color: var(--print);
+  border-radius: 6px; position: relative;
+  background-image: radial-gradient(rgba(120, 100, 70, .05) 1px, transparent 1px);
+  background-size: 5px 5px;
+}
+.sheet h1 { margin: 0; font-size: 26px; font-weight: 600; color: #4a4538; letter-spacing: .01em; }
+.meta { display: flex; gap: 36px; margin: 14px 0 26px; font-size: 14px; }
+.meta span { border-bottom: 1px solid var(--rule); padding: 0 4px 2px 0; min-width: 150px; }
+.meta .hand { font-size: 19px; margin-left: 8px; }
+
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th { font-size: 12.5px; font-weight: 500; text-align: left; vertical-align: bottom; padding: 0 10px 8px;
+     border-bottom: 1.5px solid var(--print); line-height: 1.3; }
+th small { display: block; font-weight: 400; font-size: 11.5px; opacity: .85; }
+td { height: 58px; padding: 0 10px; border-bottom: 1px solid var(--rule); border-right: 1px solid var(--rule-faint); }
+td:last-child, th:last-child { border-right: 0; }
+.hand { font-family: 'Bradley Hand', Noteworthy, cursive; color: var(--ink); font-size: 21px; line-height: 1.1; }
+.hand.sm { font-size: 18px; }
+tr.hi td { background: linear-gradient(transparent 14%, var(--hi) 14%, var(--hi) 84%, transparent 84%); }
+.big { font-size: 30px; }
+.foot { margin-top: 22px; font-size: 12.5px; }
+
+/* ---- Composite: Lidd chart | paper -------------------------------------- */
+.composite { display: none; }
+body.composite-on .solo { display: none; }
+body.composite-on .composite {
+  display: grid; grid-template-columns: 430px 860px; gap: 56px; align-items: start;
+  padding: 56px; background: var(--page); width: max-content;
+}
+.label { font-size: 13px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
+.lidd { width: 430px; height: 508px; border-radius: 28px; overflow: hidden;
+        background: url('shots/07-detail-plateau.png') no-repeat 0 -357px / 430px auto; }
+.note { margin: 20px 0 0; font-size: 17px; line-height: 1.5; color: var(--text); max-width: 430px; }
+.note b { font-weight: 500; color: #d8d2c6; }
+</style>
+</head>
+<body>
+
+<template id="sheet">
+  <div class="sheet">
+    <h1>Headache diary</h1>
+    <div class="meta">
+      <span>Month <i class="hand">November</i></span>
+      <span>Name <i class="hand">&nbsp;</i></span>
+    </div>
+    <table>
+      <colgroup><col style="width:13%"><col style="width:12%"><col style="width:12%"><col style="width:13%"><col style="width:38%"><col style="width:12%"></colgroup>
+      <thead><tr>
+        <th>Date</th><th>Started</th><th>Ended</th>
+        <th>How bad<small>at worst, 1–10</small></th>
+        <th>Medication taken</th><th>Did it help?</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="hand">8/11</td><td class="hand">14.00</td><td class="hand">20.00</td><td class="hand">7</td><td class="hand sm">Sumatriptan 1 tab</td><td class="hand">yes</td></tr>
+        <tr><td class="hand">13/11</td><td class="hand">22.40</td><td class="hand sm">asleep?</td><td class="hand">6</td><td class="hand sm">Ibuprofen 1 tab</td><td class="hand">?</td></tr>
+        <tr><td class="hand">20/11</td><td class="hand">15.00</td><td class="hand">20.00</td><td class="hand">5</td><td class="hand sm">Ibuprofen 1 tab</td><td class="hand">yes</td></tr>
+        <tr class="hi"><td class="hand">22/11</td><td class="hand">9.10</td><td class="hand">18.20</td><td class="hand big">9</td><td class="hand sm">Paracetamol 2, Sumatriptan 1 tab</td><td class="hand">yes</td></tr>
+        <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+    <p class="foot">Fill in once the headache has gone. Bring this sheet to your next appointment.</p>
+  </div>
+</template>
+
+<div class="solo"></div>
+
+<div class="composite">
+  <div>
+    <p class="label">In Lidd</p>
+    <div class="lidd" role="img" aria-label="Lidd's pain chart and medication rows for the 22 November attack"></div>
+    <p class="note"><b>7 readings, 2 doses.</b> After the paracetamol the pain held at 7 for four hours, then rose to 9. Only the sumatriptan broke it.</p>
+  </div>
+  <div>
+    <p class="label">On paper</p>
+    <div class="paper-slot"></div>
+    <p class="note" style="max-width:860px"><b>One row, one number.</b> The same attack, written up once it was over: worst 9, two medicines, “yes”. Which one helped isn’t recorded.</p>
+  </div>
+</div>
+
+<script>
+  const tpl = document.getElementById('sheet');
+  const composite = new URLSearchParams(location.search).has('composite');
+  document.body.classList.toggle('composite-on', composite);
+  (composite ? document.querySelector('.paper-slot') : document.querySelector('.solo'))
+    .appendChild(tpl.content.cloneNode(true));
+</script>
+</body>
+</html>
