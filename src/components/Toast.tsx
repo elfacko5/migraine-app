@@ -14,7 +14,13 @@ import { useEffect } from 'react';
 //   not a control), no accent, no shadow.
 export const TOAST_MS = 5000;
 
-export function Toast({ message, onDone }: { message: string | null; onDone: () => void }) {
+export function Toast({ message, onDone, lift = false }: {
+  message: string | null;
+  onDone: () => void;
+  /** Attack mode's strip sits on top of the nav (56px + a 1px rule), the same
+   *  57px the scroll reserve grows by — the toast clears it too. */
+  lift?: boolean;
+}) {
   useEffect(() => {
     if (!message) return;
     let timer: number | undefined;
@@ -40,7 +46,7 @@ export function Toast({ message, onDone }: { message: string | null; onDone: () 
       // never announced.
       data-modal-exempt=""
       className="pointer-events-none absolute inset-x-0 z-[60] flex justify-center px-gutter"
-      style={{ bottom: 'calc(4.5rem + 1rem + env(safe-area-inset-bottom))' }}
+      style={{ bottom: `calc(4.5rem + 1rem + ${lift ? '57px' : '0px'} + env(safe-area-inset-bottom))` }}
     >
       {message && (
         <p className="pointer-events-auto max-w-sm rounded-control bg-bg-raised px-control-x py-control-y text-sm text-text-primary ring-1 ring-inset ring-bg-border">

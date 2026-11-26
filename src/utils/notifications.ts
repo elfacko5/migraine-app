@@ -345,6 +345,26 @@ export function medCheckInDelay(attack: Attack, baseDelay: number, now: number =
   return delay < baseDelay ? delay : baseDelay;
 }
 
+/** The first reminder's delay for a newly logged attack — `startAttack`
+ *  schedules with it, and the saved toast names the same moment, so the two
+ *  can't disagree. A dose already on the first log brings it forward. */
+export function firstDelay(attack: Attack): number {
+  const c = attack.notificationConfig;
+  const base = c.mode === 'adaptive' ? 60 * 60 * 1000 : c.fixedIntervalMinutes * 60 * 1000;
+  return medCheckInDelay(attack, base);
+}
+
+/**
+ * When the reminder just scheduled for this attack will arrive, for the saved
+ * toast — or null when there won't be one to name: reminders off, the attack
+ * ended, or notifications not allowed (a time promised then would never come).
+ */
+export async function reminderAt(attack: Attack, delayMs: number): Promise<Date | null> {
+  if (!attack.notificationConfig.enabled || attack.end || delayMs <= 0) return null;
+  if ((await notificationPermission()) !== 'granted') return null;
+  return new Date(Date.now() + delayMs);
+}
+
 export function nextDelay(attack: Attack): number {
   return medCheckInDelay(
     attack,

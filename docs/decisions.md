@@ -2621,3 +2621,13 @@ Built from the mock-ups. All of them use one component, `StatusNotice`: the warn
     - A login still stored at launch counts as a session even when `getSession` returns none (offline, expired token). A later rejection by the server is then announced.
     - The all-synced time is written only after this account's own sync is seen *starting*. That way a previous account's sync still running at the switch can't stamp the new account.
     - `signOut` counts as done when no stored login is left, even if supabase-js also reports the refresh error.
+
+## Live and Update end on a toast, not a saved screen (2026-11-26)
+
+Past and End finish on a summary, because once they close the attack is no longer on screen, so nothing else confirms it was saved. Live and Update return to the Today hero, which already shows the attack. A saved screen there would add a tap in the middle of an attack. So they show the existing `Toast` instead:
+
+- **Wording.** "Attack logged." / "Update saved." / "Saved as no change.", plus "Next check-in at 15:20." when a reminder is coming.
+- **The time.** The time comes from the same delay the scheduler used. `firstDelay` is now shared by `startAttack` and the toast; `nextDelay` covers updates.
+- **When the time is left out.** `reminderAt` gives no time when reminders are off, the attack has ended, or notifications aren't allowed. A time promised then would never arrive.
+- **Placement.** The toast clears attack mode's strip (`lift`, 57px), because Live is often logged with attack mode on.
+- **What the toast doesn't say.** Nothing about how the attack is going (§9.5).

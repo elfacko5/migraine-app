@@ -14,7 +14,7 @@ import { useScrolledFromTop } from './hooks/useScrolledFromTop';
 import { triggerFrequency, symptomFrequency, reliefFrequency, sortByFrequency } from './utils/stats';
 import { isRetired } from './utils/retired';
 import { parseVoiceEntry, type VoiceDraft } from './utils/voiceParse';
-import { onNotificationAction, cancelNotification } from './utils/notifications';
+import { onNotificationAction, cancelNotification, firstDelay, nextDelay, reminderAt } from './utils/notifications';
 import { awaitPendingVoiceEntry } from './utils/pendingVoice';
 import { consumePendingActions } from './utils/pendingActions';
 import { useWidgetSnapshot } from './hooks/useWidgetSnapshot';
@@ -534,7 +534,20 @@ export default function App() {
     // an attack that's still going — a retrospective log is someone looking
     // back, not someone in the middle of one.
     if (attackModeAuto && !end && !attackMode) setAttackMode(true);
+    // Live logs only: a past attack ends on its own saved screen.
+    if (!end) announceSaved('Attack logged', attack, firstDelay(attack));
     return attack;
+  }
+
+  // The saved toast for Live and Update (2026-11-26) — in place of a saved
+  // screen, which would be one more tap in the middle of an attack. The hero
+  // already shows the attack; this says it went in and, when a reminder is
+  // coming, when. One clause each, nothing about how the attack is going.
+  function announceSaved(lead: string, attack: Attack | undefined, delayMs: number) {
+    if (!attack) { setToastMessage(`${lead}.`); return; }
+    reminderAt(attack, delayMs)
+      .catch(() => null)
+      .then((at) => setToastMessage(at ? `${lead}. Next check-in at ${formatTime(at.toISOString())}.` : `${lead}.`));
   }
 
   async function handleLogSave(...args: Parameters<typeof saveLog>) {
@@ -543,7 +556,10 @@ export default function App() {
   }
 
   function handleUpdateSave(snapshot: Omit<Snapshot, 'source'>, source: Snapshot['source'] = 'manual') {
-    if (updateAttackId !== null) addSnapshot(updateAttackId, stampSnapshot(snapshot, medications), source);
+    if (updateAttackId !== null) {
+      const updated = addSnapshot(updateAttackId, stampSnapshot(snapshot, medications), source);
+      announceSaved(source === 'notification_no_change' ? 'Saved as no change' : 'Update saved', updated, nextDelay(updated));
+    }
     closeUpdateSheet();
   }
 
@@ -558,7 +574,8 @@ export default function App() {
       { attackId: updateAttackId, snapshot: stampSnapshot(snapshot, medications), source: 'manual', reschedule: true },
       ...extraSnapshots.map((s) => ({ attackId: updateAttackId, snapshot: stampSnapshot(s, medications), source: 'manual' as const, reschedule: false })),
     ];
-    addSnapshots(entries);
+    const [updated] = addSnapshots(entries);
+    announceSaved('Update saved', updated, updated ? nextDelay(updated) : 0);
     closeUpdateSheet();
   }
 
@@ -1123,7 +1140,7 @@ export default function App() {
         )}
       </Sheet>
 
-      <Toast message={toastMessage} onDone={() => setToastMessage(null)} />
+      <Toast message={toastMessage} onDone={() => setToastMessage(null)} lift={attackMode} />
 
       {/* Attack detail sheet — flush/bareHeader because AttackDetail brings
           its own top bar and pins its own footer. */}
