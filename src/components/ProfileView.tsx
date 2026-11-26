@@ -5,7 +5,9 @@ import type { Attack, SyncStatus } from '../types';
 import { formatSince, formatDatetime, formatTime, everyLabel } from '../utils/format';
 import { useNowTick } from '../hooks/useNowTick';
 import { AttackCard } from './AttackCard';
-import { exportData, readBackupFile, applyBackup, requestDeleteAndReload, type ParsedBackup } from '../utils/backup';
+import { exportData, readBackupFile, applyBackup, requestDeleteAndReload, type ParsedBackup, type BackupProblem } from '../utils/backup';
+import { requestSync } from '../utils/syncNow';
+import { StatusNotice, FileWarningMark, UpdateMark, CloudOffMark, UserOffMark } from './StatusNotice';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ProfileSubPage } from './ProfileSubPage';
 import { SegmentedControl } from './SegmentedControl';
@@ -39,6 +41,10 @@ interface MenuProps {
    *  reminders will fire, and whether the diary is syncing. */
   remindersOn: boolean;
   signedIn: boolean;
+  /** Sync has stopped going through, or the session ended without this phone
+   *  asking: the Account row says so in amber instead of "On"/"Off". */
+  syncPaused?: boolean;
+  signedOutElsewhere?: boolean;
 }
 
 type MenuItem = { id: ProfileSection; Icon: (p: { className?: string }) => React.ReactElement; label: string };
@@ -99,12 +105,15 @@ const MENU_GROUPS: { label: string; items: MenuItem[] }[] = [
 // text, not a dot — a dot reads as an alert, and this is a suggestion about a
 // questionnaire. No email on the Account row: it's the sub-page's to show, and
 // this screen gets screenshotted.
-export function ProfileView({ onOpen, accountEnabled, hit6Due = false, remindersOn, signedIn }: MenuProps) {
+export function ProfileView({ onOpen, accountEnabled, hit6Due = false, remindersOn, signedIn, syncPaused = false, signedOutElsewhere = false }: MenuProps) {
+  const accountNeedsLook = signedIn ? syncPaused : signedOutElsewhere;
   const trailingFor = (id: ProfileSection): string | undefined => {
     switch (id) {
       case 'reminders': return remindersOn ? 'On' : 'Off';
       case 'hit6': return hit6Due ? 'Due' : undefined;
-      case 'account': return signedIn ? 'On' : 'Off';
+      case 'account':
+        if (accountNeedsLook) return signedIn ? 'Not synced' : 'Signed out';
+        return signedIn ? 'On' : 'Off';
       default: return undefined;
     }
   };
@@ -117,7 +126,8 @@ export function ProfileView({ onOpen, accountEnabled, hit6Due = false, reminders
             {group.items
               .filter((m) => m.id !== 'account' || accountEnabled)
               .map((item) => (
-                <SettingsRow key={item.id} leading={<item.Icon />} trailing={trailingFor(item.id)} onClick={() => onOpen(item.id)}>
+                <SettingsRow key={item.id} leading={<item.Icon />} trailing={trailingFor(item.id)}
+                  trailingTone={item.id === 'account' && accountNeedsLook ? 'warning' : 'muted'} onClick={() => onOpen(item.id)}>
                   {item.label}
                 </SettingsRow>
               ))}
@@ -584,13 +594,36 @@ export function AccountPanel({ auth, syncStatus, lastSyncedAt, onClose }: Accoun
                 Signed in as <span className="font-medium">{auth.user?.email}</span>
               </p>
               <p className="text-xs text-text-secondary">Your attacks and lists sync automatically across devices.</p>
-              <SyncIndicator status={syncStatus} lastSyncedAt={lastSyncedAt} />
+              {/* A paused sync is a notice with its own retry; every other
+                  state stays the one-line indicator. */}
+              {syncStatus === 'error' ? (
+                <StatusNotice
+                  icon={<CloudOffMark />}
+                  title={lastSyncedAt ? `Not synced since ${sinceLabel(lastSyncedAt)}` : 'Not synced yet'}
+                  action={{ label: 'Try now', onClick: requestSync }}
+                >
+                  Everything is saved on this phone. Lidd keeps trying, and catches up once it's back online.
+                </StatusNotice>
+              ) : (
+                <SyncIndicator status={syncStatus} lastSyncedAt={lastSyncedAt} />
+              )}
               <Button variant="secondary" fullWidth onClick={() => auth.signOut()}>
                 Sign out
               </Button>
             </>
           ) : (
-            <SignInForm auth={auth} />
+            <>
+              {auth.signedOutElsewhere && (
+                <StatusNotice
+                  icon={<UserOffMark />}
+                  title="Signed out on this phone"
+                  action={{ label: 'Stay signed out', onClick: auth.dismissSignedOutNotice }}
+                >
+                  Your diary is still here. Sign in again to keep it in step with your other devices.
+                </StatusNotice>
+              )}
+              <SignInForm auth={auth} />
+            </>
           )}
         </div>
       )}
@@ -738,7 +771,7 @@ export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount
   medCount: number;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [importErr, setImportErr] = useState<string | null>(null);
+  const [importErr, setImportErr] = useState<BackupProblem | null>(null);
   const [pending, setPending] = useState<ParsedBackup | null>(null);
   const [exportErr, setExportErr] = useState(false);
   // Export now opens a confirm screen first (the v4 DataExport board): it names
@@ -798,7 +831,7 @@ export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount
     setImportErr(null);
     const res = await readBackupFile(file);
     if (res.ok) setPending(res.backup);
-    else setImportErr(res.error);
+    else setImportErr(res.problem);
   }
 
   // The export-confirm screen: what the file holds, and that it isn't
@@ -848,6 +881,23 @@ export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount
     <ProfileSubPage title="Data" onClose={onClose}>
       {/* gap-[22px] on the board → space-y-5 (20px), the Reminders page's step. */}
       <div className="space-y-5">
+        {/* A refused file, above the card it came from. Both say nothing was
+            changed first, since that's the worry; neither is the alarm
+            colour (it was a bare line in severity-high, 2026-11-26). */}
+        {importErr === 'not-backup' && (
+          <StatusNotice
+            icon={<FileWarningMark />}
+            title="This file isn't a Lidd backup"
+            action={{ label: 'Choose another file', onClick: () => fileRef.current?.click() }}
+          >
+            Nothing was changed. A backup is the .json file from Export, named lidd-backup and a date.
+          </StatusNotice>
+        )}
+        {importErr === 'newer' && (
+          <StatusNotice icon={<UpdateMark />} title="This backup is from a newer Lidd">
+            Update Lidd, then import it again. Nothing was changed.
+          </StatusNotice>
+        )}
         <div className="rounded-card bg-bg-surface p-card">
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -885,7 +935,6 @@ export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount
               ? 'You’re signed in, so everything also syncs automatically — a file is a backup you keep yourself.'
               : 'Everything stays on this device; nothing is uploaded unless you sign in.'}
           </p>
-          {importErr && <p className="mt-2 text-sm text-severity-high">{importErr}</p>}
           {/* Amber, not the alarm colour: the data is untouched, only the file was not made. */}
           {/* The live region stays in the page and only its text comes and goes: VoiceOver often skips a region that is added already holding text. */}
           <p role="status" className="text-sm text-severity-mid empty:hidden">{exportErr ? "The backup couldn't be saved. Your data is still on this device." : ''}</p>
@@ -945,19 +994,14 @@ export function DataPanel({ auth, syncStatus, onClose, attackCount, checkInCount
   );
 }
 
+// "14:20" today, the weekday and time before that — the moment the last
+// sync went through, which is the fact that matters when it's paused.
+function sinceLabel(iso: string): string {
+  const then = new Date(iso);
+  return then.toDateString() === new Date().toDateString() ? formatTime(iso) : formatDatetime(iso);
+}
+
 function SyncIndicator({ status, lastSyncedAt }: { status: SyncStatus; lastSyncedAt: string | null }) {
-  if (status === 'error') {
-    return (
-      // Amber, not the alarm colour, and it says what is actually true: the
-      // writes are already safe on this device and syncing retries itself.
-      // §9.3 — calm and never alarmist — and §9.4's error guidance, which is
-      // to say what happened and what happens next without blame.
-      <p className="flex items-center gap-1.5 text-xs text-severity-mid">
-        <span className="h-1.5 w-1.5 rounded-full bg-severity-mid shrink-0" />
-        Couldn't sync just now — saved on this device, still trying
-      </p>
-    );
-  }
   if (status === 'syncing') {
     return (
       <p className="flex items-center gap-1.5 text-xs text-text-secondary">
@@ -983,6 +1027,27 @@ function SyncIndicator({ status, lastSyncedAt }: { status: SyncStatus; lastSynce
   );
 }
 
+// Sign-in errors in Lidd's words (2026-11-26). Supabase's own messages
+// ("Token has expired or is invalid", rate-limit sentences with a seconds
+// count) were shown raw. Supabase gives the same error for a wrong code and an
+// expired one, so the wording covers both rather than guessing which.
+function signInErrorText(err: unknown, stage: 'send' | 'verify'): string {
+  const e = err as { code?: string; status?: number; message?: string } | null;
+  const code = e?.code ?? '';
+  const msg = (e?.message ?? '').toLowerCase();
+  if (msg.includes('failed to fetch') || msg.includes('network') || !navigator.onLine) {
+    return "Lidd couldn't reach the server. Check you're online, then try again.";
+  }
+  if (code.includes('rate_limit') || e?.status === 429 || msg.includes('security purposes')) {
+    return 'A code was sent a moment ago. Wait a minute before asking for another.';
+  }
+  if (stage === 'verify') return "That code didn't work, or it has run out. Send a new one and use the newest email.";
+  if (code === 'email_address_invalid' || (msg.includes('invalid') && msg.includes('email'))) {
+    return "That doesn't look like an email address.";
+  }
+  return "That didn't go through. Try again in a moment.";
+}
+
 function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -999,7 +1064,21 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
       setStatus('sent');
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(signInErrorText(err, 'send'));
+    }
+  }
+
+  const [resending, setResending] = useState(false);
+  async function resend() {
+    setResending(true);
+    try {
+      await auth.signInWithEmail(email);
+      setCode('');
+      setError(null);
+    } catch (err) {
+      setError(signInErrorText(err, 'send'));
+    } finally {
+      setResending(false);
     }
   }
 
@@ -1010,7 +1089,7 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
     try {
       await auth.verifyEmailCode(email, code);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid or expired code');
+      setError(signInErrorText(err, 'verify'));
     } finally {
       setVerifying(false);
     }
@@ -1041,6 +1120,13 @@ function SignInForm({ auth }: { auth: ReturnType<typeof useAuth> }) {
           <Button type="submit" variant="secondary" fullWidth loading={verifying} loadingLabel="Verifying">
             Verify code
           </Button>
+          {/* Offered once a code has failed: the way out of a code that ran
+              out, without going back to retype the email. */}
+          {error && (
+            <button type="button" className="btn-tertiary w-full" disabled={resending} onClick={resend}>
+              {resending ? 'Sending…' : 'Send a new code'}
+            </button>
+          )}
         </form>
       </div>
     );

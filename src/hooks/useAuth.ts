@@ -1,24 +1,54 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
 // Auth is entirely optional — sync-related hooks check `session` and no-op
 // against localStorage when it's null (signed out, or Supabase isn't
 // configured at all). No one is forced to create an account to use the app.
+// "Signed out on this phone" (2026-11-26): set when a session ends without
+// this app asking — signed out everywhere from another device, or a refresh
+// token that stopped working. Kept until the next sign-in or until it's
+// dismissed, so it survives the reload that often follows. Not `hd_`: it is
+// about this phone's session, not diary data, so export and Delete all data
+// leave it alone.
+const SIGNED_OUT_NOTICE_KEY = 'lidd_signed_out_notice';
+const readNotice = () => { try { return localStorage.getItem(SIGNED_OUT_NOTICE_KEY) === '1'; } catch { return false; } };
+const writeNotice = (on: boolean) => {
+  try { if (on) localStorage.setItem(SIGNED_OUT_NOTICE_KEY, '1'); else localStorage.removeItem(SIGNED_OUT_NOTICE_KEY); } catch { /* best effort */ }
+};
+
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(!!supabase);
+  const [signedOutElsewhere, setSignedOutElsewhere] = useState(readNotice);
+  // Set just before this app signs out itself, so its own SIGNED_OUT event
+  // isn't mistaken for one from elsewhere.
+  const ownSignOut = useRef(false);
+  const hadSession = useRef(false);
 
   useEffect(() => {
     if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => {
+      hadSession.current = !!data.session;
       setSession(data.session);
       setLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, next) => {
+      if (event === 'SIGNED_OUT' && hadSession.current && !ownSignOut.current) {
+        writeNotice(true);
+        setSignedOutElsewhere(true);
+      }
+      if (event === 'SIGNED_OUT') ownSignOut.current = false;
+      if (next) { writeNotice(false); setSignedOutElsewhere(false); }
+      hadSession.current = !!next;
       setSession(next);
     });
     return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const dismissSignedOutNotice = useCallback(() => {
+    writeNotice(false);
+    setSignedOutElsewhere(false);
   }, []);
 
   const signInWithEmail = useCallback(async (email: string) => {
@@ -42,6 +72,7 @@ export function useAuth() {
 
   const signOut = useCallback(async () => {
     if (!supabase) return;
+    ownSignOut.current = true;
     await supabase.auth.signOut();
   }, []);
 
@@ -63,6 +94,7 @@ export function useAuth() {
    */
   const signOutThisDevice = useCallback(async (): Promise<boolean> => {
     if (!supabase) return true;
+    ownSignOut.current = true;
     try {
       // Stopped first: nothing may refresh and re-save a session from here on.
       await supabase.auth.stopAutoRefresh();
@@ -96,5 +128,7 @@ export function useAuth() {
     verifyEmailCode,
     signOut,
     signOutThisDevice,
+    signedOutElsewhere,
+    dismissSignedOutNotice,
   };
 }

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { SYNC_NOW_EVENT } from '../utils/syncNow';
 import type { Hit6Entry, SyncStatus } from '../types';
 import { pullUserPrefs, pushHit6 } from '../lib/sync';
 import { hit6Score } from '../utils/hit6';
@@ -103,9 +104,12 @@ export function useHit6(userId: string | null) {
     const onVisible = () => { if (document.visibilityState === 'visible') sync(userId); };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
+    const onRequest = () => sync(userId);
+    window.addEventListener(SYNC_NOW_EVENT, onRequest);
     return () => {
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onVisible);
+      window.removeEventListener(SYNC_NOW_EVENT, onRequest);
     };
   }, [userId, sync]);
 

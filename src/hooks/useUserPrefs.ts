@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { SYNC_NOW_EVENT } from '../utils/syncNow';
 import type { NotificationConfig, SyncStatus } from '../types';
 import { DEFAULT_NOTIFICATION_CONFIG } from '../utils/notifications';
 import { pullUserPrefs, pushUserPrefs } from '../lib/sync';
@@ -178,9 +179,12 @@ export function useUserPrefs(userId: string | null) {
     const onVisible = () => { if (document.visibilityState === 'visible') sync(userId); };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
+    const onRequest = () => sync(userId);
+    window.addEventListener(SYNC_NOW_EVENT, onRequest);
     return () => {
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onVisible);
+      window.removeEventListener(SYNC_NOW_EVENT, onRequest);
     };
   }, [userId, sync]);
 

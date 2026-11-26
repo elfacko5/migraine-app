@@ -751,6 +751,8 @@ export default function App() {
               hit6Due={hit6IsDue}
               remindersOn={defaultNotifConfig.enabled}
               signedIn={!!auth.user}
+              syncPaused={syncStatus === 'error'}
+              signedOutElsewhere={auth.signedOutElsewhere}
             />
           </section>
         )}

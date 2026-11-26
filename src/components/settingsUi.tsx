@@ -70,7 +70,7 @@ export interface SettingsRowProps {
    * chosen value such as Display's "Lexend" or "iPhone" — the v4 Display
    * board draws those at full text colour.
    */
-  trailingTone?: 'muted' | 'primary' | 'accent';
+  trailingTone?: 'muted' | 'primary' | 'accent' | 'warning';
   /** A decorative icon in currentColor. Hidden from screen readers. */
   leading?: React.ReactNode;
   /** Makes the row pressable: a button with a chevron. Without it the row is static. */
@@ -95,6 +95,9 @@ const TRAILING_TONE = {
   muted: 'text-text-secondary',
   primary: 'text-text-primary',
   accent: 'font-medium text-accent-light',
+  // A state that wants a look ("Not synced"): the amber text the app's
+  // other calm warnings use, never the alarm colour.
+  warning: 'font-medium text-severity-mid',
 } as const;
 
 export function SettingsRow({ children, value, trailing, trailingTone = 'muted', leading, onClick, disabled = false, bare = false }: SettingsRowProps) {

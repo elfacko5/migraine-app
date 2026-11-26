@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { SYNC_NOW_EVENT } from '../utils/syncNow';
 import type { DeletedMedName, MedGuides, Medication, SyncStatus } from '../types';
 import { pullUserPrefs, pushMedications } from '../lib/sync';
 import { cleanDeleted, cleanGuides, editMakesDuplicate, findDuplicate, formOf, sameMedName, withDeleted, withGuide, withoutDeleted } from '../utils/medResolve';
@@ -158,9 +159,12 @@ export function useMedications(userId: string | null) {
     const onVisible = () => { if (document.visibilityState === 'visible') sync(userId); };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
+    const onRequest = () => sync(userId);
+    window.addEventListener(SYNC_NOW_EVENT, onRequest);
     return () => {
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onVisible);
+      window.removeEventListener(SYNC_NOW_EVENT, onRequest);
     };
   }, [userId, sync]);
 

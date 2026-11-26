@@ -7,6 +7,11 @@ import { Share } from '@capacitor/share';
 
 const PREFIX = 'hd_';
 
+/** The backup format this build writes and reads. A file stamped higher came
+ *  from a newer Lidd and is refused rather than half-read: its keys may hold
+ *  shapes this build would misread and then save over. */
+const BACKUP_VERSION = 1;
+
 /** Did the share sheet get dismissed rather than fail? The iOS plugin rejects
  *  with exactly "Share canceled" when the sheet is closed or the Save to Files
  *  picker is backed out of (`SharePlugin.swift`, 8.0.3), and its other two
@@ -40,7 +45,7 @@ export async function exportData(): Promise<void> {
 
   const payload = {
     app: 'migraine-tracker',
-    version: 1,
+    version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     data,
   };
@@ -74,30 +79,39 @@ export interface ParsedBackup {
   attacks: number; // attack count, for the confirm message
 }
 
-type ReadResult = { ok: true; backup: ParsedBackup } | { ok: false; error: string };
+/** Why a file was refused. The Data page words each one (2026-11-26); the
+ *  reasons stay codes here so the copy lives with the screen.
+ *  - `not-backup`: not JSON, not an object, or no `hd_` keys in it.
+ *  - `newer`: a Lidd backup stamped with a format this build doesn't know. */
+export type BackupProblem = 'not-backup' | 'newer';
+
+type ReadResult = { ok: true; backup: ParsedBackup } | { ok: false; problem: BackupProblem };
 
 export async function readBackupFile(file: File): Promise<ReadResult> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(await file.text());
   } catch {
-    return { ok: false, error: "That file isn't valid JSON." };
+    return { ok: false, problem: 'not-backup' };
   }
 
   // Accept our wrapper ({ data: {...} }) or a bare { hd_*: value } object.
   const obj = parsed as Record<string, unknown> | null;
+  if (obj && typeof obj === 'object' && typeof obj.version === 'number' && obj.version > BACKUP_VERSION) {
+    return { ok: false, problem: 'newer' };
+  }
   const rawCandidate =
     obj && typeof obj === 'object' && obj.data && typeof obj.data === 'object'
       ? (obj.data as Record<string, unknown>)
       : obj;
 
   if (!rawCandidate || typeof rawCandidate !== 'object') {
-    return { ok: false, error: 'Unrecognised backup file.' };
+    return { ok: false, problem: 'not-backup' };
   }
 
   const entries = Object.entries(rawCandidate).filter(([k]) => k.startsWith(PREFIX));
   if (entries.length === 0) {
-    return { ok: false, error: 'No Lidd data found in this file.' };
+    return { ok: false, problem: 'not-backup' };
   }
 
   const data: Record<string, string> = {};
