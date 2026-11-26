@@ -40,4 +40,19 @@ for (const [file, name] of BOARDS) {
   console.log('saved', name);
   await page.close();
 }
+// The attack-mode placement proposal, one phone per option: as built, A–D.
+{
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 3 });
+  await page.goto('file://' + ROOT + 'proposals/AttackModeBandBottomProposals.html');
+  await page.waitForTimeout(1200);
+  // The proposal's "content ends" guides are working marks, not design.
+  await page.addStyleTag({ content: '.ruler { display: none !important; }' });
+  const names = ['as-built', 'a', 'b', 'c', 'd'];
+  const sections = page.locator('section.opt');
+  for (let i = 0; i < names.length; i++) {
+    await sections.nth(i).locator('.phone').first().screenshot({ path: OUT + `placement-${names[i]}.png` });
+    console.log('saved placement-' + names[i]);
+  }
+  await page.close();
+}
 await browser.close();

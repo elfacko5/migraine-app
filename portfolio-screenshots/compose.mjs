@@ -1,6 +1,6 @@
 // Renders the case study's composed visuals from local HTML:
 // paper-diary.html (the sheet alone, and beside Lidd's chart),
-// board-vs-shipped.html and review-table.html. Needs capture.mjs and boards.mjs to have run first.
+// board-vs-shipped.html, review-table.html and placements.html. Needs capture.mjs and boards.mjs to have run first.
 // PW / CHROME as in capture.mjs.
 import { createRequire } from 'module';
 const require = createRequire((process.env.PW ?? process.cwd() + '/node_modules') + '/');
@@ -29,4 +29,9 @@ await page.goto('file://' + HERE + 'review-table.html');
 await page.waitForTimeout(800);
 await page.locator('.wrap').screenshot({ path: HERE + 'shots/redesign-review-table.png' });
 console.log('saved redesign-review-table');
+
+await page.goto('file://' + HERE + 'placements.html');
+await page.waitForTimeout(800);
+await page.locator('.wrap').screenshot({ path: HERE + 'shots/attack-mode-placements.png' });
+console.log('saved attack-mode-placements');
 await browser.close();

@@ -101,8 +101,8 @@ picture of how I iterate:
    floats anywhere while it's off. Its size is fixed in pixels so it stays on one line at
    150% text size.
 
-`[Visual]` The four bottom placements (A–D) side by side, D circled. Beside them, Today with
-attack mode off (the pill) and on (the strip).
+`[Visual]` `attack-mode-placements.png`: the band as built, the four bottom placements (A–D)
+with a line on each, and D framed beside the shipped screen.
 *Caption: Four placements for "Attack mode on". The strip joined to the tab bar won.*
 
 ---
@@ -288,7 +288,7 @@ finished until the reason for it is somewhere the next person will read it.
     `10-detail-ended-in-sleep`.
   - §4 review table: `redesign-review-table` (from `review-table.html`).
   - §4 board vs shipped: the finished visual is `detail-board-vs-shipped` (from
-    `board-vs-shipped.html`); its sources are `boards/v4-detail*` and `10`. The four placements are
+    `board-vs-shipped.html`); its sources are `boards/v4-detail*` and `10`. The placements visual is `attack-mode-placements` (from `placements.html`). The four placements are
     `boards/attack-mode-bottom-placements`; Insights colour key from `12-insights-3m-full`.
   - Spare: `03-today-attack-free-light`, `13-add-sheet`, `14-log-*`.
 - Rerun with the `migraine-app-verify` server up: `node portfolio-screenshots/capture.mjs` and

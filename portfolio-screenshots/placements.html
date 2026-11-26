@@ -1,0 +1,96 @@
+<!doctype html>
+<!--
+  Case study §2: where "Attack mode on" should live. The as-built band and
+  options A–D are cropped from
+  docs/redesign-v4/proposals/AttackModeBandBottomProposals.html by boards.mjs;
+  "Shipped" is the app itself (shots/04-today-attack-mode-on.png). The
+  one-line verdicts summarise that page's for/against notes. Rendered by
+  compose.mjs.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: Lexend; src: url('../src/assets/fonts/Lexend-Variable.woff2') format('woff2'); font-weight: 100 900; }
+:root { --page: #1b1a18; --surface: #262421; --rule: #3a3733; --text: #cdc7bb; --muted: #a39d92;
+        --strong: #d8d2c6; --accent: #7fa187; --amber: #c39257; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); font-family: Lexend, sans-serif; color: var(--text); }
+.wrap { width: max-content; padding: 64px 64px 60px; }
+h1 { margin: 0 0 10px; font-size: 32px; font-weight: 600; color: var(--strong); }
+.lede { margin: 0 0 40px; font-size: 18px; line-height: 1.5; color: var(--muted); max-width: 1000px; }
+
+.grid { display: grid; grid-template-columns: repeat(4, 250px) 28px 250px 250px; column-gap: 28px; align-items: start; }
+.opt { width: 250px; }
+.tag { display: flex; align-items: center; gap: 10px; height: 30px; margin-bottom: 14px; }
+.letter { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 600;
+          color: var(--text); box-shadow: inset 0 0 0 1.5px var(--rule); }
+.tag .name { font-size: 13px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.phone { display: block; width: 250px; border-radius: 22px; outline: 1px solid var(--rule); }
+.opt.dim .phone { opacity: .72; }
+h2 { margin: 18px 0 6px; font-size: 18px; font-weight: 600; color: var(--strong); line-height: 1.3; }
+.opt p { margin: 0; font-size: 15px; line-height: 1.5; }
+.con { color: var(--muted); }
+
+.sep { width: 28px; }
+.pick { grid-column: 6 / span 2; position: relative; }
+.pick-frame { position: absolute; inset: -18px -18px -20px -18px; border-radius: 30px; box-shadow: inset 0 0 0 2px var(--accent); pointer-events: none; }
+.pick .cols { display: grid; grid-template-columns: 250px 250px; column-gap: 28px; }
+.pick .letter { color: #1b1a18; background: var(--accent); box-shadow: none; }
+.pick .tag .name { color: var(--accent); }
+.arrow { position: absolute; left: 250px; top: 300px; width: 28px; text-align: center; color: var(--accent); font-size: 22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Where “Attack mode on” should live</h1>
+  <p class="lede">In attack mode every text is larger. The band at the top wrapped to two lines and pushed the headline down, so the top of the screen was heaviest exactly when it should be quietest. Four bottom placements, mocked side by side with attack mode on.</p>
+
+  <div class="grid">
+    <div class="opt dim">
+      <div class="tag"><span class="letter">–</span><span class="name">As built</span></div>
+      <img class="phone" src="shots/boards/placement-as-built.png" alt="">
+      <h2>Band at the top</h2>
+      <p class="con">Two lines at 20px text. “Turn off” is in the corner furthest from the thumb.</p>
+    </div>
+    <div class="opt dim">
+      <div class="tag"><span class="letter">A</span><span class="name">Option</span></div>
+      <img class="phone" src="shots/boards/placement-a.png" alt="">
+      <h2>Floating band, Today only</h2>
+      <p class="con">The smallest change, but it covers a card’s height of content, and it’s only a way out on Today.</p>
+    </div>
+    <div class="opt dim">
+      <div class="tag"><span class="letter">B</span><span class="name">Option</span></div>
+      <img class="phone" src="shots/boards/placement-b.png" alt="">
+      <h2>Floating band, every tab</h2>
+      <p class="con">A way out from any screen, but a card floating over every screen while it’s on.</p>
+    </div>
+    <div class="opt dim">
+      <div class="tag"><span class="letter">C</span><span class="name">Option</span></div>
+      <img class="phone" src="shots/boards/placement-c.png" alt="">
+      <h2>A chip over the +</h2>
+      <p class="con">The lightest, but a 34px “Turn off” sitting on the busiest tap spot on the screen.</p>
+    </div>
+    <div class="sep"></div>
+    <div class="pick">
+      <div class="pick-frame"></div>
+      <div class="cols">
+        <div class="opt">
+          <div class="tag"><span class="letter">D</span><span class="name">Picked</span></div>
+          <img class="phone" src="shots/boards/placement-d.png" alt="">
+          <h2>A strip joined to the nav</h2>
+          <p>Part of the app’s frame, not a card over content. It reads as “a mode is on”, and stays on every tab.</p>
+        </div>
+        <div class="opt">
+          <div class="tag"><span class="letter">✓</span><span class="name">Shipped</span></div>
+          <img class="phone" src="shots/04-today-attack-mode-on.png" alt="">
+          <h2>In the app</h2>
+          <p>Text and height fixed in pixels, so it stays on one line even at 150% text size.</p>
+        </div>
+      </div>
+      <div class="arrow">→</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
