@@ -934,6 +934,10 @@ export default function App() {
             medications={medications}
             attacks={attacks}
             defaultNotifConfig={defaultNotifConfig}
+            symptoms={sortedSymptoms}
+            reliefs={sortedReliefs}
+            onAddSymptom={addSymptom}
+            onAddRelief={addRelief}
             onClose={closeLogSheet}
             onSave={handleLogSave}
           />

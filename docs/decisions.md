@@ -2647,3 +2647,14 @@ Sunny's notes from the phone, all decided the same day.
 - **"Felt like" is asked in the Update flow too**, on its last step above Also had. Once "Throbbing" left the symptom list, End and Detail were the only places to say it, so mid-attack it went unrecorded. It's attack-level, so the chips start from what the attack already has (unlike the reading's own fields, which start blank), and only a change is written — in the same commit as the new readings (`addSnapshots`' `painQuality` param), since a separate `updateAttackDetails` call would drop them. On an ended attack it's offered only inside Detail's 48-hour answers window.
 - **Insights has a "Felt like" section**, purple (pain), right after Pain over time. One count per attack per answer, **out of the attacks that answered it**, not every attack in the period: the field is newer than most of the diary and optional, so an unanswered attack isn't "none of these". The info text names both numbers. Historic "Throbbing" *symptoms* aren't folded in; they still count under Symptoms. No board glyph exists, so it's a plain wave, distinct from Symptoms' pulse trace and from `ThrobbingIcon`.
 - **Update flow, review fix:** the Felt like save compares against the value the chips started from, not the live attack, so a sync landing mid-sheet can't have its newer answer overwritten.
+
+## In-attack flows ask the core, then offer the rest (2026-11-27)
+
+Sunny's call, from the phone. Live asked no symptoms, reliefs or Felt like (the v4 board left them to End), while Update asked all three on a fixed last step. Both are filled in during an attack, so the difference had no reason behind it.
+
+- **Live and Update now share one shape.** The core steps make a complete reading: when, pain areas with severity, medication (and Update's "Did it help?" when a dose is old enough). Then **"Up for a few more questions?"** with **Save** (primary) and **A few more** (secondary). "A few more" opens one screen with Felt like, Also had and What have you tried? (`MoreQuestions.tsx`, shared by both).
+- **Why an offer, not a fixed step.** How much someone can answer depends on how bad the attack is, and they know that better than the app does. Saving at the offer loses nothing: End asks the same three, and Detail keeps them open for 48 h.
+- **The step counter covers the core only.** The offer and the extra questions show no "Step N of M", so a count never grows from 4 to 6 halfway through.
+- **Update's time is its own first step.** It used to share a screen with the head diagram. A2's "keep the update-time step" still holds.
+- **Live now asks before discarding.** Once an area is rated, its × opens the same Save / Discard sheet Update and Past use. Before, it closed without asking.
+- Past and End are unchanged. Neither is filled in mid-attack, so they keep asking inline.

@@ -9,12 +9,18 @@ import { MedicationEntry, type SelectedMedication } from './MedicationEntry';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SunriseIcon } from './icons';
 import { ChipCheck } from './ChipCheck';
+import { DiscardDraftDialog } from './DiscardDraftDialog';
+import { MoreQuestionsFields, OFFER_TITLE, OFFER_SUBHEAD, EXTRAS_TITLE } from './MoreQuestions';
 
 interface Props {
   recentMeds: Array<{ name: string; dose: string }>;
   medications?: Medication[];
   attacks?: Attack[];
   defaultNotifConfig: NotificationConfig;
+  symptoms: string[];
+  reliefs: string[];
+  onAddSymptom: (s: string) => void;
+  onAddRelief: (r: string) => void;
   onClose: () => void;
   onSave: (
     snapshot: Omit<Snapshot, 'source'>,
@@ -23,6 +29,8 @@ interface Props {
     end: string | null,
     wokeWithMigraine: boolean,
     doseReadings: Array<Omit<Snapshot, 'source'>>,
+    endUnknown?: boolean,
+    painQuality?: string[],
   ) => void;
 }
 
@@ -38,18 +46,23 @@ const START_OPTIONS: { value: StartMode; label: string }[] = [
   { value: 'manual',   label: 'Pick a time…' },
 ];
 
-const STEP_LABELS = ['When did it start?', 'Where does it hurt?', 'Taken anything?'];
+const STEP_LABELS = ['When did it start?', 'Where does it hurt?', 'Taken anything?', OFFER_TITLE, EXTRAS_TITLE];
 const STEP_SUBHEADS = [
   undefined,
   'Tap an area, then rate it. Required.',
   'Optional',
+  OFFER_SUBHEAD,
+  'Optional',
 ];
+/** Steps 1–3 make the reading; 4 offers more questions, 5 asks them. */
+const CORE_STEPS = 3;
+const OFFER_STEP = 4;
 
 /**
  * "Log an attack" (live), v4 redesign — 3 steps (When → Where → Medication),
- * matching `docs/redesign-v4/screens/23-live/`. Symptoms, reliefs and
- * triggers are no longer collected here; they move to the end-of-attack flow
- * (per `docs/redesign-v4-diff.md`'s decided A-items — not yet built).
+ * matching `docs/redesign-v4/screens/23-live/`, then an offer of a few more
+ * questions — Felt like, symptoms, reliefs (`MoreQuestions.tsx`, 2026-11-27).
+ * Triggers stay with the end-of-attack flow.
  *
  * Replaces `LogForm`'s `past={false}` case for **manual** entry only. A
  * voice draft still opens `LogForm` regardless of past/live — that flow's
@@ -58,13 +71,17 @@ const STEP_SUBHEADS = [
  * it works today matters more than this flow covering that case too. See
  * docs/voice-parsing.md.
  */
-export function LiveAttackForm({ recentMeds, medications = [], attacks = [], defaultNotifConfig, onClose, onSave }: Props) {
+export function LiveAttackForm({ recentMeds, medications = [], attacks = [], defaultNotifConfig, symptoms: symptomOptions, reliefs: reliefOptions, onAddSymptom, onAddRelief, onClose, onSave }: Props) {
   const [step, setStep] = useState(1);
   const [startMode, setStartMode] = useState<StartMode>('now');
   const [startTime, setStartTime] = useState(() => isoToLocalInput());
   const [wokeWithMigraine, setWokeWithMigraine] = useState(false);
   const [areas, setAreas] = useState<Record<string, number>>({});
   const [meds, setMeds] = useState<SelectedMedication[]>([]);
+  const [painQuality, setPainQuality] = useState<string[]>([]);
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [reliefs, setReliefs] = useState<string[]>([]);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const [openedAt] = useState(() => Date.now());
   const startInputRef = useRef<DateTimeFieldHandle>(null);
 
@@ -78,8 +95,15 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
 
   function goNext() {
     if (nextDisabled) return;
-    if (step < totalSteps) setStep((s) => s + 1);
-    else submit();
+    if (step === OFFER_STEP || step === totalSteps) submit();
+    else setStep((s) => s + 1);
+  }
+
+  // Once an area is rated the reading is complete, so closing asks before
+  // dropping it — same dialog Update and Past use.
+  function requestClose() {
+    if (Object.keys(areas).length > 0) setDiscardOpen(true);
+    else onClose();
   }
 
   function submit() {
@@ -122,12 +146,14 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
     }
 
     onSave(
-      { time: startIso, areas, symptoms: [], reliefs: [], medication: openingMedication, note: null },
+      { time: startIso, areas, symptoms, reliefs, medication: openingMedication, note: null },
       [],
       defaultNotifConfig,
       null,
       wokeWithMigraine,
       extraSnapshots,
+      undefined,
+      painQuality,
     );
   }
 
@@ -162,10 +188,10 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
         ) : (
           <span className="size-target shrink-0" aria-hidden="true" />
         )}
-        <span className="flex-1 text-center text-sm font-medium text-text-primary">Step {step} of {totalSteps}</span>
+        <span className="flex-1 text-center text-sm font-medium text-text-primary">{step <= CORE_STEPS ? `Step ${step} of ${CORE_STEPS}` : ''}</span>
         <button
           type="button"
-          onClick={onClose}
+          onClick={requestClose}
           aria-label="Close"
           className="tap-44 flex size-target items-center justify-center rounded-full bg-bg-raised text-text-primary transition-colors hover:bg-bg-elevated"
         >
@@ -238,21 +264,44 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
             nowMs={openedAt}
           />
         )}
+
+        {step === 5 && (
+          <MoreQuestionsFields
+            idPrefix="live"
+            showFeltLike
+            painQuality={painQuality} onPainQuality={setPainQuality}
+            symptomOptions={symptomOptions} symptoms={symptoms} onSymptoms={setSymptoms} onAddSymptom={onAddSymptom}
+            reliefOptions={reliefOptions} reliefs={reliefs} onReliefs={setReliefs} onAddRelief={onAddRelief}
+          />
+        )}
       </div>
 
       <div
         className="flex gap-3 border-t border-bg-border bg-bg-surface px-gutter sm:px-gutter-wide py-3"
         style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
       >
+        {step === OFFER_STEP && (
+          <button type="button" onClick={() => setStep((s) => s + 1)} className="btn-secondary btn-cta flex-1 transition-colors">
+            A few more
+          </button>
+        )}
         <button
           type="button"
           onClick={goNext}
           disabled={nextDisabled}
           className={`btn-primary btn-cta flex-1 transition-all ${nextDisabled ? '' : 'active:scale-[.99]'}`}
         >
-          {step === totalSteps ? 'Save' : 'Next'}
+          {step >= OFFER_STEP ? 'Save' : 'Next'}
         </button>
       </div>
+
+      <DiscardDraftDialog
+        open={discardOpen}
+        discardLabel="Discard this attack"
+        onKeepGoing={() => setDiscardOpen(false)}
+        onSave={submit}
+        onDiscard={onClose}
+      />
     </div>
   );
 }

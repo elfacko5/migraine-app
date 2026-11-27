@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { PAIN_QUALITY_OPTIONS, type Attack, type Medication, type Snapshot } from '../types';
+import { type Attack, type Medication, type Snapshot } from '../types';
 import { isoToLocalInput, localInputToIso, formatTime, formatDuration } from '../utils/format';
 import { attackMaxSeverity, FOLLOW_UP_TARGET_MS } from '../utils/stats';
 import { doseEntryMs, followUpApplies, type SelectedMedication } from '../utils/doseEntries';
@@ -9,9 +9,8 @@ import { RadioDot } from './RadioDot';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationEntry } from './MedicationEntry';
 import { DoseOutcomeRow } from './DoseOutcomeRow';
-import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
-import { SymptomIcon, ReliefIcon } from './drawnIcons';
+import { MoreQuestionsFields, OFFER_TITLE, OFFER_SUBHEAD, EXTRAS_TITLE } from './MoreQuestions';
 import { DiscardDraftDialog } from './DiscardDraftDialog';
 import { lastReading } from '../utils/readings';
 import { editWindows } from '../utils/editWindow';
@@ -102,8 +101,10 @@ function sameSet(a: string[], b: string[]): boolean {
 }
 
 /**
- * "Add update" (v4 redesign) — 4 steps (How bad now → Did it help → Taken
- * since → Anything else), matching `docs/redesign-v4/screens/25-update/`.
+ * "Add update" (v4 redesign) — When → How bad now → Did it help → Taken
+ * since, then an offer of a few more questions (`MoreQuestions.tsx`), matching `docs/redesign-v4/screens/25-update/`, except that
+ * the update time is its own first step (2026-11-27, Sunny's call — A2 kept
+ * the step; it no longer shares a screen with the head diagram).
  * Replaces `QuickUpdateForm`'s **manual-entry** case only — a voice draft
  * still opens `QuickUpdateForm`, same reasoning `LiveAttackForm`/
  * `PastAttackForm` give for their own voice carve-out.
@@ -182,10 +183,13 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
     return null;
   })();
 
-  const STEPS = ['now', ...(helpRows.length > 0 ? ['help'] : []), 'meds', 'else'] as const;
+  const STEPS = ['when', 'now', ...(helpRows.length > 0 ? ['help'] : []), 'meds', 'offer', 'else'] as const;
   const [stepIndex, setStepIndex] = useState(0);
   const kind = STEPS[stepIndex];
   const totalSteps = STEPS.length;
+  // The counter covers the core reading only; the offer and its questions
+  // sit outside it, so "Step 4 of 4" never turns into "of 6".
+  const coreSteps = STEPS.indexOf('offer');
 
   const updateMs = form.timeMode === 'manual' ? new Date(localInputToIso(form.time)).getTime() : openedAt;
   const resolvedUpdateMs = Math.min(Math.max(updateMs, new Date(minTime).getTime()), new Date(maxTime).getTime());
@@ -195,8 +199,8 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
 
   function goNext() {
     if (nextDisabled) return;
-    if (stepIndex < totalSteps - 1) setStepIndex((s) => s + 1);
-    else submit();
+    if (kind === 'offer' || stepIndex === totalSteps - 1) submit();
+    else setStepIndex((s) => s + 1);
   }
 
   function goBack() {
@@ -293,10 +297,12 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   const worst = attackMaxSeverity(attack);
 
   const STEP_TITLES: Record<string, string> = {
+    when: 'When is this update from?',
     now: 'How bad is it now?',
     help: 'Did it help?',
     meds: 'Taken anything since?',
-    else: 'Anything else right now?',
+    offer: OFFER_TITLE,
+    else: EXTRAS_TITLE,
   };
 
   return (
@@ -321,7 +327,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         ) : (
           <span className="size-target shrink-0" aria-hidden="true" />
         )}
-        <span className="flex-1 text-center text-sm font-medium text-text-primary">Step {stepIndex + 1} of {totalSteps}</span>
+        <span className="flex-1 text-center text-sm font-medium text-text-primary">{stepIndex < coreSteps ? `Step ${stepIndex + 1} of ${coreSteps}` : ''}</span>
         <button
           type="button"
           onClick={requestClose}
@@ -338,16 +344,17 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         <div className="mb-5 shrink-0">
           <div className="min-w-0">
             <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{STEP_TITLES[kind]}</h1>
-            <p className="mt-1.5 text-sm text-text-secondary">
+            {kind !== 'when' && <p className="mt-1.5 text-sm text-text-secondary">
               {kind === 'now' && <>Required<span className="text-severity-high ml-0.5">*</span> · {elapsed} in · worst {worst}</>}
               {kind === 'help' && 'Optional · for doses already logged this attack'}
               {kind === 'meds' && (lastDose ? `Optional · ${lastDose.name} at ${formatTime(lastDose.time)} is already logged` : 'Optional')}
+              {kind === 'offer' && OFFER_SUBHEAD}
               {kind === 'else' && 'Optional'}
-            </p>
+            </p>}
           </div>
         </div>
 
-        {kind === 'now' && (
+        {kind === 'when' && (
           <div className="space-y-4">
             <div role="radiogroup" aria-label="When this reading is from" className="flex flex-wrap gap-2">
               <button
@@ -381,8 +388,11 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
                 openRef={timeInputRef}
               />
             )}
-            <AreaSeverityPicker value={form.areas} onChange={(v) => set('areas', v)} previousValue={lastKnownAreas(attack.snapshots)} />
           </div>
+        )}
+
+        {kind === 'now' && (
+          <AreaSeverityPicker value={form.areas} onChange={(v) => set('areas', v)} previousValue={lastKnownAreas(attack.snapshots)} />
         )}
 
         {kind === 'help' && (
@@ -424,38 +434,16 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         )}
 
         {kind === 'else' && (
-          <div className="space-y-6">
-            {/* "Felt like" during the attack too (2026-11-27, Sunny's call):
-                once "Throbbing" left the symptom list, End and Detail were
-                the only places to say it. Same options and chips as End's
-                own step; pre-filled from the attack, since it's one answer
-                for the whole attack. */}
-            {feltLikeOpen && (
-              <section className="space-y-2" aria-labelledby="upd-felt-like-label">
-                <h3 id="upd-felt-like-label" className="text-sm font-medium text-text-primary">
-                  Felt like
-                </h3>
-                <ChipSelector options={PAIN_QUALITY_OPTIONS} selected={form.painQuality}
-                  onChange={(v) => set('painQuality', v)} />
-              </section>
-            )}
-            <section className="space-y-2" aria-labelledby="upd-symptoms-label">
-              <h3 id="upd-symptoms-label" className="text-sm font-medium text-text-primary">
-                Also had
-              </h3>
-              <ChipSelector options={symptoms} selected={form.symptoms}
-                onChange={(v) => set('symptoms', v)} onAddCustom={onAddSymptom}
-                renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
-            </section>
-            <section className="space-y-2" aria-labelledby="upd-reliefs-label">
-              <h3 id="upd-reliefs-label" className="text-sm font-medium text-text-primary">
-                What have you tried?
-              </h3>
-              <ChipSelector options={reliefs} selected={form.reliefs}
-                onChange={(v) => set('reliefs', v)} onAddCustom={onAddRelief}
-                renderIcon={(r) => <ReliefIcon name={r} className="h-4 w-4" />} />
-            </section>
-          </div>
+          // "Felt like" during the attack too (2026-11-27): once "Throbbing"
+          // left the symptom list, End and Detail were the only places to
+          // say it. Pre-filled from the attack — one answer per attack.
+          <MoreQuestionsFields
+            idPrefix="upd"
+            showFeltLike={feltLikeOpen}
+            painQuality={form.painQuality} onPainQuality={(v) => set('painQuality', v)}
+            symptomOptions={symptoms} symptoms={form.symptoms} onSymptoms={(v) => set('symptoms', v)} onAddSymptom={onAddSymptom}
+            reliefOptions={reliefs} reliefs={form.reliefs} onReliefs={(v) => set('reliefs', v)} onAddRelief={onAddRelief}
+          />
         )}
       </div>
 
@@ -463,6 +451,11 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         className="flex gap-3 border-t border-bg-border bg-bg-surface px-gutter sm:px-gutter-wide py-3"
         style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
       >
+        {kind === 'offer' && (
+          <button type="button" onClick={() => setStepIndex((s) => s + 1)} className="btn-secondary btn-cta flex-1 transition-colors">
+            A few more
+          </button>
+        )}
         <button
           type="button"
           onClick={goNext}
@@ -470,7 +463,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
           title={nextDisabled ? 'Rate at least one pain area first' : undefined}
           className={`btn-primary btn-cta flex-1 transition-all ${nextDisabled ? '' : 'active:scale-[.99]'}`}
         >
-          {stepIndex === totalSteps - 1 ? 'Save update' : 'Next'}
+          {kind === 'offer' || stepIndex === totalSteps - 1 ? 'Save' : 'Next'}
         </button>
       </div>
 
