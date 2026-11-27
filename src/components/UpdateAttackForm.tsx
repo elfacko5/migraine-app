@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Attack, Medication, Snapshot } from '../types';
+import { PAIN_QUALITY_OPTIONS, type Attack, type Medication, type Snapshot } from '../types';
 import { isoToLocalInput, localInputToIso, formatTime, formatDuration } from '../utils/format';
 import { attackMaxSeverity, FOLLOW_UP_TARGET_MS } from '../utils/stats';
 import { doseEntryMs, followUpApplies, type SelectedMedication } from '../utils/doseEntries';
@@ -14,6 +14,7 @@ import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SymptomIcon, ReliefIcon } from './drawnIcons';
 import { DiscardDraftDialog } from './DiscardDraftDialog';
 import { lastReading } from '../utils/readings';
+import { editWindows } from '../utils/editWindow';
 
 interface Props {
   attack: Attack;
@@ -25,7 +26,9 @@ interface Props {
   onAddSymptom: (s: string) => void;
   onAddRelief: (r: string) => void;
   onClose: () => void;
-  onSave: (snapshot: Omit<Snapshot, 'source'>, extraSnapshots: Array<Omit<Snapshot, 'source'>>) => void;
+  /** `painQuality`: the attack's whole "Felt like" answer, only when it
+   *  changed here — `undefined` leaves the stored one alone. */
+  onSave: (snapshot: Omit<Snapshot, 'source'>, extraSnapshots: Array<Omit<Snapshot, 'source'>>, painQuality?: string[]) => void;
 }
 
 interface FormState {
@@ -35,6 +38,10 @@ interface FormState {
   meds: SelectedMedication[];
   symptoms: string[];
   reliefs: string[];
+  /** Attack-level, not part of the reading: starts from what's already
+   *  stored (one answer per attack, as End and Detail treat it), unlike the
+   *  reading's own fields, which start blank. */
+  painQuality: string[];
 }
 
 /** How each area stood at its own most recent reading — not just the
@@ -86,8 +93,12 @@ function areasAsOf(snapshots: Snapshot[], ms: number): Record<string, number> {
   return result;
 }
 
-function blank(defaultTime: string): FormState {
-  return { timeMode: 'now', time: defaultTime, areas: {}, meds: [], symptoms: [], reliefs: [] };
+function blank(defaultTime: string, painQuality: string[] = []): FormState {
+  return { timeMode: 'now', time: defaultTime, areas: {}, meds: [], symptoms: [], reliefs: [], painQuality };
+}
+
+function sameSet(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((x) => b.includes(x));
 }
 
 /**
@@ -126,10 +137,15 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   const attackEndMs = attack.end ? new Date(attack.end).getTime() : null;
 
   const [openedAt] = useState(() => Date.now());
+  // Felt like is offered while the attack is ongoing, and on an ended one
+  // only inside Detail's own 48-hour answers window (`editWindow.ts`), so a
+  // backfilled update can't change it later than Detail could. Settled once
+  // when the sheet opens, so the step doesn't change under the user.
+  const [feltLikeOpen] = useState(() => attack.end === null || (editWindows(attack)?.answersOpen ?? false));
   const [form, setForm] = useState<FormState>(() => {
     const opened = new Date().toISOString();
     const initialTime = opened < minTime ? minTime : opened > maxTime ? maxTime : opened;
-    return blank(isoToLocalInput(initialTime));
+    return blank(isoToLocalInput(initialTime), attack.painQuality ?? []);
   });
   const [helpAnswers, setHelpAnswers] = useState<Record<string, number>>({});
   const [discardOpen, setDiscardOpen] = useState(false);
@@ -263,6 +279,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         note: null,
       },
       extraSnapshots,
+      !feltLikeOpen || sameSet(form.painQuality, attack.painQuality ?? []) ? undefined : form.painQuality,
     );
   }
 
@@ -402,6 +419,20 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
 
         {kind === 'else' && (
           <div className="space-y-6">
+            {/* "Felt like" during the attack too (2026-11-27, Sunny's call):
+                once "Throbbing" left the symptom list, End and Detail were
+                the only places to say it. Same options and chips as End's
+                own step; pre-filled from the attack, since it's one answer
+                for the whole attack. */}
+            {feltLikeOpen && (
+              <section className="space-y-2" aria-labelledby="upd-felt-like-label">
+                <h3 id="upd-felt-like-label" className="text-sm font-medium text-text-primary">
+                  Felt like
+                </h3>
+                <ChipSelector options={PAIN_QUALITY_OPTIONS} selected={form.painQuality}
+                  onChange={(v) => set('painQuality', v)} />
+              </section>
+            )}
             <section className="space-y-2" aria-labelledby="upd-symptoms-label">
               <h3 id="upd-symptoms-label" className="text-sm font-medium text-text-primary">
                 Also had

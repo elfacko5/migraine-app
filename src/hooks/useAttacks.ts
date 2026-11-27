@@ -166,7 +166,16 @@ export function useAttacks(userId: string | null) {
   // answered repeatedly while the app stayed closed — and calling addSnapshot
   // in a loop would drop all but the last: each call maps over the `attacks`
   // captured in the current render, so the second overwrites the first.
-  const addSnapshots = useCallback((entries: SnapshotEntry[]): Attack[] => {
+  //
+  // `painQuality`: the Update flow's "Felt like" answer (2026-11-27). It's
+  // attack-level, not per reading, so it's written in this same commit for
+  // the reason `startAttack`'s trailing params are: a separate
+  // `updateAttackDetails` call right after would map over this render's
+  // `attacks` and drop the readings just added.
+  const addSnapshots = useCallback((
+    entries: SnapshotEntry[],
+    painQuality?: { attackId: number; value: string[] },
+  ): Attack[] => {
     if (entries.length === 0) return [];
     const updatedAt = new Date().toISOString();
     const touched: Attack[] = [];
@@ -183,6 +192,7 @@ export function useAttacks(userId: string | null) {
         // is in time order the way `startAttack`'s own sort already keeps it.
         snapshots: [...a.snapshots, ...mine.map((e) => ({ ...e.snapshot, source: e.source }))]
           .sort((x, y) => x.time.localeCompare(y.time)),
+        ...(painQuality && painQuality.attackId === a.id ? { painQuality: painQuality.value } : {}),
         updatedAt,
       };
       touched.push(updated);

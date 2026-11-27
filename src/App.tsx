@@ -575,13 +575,13 @@ export default function App() {
   // the same way `handleLogSave` bundles `extraSnapshots` into one call. One
   // entry per attack carries `reschedule: true`; `addSnapshots` only checks
   // whether *any* of an attack's entries ask for it.
-  function handleUpdateFlowSave(snapshot: Omit<Snapshot, 'source'>, extraSnapshots: Array<Omit<Snapshot, 'source'>>) {
+  function handleUpdateFlowSave(snapshot: Omit<Snapshot, 'source'>, extraSnapshots: Array<Omit<Snapshot, 'source'>>, painQuality?: string[]) {
     if (updateAttackId === null) return;
     const entries: SnapshotEntry[] = [
       { attackId: updateAttackId, snapshot: stampSnapshot(snapshot, medications), source: 'manual', reschedule: true },
       ...extraSnapshots.map((s) => ({ attackId: updateAttackId, snapshot: stampSnapshot(s, medications), source: 'manual' as const, reschedule: false })),
     ];
-    const [updated] = addSnapshots(entries);
+    const [updated] = addSnapshots(entries, painQuality ? { attackId: updateAttackId, value: painQuality } : undefined);
     announceSaved('Update saved', updated, updated ? nextDelay(updated) : 0);
     closeUpdateSheet();
   }
