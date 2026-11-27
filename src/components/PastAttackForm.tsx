@@ -90,7 +90,7 @@ function blank(): FormState {
 const STEP_LABELS = ['When was it?', 'Where does it hurt?', 'Did you take anything?', 'What was it like?', 'What did you try?', 'The two days before'];
 const STEP_SUBHEADS = [
   'Required: fill out date and time.',
-  'Tap an area, then rate it. Required. The rest is optional.',
+  'Tap an area, then rate it. Required.',
   // Plain "Optional" on every optional step (June, 2026-11-25): "pick any"
   // already sits on the medication list's own label, and the chip checks
   // say it.
