@@ -225,6 +225,24 @@ export function symptomFrequency(attacks: Attack[]): Freq[] {
   return tallyToFreq(tally);
 }
 
+/** "Felt like" (`Attack.painQuality`), one count per attack per answer, and
+ *  how many attacks answered at all. Unlike symptoms, an attack with no
+ *  answer says nothing either way — the field is newer than most of the
+ *  diary and optional everywhere — so `answered`, not every attack, is the
+ *  honest "of N". Historic "Throbbing" *symptoms* aren't folded in: those
+ *  were a different question, and they still count under Symptoms. */
+export function painQualityFrequency(attacks: Attack[]): { freq: Freq[]; answered: number } {
+  const tally: Record<string, number> = {};
+  let answered = 0;
+  for (const a of attacks) {
+    const picks = new Set(a.painQuality ?? []);
+    if (picks.size === 0) continue;
+    answered++;
+    for (const x of picks) tally[x] = (tally[x] ?? 0) + 1;
+  }
+  return { freq: tallyToFreq(tally), answered };
+}
+
 export function reliefFrequency(attacks: Attack[]): Freq[] {
   const tally: Record<string, number> = {};
   for (const a of attacks) {

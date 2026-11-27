@@ -9,7 +9,7 @@ import { isRetired } from '../utils/retired';
 import {
   attackMaxSeverity,
   areaFrequency, avgTimeToPeak, avgAttackLength,
-  triggerFrequency, symptomFrequency, reliefFrequency, type Freq,
+  triggerFrequency, symptomFrequency, reliefFrequency, painQualityFrequency, type Freq,
 } from '../utils/stats';
 import { HeadHeatmap } from './HeadHeatmap';
 import { MigraineDaysChart, CalendarMark } from './MigraineDaysChart';
@@ -42,7 +42,7 @@ const LOW_DATA_THRESHOLD = 5;
 //
 //   green  (accent)   how often      Attack days
 //   blue   (chart-1)  what you did   Medication, What you tried
-//   purple (chart-2)  pain           Typical attack, Pain over time, Where it hurt
+//   purple (chart-2)  pain           Typical attack, Pain over time, Felt like, Where it hurt
 //   rose   (chart-3)  what it was like  Symptoms
 //   gold   (chart-4)  what came before  In the two days before
 //
@@ -184,6 +184,16 @@ const LeafGlyph = (
     strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z" />
     <path d="M5 19l8-8" />
+  </svg>
+);
+
+// "Felt like" has no board glyph. A wave: the quality of the pain, drawn
+// apart from Symptoms' pulse trace and from `ThrobbingIcon`, which is one of
+// the answers rather than the question. Purple, the pain subject's colour.
+const WaveGlyph = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0" />
   </svg>
 );
 
@@ -355,6 +365,7 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
       areas,
       triggers: triggerFrequency(filtered),
       symptoms: symptomFrequency(filtered),
+      painQuality: painQualityFrequency(filtered),
       reliefs: reliefFrequency(filtered),
     };
   }, [filtered]);
@@ -614,7 +625,16 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
           )}
 
           {/* Section order is the v4 board's (2026-11-25): Pain over time,
-              Symptoms, Where it hurt, What you tried, In the two days before. */}
+              Symptoms, Where it hurt, What you tried, In the two days before —
+              plus Felt like (2026-11-27, no board), next to Pain over time
+              since both are about the pain itself. Counted over the attacks
+              that answered it, not every attack: unanswered isn't "none of
+              these" (`painQualityFrequency`). */}
+          <FreqSection title="Felt like" data={stats.painQuality.freq} color={chartColors.chart2}
+            total={stats.painQuality.answered}
+            icon={WaveGlyph} iconTone="bg-chart-2/16 text-chart-2"
+            info={`How the pain felt, counted once per attack. Out of the ${stats.painQuality.answered} ${stats.painQuality.answered === 1 ? 'attack' : 'attacks'} in this period where it was answered${stats.painQuality.answered < filtered.length ? ` (${filtered.length} in all)` : ''} — an attack can be more than one.`}
+          />
           {/* Symptom/trigger frequency used to reuse the severity-mid/high
               colours (2026-09-02) — the same mismatch `HeadHeatmap`'s own
               comment warns about: severity means *pain intensity* everywhere

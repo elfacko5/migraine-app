@@ -137,6 +137,12 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   const attackEndMs = attack.end ? new Date(attack.end).getTime() : null;
 
   const [openedAt] = useState(() => Date.now());
+  // What the Felt like chips started from. The save compares against this,
+  // not the live `attack` prop: a sync pull can change that prop while the
+  // sheet is open, and comparing against it would write this sheet's stale
+  // seed back over the newer answer with a fresh `updatedAt` (review,
+  // 2026-11-27).
+  const [seedQuality] = useState(() => attack.painQuality ?? []);
   // Felt like is offered while the attack is ongoing, and on an ended one
   // only inside Detail's own 48-hour answers window (`editWindow.ts`), so a
   // backfilled update can't change it later than Detail could. Settled once
@@ -145,7 +151,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   const [form, setForm] = useState<FormState>(() => {
     const opened = new Date().toISOString();
     const initialTime = opened < minTime ? minTime : opened > maxTime ? maxTime : opened;
-    return blank(isoToLocalInput(initialTime), attack.painQuality ?? []);
+    return blank(isoToLocalInput(initialTime), seedQuality);
   });
   const [helpAnswers, setHelpAnswers] = useState<Record<string, number>>({});
   const [discardOpen, setDiscardOpen] = useState(false);
@@ -279,7 +285,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         note: null,
       },
       extraSnapshots,
-      !feltLikeOpen || sameSet(form.painQuality, attack.painQuality ?? []) ? undefined : form.painQuality,
+      !feltLikeOpen || sameSet(form.painQuality, seedQuality) ? undefined : form.painQuality,
     );
   }
 
