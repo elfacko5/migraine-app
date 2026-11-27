@@ -42,7 +42,7 @@ const STEP_LABELS = ['When did it start?', 'Where does it hurt?', 'Taken anythin
 const STEP_SUBHEADS = [
   undefined,
   'Tap an area, then rate it. Required.',
-  'Optional · asked now so the dose limit can warn you',
+  'Optional',
 ];
 
 /**
