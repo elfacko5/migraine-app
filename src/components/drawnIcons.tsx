@@ -362,7 +362,9 @@ const TRIGGER_ICON_RULES: { pattern: RegExp; Icon: IconComponent }[] = [
   { pattern: /caffeine|coffee|tea\b|cola|energy drink/i, Icon: CoffeeIcon },
   { pattern: /light|glare|bright|sun\b|flicker/i, Icon: LightIcon },
   { pattern: /noise|loud|sound|music/i, Icon: SoundIcon },
-  { pattern: /meal|food|eat|hunger|hungry|fasting|sugar/i, Icon: FoodIcon },
+  // `\beat`, not `eat`: a bare `eat` matched inside "weather" (and "heat",
+  // "sweat"), so "Weather change" drew a knife and fork (2026-11-27).
+  { pattern: /meal|food|\beat|hunger|hungry|fasting|sugar/i, Icon: FoodIcon },
   { pattern: /weather|pressure|humid|storm|heat wave|cold front/i, Icon: WeatherIcon },
   { pattern: /menstr|period|cycle/i, Icon: CycleIcon },
   { pattern: /hormon|oestrogen|estrogen|ovulat/i, Icon: HormoneIcon },

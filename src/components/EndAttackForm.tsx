@@ -8,6 +8,7 @@ import { chipClass } from '../utils/chipStyles';
 import { RadioDot } from './RadioDot';
 import { DoseOutcomeRow } from './DoseOutcomeRow';
 import { ChipSelector } from './ChipSelector';
+import { NothingUnusualChip } from './NothingUnusualChip';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -365,8 +366,7 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, onAddSympto
         )}
 
         {kind === 'before' && (
-          <section className="space-y-2" aria-labelledby="end-two-days-label">
-            <h3 id="end-two-days-label" className="text-sm font-medium text-text-primary">The two days before</h3>
+          <section aria-label="The two days before">
             <ChipSelector
               options={triggers}
               selected={form.triggers.filter((t) => t !== NOTHING_UNUSUAL)}
@@ -374,14 +374,10 @@ export function EndAttackForm({ attack, symptoms, reliefs, triggers, onAddSympto
               onAddCustom={onAddTrigger}
               renderIcon={(t) => <TriggerIcon name={t} className="h-4 w-4" />}
             />
-            <button
-              type="button"
-              onClick={() => set('triggers', form.triggers.includes(NOTHING_UNUSUAL) ? [] : [NOTHING_UNUSUAL])}
-              aria-pressed={form.triggers.includes(NOTHING_UNUSUAL)}
-              className={`tap-44-y mt-1 inline-flex items-center gap-1.5 rounded-chip px-3.5 py-2 text-sm font-medium transition-colors ${chipClass(form.triggers.includes(NOTHING_UNUSUAL))}`}
-            >
-              Nothing unusual
-            </button>
+            <NothingUnusualChip
+              selected={form.triggers.includes(NOTHING_UNUSUAL)}
+              onToggle={() => set('triggers', form.triggers.includes(NOTHING_UNUSUAL) ? [] : [NOTHING_UNUSUAL])}
+            />
           </section>
         )}
       </div>

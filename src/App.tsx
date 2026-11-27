@@ -948,7 +948,6 @@ export default function App() {
               onAddSymptom={addSymptom}
               onAddRelief={addRelief}
               onSave={handleUpdateFlowSave}
-              onNoChange={(snapshot) => handleUpdateSave(snapshot, 'notification_no_change')}
               onClose={closeUpdateSheet}
             />
           )}

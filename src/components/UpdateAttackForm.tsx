@@ -12,7 +12,6 @@ import { DoseOutcomeRow } from './DoseOutcomeRow';
 import { ChipSelector } from './ChipSelector';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SymptomIcon, ReliefIcon } from './drawnIcons';
-import { ConfirmDialog } from './ConfirmDialog';
 import { DiscardDraftDialog } from './DiscardDraftDialog';
 import { lastReading } from '../utils/readings';
 
@@ -27,10 +26,6 @@ interface Props {
   onAddRelief: (r: string) => void;
   onClose: () => void;
   onSave: (snapshot: Omit<Snapshot, 'source'>, extraSnapshots: Array<Omit<Snapshot, 'source'>>) => void;
-  // Carries the previous reading's severities forward, marked `notification_no_change`
-  // — `QuickUpdateForm`'s own "Finish now" path, kept reachable from the new
-  // flow too (see this file's doc comment).
-  onNoChange: (snapshot: Omit<Snapshot, 'source'>) => void;
 }
 
 interface FormState {
@@ -70,8 +65,8 @@ function lastKnownAreas(snapshots: Snapshot[]): Record<string, number> {
  *  reconstruct this dose's "before" state as of `ms` by walking each area
  *  back to wherever it was last mentioned, which can resurrect an area that
  *  had already been dropped (stopped being re-rated) by the time of `ms` —
- *  the same ambiguity `submitNoChange` backed away from, for the same
- *  reason. Taking one snapshot's areas wholesale can itself be a one-area
+ *  the same ambiguity A2 leaves open ("how areas not re-rated are
+ *  recorded"). Taking one snapshot's areas wholesale can itself be a one-area
  *  follow-up reading; that's an accepted, pre-existing shape already
  *  possible from Past/Live's own follow-up events, not a new one.
  *
@@ -111,15 +106,11 @@ function blank(defaultTime: string): FormState {
  * the count entirely when this attack has no medication old enough to ask
  * about yet.
  *
- * **"Nothing changed" survives as a header link on step 1 only**, not a
- * "Finish now" reachable from every step — this flow's first step is
- * itself the required pain-area entry, so the old "form left entirely
- * blank" trigger no longer exists, but CLAUDE.md's Quick-update rule still
- * promises the shortcut and `notification_no_change` is still a real,
- * first-class plateau-analytics source worth keeping reachable from inside
- * the app, not only from a reminder's own quick reply.
+ * **No "Nothing changed" shortcut** (removed 2026-11-27, Sunny's call): the
+ * v4 Update board has none, and a no-change reading stays reachable from the
+ * reminder's own quick reply (`notification_no_change`).
  */
-export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], onAddSymptom, onAddRelief, onClose, onSave, onNoChange }: Props) {
+export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medications = [], attacks = [], onAddSymptom, onAddRelief, onClose, onSave }: Props) {
   // Not simply the last snapshot: one that only says what the attack was like
   // is stamped at the end, and would force every new update onto it.
   const prev = lastReading(attack);
@@ -142,7 +133,6 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
   });
   const [helpAnswers, setHelpAnswers] = useState<Record<string, number>>({});
   const [discardOpen, setDiscardOpen] = useState(false);
-  const [confirmNoChange, setConfirmNoChange] = useState(false);
   const timeInputRef = useRef<DateTimeFieldHandle>(null);
 
   function set<K extends keyof FormState>(key: K, val: FormState[K]) {
@@ -196,25 +186,6 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
     else onClose();
   }
 
-  // Same record `QuickUpdateForm`'s own no-change path writes: the previous
-  // *scored* reading's severities, carried forward at this reading's own
-  // time, tagged `notification_no_change` rather than `manual` so the
-  // plateau analytics count it as "held", not as a gap.
-  // `lastScored.areas`, not `lastKnownAreas` — matching the other two
-  // writers of this same source (the notification's own no-change reply,
-  // and QuickUpdateForm's own `prev.areas`, which on an attack with no
-  // area-less readings is the exact same value). Per-area lookback would
-  // resurrect an area the user had since stopped re-rating: severity has no
-  // zero, so dropping an area from a later full reading *is* how "this one
-  // eased" gets said, and A2 leaves "how areas not re-rated are recorded"
-  // an open question — not something to settle differently in just one of
-  // three call sites. `lastScored` only steps past `prev` itself when `prev`
-  // carries no areas at all, which isn't that question — it's a reading
-  // that never reported a severity in the first place.
-  function submitNoChange() {
-    onNoChange({ time: new Date(resolvedUpdateMs).toISOString(), areas: { ...lastScored.areas }, symptoms: [], reliefs: [], medication: null, note: null });
-  }
-
   function submit() {
     const nowMs = Date.now();
     const nowArea = peakArea(form.areas);
@@ -246,7 +217,9 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
     // Never actually read before the primary event overwrites it (every
     // `dose`/`followUp` event before the primary resolves through
     // `areasAsOf` instead) — kept as `lastScored.areas` rather than
-    // `lastKnownAreas` for the same reason `submitNoChange` is, just above.
+    // `lastKnownAreas`: per-area lookback would resurrect an area the user had
+    // since stopped re-rating (severity has no zero, so dropping an area is
+    // how "this one eased" gets said — A2 leaves that question open).
     let runningAreas = { ...lastScored.areas };
     let openingMedication: Omit<Snapshot, 'source'>['medication'] = null;
     let openingClaimed = false;
@@ -339,7 +312,7 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-gutter sm:px-gutter-wide pt-5 pb-4 flex flex-col">
-        <div className="mb-5 flex items-start justify-between gap-3 shrink-0">
+        <div className="mb-5 shrink-0">
           <div className="min-w-0">
             <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{STEP_TITLES[kind]}</h1>
             <p className="mt-1.5 text-sm text-text-secondary">
@@ -348,17 +321,6 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
               {kind === 'meds' && (lastDose ? `Optional · ${lastDose.name} at ${formatTime(lastDose.time)} is already logged` : 'Optional')}
               {kind === 'else' && 'Optional'}
             </p>
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-1.5">
-            {kind === 'now' && (
-              <button
-                type="button"
-                onClick={() => setConfirmNoChange(true)}
-                className="tap-44-y px-1 py-1 text-sm font-medium text-accent-light transition-colors hover:text-accent"
-              >
-                Nothing changed
-              </button>
-            )}
           </div>
         </div>
 
@@ -481,16 +443,6 @@ export function UpdateAttackForm({ attack, symptoms, reliefs, recentMeds, medica
         onKeepGoing={() => setDiscardOpen(false)}
         onSave={submit}
         onDiscard={onClose}
-      />
-
-      <ConfirmDialog
-        open={confirmNoChange}
-        title="Log that nothing has changed?"
-        message={`This saves a reading at ${formatTime(new Date(resolvedUpdateMs).toISOString())} carrying your last entry forward — same pain areas and severities. Go back if you want to record something different.`}
-        confirmLabel="Log no change"
-        cancelLabel="Go back"
-        onConfirm={() => { setConfirmNoChange(false); submitNoChange(); }}
-        onCancel={() => setConfirmNoChange(false)}
       />
     </div>
   );

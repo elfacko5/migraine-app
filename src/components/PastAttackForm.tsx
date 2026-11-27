@@ -9,6 +9,7 @@ import { chipClass } from '../utils/chipStyles';
 import { AreaSeverityPicker } from './AreaSeverityPicker';
 import { MedicationEntry } from './MedicationEntry';
 import { ChipSelector } from './ChipSelector';
+import { NothingUnusualChip } from './NothingUnusualChip';
 import { DateTimeField, type DateTimeFieldHandle } from './DateTimeField';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
 import { SunriseIcon } from './icons';
@@ -436,14 +437,10 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
                 onAddCustom={onAddTrigger}
                 renderIcon={(t) => <TriggerIcon name={t} className="h-4 w-4" />}
               />
-              <button
-                type="button"
-                onClick={() => set('triggers', form.triggers.includes(NOTHING_UNUSUAL) ? [] : [NOTHING_UNUSUAL])}
-                aria-pressed={form.triggers.includes(NOTHING_UNUSUAL)}
-                className={`tap-44-y mt-1 inline-flex items-center gap-1.5 rounded-chip px-3.5 py-2 text-sm font-medium transition-colors ${chipClass(form.triggers.includes(NOTHING_UNUSUAL))}`}
-              >
-                Nothing unusual
-              </button>
+              <NothingUnusualChip
+                selected={form.triggers.includes(NOTHING_UNUSUAL)}
+                onToggle={() => set('triggers', form.triggers.includes(NOTHING_UNUSUAL) ? [] : [NOTHING_UNUSUAL])}
+              />
             </section>
             <section className="space-y-2">
               <h3 className="text-sm font-medium text-text-primary">Note</h3>

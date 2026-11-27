@@ -4,7 +4,7 @@ import { NOTHING_UNUSUAL, PAIN_QUALITY_OPTIONS } from '../types';
 import { isoToLocalInput, localInputToIso, formatDatetime } from '../utils/format';
 import { chipClass } from '../utils/chipStyles';
 import { ChipSelector } from './ChipSelector';
-import { ChipCheck } from './ChipCheck';
+import { NothingUnusualChip } from './NothingUnusualChip';
 import { RadioDot } from './RadioDot';
 import { DateTimeField } from './DateTimeField';
 import { SymptomIcon, ReliefIcon, TriggerIcon } from './drawnIcons';
@@ -152,7 +152,7 @@ export function AttackDetailEditor({ field, attack, recorded, symptomOptions, re
         )}
 
         {field === 'before' && (
-          <div className="space-y-3">
+          <div>
             <ChipSelector
               options={triggerOptions}
               selected={triggers.filter((t) => t !== NOTHING_UNUSUAL)}
@@ -160,12 +160,7 @@ export function AttackDetailEditor({ field, attack, recorded, symptomOptions, re
               onAddCustom={onAddTrigger}
               renderIcon={(t) => <TriggerIcon name={t} className="h-4 w-4" />}
             />
-            <button type="button" aria-pressed={nothing}
-              onClick={() => change(setTriggers)(nothing ? [] : [NOTHING_UNUSUAL])}
-              className={`tap-44-y inline-flex items-center gap-1.5 rounded-chip px-3.5 py-2 text-sm font-medium transition-colors ${chipClass(nothing)}`}>
-              Nothing unusual
-              <ChipCheck selected={nothing} />
-            </button>
+            <NothingUnusualChip selected={nothing} onToggle={() => change(setTriggers)(nothing ? [] : [NOTHING_UNUSUAL])} />
           </div>
         )}
 

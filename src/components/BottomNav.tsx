@@ -4,7 +4,7 @@ import { AttackModeStrip } from './AttackModePill';
 interface NavItem { id: Tab; label: string; icon: React.ReactNode }
 
 // The four tab marks are Lucide paths, inlined unchanged — `calendar`, `list`,
-// `line-chart` — plus the design's own gear for Settings — which is the rule for a generic UI affordance:
+// `line-chart`, `settings` — which is the rule for a generic UI affordance:
 // Lucide's contract (24×24, fill none, currentColor, round caps) is the same
 // one every icon here already follows, so a path drops straight in. They match
 // the nav in Sunny's Figma, and the stroke is 1.8 rather than Lucide's own 2
@@ -29,14 +29,13 @@ function StatsIcon() {
 // reversing the 2026-08-25 "Profile, with a person" decision: the v3 design
 // names the tab for what it holds — display, attack mode, medications, data.
 //
-// **The design's own gear, drawn as it is there**: a ring with eight short
-// spokes. It is not Lucide's cog (that was the first build, and Sunny asked
-// for the design's mark). It reads close to a sun, which used to matter —
-// the sun was the light/dark switch's mark — but that switch became the two
-// theme tiles in the same round, so the shape has no other meaning to clash
-// with now. Keep it that way: don't bring a sun back as an icon elsewhere.
+// **Lucide's `settings` cog**, inlined unchanged (v4 decision A12, 2026-11-22).
+// The v3 design's own mark — a dot with eight straight spokes — shipped from
+// 2026-10-26 until 2026-11-27 and was dropped because a dot with rays is a
+// sun: in an app built around light sensitivity it reads as brightness, not
+// settings. Don't bring the spoked gear back.
 function SettingsIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
 }
 function PlusIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" className="w-7 h-7"><path d="M12 5v14M5 12h14"/></svg>
