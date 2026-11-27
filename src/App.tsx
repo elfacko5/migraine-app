@@ -661,9 +661,10 @@ export default function App() {
             // On Today this is the first-run state — no hero yet — and the
             // attack mode button lives here instead, so attack mode is
             // reachable before the first attack is ever logged.
-            control={tab === 'log' ? (
+            lead={tab === 'log' ? (
               <AttackModePill active={attackMode} onToggle={setAttackMode} />
-            ) : tab === 'stats' && attacks.length > 0 ? (
+            ) : undefined}
+            control={tab === 'stats' && attacks.length > 0 ? (
               <SegmentedControl
                 options={PERIOD_SEGMENTS}
                 value={statsPeriod}
@@ -678,16 +679,20 @@ export default function App() {
             // every screen of a long page. It comes back at the top and only
             // there: see `useScrolledFromTop` for why this watches position
             // rather than direction the way the floating pill does.
-            // Today's first-run bar has no visible title — the pill takes
-            // the row (`TopBar` keeps an sr-only h1).
-            titleHidden={tab === 'log' || insightsScrolled}
+            // Today's first-run bar has no visible title: the pill takes the
+            // title's own row through `lead`, at the title's own height, so
+            // the empty states on Today, Logs and Insights line up.
+            titleHidden={insightsScrolled}
           />
         )}
         {/* No top padding on Insights: its date line belongs to the period
             control above it, so it sits on the top bar's own 12px under the
             control (the v4 board's `.top` gap is 10) rather than 32px away. */}
         <div
-          className={`mx-auto max-w-2xl px-gutter sm:px-gutter-wide ${tab === 'stats' ? '' : 'pt-5'}`}
+          // Only while the period control is there — the empty Insights page
+          // has none, and without the padding its empty state sat 20px higher
+          // than Today's and Logs' identical one.
+          className={`mx-auto max-w-2xl px-gutter sm:px-gutter-wide ${tab === 'stats' && attacks.length > 0 ? '' : 'pt-5'}`}
           // The reserve clears the nav and the FAB in it. It was 10rem while
           // AttackModePill floated over every tab; that pill is gone (v3,
           // 2026-10-26 — attack mode lives in Today's hero and on the Display

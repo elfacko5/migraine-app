@@ -13,6 +13,12 @@ interface Props {
    *  under. Only meaningful alongside `control` — with the title gone and
    *  nothing to replace it, the header would collapse to an empty bar. */
   titleHidden?: boolean;
+  /** Drawn in the title's own place — same row, same spacing — with the
+   *  `h1` kept `sr-only`. For Today's first-run bar, whose visible title went
+   *  (2026-11-27): collapsing it like `titleHidden` made that bar 12px shorter
+   *  than Logs' and Insights', so the three empty states, which match each
+   *  other, sat at three different heights and hopped on every tab switch. */
+  lead?: React.ReactNode;
 }
 
 /**
@@ -24,7 +30,7 @@ interface Props {
  * colour, and a divider under the greeting made the bar read as a separate
  * strip of chrome rather than the top of the page.
  */
-export function TopBar({ title, action, control, titleHidden = false }: Props) {
+export function TopBar({ title, action, control, titleHidden = false, lead }: Props) {
   // A control with no title takes the title's own row; with a title it sits
   // beneath one. Guarded so `titleHidden` on its own can't empty the bar.
   const collapsed = titleHidden && !!control;
@@ -67,7 +73,18 @@ export function TopBar({ title, action, control, titleHidden = false }: Props) {
              a px value would pin the one piece of type on screen that
              ignores the setting. font-semibold, not bold: a screen title is
              text, and the app reserves font-bold for headline numbers. */
-          <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{title}</h1>
+          lead ? (
+            <>
+              <h1 className="sr-only">{title}</h1>
+              {/* `-my-2` hands the row's own 8px padding to the lead: the
+                  44px pill plus that padding outgrew the title row's
+                  `min-h-14` by 4–9px depending on text size; inside it, the
+                  row is exactly the height a title gives it. */}
+              <div className="-my-2 min-w-0 flex-1">{lead}</div>
+            </>
+          ) : (
+            <h1 className="text-[1.625rem] font-semibold leading-tight text-text-primary">{title}</h1>
+          )
         )}
         {action}
       </div>
