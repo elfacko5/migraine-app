@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SideLabel } from './SideLabel';
 import { useUiTheme } from '../hooks/useUiTheme';
 import { CHIP_ON } from '../utils/chipStyles';
+import { sevTextClass } from '../utils/severity';
 
 // See the comment on the severity grid below for why this isn't `CHIP_OFF`.
 const SEV_CELL_OFF =
@@ -32,11 +33,17 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
   const [activeArea, setActiveArea] = useState<string | null>(null);
   const activeView = VIEWS.find((v) => v.id === activeViewId) ?? VIEWS[0];
 
-  // The single slider follows the most-recently-tapped area; if that area was
-  // removed, fall back to any still-selected area.
+  // Newest first (2026-11-27, Sunny's call, matching the `UpdNowMapDark`
+  // board): the area just added sits on top. A record keeps its keys in
+  // insertion order, and every write here either appends a key or rewrites
+  // one in place, so reversing the keys is the order they were added.
+  const stacked = Object.keys(value).reverse();
+
+  // The severity grid follows the most-recently-tapped area; if that area was
+  // removed, fall back to the newest one still selected.
   const active = activeArea && activeArea in value
     ? activeArea
-    : (Object.keys(value)[0] ?? null);
+    : (stacked[0] ?? null);
 
   const selectedCount = (view: DiagramView) =>
     view.zones.filter((z) => z.name in value).length;
@@ -139,15 +146,18 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
         />
       </div>
 
-      {/* Single severity card — follows the focused area. Matched against
-          the board's own severity card (`23-live/Live23WhereDark`,
-          `.grp .rw`): solid `bg-bg-raised` card at `rounded-card`, no border
-          — not the translucent-outlined `rounded-control` box this drew
-          before, which read as an empty outline rather than a card-on-card
-          surface. Header is name (+ "was X") against a plain "Remove" text
-          link, not an icon button — the board never uses an icon here. */}
+      {/* One card, every selected area, **newest on top** (2026-11-27,
+          against `UpdNowMapDark`): the focused area opens with its 1–10 grid,
+          the rest are one-line rows — name, value, "was X" — that open when
+          tapped. Before this the card showed only the focused area, so the
+          others were visible only as fills on the head. Solid `bg-bg-raised`
+          at `rounded-card`, hairlines between rows, as the board's `.grp`.
+          Header is name (+ "was X") against a plain "Remove" text link, not
+          an icon button — the board never uses an icon here. */}
       {active && (
-        <div className="rounded-card bg-bg-raised px-4 py-3 space-y-2.5">
+        <div className="overflow-hidden rounded-card bg-bg-raised">
+          {stacked.map((area, idx) => area === active ? (
+        <div key={area} className={`px-4 py-3 space-y-2.5 ${idx > 0 ? 'border-t border-bg-border' : ''}`}>
           <div className="flex items-center justify-between gap-2">
             <span className="text-base font-semibold text-text-primary">
               {active}
@@ -161,23 +171,6 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
               Remove
             </button>
           </div>
-          {/* Button grid, not a slider (pattern library, 2026-11-24) — the
-              redesign's `UpdNowDark` board draws each value as its own tap
-              target rather than a point on a continuous track. 1-10, not the
-              design's 0-10 (June's call, 2026-11-25): every area that's
-              selected already carries a severity (defaulted to 5), so there's
-              no "unset" state for a 0 cell to mean — kept deliberately unlike
-              every other piece of this card, which now matches the board.
-              Previous value marked with a dashed outline (outline, not a
-              ring — it's already carrying the selection ring) rather than
-              redrawn as selected.
-              Unselected cells are one surface step above the card
-              (`bg-elevated`), not `CHIP_OFF`'s `bg-raised`: the board draws
-              each cell as a visible tile on its card (`.pn` #302D29 on a
-              #262421 `.grp`), and this card already *is* `bg-raised` because
-              the sheet behind it is `bg-surface` — so `CHIP_OFF` made every
-              unselected cell vanish into the card. Label is `text-primary`,
-              as the board's `.pn` colour. */}
           <div className="grid grid-cols-5 gap-1.5" role="group"
             aria-label={`${active} severity, 1 to 10`}>
             {SEVERITIES.map((s) => {
@@ -199,6 +192,18 @@ export function AreaSeverityPicker({ value, onChange, previousValue }: Props) {
             <span>1 mild</span>
             <span>10 worst</span>
           </div>
+        </div>
+          ) : (
+            <button key={area} type="button" onClick={() => setActiveArea(area)}
+              aria-label={`${area}, ${value[area]}${previousValue?.[area] !== undefined ? `, was ${previousValue[area]}` : ''}. Change`}
+              className={`flex min-h-target w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-bg-elevated ${idx > 0 ? 'border-t border-bg-border' : ''}`}>
+              <span className="flex-1 text-base text-text-primary">{area}</span>
+              <span className={`text-base font-semibold tabular-nums ${sevTextClass(value[area])}`}>{value[area]}</span>
+              {previousValue?.[area] !== undefined && (
+                <span className="text-sm text-text-secondary">was {previousValue[area]}</span>
+              )}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -236,8 +241,13 @@ function HeadDiagram({ view, value, active, hovered, onHover, onToggle }: Diagra
           it clears with ~19px to spare, so the grid is on screen as soon as
           an area is tapped. Smaller screens (iPhone SE-class, 667pt)
           still need a short scroll — shrinking further to avoid that would
-          make the zones too small to tap reliably. */}
-      <svg viewBox={view.viewBox} className="block w-full max-w-[195px]"
+          make the zones too small to tap reliably.
+          195px -> 170px (2026-11-27, Sunny's call): the card under the head
+          now lists every selected area, not only the focused one, so it
+          needs the room. 170px is the floor the note above warns about —
+          the narrowest front zone measures 33px across here; don't go
+          further without checking taps on a phone. */}
+      <svg viewBox={view.viewBox} className="block w-full max-w-[170px]"
         aria-label={`${view.label} of head — tap a region to select it`}>
         <defs>
           <clipPath id={clip}>

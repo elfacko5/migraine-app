@@ -5,7 +5,7 @@ import {
   sideOptions, filterCount, PERIOD_OPTIONS,
   type LogFilters, type SortOrder, type SeverityBand, type TreatedFilter,
 } from '../utils/logFilters';
-import { LOW_MAX, MID_MAX } from '../utils/severity';
+import { LOW_MAX, MID_MAX, sevFillClass } from '../utils/severity';
 import { chipClass} from '../utils/chipStyles';
 import { ChipCheck } from './ChipCheck';
 
@@ -77,11 +77,14 @@ function Pill({
   );
 }
 
-const SEVERITY_BANDS: { value: SeverityBand; label: string }[] = [
+// `swatch`: any severity inside the band, so `sevFillClass` picks the band's
+// own colour — the same ramp the Logs row's number box is filled from, so the
+// filter and the list it narrows agree (v4 `LogsFilterDark`, 2026-11-27).
+const SEVERITY_BANDS: { value: SeverityBand; label: string; swatch?: number }[] = [
   { value: 'any', label: 'Any' },
-  { value: 'low', label: `1–${LOW_MAX}` },
-  { value: 'mid', label: `${LOW_MAX + 1}–${MID_MAX}` },
-  { value: 'high', label: `${MID_MAX + 1}–10` },
+  { value: 'low', label: `1–${LOW_MAX}`, swatch: 1 },
+  { value: 'mid', label: `${LOW_MAX + 1}–${MID_MAX}`, swatch: LOW_MAX + 1 },
+  { value: 'high', label: `${MID_MAX + 1}–10`, swatch: 10 },
 ];
 
 const TREATED: { value: TreatedFilter; label: string }[] = [
@@ -131,9 +134,15 @@ export function LogsFilterPanel({ attacks, filters, sort, onChange, onSort, onCl
         ))}
       </Group>
 
-      <Group label="Peak severity">
-        {SEVERITY_BANDS.map(({ value, label }) => (
+      <Group label="Peak pain">
+        {SEVERITY_BANDS.map(({ value, label, swatch }) => (
           <Pill key={value} active={filters.severity === value} onClick={() => set('severity', value)}>
+            {/* A 10px colour mark, not a structure, so a literal radius
+                rather than a shape role (none is this small). Decorative:
+                the label already says the band. */}
+            {swatch !== undefined && (
+              <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-[3px] ${sevFillClass(swatch)}`} />
+            )}
             {label}
           </Pill>
         ))}

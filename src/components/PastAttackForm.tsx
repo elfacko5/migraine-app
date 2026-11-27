@@ -83,13 +83,18 @@ function blank(): FormState {
   };
 }
 
-const STEP_LABELS = ['When was it?', 'Where does it hurt?', 'Did you take anything?', 'What was it like?', 'Anything else?'];
+// Six steps, one topic each (2026-11-27, Sunny's call). The board's five put
+// pain quality, symptoms and reliefs on one screen and the two days before
+// with a note on the next; on the phone both read as too much to ask at once.
+// Felt like and Also had stay together — both describe the pain itself.
+const STEP_LABELS = ['When was it?', 'Where does it hurt?', 'Did you take anything?', 'What was it like?', 'What did you try?', 'The two days before'];
 const STEP_SUBHEADS = [
   'Required: fill out date and time.',
   'Tap an area, then rate it. Required. The rest is optional.',
-  // Plain "Optional" on all three optional steps (June, 2026-11-25): "pick
-  // any" already sits on the medication list's own label, and the chip
-  // checks say it on step 4.
+  // Plain "Optional" on every optional step (June, 2026-11-25): "pick any"
+  // already sits on the medication list's own label, and the chip checks
+  // say it.
+  'Optional',
   'Optional',
   'Optional',
   'Optional',
@@ -104,9 +109,10 @@ function peakArea(areas: Record<string, number>): string | null {
 }
 
 /**
- * "Add a past attack" (v4 redesign) — 5 steps (When → Where → Medication →
- * What it was like → Anything else), matching
- * `docs/redesign-v4/screens/21-past-attack/`. Replaces `LogForm`'s
+ * "Add a past attack" (v4 redesign) — 6 steps (When → Where → Medication →
+ * What it was like → What you tried → The two days before), from
+ * `docs/redesign-v4/screens/21-past-attack/` with its last two steps split
+ * into three (2026-11-27). Replaces `LogForm`'s
  * `past={true}` case for **manual** entry — a voice draft still opens
  * `LogForm`, same reasoning as `LiveAttackForm`.
  *
@@ -122,6 +128,9 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(blank);
   const [discardOpen, setDiscardOpen] = useState(false);
+  // The note sits behind "+ Add a note" on the last step, as the board draws
+  // it; it stays open once there's text in it.
+  const [noteOpen, setNoteOpen] = useState(false);
   // The stored attack once saved — swaps the steps for the summary screen.
   const [saved, setSaved] = useState<Attack | null>(null);
   // One save per form: a second tap while the first is still in flight would
@@ -416,20 +425,21 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
               <ChipSelector options={symptoms} selected={form.symptoms} onChange={(v) => set('symptoms', v)}
                 onAddCustom={onAddSymptom} renderIcon={(s) => <SymptomIcon name={s} className="h-4 w-4" />} />
             </section>
-            <section className="space-y-2" aria-labelledby="tried-label">
-              <h3 id="tried-label" className="text-sm font-medium text-text-primary">
-                What did you try?
-              </h3>
-              <ChipSelector options={reliefs} selected={form.reliefs} onChange={(v) => set('reliefs', v)}
-                onAddCustom={onAddRelief} renderIcon={(r) => <ReliefIcon name={r} className="h-4 w-4" />} />
-            </section>
           </div>
         )}
 
+        {/* Steps 5 and 6 carry no section heading: each holds one list, and
+            the step's own title already names it. */}
         {step === 5 && (
+          <section aria-label="What you tried">
+            <ChipSelector options={reliefs} selected={form.reliefs} onChange={(v) => set('reliefs', v)}
+              onAddCustom={onAddRelief} renderIcon={(r) => <ReliefIcon name={r} className="h-4 w-4" />} />
+          </section>
+        )}
+
+        {step === 6 && (
           <div className="space-y-6">
-            <section className="space-y-2" aria-labelledby="two-days-label">
-              <h3 id="two-days-label" className="text-sm font-medium text-text-primary">The two days before</h3>
+            <section aria-label="The two days before">
               <ChipSelector
                 options={triggers}
                 selected={form.triggers.filter((t) => t !== NOTHING_UNUSUAL)}
@@ -442,16 +452,27 @@ export function PastAttackForm({ symptoms, reliefs, triggers, recentMeds, medica
                 onToggle={() => set('triggers', form.triggers.includes(NOTHING_UNUSUAL) ? [] : [NOTHING_UNUSUAL])}
               />
             </section>
-            <section className="space-y-2">
-              <h3 className="text-sm font-medium text-text-primary">Note</h3>
-              <textarea
-                value={form.note}
-                onChange={(e) => set('note', e.target.value)}
-                placeholder="Anything else worth remembering"
-                rows={3}
-                className="w-full rounded-field bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </section>
+            {noteOpen || form.note ? (
+              <section className="space-y-2">
+                <h3 id="note-label" className="text-sm font-medium text-text-primary">Note</h3>
+                <textarea
+                  aria-labelledby="note-label"
+                  // Opened by the link's own tap, so focusing it is what
+                  // the user just asked for.
+                  autoFocus={!form.note}
+                  value={form.note}
+                  onChange={(e) => set('note', e.target.value)}
+                  placeholder="Anything else worth remembering"
+                  rows={3}
+                  className="w-full rounded-field bg-bg-raised border border-border-control px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </section>
+            ) : (
+              <button type="button" onClick={() => setNoteOpen(true)}
+                className="tap-44-y text-base font-medium text-accent-light transition-colors hover:text-accent">
+                + Add a note
+              </button>
+            )}
           </div>
         )}
       </div>

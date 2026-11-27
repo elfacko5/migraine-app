@@ -2631,3 +2631,15 @@ Past and End finish on a summary, because once they close the attack is no longe
 - **When the time is left out.** `reminderAt` gives no time when reminders are off, the attack has ended, or notifications aren't allowed. A time promised then would never arrive.
 - **Placement.** The toast clears attack mode's strip (`lift`, 57px), because Live is often logged with attack mode on.
 - **What the toast doesn't say.** Nothing about how the attack is going (§9.5).
+
+## Logging flows trimmed (2026-11-27)
+
+Sunny's notes from the phone, all decided the same day.
+
+- **Settings tab is Lucide's cog** (v4 A12). The spoked gear shipped by mistake, and a dot with rays reads as a sun, which in this app means brightness.
+- **No "Nothing changed" in the Update flow.** The v4 board has none. The reminder's quick reply still writes a `notification_no_change` reading; `QuickUpdateForm` keeps its own path.
+- **"Nothing unusual" is one shared chip** (`NothingUnusualChip`), sized like the chips beside it and on its own row below "Add custom…".
+- **Pain areas stack newest first** under the head, in one card: the focused area with its 1–10 grid, the others as one-line rows (name, value, "was X") that open when tapped. Before, only the focused area was listed. Reverses nothing; matches `UpdNowMapDark`.
+- **The head drawing is 170px wide** (was 195px), to make room for that list. The narrowest front zone measures 33px across; don't go smaller without testing taps on a phone.
+- **Add a past attack has six steps, one topic each.** When → Where → Medication → What was it like? (Felt like + Also had) → What did you try? → The two days before (note behind "+ Add a note"). The board's five steps put three lists on one screen and the two days before with a note on the next; both read as too much at once. *Rejected:* seven steps with Felt like and Also had apart — both describe the pain, and a seventh screen costs more than it saves.
+- **Closing a half-filled wizard: two buttons and a close.** Replaces the three-answer sheet above. **Discard** (secondary, neutral) and **Save** (primary) share a row; **Keep going** is the sheet's own × plus the scrim. The earlier objection was to the scrim *alone*; the × is the visible way back. *Rejected:* saving straight away on × with an Undo toast; Sunny chose the two-button sheet.

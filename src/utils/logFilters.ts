@@ -240,7 +240,7 @@ export function activeFilterChips(f: LogFilters): FilterChip[] {
 
   if (f.severity !== 'any') {
     const band = { low: '1–3', mid: `${LOW_MAX + 1}–${MID_MAX}`, high: `${MID_MAX + 1}–10` }[f.severity];
-    chips.push({ key: 'severity', label: `Severity ${band}` });
+    chips.push({ key: 'severity', label: `Peak pain ${band}` });
   }
   if (f.impact.length > 0) {
     const sorted = [...f.impact].sort((a, b) => b - a);
