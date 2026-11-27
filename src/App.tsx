@@ -27,10 +27,10 @@ import { EndAttackForm } from './components/EndAttackForm';
 import { AttackEndedSummary } from './components/AttackEndedSummary';
 
 const TAB_TITLES: Record<Tab, string> = {
-  // A greeting rather than the app's name: the user already knows which app
-  // they opened, and the Today tab is the one screen that isn't a list of
-  // something, so naming it after its contents would say nothing either.
-  log: 'Hello',
+  // Never shown: Today's first-run bar hides its title and leaves the attack
+  // mode pill alone (2026-11-27, Sunny's call — the "Hello" greeting went),
+  // so this is only the screen-reader `h1`, which names the tab.
+  log: 'Today',
   history: 'Logs',
   stats: 'Insights',
   profile: 'Settings',
@@ -247,7 +247,14 @@ export default function App() {
   // page that hid that would be lying. The Today card is the interruption, so
   // it is the one the dismissal applies to.
   const hit6IsDue = useMemo(() => hit6Due(hit6Entries), [hit6Entries]);
-  const hit6Prompting = useMemo(() => hit6Due(hit6Entries, hit6DismissedAt), [hit6Entries, hit6DismissedAt]);
+  // Not before the first attack is logged (2026-11-27, Sunny's call): on a
+  // fresh install it was the loudest thing on Today, a six-question form put
+  // ahead of the one thing a new user came to do. The Settings row above
+  // still reports it as due — that's status, not an interruption.
+  const hit6Prompting = useMemo(
+    () => attacks.length > 0 && hit6Due(hit6Entries, hit6DismissedAt),
+    [attacks.length, hit6Entries, hit6DismissedAt],
+  );
 
   // Medications offered in the logging wizard and used to correct spoken drug
   // names in voiceParse: the user's own acute library first, in their order,
@@ -671,7 +678,9 @@ export default function App() {
             // every screen of a long page. It comes back at the top and only
             // there: see `useScrolledFromTop` for why this watches position
             // rather than direction the way the floating pill does.
-            titleHidden={insightsScrolled}
+            // Today's first-run bar has no visible title — the pill takes
+            // the row (`TopBar` keeps an sr-only h1).
+            titleHidden={tab === 'log' || insightsScrolled}
           />
         )}
         {/* No top padding on Insights: its date line belongs to the period
@@ -764,18 +773,28 @@ export default function App() {
             )}
 
             {!ongoingAttack && !lastAttackEnd && (
-              <div className="rounded-card border border-dashed border-bg-border p-10 text-center space-y-2">
-                {/* "when you're ready" is the dossier's §9.4 empty state: the
-                    app doesn't chase, and a first entry shouldn't feel owed. */}
-                <p className="text-text-secondary text-sm">
-                  Nothing logged yet. Add your first entry when you're ready.
+              // Built as Logs' own empty state (`HistoryView`, v4 "LogsEmptyDark")
+              // so the first screen matches the two tabs beside it (2026-11-27,
+              // Sunny's call): the tab's own mark in a drawn tile, heading, one
+              // line on what the page will do, and the CTA straight into the
+              // wizard. Replaces a dashed placeholder box whose "Start logging"
+              // read as a different control from the + it duplicates. No
+              // "when you're ready" chase either way (dossier §9.4): the line
+              // says what happens, not what's owed.
+              <div className="flex flex-col items-center justify-center gap-4 px-7 py-16 text-center">
+                <span className="flex h-18 w-18 items-center justify-center rounded-full bg-bg-surface text-border-control">
+                  {/* Lucide `calendar`, Today's own tab mark (`BottomNav`). */}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
+                    strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8" aria-hidden="true">
+                    <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
+                  </svg>
+                </span>
+                <p className="text-lg font-semibold text-text-strong">Nothing logged yet</p>
+                <p className="max-w-[17.5rem] text-[0.9375rem] leading-normal text-text-secondary">
+                  When an attack starts, log it here. Today then shows how it's going, and afterwards how long it's been since the last one.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setLogSheetOpen(true)}
-                  className="btn-primary rounded-control px-6 py-2.5 text-sm font-medium transition-colors"
-                >
-                  Start logging
+                <button type="button" onClick={() => { setLogPast(false); setLogSheetOpen(true); }} className="btn-primary btn-compact mt-1.5">
+                  Log an attack
                 </button>
               </div>
             )}

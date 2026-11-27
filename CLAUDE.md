@@ -275,7 +275,7 @@ Six questions, scored 36–78. One per screen, no auto-advance. Prompts on Today
 
 `App.tsx` owns sheet/modal state and routes notifications. Four tabs (Today/Logs/Insights/Settings), no router. **Nav at capacity** — new destinations go inside a tab. Lucide paths at stroke 1.8: `calendar`, `list`, `line-chart`, `settings`. FAB (58px) in the bar.
 
-- Today renders no `TopBar` while hero is on screen. First-run title is "Hello".
+- Today renders no `TopBar` while hero is on screen. First-run `TopBar` has no visible title (sr-only "Today"); the Attack mode pill takes its row.
 - `TopBar` has no bottom border. Tab titles 34px in `rem`. `TopBar` **must stay inside the scroll div**.
 - Bottom clearance: `calc(7rem + env(safe-area-inset-bottom))`, plus 57px while attack mode's strip is on the nav.
 - Header padding: `calc(2rem + env(safe-area-inset-top))`.

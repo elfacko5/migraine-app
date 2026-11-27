@@ -367,18 +367,20 @@ export function StatsView({ attacks, medications = [], guides = {}, deleted = []
     // Today's own first-run shortcut (`App.tsx`): straight into the wizard,
     // no menu, since there's no ongoing attack to choose against.
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-16 px-8 text-center">
-        <span className="flex h-18 w-18 items-center justify-center rounded-full bg-bg-raised text-text-secondary">
+      // Tile, spacing and type match Logs' and Today's empty states exactly
+      // (2026-11-27): this one had drifted to a lighter tile and brighter mark.
+      <div className="flex flex-col items-center justify-center gap-4 px-7 py-16 text-center">
+        <span className="flex h-18 w-18 items-center justify-center rounded-full bg-bg-surface text-border-control">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
             strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8" aria-hidden="true">
             <path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/>
           </svg>
         </span>
         <p className="text-lg font-semibold text-text-strong">Nothing to show yet</p>
-        <p className="max-w-[17rem] text-sm text-text-secondary">
+        <p className="max-w-[17.5rem] text-[0.9375rem] leading-normal text-text-secondary">
           Log a few attacks and this page fills in — patterns in timing, medication and what tends to come with them.
         </p>
-        <button type="button" onClick={onAdd} className="btn-primary btn-compact mt-1">
+        <button type="button" onClick={onAdd} className="btn-primary btn-compact mt-1.5">
           Log an attack
         </button>
       </div>

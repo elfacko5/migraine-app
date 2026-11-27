@@ -28,6 +28,9 @@ interface Props {
  *   `hd_hit6_dismissed`).
  * - **It doesn't show in attack mode.** That mode carries only what changes
  *   the next hour, and this changes nothing.
+ * - **It waits for the first logged attack** (2026-11-27). Before that it
+ *   pushed the empty state down and asked for a questionnaire ahead of the
+ *   first entry.
  */
 export function Hit6Prompt({ onStart, onDismiss, first }: Props) {
   return (
