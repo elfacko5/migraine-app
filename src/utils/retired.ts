@@ -49,6 +49,12 @@ const UNOFFERED_ENTRIES = [
   // flow). Their drawn icon stays in `drawnIcons.tsx` for old timelines.
   'cold compress',
   'hot compress',
+  // Dropped from DEFAULT_SYMPTOMS (2026-11-27, Sunny's call): it's the first
+  // "Felt like" option (`PAIN_QUALITY_OPTIONS`), so the same step showed it
+  // twice. Pain quality is the right home — throbbing describes the pain,
+  // not something that came with it. `PAIN_QUALITY_OPTIONS` never passes
+  // through `pruneRetired`, so it stays offered there.
+  'throbbing',
 ];
 
 export function isRetired(name: string | null | undefined): boolean {

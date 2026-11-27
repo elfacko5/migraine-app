@@ -13,7 +13,7 @@ export const DEFAULT_TRIGGERS = [
 
 export const DEFAULT_SYMPTOMS = [
   'Nausea', 'Vomiting', 'Aura', 'Light sensitivity', 'Sound sensitivity',
-  'Throbbing', 'Dizziness', 'Neck stiffness',
+  'Dizziness', 'Neck stiffness',
 ];
 
 export const DEFAULT_RELIEFS = [
