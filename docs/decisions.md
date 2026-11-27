@@ -2656,5 +2656,5 @@ Sunny's call, from the phone. Live asked no symptoms, reliefs or Felt like (the 
 - **Why an offer, not a fixed step.** How much someone can answer depends on how bad the attack is, and they know that better than the app does. Saving at the offer loses nothing: End asks the same three, and Detail keeps them open for 48 h.
 - **The step counter covers the core only.** The offer and the extra questions show no "Step N of M", so a count never grows from 4 to 6 halfway through.
 - **Update's time is its own first step.** It used to share a screen with the head diagram. A2's "keep the update-time step" still holds.
-- **Live now asks before discarding.** Once an area is rated, its × opens the same Save / Discard sheet Update and Past use. Before, it closed without asking.
+- **Live now asks before discarding.** Once an area is rated, its × opens the same Save / Discard sheet Update and Past use. Before, it closed without asking. Escape on a hardware keyboard still closes the sheet without asking, the limitation `DiscardDraftDialog.tsx` already records for Update and Past. A second Save tap is ignored (`submittedRef`), since the save waits on the permission prompt before the sheet closes.
 - Past and End are unchanged. Neither is filled in mid-attack, so they keep asking inline.

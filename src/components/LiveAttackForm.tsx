@@ -84,6 +84,10 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
   const [discardOpen, setDiscardOpen] = useState(false);
   const [openedAt] = useState(() => Date.now());
   const startInputRef = useRef<DateTimeFieldHandle>(null);
+  // The save awaits the notification permission prompt before the sheet
+  // closes, so a second tap (footer or the discard dialog's Save) could
+  // otherwise start a second attack, and both could reach Supabase.
+  const submittedRef = useRef(false);
 
   useEffect(() => {
     if (startMode === 'manual') startInputRef.current?.open();
@@ -107,6 +111,8 @@ export function LiveAttackForm({ recentMeds, medications = [], attacks = [], def
   }
 
   function submit() {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
     const nowMs = Date.now();
     const rawStartMs = startMode === 'manual' ? new Date(localInputToIso(startTime)).getTime() : nowMs - (START_OFFSET_MIN[startMode] ?? 0) * 60_000;
     // Clamped once, here, and reused for every dose below — a manually
